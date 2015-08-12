@@ -1,5 +1,6 @@
 import React from "react/addons";
 import _ from "underscore";
+import $ from "jquery";
 import Settings from "../config/settings";
 
 export default React.createClass({
