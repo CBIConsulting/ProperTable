@@ -2,15 +2,21 @@ module.exports = function(config) {
   config.set({
     browsers: ['PhantomJS'],
     files: [
-      { pattern: 'tests.webpack.js', watched: false },
+      'tests.webpack.js',
+      {
+        pattern: 'src/**/__tests__/*.js',
+        included: false,
+        served: false,
+        watched: true
+      }
     ],
     frameworks: ['jasmine'],
     preprocessors: {
-      'tests.webpack.js': ['webpack'],
+      'tests.webpack.js': ['webpack', 'sourcemap'],
     },
-    reporters: ['dots'],
-    singleRun: true,
+    reporters: ['dots', 'notification'],
     webpack: {
+      devtool: 'inline-source-map',
       module: {
         loaders: [
           { test: /\.jsx?$/, exclude: /node_modules/, loader: 'babel-loader' },
@@ -20,6 +26,6 @@ module.exports = function(config) {
     },
     webpackServer: {
       noInfo: true,
-    },
+    }
   });
 };
