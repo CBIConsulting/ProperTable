@@ -4,6 +4,8 @@ import $ from "jquery";
 import Settings from "../config/settings";
 
 export default React.createClass({
+	mixins: [React.addons.PureRendermixin],
+
 	getDefaultProps() {
 		return {
 			className: '',

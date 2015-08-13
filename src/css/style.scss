@@ -1,7 +1,15 @@
+@import "compass";
+
 .propertable {
-	border: 1px solid red;
 	position: absolute;
 	top: 0;
 	bottom: 0;
 	width: 100%;
+	overflow: auto;
+
+	.propertable-hcell {
+		>div {
+			@include inline-block();
+		}
+	}
 }

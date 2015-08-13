@@ -2,15 +2,16 @@ import langs from "../i18n/languages";
 import _ from "underscore";
 import $ from "jquery";
 import numeral from "numeral";
+import "numeral/languages";
 
 class Settings	{
 	constructor() {
 		this.settings = {
-			language: "en"
+			language: "es"
 		};
 		this.messages = {};
-		this.setLang(this.settings.language);
 		this.numeral = numeral;
+		this.setLang(this.settings.language);
 	}
 
 	set(settings) {
@@ -37,6 +38,11 @@ class Settings	{
 		}
 
 		this.settings.language = lang;
+		try {
+			numeral.language(lang);
+		} catch (err) {
+			console.warn('unable to set numeral language to '+lang);
+		}
 
 		this.messages = newmsgs;
 	}

@@ -10,7 +10,10 @@ $(function () {
 	var cols = [{
 		name: 'col1',
 		label: 'columna 1',
-		field: 'col1'
+		field: 'col1',
+		formatter: function formatter(value) {
+			return _.uniqueId(value + '-');
+		}
 	}, {
 		name: 'number',
 		label: 'A number',
@@ -24,7 +27,11 @@ $(function () {
 		children: [{
 			name: 'nested1',
 			label: 'nested1',
-			field: 'nested1'
+			field: 'nested1',
+			sortVal: function sortVal(value) {
+				return moment(value).unix();
+			},
+			formatter: ProperTable.formatters.date
 		}, {
 			name: 'nested2',
 			label: 'nested2',
@@ -34,17 +41,17 @@ $(function () {
 
 	var data = [{
 		col1: 'foo',
-		nested1: 'bar1',
+		nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
 		nested2: 'bar2',
 		number: 1218579.81356738
 	}, {
 		col1: 'foo',
-		nested1: 'bar1',
+		nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
 		nested2: 'bar2',
 		number: 12545
 	}, {
 		col1: 'foo',
-		nested1: 'bar1',
+		nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
 		nested2: 'bar2',
 		number: Math.PI
 	}];

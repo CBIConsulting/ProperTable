@@ -36,14 +36,16 @@ export default React.createClass({
 			className: '',
 			cols: [],
 			data: [],
-			uniqueId: _.uniqueId('propertable-')
+			uniqueId: _.uniqueId('propertable-'),
+			afterSort: null
 		}
 	},
 
 	getInitialState() {
 		return {
 			cols: $.extend(true, this.props.cols, []),
-			data: $.extend(true, this.props.data, [])
+			data: $.extend(true, this.props.data, []),
+			sort: null
 		};
 	},
 
@@ -91,6 +93,45 @@ export default React.createClass({
 		return rows;
 	},
 
+	handleSort(direction, col) {
+		let field = col.field || null;
+		let data = $.extend(true, {}, this.state.data);
+
+		if (field) {
+			if (!direction) {
+				data = $.extend(true, {}, this.props.data);
+				this.setState({
+					data: data,
+					sort: null
+				});
+			} else {
+				data = _.sortBy(data, (item) => {
+					let val = item[field];
+
+					if (col.sortVal && typeof col.sortVal == 'function') {
+						val = col.sortVal(val);
+					}
+
+					console.log(item[field], val);
+
+					return val;
+				});
+
+				if (direction == 'desc') {
+					data.reverse();
+				}
+
+				this.setState({
+					data: data,
+					sort: {
+						field: field,
+						direction: direction
+					}
+				});
+			}
+		}
+	},
+
 	buildCols(cols) {
 		let plain = this.buildPlainColumns(cols), rows = [];
 		let rowcount = 1;
@@ -100,12 +141,18 @@ export default React.createClass({
 
 		rows = _.map(plain, (row) => {
 			return _.map(row, (item) => {
+				item.sorted = false;
+
 				if (typeof item.field != 'undefined' && item.field) {
 					this.fieldsOrder.push(item.field);
 					this.columnIndex[item.field] = item;
+
+					if (this.state.sort && item.field == this.state.sort.field) {
+						item.sorted = this.state.sort.direction;
+					}
 				}
 
-				return <HCell key={'header' + item.name} {...item}>{item.label}</HCell>;
+				return <HCell onSort={this.handleSort} key={'header' + item.name} {...item}>{item.label}</HCell>;
 			});
 		});
 
@@ -116,6 +163,10 @@ export default React.createClass({
 
 	buildDataRows(data) {
 		let result = null, rdata = [], curCell = 1, curRow = 1;
+		let defaults = {
+			visible: true,
+			sortable: true
+		};
 
 		result = _.map(data, (rowdata) => {
 			let cells = _.map(this.fieldsOrder, (field) => {
@@ -126,7 +177,7 @@ export default React.createClass({
 					value = col.formatter(value, col);
 				}
 
-				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''}>{value}</Cell>;
+				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
 			});
 
 			return <Row key={'crow-'+(curRow++)}>{cells}</Row>;
