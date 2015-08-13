@@ -1,4 +1,5 @@
 const webpack = require('webpack');
+const path = require('path');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
 module.exports = {
@@ -20,14 +21,16 @@ module.exports = {
       },
       {
         test: /\.scss$/,
-        loader: ExtractTextPlugin.extract('css!sass')
-      }
+        loader: ExtractTextPlugin.extract('css!sass?includePaths[]='+path.resolve(__dirname, "./node_modules/compass-mixins/lib"))
+      },
+      { test: /globalize/, loaders: ["babel-loader", 'imports?define=>false'] }
     ],
   },
   externals: {
     'react/addons': 'React',
     'jquery': '$',
-    'underscore': '_'
+    'underscore': '_',
+    'moment': 'moment'
   },
   output: {
     libraryTarget: "var",
