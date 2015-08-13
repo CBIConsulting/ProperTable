@@ -69,11 +69,13 @@ export default React.createClass({
 		let $container = null, $table = null;
 		let parentHeight = null, parentTag;
 
-		if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
+		if (this.isMounted()) {
 			$container = $(React.findDOMNode(this));
 			$table = $(React.findDOMNode(this.refs.table));
 			$table.floatThead('destroy');
+		}
 
+		if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
 			parentHeight = $container.parent().height();
 			parentTag = $container.parent().prop('tagName');
 			if (parentTag === 'BODY') {
