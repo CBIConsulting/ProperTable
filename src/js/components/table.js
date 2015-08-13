@@ -46,15 +46,27 @@ export default React.createClass({
 	getInitialState() {
 		return {
 			cols: $.extend(true, this.props.cols, []),
-			data: $.extend(true, this.props.data, []),
+			data: null,
 			sort: null
 		};
 	},
 
 	componentDidMount() {
-		this.fixHeader();
+		this.initData();
 
 		$(window).on('resize', this.fixHeader);
+	},
+
+	initData() {
+		let data = $.extend(true, this.props.data, []);
+
+		this.setState({
+			data: _.map(data, (row) => {
+				row._properId = _.uniqueId();
+
+				return row;
+			})
+		});
 	},
 
 	componentDidUpdate() {
@@ -219,8 +231,9 @@ export default React.createClass({
 
 				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
 			});
+			let nextRow = rowdata._properId;
 
-			return <Row key={'crow-'+(curRow++)}>{cells}</Row>;
+			return <Row key={'crow-'+nextRow} uniqueId={'propertable-row-' + nextRow}>{cells}</Row>;
 		});
 
 		return result;
