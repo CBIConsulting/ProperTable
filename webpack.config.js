@@ -21,13 +21,15 @@ module.exports = {
       {
         test: /\.scss$/,
         loader: ExtractTextPlugin.extract('css!sass')
-      }
+      },
+      { test: /globalize/, loaders: ["babel-loader", 'imports?define=>false'] }
     ],
   },
   externals: {
     'react/addons': 'React',
     'jquery': '$',
-    'underscore': '_'
+    'underscore': '_',
+    'moment': 'moment'
   },
   output: {
     libraryTarget: "var",

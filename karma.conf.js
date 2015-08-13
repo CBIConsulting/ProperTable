@@ -1,6 +1,6 @@
 module.exports = function(config) {
   config.set({
-    browsers: ['PhantomJS', 'Chrome', 'Firefox'],
+    browsers: ['PhantomJS'],
     files: [
       'tests.webpack.js',
       {
@@ -14,31 +14,19 @@ module.exports = function(config) {
     preprocessors: {
       'tests.webpack.js': ['webpack', 'sourcemap', 'coverage'],
     },
-    reporters: ['progress', 'notification', 'coverage'],
+    reporters: ['progress', 'notification'],
     webpack: {
       devtool: 'inline-source-map',
       module: {
         loaders: [
           { test: /\.jsx?$/, exclude: /node_modules/, loader: 'babel-loader' },
-        ],
-        postLoaders: [{ // << add subject as webpack's postloader
-            test: /\.jsx$/,
-            exclude: /(__tests__|node_modules|legacy)\//,
-            loader: 'istanbul-instrumenter'
-        }]
+          { test: /globalize/, loaders: ["babel-loader", 'imports?define=>false'] }
+        ]
       },
       watch: true
     },
     webpackServer: {
       noInfo: true,
-    },
-    coverageReporter: {
-      includeAllSources: false,
-      check: {
-        global: {
-          excludes: ['node_modules/**/*.js', 'src/**/__tests__/*.js']
-        }
-      }
     }
   });
 };

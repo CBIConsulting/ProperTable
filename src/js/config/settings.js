@@ -1,6 +1,7 @@
 import langs from "../i18n/languages";
 import _ from "underscore";
 import $ from "jquery";
+import numeral from "numeral";
 
 class Settings	{
 	constructor() {
@@ -8,8 +9,8 @@ class Settings	{
 			language: "en"
 		};
 		this.messages = {};
-
-		this.setLang(this.settings.lang);
+		this.setLang(this.settings.language);
+		this.numeral = numeral;
 	}
 
 	set(settings) {
@@ -34,6 +35,8 @@ class Settings	{
 		if (!_.isEmpty(msgs)) {
 			newmsgs = $.extend(true, newmsgs, msgs);
 		}
+
+		this.settings.language = lang;
 
 		this.messages = newmsgs;
 	}
