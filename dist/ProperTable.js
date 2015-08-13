@@ -155,14 +155,16 @@ var ProperTable =
 				className: '',
 				cols: [],
 				data: [],
-				uniqueId: _underscore2["default"].uniqueId('propertable-')
+				uniqueId: _underscore2["default"].uniqueId('propertable-'),
+				afterSort: null
 			};
 		},
 
 		getInitialState: function getInitialState() {
 			return {
 				cols: _jquery2["default"].extend(true, this.props.cols, []),
-				data: _jquery2["default"].extend(true, this.props.data, [])
+				data: _jquery2["default"].extend(true, this.props.data, []),
+				sort: null
 			};
 		},
 
@@ -214,6 +216,45 @@ var ProperTable =
 			return rows;
 		},
 
+		handleSort: function handleSort(direction, col) {
+			var field = col.field || null;
+			var data = _jquery2["default"].extend(true, {}, this.state.data);
+
+			if (field) {
+				if (!direction) {
+					data = _jquery2["default"].extend(true, {}, this.props.data);
+					this.setState({
+						data: data,
+						sort: null
+					});
+				} else {
+					data = _underscore2["default"].sortBy(data, function (item) {
+						var val = item[field];
+
+						if (col.sortVal && typeof col.sortVal == 'function') {
+							val = col.sortVal(val);
+						}
+
+						console.log(item[field], val);
+
+						return val;
+					});
+
+					if (direction == 'desc') {
+						data.reverse();
+					}
+
+					this.setState({
+						data: data,
+						sort: {
+							field: field,
+							direction: direction
+						}
+					});
+				}
+			}
+		},
+
 		buildCols: function buildCols(cols) {
 			var _this = this;
 
@@ -226,14 +267,20 @@ var ProperTable =
 
 			rows = _underscore2["default"].map(plain, function (row) {
 				return _underscore2["default"].map(row, function (item) {
+					item.sorted = false;
+
 					if (typeof item.field != 'undefined' && item.field) {
 						_this.fieldsOrder.push(item.field);
 						_this.columnIndex[item.field] = item;
+
+						if (_this.state.sort && item.field == _this.state.sort.field) {
+							item.sorted = _this.state.sort.direction;
+						}
 					}
 
 					return _reactAddons2["default"].createElement(
 						_hcell2["default"],
-						_extends({ key: 'header' + item.name }, item),
+						_extends({ onSort: _this.handleSort, key: 'header' + item.name }, item),
 						item.label
 					);
 				});
@@ -2211,6 +2258,8 @@ var ProperTable =
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "row",
 
+		mixins: [_reactAddons2["default"].addons.PureRendermixin],
+
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
@@ -2267,6 +2316,8 @@ var ProperTable =
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "hcell",
 
+		mixins: [_reactAddons2["default"].addons.PureRendermixin],
+
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
@@ -2279,16 +2330,40 @@ var ProperTable =
 			};
 		},
 
-		getInitialState: function getInitialState() {
-			return {
-				sorted: this.props.sorted
-			};
+		handleSort: function handleSort(e) {
+			var next = 'asc';
+
+			if (this.props.sorted == 'asc') {
+				next = 'desc';
+			}
+
+			if (this.props.sorted == 'desc') {
+				next = false;
+			}
+
+			if (this.props.onSort && typeof this.props.onSort == 'function') {
+				this.props.onSort(next, this.props);
+			}
 		},
 
 		renderSortOptions: function renderSortOptions() {
+			var next = 'asc';
+
+			if (this.props.sorted == 'asc') {
+				next = 'desc';
+			}
+
+			if (this.props.sorted == 'desc') {
+				next = false;
+			}
+
+			if (!this.props.sortable) {
+				return false;
+			}
+
 			return _reactAddons2["default"].createElement(
 				"button",
-				{ onClick: this.handleSort },
+				{ className: "btn btn-xs sort sort-" + next, onClick: this.handleSort },
 				"sort"
 			);
 		},
@@ -2297,6 +2372,7 @@ var ProperTable =
 			var className = this.props.className;
 			var spans = {};
 			var sortBtns = this.renderSortOptions();
+			var tools = null;
 
 			if (this.props.rowspan) {
 				spans.rowSpan = this.props.rowspan + 1;
@@ -2304,6 +2380,16 @@ var ProperTable =
 
 			if (this.props.colspan) {
 				spans.colSpan = this.props.colspan + 1;
+			}
+
+			if (this.props.field) {
+				tools = _reactAddons2["default"].createElement(
+					"div",
+					{ className: "htools" },
+					sortBtns
+				);
+
+				className += ' has-tools';
 			}
 
 			return _reactAddons2["default"].createElement(
@@ -2314,11 +2400,7 @@ var ProperTable =
 					{ className: "hlabel" },
 					this.props.children
 				),
-				_reactAddons2["default"].createElement(
-					"div",
-					{ className: "htools" },
-					sortBtns
-				)
+				tools
 			);
 		}
 	});
@@ -2358,6 +2440,8 @@ var ProperTable =
 
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "cell",
+
+		mixins: [_reactAddons2["default"].addons.PureRendermixin],
 
 		getDefaultProps: function getDefaultProps() {
 			return {
