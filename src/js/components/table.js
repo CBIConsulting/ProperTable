@@ -5,6 +5,7 @@ import Settings from "../config/settings";
 import Row from "./row";
 import HCell from "./hcell";
 import Cell from "./cell";
+import "floatthead";
 
 function countChildren(cell) {
 	let ccount = 0, haschildren = false;
@@ -37,7 +38,8 @@ export default React.createClass({
 			cols: [],
 			data: [],
 			uniqueId: _.uniqueId('propertable-'),
-			afterSort: null
+			afterSort: null,
+			fixedHeader: true
 		}
 	},
 
@@ -48,6 +50,44 @@ export default React.createClass({
 			sort: null
 		};
 	},
+
+	componentDidMount() {
+		this.fixHeader();
+
+		$(window).on('resize', this.fixHeader);
+	},
+
+	componentDidUpdate() {
+		this.fixHeader();
+	},
+
+	componentWillUnmount() {
+		$(window).off('resize', this.fixHeader);
+	},
+
+	fixHeader: _.debounce(function() {
+		let $container = null, $table = null;
+		let parentHeight = null, parentTag;
+
+		if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
+			$container = $(React.findDOMNode(this));
+			$table = $(React.findDOMNode(this.refs.table));
+			$table.floatThead('destroy');
+
+			parentHeight = $container.parent().height();
+			parentTag = $container.parent().prop('tagName');
+			if (parentTag === 'BODY') {
+				parentHeight = $(document).height();
+			}
+			$container.height(parentHeight);
+
+			$table.floatThead({
+				scrollContainer: function($table) {
+					return $container;
+				}
+			});
+		}
+	}, 200),
 
 	buildPlainColumns(cols) {
 		let rows = [], row = [], crow = [], nextrow = cols, levels = 0;
@@ -111,8 +151,6 @@ export default React.createClass({
 					if (col.sortVal && typeof col.sortVal == 'function') {
 						val = col.sortVal(val);
 					}
-
-					console.log(item[field], val);
 
 					return val;
 				});
@@ -203,7 +241,7 @@ export default React.createClass({
 		rows = this.buildDataRows(this.state.data);
 
 		return <div id={this.props.uniqueId} className={"propertable "+className}>
-			<table className="table table-condensed table-bordered table-hover table-responsive propertable-table">
+			<table ref="table" className="table table-condensed table-bordered table-hover table-responsive propertable-table">
 				<thead ref="head">{cols}</thead>
 				<tbody>
 					{rows}

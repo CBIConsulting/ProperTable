@@ -62,7 +62,92 @@ $(() => {
 			nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
 			nested2: 'bar2',
 			number: Math.PI
-		}
+		},{
+			col1: 'foo',
+			nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 1218579.81356738
+		},
+		{
+			col1: 'foo',
+			nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 12545
+		},
+		{
+			col1: 'foo',
+			nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: Math.PI
+		},{
+			col1: 'foo',
+			nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 1218579.81356738
+		},
+		{
+			col1: 'foo',
+			nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 12545
+		},
+		{
+			col1: 'foo',
+			nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: Math.PI
+		},{
+			col1: 'foo',
+			nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 1218579.81356738
+		},
+		{
+			col1: 'foo',
+			nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 12545
+		},
+		{
+			col1: 'foo',
+			nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: Math.PI
+		},{
+			col1: 'foo',
+			nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 1218579.81356738
+		},
+		{
+			col1: 'foo',
+			nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 12545
+		},
+		{
+			col1: 'foo',
+			nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: Math.PI
+		},{
+			col1: 'foo',
+			nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 1218579.81356738
+		},
+		{
+			col1: 'foo',
+			nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: 12545
+		},
+		{
+			col1: 'foo',
+			nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar2',
+			number: Math.PI
+		},
 	];
 
 	React.render(<ProperTable.Table cols={cols} data={data} />, body);

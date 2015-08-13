@@ -7,9 +7,10 @@
 	width: 100%;
 	overflow: auto;
 
-	.propertable-hcell {
-		>div {
-			@include inline-block();
-		}
+}
+
+.propertable-hcell {
+	>div {
+		@include inline-block();
 	}
 }

@@ -4,10 +4,11 @@
   bottom: 0;
   width: 100%;
   overflow: auto; }
-  .propertable .propertable-hcell > div {
-    display: -moz-inline-stack;
-    display: inline-block;
-    vertical-align: middle;
-    *vertical-align: auto;
-    zoom: 1;
-    *display: inline; }
+
+.propertable-hcell > div {
+  display: -moz-inline-stack;
+  display: inline-block;
+  vertical-align: middle;
+  *vertical-align: auto;
+  zoom: 1;
+  *display: inline; }
