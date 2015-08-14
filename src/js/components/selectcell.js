@@ -9,7 +9,7 @@ export default React.createClass({
 	getDefaultProps() {
 		return {
 			className: '',
-			uniqueId: _.uniqueId('propertable-selectcell-'),
+			uniqueId: null,
 			onChange: null,
 			selected: false
 		}
@@ -24,7 +24,7 @@ export default React.createClass({
 	render() {
 		let className = this.props.className;
 
-		return <td id={this.props.uniqueId} className={"propertable-cell select-cell "+className}>
+		return <td id={this.props.uniqueId || _.uniqueId('propertable-selectcell-')} className={"propertable-cell select-cell "+className}>
 			<input type="checkbox" value={1} checked={this.props.selected} onChange={this.handleChange}/>
 		</td>;
 	}

@@ -40,7 +40,7 @@ export default React.createClass({
 			className += " selected";
 		}
 
-		return <tr id={this.props.uniqueId} className={"propertable-row "+className} onClick={this.handleSelect}>
+		return <tr id={this.props.uniqueId || _.uniqueId('propertable-row-')} className={"propertable-row "+className} onClick={this.handleSelect}>
 			{selectcontent}
 			{this.props.children}
 		</tr>;

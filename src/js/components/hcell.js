@@ -9,7 +9,7 @@ export default React.createClass({
 	getDefaultProps() {
 		return {
 			className: '',
-			uniqueId: 'select-all-header',
+			uniqueId: _.uniqueId('propertable-hcell-'),
 			rowspan: null,
 			colspan: null,
 			sortable: true,
