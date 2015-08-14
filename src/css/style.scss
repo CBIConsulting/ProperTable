@@ -10,6 +10,8 @@
 }
 
 .propertable-hcell {
+	background: #f3f3f3;
+
 	>div {
 		@include inline-block();
 	}

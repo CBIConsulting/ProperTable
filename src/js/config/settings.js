@@ -7,7 +7,7 @@ import "numeral/languages";
 class Settings	{
 	constructor() {
 		this.settings = {
-			language: "es"
+			language: "en"
 		};
 		this.messages = {};
 		this.numeral = numeral;

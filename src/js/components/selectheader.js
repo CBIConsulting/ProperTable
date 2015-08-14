@@ -9,7 +9,7 @@ export default React.createClass({
 	getDefaultProps() {
 		return {
 			className: '',
-			uniqueId: 'select-all-header',
+			uniqueId: _.uniqueId('propertable-hcell-'),
 			rowspan: null,
 			colspan: null,
 			sortable: true,
@@ -58,26 +58,23 @@ export default React.createClass({
 		let sortBtns = this.renderSortOptions();
 		let tools = null;
 
-		if (this.props.rowspan) {
-			spans.rowSpan = this.props.rowspan + 1;
-		}
+		spans.rowSpan = this.props.rowspan;
 
 		if (this.props.colspan) {
 			spans.colSpan = this.props.colspan + 1;
 		}
 
-		if (this.props.field) {
-			tools = <div className="htools">
-				{sortBtns}
-			</div>;
 
-			className += ' has-tools'
-		}
+		tools = <div className="htools">
+			{sortBtns}
+			<button className={"btn btn-xs select-all"} onClick={this.handleSort}>
+				{Settings.msg('selectmsg')}
+			</button>
+		</div>;
 
-		return <th id={this.props.uniqueId} className={"propertable-hcell "+className} {...spans}>
-			<div className="hlabel">
-				{this.props.children}
-			</div>
+		className += ' has-tools'
+
+		return <th id={this.props.uniqueId} className={"propertable-hcell selectheader "+className} {...spans}>
 			{tools}
 		</th>;
 	}

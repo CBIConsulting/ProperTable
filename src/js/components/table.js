@@ -4,6 +4,7 @@ import $ from "jquery";
 import Settings from "../config/settings";
 import Row from "./row";
 import HCell from "./hcell";
+import SelectHeader from "./selectheader";
 import Cell from "./cell";
 import "floatthead";
 
@@ -39,7 +40,8 @@ export default React.createClass({
 			data: [],
 			uniqueId: _.uniqueId('propertable-'),
 			afterSort: null,
-			fixedHeader: true
+			fixedHeader: true,
+			selectable: true
 		}
 	},
 
@@ -62,7 +64,13 @@ export default React.createClass({
 
 		this.setState({
 			data: _.map(data, (row) => {
-				row._properId = _.uniqueId();
+				if (!row._properId) {
+					row._properId = _.uniqueId();
+				}
+
+				if (typeof row._selected == 'undefined') {
+					row._selected = false;
+				}
 
 				return row;
 			})
@@ -81,19 +89,21 @@ export default React.createClass({
 		let $container = null, $table = null;
 		let parentHeight = null, parentTag;
 
+
 		if (this.isMounted()) {
 			$container = $(React.findDOMNode(this));
 			$table = $(React.findDOMNode(this.refs.table));
+
+			$container.removeAttr('style');
 			$table.floatThead('destroy');
 		}
 
 		if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
-			parentHeight = $container.parent().height();
-			parentTag = $container.parent().prop('tagName');
-			if (parentTag === 'BODY') {
-				parentHeight = $(document).height();
-			}
-			$container.height(parentHeight);
+
+			$container.css({
+				position: 'relative',
+				height: $container.height()
+			});
 
 			$table.floatThead({
 				scrollContainer: function($table) {
@@ -101,7 +111,7 @@ export default React.createClass({
 				}
 			});
 		}
-	}, 200),
+	}, 50),
 
 	buildPlainColumns(cols) {
 		let rows = [], row = [], crow = [], nextrow = cols, levels = 0;
@@ -209,7 +219,14 @@ export default React.createClass({
 		});
 
 		return _.map(rows, (row) => {
-			return <Row key={'header-row-'+(rowcount++)}>{row}</Row>;
+			let selectable = this.props.selectable;
+			if (rowcount === 1) {
+				row = row.reverse();
+				row.push(<SelectHeader rowspan={rows.length}/>);
+				row = row.reverse();
+			}
+
+			return <Row selectable={false} key={'header-row-'+(rowcount++)}>{row}</Row>;
 		});
 	},
 
@@ -233,10 +250,32 @@ export default React.createClass({
 			});
 			let nextRow = rowdata._properId;
 
-			return <Row key={'crow-'+nextRow} uniqueId={'propertable-row-' + nextRow}>{cells}</Row>;
+			return <Row data={rowdata} selected={rowdata._selected} selectable={this.props.selectable} key={'crow-'+nextRow} uniqueId={'propertable-row-' + nextRow} onSelect={this.handleSelect}>
+				{cells}
+			</Row>;
 		});
 
 		return result;
+	},
+
+	handleSelect(row, status) {
+		let curRow = _.findWhere(this.state.data, {_properId: row._properId});
+		let id = row._properId;
+		let newData = null;
+
+		if (curRow._selected != status) {
+			newData = _.map($.extend(true, this.state.data, {}), (crow) => {
+				if (crow._properId == id) {
+					crow._selected = status;
+				}
+
+				return crow;
+			});
+
+			this.setState({
+				data: newData
+			});
+		}
 	},
 
 	render() {
