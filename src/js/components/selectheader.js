@@ -14,7 +14,9 @@ export default React.createClass({
 			colspan: null,
 			sortable: true,
 			sorted: false,
-			onSort: null
+			onSort: null,
+			selected: false,
+			onSelect: null
 		}
 	},
 
@@ -30,7 +32,13 @@ export default React.createClass({
 		}
 
 		if (this.props.onSort && typeof this.props.onSort == 'function') {
-			this.props.onSort(next, this.props);
+			this.props.onSort(next, {field: '_selected'});
+		}
+	},
+
+	handleSelect(e) {
+		if (typeof this.props.onSelect == 'function') {
+			this.props.onSelect(this.props.data, !this.props.selected);
 		}
 	},
 
@@ -49,7 +57,7 @@ export default React.createClass({
 			return false;
 		}
 
-		return <button className={"btn btn-xs sort sort-"+next} onClick={this.handleSort}>sort</button>;
+		return <button className={"pull-right btn btn-xs sort sort-"+next} onClick={this.handleSort}>sort</button>;
 	},
 
 	render() {
@@ -64,12 +72,11 @@ export default React.createClass({
 			spans.colSpan = this.props.colspan + 1;
 		}
 
-
 		tools = <div className="htools">
-			{sortBtns}
-			<button className={"btn btn-xs select-all"} onClick={this.handleSort}>
+			<button className={"btn btn-xs select-all"} onClick={this.handleSelect}>
 				{Settings.msg('selectmsg')}
 			</button>
+			{sortBtns}
 		</div>;
 
 		className += ' has-tools'

@@ -40,6 +40,7 @@ export default React.createClass({
 			data: [],
 			uniqueId: _.uniqueId('propertable-'),
 			afterSort: null,
+			afterSelect: null,
 			fixedHeader: true,
 			selectable: true
 		}
@@ -49,7 +50,8 @@ export default React.createClass({
 		return {
 			cols: $.extend(true, this.props.cols, []),
 			data: null,
-			sort: null
+			sort: null,
+			allSelected: false
 		};
 	},
 
@@ -159,11 +161,10 @@ export default React.createClass({
 
 	handleSort(direction, col) {
 		let field = col.field || null;
-		let data = $.extend(true, {}, this.state.data);
+		let data = _.values($.extend(true, {}, this.state.data));
 
 		if (field) {
 			if (!direction) {
-				data = $.extend(true, {}, this.props.data);
 				this.setState({
 					data: data,
 					sort: null
@@ -174,6 +175,10 @@ export default React.createClass({
 
 					if (col.sortVal && typeof col.sortVal == 'function') {
 						val = col.sortVal(val);
+					}
+
+					if (_.isBoolean(val)) {
+						val = - (val * 10000) * parseInt(item._properId);
 					}
 
 					return val;
@@ -220,13 +225,32 @@ export default React.createClass({
 
 		return _.map(rows, (row) => {
 			let selectable = this.props.selectable;
+			let sorted = false;
+
+			if (this.state.sort && '_selected' == this.state.sort.field) {
+				sorted = this.state.sort.direction;
+			}
+
 			if (rowcount === 1) {
 				row = row.reverse();
-				row.push(<SelectHeader rowspan={rows.length}/>);
+				row.push(<SelectHeader rowspan={rows.length} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
 				row = row.reverse();
 			}
 
 			return <Row selectable={false} key={'header-row-'+(rowcount++)}>{row}</Row>;
+		});
+	},
+
+	selectAll() {
+		let data = $.extend(true, {}, this.state.data);
+		let selectedState = !this.state.allSelected;
+
+		data = _.each(data, (item) => {
+			this.handleSelect(item, selectedState);
+		});
+
+		this.setState({
+			allSelected: selectedState
 		});
 	},
 
@@ -276,7 +300,30 @@ export default React.createClass({
 				data: newData
 			});
 		}
+
+		this.callAfterSelect();
+
+		if (this.state.sort && '_selected' == this.state.sort.field) {
+			this.handleSort(this.state.sort.direction, this.state.sort);
+		}
 	},
+
+	callAfterSelect: _.debounce(function(all = false) {
+		let selection = [];
+
+		if (typeof this.props.afterSelect == 'function') {
+
+			if (!all) {
+				selection = _.filter(this.state.data, (item) => {
+					return item._selected;
+				});
+			} else {
+				selection = _.clone(this.state.data);
+			}
+
+			this.props.afterSelect.call(this, selection);
+		}
+	}, 25),
 
 	render() {
 		let className = this.props.className;

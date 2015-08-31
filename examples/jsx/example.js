@@ -150,5 +150,7 @@ $(() => {
 		},
 	];
 
-	React.render(<ProperTable.Table cols={cols} data={data} />, body);
+	React.render(<ProperTable.Table cols={cols} data={data} afterSelect={function(data) {
+		console.log('selected', data);
+	}} />, body);
 });

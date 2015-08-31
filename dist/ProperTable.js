@@ -172,7 +172,8 @@ var ProperTable =
 			return {
 				cols: _jquery2["default"].extend(true, this.props.cols, []),
 				data: null,
-				sort: null
+				sort: null,
+				allSelected: false
 			};
 		},
 
@@ -357,7 +358,7 @@ var ProperTable =
 				var selectable = _this.props.selectable;
 				if (rowcount === 1) {
 					row = row.reverse();
-					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length }));
+					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, onSelect: _this.selectAll }));
 					row = row.reverse();
 				}
 
@@ -366,6 +367,24 @@ var ProperTable =
 					{ selectable: false, key: 'header-row-' + rowcount++ },
 					row
 				);
+			});
+		},
+
+		selectAll: function selectAll() {
+			var data = _jquery2["default"].extend(true, {}, this.state.data);
+			var selectedState = !this.state.allSelected;
+
+			console.log('hola');
+
+			data = _underscore2["default"].map(data, function (item) {
+				item._selected = selectedState;
+
+				return item;
+			});
+
+			this.setState({
+				data: data,
+				allSelected: selectedState
 			});
 		},
 
@@ -535,7 +554,7 @@ var ProperTable =
 			_classCallCheck(this, Settings);
 
 			this.settings = {
-				language: "es"
+				language: "en"
 			};
 			this.messages = {};
 			this.numeral = _numeral2["default"];
@@ -2395,7 +2414,7 @@ var ProperTable =
 
 			return _reactAddons2["default"].createElement(
 				"tr",
-				{ id: this.props.uniqueId, className: "propertable-row " + className, onClick: this.handleSelect },
+				{ id: this.props.uniqueId || _underscore2["default"].uniqueId('propertable-row-'), className: "propertable-row " + className, onClick: this.handleSelect },
 				selectcontent,
 				this.props.children
 			);
@@ -2443,7 +2462,7 @@ var ProperTable =
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
-				uniqueId: _underscore2["default"].uniqueId('propertable-selectcell-'),
+				uniqueId: null,
 				onChange: null,
 				selected: false
 			};
@@ -2460,7 +2479,7 @@ var ProperTable =
 
 			return _reactAddons2["default"].createElement(
 				"td",
-				{ id: this.props.uniqueId, className: "propertable-cell select-cell " + className },
+				{ id: this.props.uniqueId || _underscore2["default"].uniqueId('propertable-selectcell-'), className: "propertable-cell select-cell " + className },
 				_reactAddons2["default"].createElement("input", { type: "checkbox", value: 1, checked: this.props.selected, onChange: this.handleChange })
 			);
 		}
@@ -2509,7 +2528,7 @@ var ProperTable =
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
-				uniqueId: 'select-all-header',
+				uniqueId: _underscore2["default"].uniqueId('propertable-hcell-'),
 				rowspan: null,
 				colspan: null,
 				sortable: true,
@@ -2636,12 +2655,14 @@ var ProperTable =
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
-				uniqueId: _underscore2["default"].uniqueId('propertable-hcell-'),
+				uniqueId: 'select-all-header',
 				rowspan: null,
 				colspan: null,
 				sortable: true,
 				sorted: false,
-				onSort: null
+				onSort: null,
+				selected: false,
+				onSelect: null
 			};
 		},
 
@@ -2658,6 +2679,12 @@ var ProperTable =
 
 			if (this.props.onSort && typeof this.props.onSort == 'function') {
 				this.props.onSort(next, this.props);
+			}
+		},
+
+		handleSelect: function handleSelect(e) {
+			if (this.props.selectable && typeof this.props.onSelect == 'function') {
+				this.props.onSelect(this.props.data, !this.props.selected);
 			}
 		},
 
@@ -2701,7 +2728,7 @@ var ProperTable =
 				sortBtns,
 				_reactAddons2["default"].createElement(
 					"button",
-					{ className: "btn btn-xs select-all", onClick: this.handleSort },
+					{ className: "btn btn-xs select-all", onClick: this.handleSelect },
 					_configSettings2["default"].msg('selectmsg')
 				)
 			);

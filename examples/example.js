@@ -131,5 +131,7 @@ $(function () {
 		number: Math.PI
 	}];
 
-	React.render(React.createElement(ProperTable.Table, { cols: cols, data: data }), body);
+	React.render(React.createElement(ProperTable.Table, { cols: cols, data: data, afterSelect: function (data) {
+			console.log('selected', data);
+		} }), body);
 });
