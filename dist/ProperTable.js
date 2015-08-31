@@ -173,6 +173,7 @@ var ProperTable =
 			return {
 				cols: _jquery2["default"].extend(true, this.props.cols, []),
 				data: null,
+				rawdata: null,
 				sort: null,
 				allSelected: false
 			};
@@ -185,9 +186,10 @@ var ProperTable =
 		},
 
 		initData: function initData() {
-			var data = _jquery2["default"].extend(true, this.props.data, []);
+			var data = _underscore2["default"].values(_jquery2["default"].extend(true, this.props.data, []));
 
 			this.setState({
+				rawdata: data,
 				data: _underscore2["default"].map(data, function (row) {
 					if (!row._properId) {
 						row._properId = _underscore2["default"].uniqueId();
@@ -202,7 +204,36 @@ var ProperTable =
 			});
 		},
 
+		updateData: function updateData() {
+			var data = _underscore2["default"].values(_jquery2["default"].extend(true, this.props.data, []));
+			var newdata = [];
+
+			if (this.state.rawdata && !_underscore2["default"].isEqual(data, this.state.rawdata)) {
+				newdata = _underscore2["default"].map(data, function (row) {
+					if (!row._properId) {
+						row._properId = _underscore2["default"].uniqueId();
+					}
+
+					if (typeof row._selected == 'undefined') {
+						row._selected = false;
+					}
+
+					return row;
+				});
+
+				this.setState({
+					rawdata: data,
+					data: newdata
+				});
+
+				if (this.state.sort && this.state.sort.field) {
+					this.handleSort(this.state.sort.direction, this.state.sort);
+				}
+			}
+		},
+
 		componentDidUpdate: function componentDidUpdate() {
+			this.updateData();
 			this.fixHeader();
 		},
 
