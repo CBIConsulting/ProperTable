@@ -163,6 +163,7 @@ var ProperTable =
 				data: [],
 				uniqueId: _underscore2["default"].uniqueId('propertable-'),
 				afterSort: null,
+				afterSelect: null,
 				fixedHeader: true,
 				selectable: true
 			};
@@ -288,11 +289,10 @@ var ProperTable =
 
 		handleSort: function handleSort(direction, col) {
 			var field = col.field || null;
-			var data = _jquery2["default"].extend(true, {}, this.state.data);
+			var data = _underscore2["default"].values(_jquery2["default"].extend(true, {}, this.state.data));
 
 			if (field) {
 				if (!direction) {
-					data = _jquery2["default"].extend(true, {}, this.props.data);
 					this.setState({
 						data: data,
 						sort: null
@@ -303,6 +303,10 @@ var ProperTable =
 
 						if (col.sortVal && typeof col.sortVal == 'function') {
 							val = col.sortVal(val);
+						}
+
+						if (_underscore2["default"].isBoolean(val)) {
+							val = -(val * 10000) * parseInt(item._properId);
 						}
 
 						return val;
@@ -356,9 +360,15 @@ var ProperTable =
 
 			return _underscore2["default"].map(rows, function (row) {
 				var selectable = _this.props.selectable;
+				var sorted = false;
+
+				if (_this.state.sort && '_selected' == _this.state.sort.field) {
+					sorted = _this.state.sort.direction;
+				}
+
 				if (rowcount === 1) {
 					row = row.reverse();
-					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, onSelect: _this.selectAll }));
+					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, sorted: sorted, onSelect: _this.selectAll, onSort: _this.handleSort }));
 					row = row.reverse();
 				}
 
@@ -371,25 +381,22 @@ var ProperTable =
 		},
 
 		selectAll: function selectAll() {
+			var _this2 = this;
+
 			var data = _jquery2["default"].extend(true, {}, this.state.data);
 			var selectedState = !this.state.allSelected;
 
-			console.log('hola');
-
-			data = _underscore2["default"].map(data, function (item) {
-				item._selected = selectedState;
-
-				return item;
+			data = _underscore2["default"].each(data, function (item) {
+				_this2.handleSelect(item, selectedState);
 			});
 
 			this.setState({
-				data: data,
 				allSelected: selectedState
 			});
 		},
 
 		buildDataRows: function buildDataRows(data) {
-			var _this2 = this;
+			var _this3 = this;
 
 			var result = null,
 			    rdata = [],
@@ -401,8 +408,8 @@ var ProperTable =
 			};
 
 			result = _underscore2["default"].map(data, function (rowdata) {
-				var cells = _underscore2["default"].map(_this2.fieldsOrder, function (field) {
-					var col = _this2.columnIndex[field];
+				var cells = _underscore2["default"].map(_this3.fieldsOrder, function (field) {
+					var col = _this3.columnIndex[field];
 					var value = rowdata[field];
 
 					if (typeof col.formatter == 'function') {
@@ -419,7 +426,7 @@ var ProperTable =
 
 				return _reactAddons2["default"].createElement(
 					_row2["default"],
-					{ data: rowdata, selected: rowdata._selected, selectable: _this2.props.selectable, key: 'crow-' + nextRow, uniqueId: 'propertable-row-' + nextRow, onSelect: _this2.handleSelect },
+					{ data: rowdata, selected: rowdata._selected, selectable: _this3.props.selectable, key: 'crow-' + nextRow, uniqueId: 'propertable-row-' + nextRow, onSelect: _this3.handleSelect },
 					cells
 				);
 			});
@@ -445,7 +452,32 @@ var ProperTable =
 					data: newData
 				});
 			}
+
+			this.callAfterSelect();
+
+			if (this.state.sort && '_selected' == this.state.sort.field) {
+				this.handleSort(this.state.sort.direction, this.state.sort);
+			}
 		},
+
+		callAfterSelect: _underscore2["default"].debounce(function () {
+			var all = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
+			var selection = [];
+
+			if (typeof this.props.afterSelect == 'function') {
+
+				if (!all) {
+					selection = _underscore2["default"].filter(this.state.data, function (item) {
+						return item._selected;
+					});
+				} else {
+					selection = _underscore2["default"].clone(this.state.data);
+				}
+
+				this.props.afterSelect.call(this, selection);
+			}
+		}, 25),
 
 		render: function render() {
 			var className = this.props.className;
@@ -2678,12 +2710,12 @@ var ProperTable =
 			}
 
 			if (this.props.onSort && typeof this.props.onSort == 'function') {
-				this.props.onSort(next, this.props);
+				this.props.onSort(next, { field: '_selected' });
 			}
 		},
 
 		handleSelect: function handleSelect(e) {
-			if (this.props.selectable && typeof this.props.onSelect == 'function') {
+			if (typeof this.props.onSelect == 'function') {
 				this.props.onSelect(this.props.data, !this.props.selected);
 			}
 		},
@@ -2705,7 +2737,7 @@ var ProperTable =
 
 			return _reactAddons2["default"].createElement(
 				"button",
-				{ className: "btn btn-xs sort sort-" + next, onClick: this.handleSort },
+				{ className: "pull-right btn btn-xs sort sort-" + next, onClick: this.handleSort },
 				"sort"
 			);
 		},
@@ -2725,12 +2757,12 @@ var ProperTable =
 			tools = _reactAddons2["default"].createElement(
 				"div",
 				{ className: "htools" },
-				sortBtns,
 				_reactAddons2["default"].createElement(
 					"button",
 					{ className: "btn btn-xs select-all", onClick: this.handleSelect },
 					_configSettings2["default"].msg('selectmsg')
-				)
+				),
+				sortBtns
 			);
 
 			className += ' has-tools';
