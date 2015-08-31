@@ -368,7 +368,7 @@ var ProperTable =
 
 				if (rowcount === 1) {
 					row = row.reverse();
-					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, sorted: sorted, onSelect: _this.selectAll, onSort: _this.handleSort }));
+					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, selected: _this.state.allSelected, sorted: sorted, onSelect: _this.selectAll, onSort: _this.handleSort }));
 					row = row.reverse();
 				}
 
@@ -686,7 +686,8 @@ var ProperTable =
 	});
 	exports["default"] = {
 		emptymsg: "There are no data for the table",
-		selectmsg: "Select/deselect all"
+		select_all: "Select all",
+		deselect_all: "Deselect all"
 	};
 	module.exports = exports["default"];
 
@@ -2747,11 +2748,16 @@ var ProperTable =
 			var spans = {};
 			var sortBtns = this.renderSortOptions();
 			var tools = null;
+			var msg = _configSettings2["default"].msg('select_all');
 
 			spans.rowSpan = this.props.rowspan;
 
 			if (this.props.colspan) {
 				spans.colSpan = this.props.colspan + 1;
+			}
+
+			if (this.props.selected) {
+				msg = _configSettings2["default"].msg('deselect_all');
 			}
 
 			tools = _reactAddons2["default"].createElement(
@@ -2760,7 +2766,7 @@ var ProperTable =
 				_reactAddons2["default"].createElement(
 					"button",
 					{ className: "btn btn-xs select-all", onClick: this.handleSelect },
-					_configSettings2["default"].msg('selectmsg')
+					msg
 				),
 				sortBtns
 			);
