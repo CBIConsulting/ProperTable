@@ -233,7 +233,7 @@ export default React.createClass({
 
 			if (rowcount === 1) {
 				row = row.reverse();
-				row.push(<SelectHeader rowspan={rows.length} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
+				row.push(<SelectHeader rowspan={rows.length} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
 				row = row.reverse();
 			}
 
@@ -267,7 +267,7 @@ export default React.createClass({
 				let value = rowdata[field];
 
 				if (typeof col.formatter == 'function') {
-					value = col.formatter(value, col);
+					value = col.formatter(value, col, rowdata);
 				}
 
 				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;

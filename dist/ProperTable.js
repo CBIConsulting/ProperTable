@@ -413,7 +413,7 @@ var ProperTable =
 					var value = rowdata[field];
 
 					if (typeof col.formatter == 'function') {
-						value = col.formatter(value, col);
+						value = col.formatter(value, col, rowdata);
 					}
 
 					return _reactAddons2["default"].createElement(
