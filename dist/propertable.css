@@ -6,7 +6,9 @@
   overflow: auto; }
 
 .propertable-hcell {
-  background: #f3f3f3; }
+  background: #f3f3f3;
+  position: relative;
+  overflow: hidden; }
   .propertable-hcell > div {
     display: -moz-inline-stack;
     display: inline-block;
@@ -14,3 +16,13 @@
     *vertical-align: auto;
     zoom: 1;
     *display: inline; }
+    .propertable-hcell > div.htools {
+      float: right; }
+  .propertable-hcell.selectheader {
+    width: 150px; }
+    .propertable-hcell.selectheader > div.htools {
+      float: none; }
+
+.propertable-cell.select-cell {
+  width: 150px;
+  text-align: center; }
