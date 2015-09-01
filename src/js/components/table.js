@@ -122,7 +122,6 @@ export default React.createClass({
 		let $container = null, $table = null;
 		let parentHeight = null, parentTag;
 
-
 		if (this.isMounted()) {
 			$container = $(React.findDOMNode(this));
 			$table = $(React.findDOMNode(this.refs.table));
@@ -132,10 +131,9 @@ export default React.createClass({
 		}
 
 		if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
-
 			$container.css({
 				position: 'relative',
-				height: $container.height()
+				height: $container.height() || $container.parent().height()
 			});
 
 			$table.floatThead({

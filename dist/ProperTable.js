@@ -256,10 +256,9 @@ var ProperTable =
 			}
 
 			if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
-
 				$container.css({
 					position: 'relative',
-					height: $container.height()
+					height: $container.height() || $container.parent().height()
 				});
 
 				$table.floatThead({
