@@ -65,6 +65,7 @@ export default React.createClass({
 		let spans = {};
 		let sortBtns = this.renderSortOptions();
 		let tools = null;
+		let msg = Settings.msg('select_all');
 
 		spans.rowSpan = this.props.rowspan;
 
@@ -72,9 +73,13 @@ export default React.createClass({
 			spans.colSpan = this.props.colspan + 1;
 		}
 
+		if (this.props.selected) {
+			msg = Settings.msg('deselect_all');
+		}
+
 		tools = <div className="htools">
 			<button className={"btn btn-xs select-all"} onClick={this.handleSelect}>
-				{Settings.msg('selectmsg')}
+				{msg}
 			</button>
 			{sortBtns}
 		</div>;

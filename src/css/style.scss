@@ -1,18 +1,42 @@
 @import "compass";
 
+$selectWidth: 150px;
+
 .propertable {
 	position: absolute;
 	top: 0;
 	bottom: 0;
 	width: 100%;
 	overflow: auto;
-
 }
 
 .propertable-hcell {
 	background: #f3f3f3;
+	position: relative;
+	overflow: hidden;
 
 	>div {
 		@include inline-block();
+
+		&.htools {
+			float: right;
+		}
+	}
+
+	&.selectheader {
+		width: $selectWidth;
+
+		>div {
+			&.htools {
+				float: none;
+			}
+		}
+	}
+}
+
+.propertable-cell {
+	&.select-cell {
+		width: $selectWidth;
+		text-align: center;
 	}
 }

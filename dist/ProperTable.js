@@ -173,6 +173,7 @@ var ProperTable =
 			return {
 				cols: _jquery2["default"].extend(true, this.props.cols, []),
 				data: null,
+				rawdata: null,
 				sort: null,
 				allSelected: false
 			};
@@ -185,9 +186,10 @@ var ProperTable =
 		},
 
 		initData: function initData() {
-			var data = _jquery2["default"].extend(true, this.props.data, []);
+			var data = _underscore2["default"].values(_jquery2["default"].extend(true, this.props.data, []));
 
 			this.setState({
+				rawdata: data,
 				data: _underscore2["default"].map(data, function (row) {
 					if (!row._properId) {
 						row._properId = _underscore2["default"].uniqueId();
@@ -202,7 +204,36 @@ var ProperTable =
 			});
 		},
 
+		updateData: function updateData() {
+			var data = _underscore2["default"].values(_jquery2["default"].extend(true, this.props.data, []));
+			var newdata = [];
+
+			if (this.state.rawdata && !_underscore2["default"].isEqual(data, this.state.rawdata)) {
+				newdata = _underscore2["default"].map(data, function (row) {
+					if (!row._properId) {
+						row._properId = _underscore2["default"].uniqueId();
+					}
+
+					if (typeof row._selected == 'undefined') {
+						row._selected = false;
+					}
+
+					return row;
+				});
+
+				this.setState({
+					rawdata: data,
+					data: newdata
+				});
+
+				if (this.state.sort && this.state.sort.field) {
+					this.handleSort(this.state.sort.direction, this.state.sort);
+				}
+			}
+		},
+
 		componentDidUpdate: function componentDidUpdate() {
+			this.updateData();
 			this.fixHeader();
 		},
 
@@ -225,10 +256,9 @@ var ProperTable =
 			}
 
 			if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
-
 				$container.css({
 					position: 'relative',
-					height: $container.height()
+					height: $container.height() || $container.parent().height()
 				});
 
 				$table.floatThead({
@@ -368,7 +398,7 @@ var ProperTable =
 
 				if (rowcount === 1) {
 					row = row.reverse();
-					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, sorted: sorted, onSelect: _this.selectAll, onSort: _this.handleSort }));
+					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, selected: _this.state.allSelected, sorted: sorted, onSelect: _this.selectAll, onSort: _this.handleSort }));
 					row = row.reverse();
 				}
 
@@ -413,7 +443,7 @@ var ProperTable =
 					var value = rowdata[field];
 
 					if (typeof col.formatter == 'function') {
-						value = col.formatter(value, col);
+						value = col.formatter(value, col, rowdata);
 					}
 
 					return _reactAddons2["default"].createElement(
@@ -686,7 +716,8 @@ var ProperTable =
 	});
 	exports["default"] = {
 		emptymsg: "There are no data for the table",
-		selectmsg: "Select/deselect all"
+		select_all: "Select all",
+		deselect_all: "Deselect all"
 	};
 	module.exports = exports["default"];
 
@@ -2747,11 +2778,16 @@ var ProperTable =
 			var spans = {};
 			var sortBtns = this.renderSortOptions();
 			var tools = null;
+			var msg = _configSettings2["default"].msg('select_all');
 
 			spans.rowSpan = this.props.rowspan;
 
 			if (this.props.colspan) {
 				spans.colSpan = this.props.colspan + 1;
+			}
+
+			if (this.props.selected) {
+				msg = _configSettings2["default"].msg('deselect_all');
 			}
 
 			tools = _reactAddons2["default"].createElement(
@@ -2760,7 +2796,7 @@ var ProperTable =
 				_reactAddons2["default"].createElement(
 					"button",
 					{ className: "btn btn-xs select-all", onClick: this.handleSelect },
-					_configSettings2["default"].msg('selectmsg')
+					msg
 				),
 				sortBtns
 			);

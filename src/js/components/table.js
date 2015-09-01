@@ -50,6 +50,7 @@ export default React.createClass({
 		return {
 			cols: $.extend(true, this.props.cols, []),
 			data: null,
+			rawdata: null,
 			sort: null,
 			allSelected: false
 		};
@@ -62,9 +63,10 @@ export default React.createClass({
 	},
 
 	initData() {
-		let data = $.extend(true, this.props.data, []);
+		let data = _.values($.extend(true, this.props.data, []));
 
 		this.setState({
+			rawdata: data,
 			data: _.map(data, (row) => {
 				if (!row._properId) {
 					row._properId = _.uniqueId();
@@ -79,7 +81,36 @@ export default React.createClass({
 		});
 	},
 
+	updateData() {
+		let data = _.values($.extend(true, this.props.data, []));
+		let newdata = [];
+
+		if (this.state.rawdata && !_.isEqual(data, this.state.rawdata)) {
+			newdata = _.map(data, (row) => {
+				if (!row._properId) {
+					row._properId = _.uniqueId();
+				}
+
+				if (typeof row._selected == 'undefined') {
+					row._selected = false;
+				}
+
+				return row;
+			});
+
+			this.setState({
+				rawdata: data,
+				data: newdata
+			});
+
+			if (this.state.sort && this.state.sort.field) {
+				this.handleSort(this.state.sort.direction, this.state.sort);
+			}
+		}
+	},
+
 	componentDidUpdate() {
+		this.updateData();
 		this.fixHeader();
 	},
 
@@ -91,7 +122,6 @@ export default React.createClass({
 		let $container = null, $table = null;
 		let parentHeight = null, parentTag;
 
-
 		if (this.isMounted()) {
 			$container = $(React.findDOMNode(this));
 			$table = $(React.findDOMNode(this.refs.table));
@@ -101,10 +131,9 @@ export default React.createClass({
 		}
 
 		if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
-
 			$container.css({
 				position: 'relative',
-				height: $container.height()
+				height: $container.height() || $container.parent().height()
 			});
 
 			$table.floatThead({
@@ -233,7 +262,7 @@ export default React.createClass({
 
 			if (rowcount === 1) {
 				row = row.reverse();
-				row.push(<SelectHeader rowspan={rows.length} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
+				row.push(<SelectHeader rowspan={rows.length} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
 				row = row.reverse();
 			}
 
@@ -267,7 +296,7 @@ export default React.createClass({
 				let value = rowdata[field];
 
 				if (typeof col.formatter == 'function') {
-					value = col.formatter(value, col);
+					value = col.formatter(value, col, rowdata);
 				}
 
 				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
