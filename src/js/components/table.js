@@ -260,7 +260,7 @@ export default React.createClass({
 				sorted = this.state.sort.direction;
 			}
 
-			if (rowcount === 1) {
+			if (rowcount === 1 && this.props.selectable) {
 				row = row.reverse();
 				row.push(<SelectHeader rowspan={rows.length} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
 				row = row.reverse();
