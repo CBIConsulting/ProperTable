@@ -398,7 +398,7 @@ var ProperTable =
 
 				if (rowcount === 1 && _this.props.selectable) {
 					row = row.reverse();
-					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, selected: _this.state.allSelected, sorted: sorted, onSelect: _this.selectAll, onSort: _this.handleSort }));
+					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { key: _this.props.uniqueId + '-select-all-header', rowspan: rows.length, selected: _this.state.allSelected, sorted: sorted, onSelect: _this.selectAll, onSort: _this.handleSort }));
 					row = row.reverse();
 				}
 
@@ -2718,7 +2718,7 @@ var ProperTable =
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
-				uniqueId: 'select-all-header',
+				uniqueId: _underscore2["default"].uniqueId('select-all-header'),
 				rowspan: null,
 				colspan: null,
 				sortable: true,
