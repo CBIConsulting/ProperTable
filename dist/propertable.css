@@ -4,6 +4,38 @@
   bottom: 0;
   width: 100%;
   overflow: auto; }
+  .propertable .propertable-table {
+    position: relative;
+    width: 100%;
+    max-height: 100%;
+    overflow: auto; }
+    .propertable .propertable-table .thead-wrapper {
+      position: relative;
+      display: block;
+      width: 100%; }
+    .propertable .propertable-table .tbody-scroller {
+      position: relative;
+      display: block;
+      overflow: auto; }
+    .propertable .propertable-table .propertable-container {
+      display: table;
+      width: 100%;
+      border-collapse: collapse; }
+      .propertable .propertable-table .propertable-container > div {
+        display: table-row-group; }
+      .propertable .propertable-table .propertable-container .propertable-row {
+        display: table-row; }
+      .propertable .propertable-table .propertable-container .propertable-cell, .propertable .propertable-table .propertable-container .propertable-hcell {
+        display: table-cell;
+        border: 1px solid #ccc; }
+        .propertable .propertable-table .propertable-container .propertable-cell > .cell-inner, .propertable .propertable-table .propertable-container .propertable-hcell > .cell-inner {
+          padding: 5px; }
+      .propertable .propertable-table .propertable-container .propertable-thead {
+        display: table-header-group; }
+    .propertable .propertable-table.fixedheader .thead-wrapper {
+      position: fixed;
+      top: 0;
+      width: 100%; }
 
 .propertable-hcell {
   background: #f3f3f3;

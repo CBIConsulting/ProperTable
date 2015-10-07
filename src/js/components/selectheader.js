@@ -86,8 +86,8 @@ export default React.createClass({
 
 		className += ' has-tools'
 
-		return <th id={this.props.uniqueId} className={"propertable-hcell selectheader "+className} {...spans}>
+		return <div id={this.props.uniqueId} className={"propertable-hcell selectheader "+className} {...spans}>
 			{tools}
-		</th>;
+		</div>;
 	}
 });

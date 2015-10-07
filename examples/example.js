@@ -39,99 +39,18 @@ $(function () {
 		}]
 	}];
 
-	var data = [{
-		col1: 'foo',
-		nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 1218579.81356738
-	}, {
-		col1: 'foo',
-		nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 12545
-	}, {
-		col1: 'foo',
-		nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: Math.PI
-	}, {
-		col1: 'foo',
-		nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 1218579.81356738
-	}, {
-		col1: 'foo',
-		nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 12545
-	}, {
-		col1: 'foo',
-		nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: Math.PI
-	}, {
-		col1: 'foo',
-		nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 1218579.81356738
-	}, {
-		col1: 'foo',
-		nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 12545
-	}, {
-		col1: 'foo',
-		nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: Math.PI
-	}, {
-		col1: 'foo',
-		nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 1218579.81356738
-	}, {
-		col1: 'foo',
-		nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 12545
-	}, {
-		col1: 'foo',
-		nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: Math.PI
-	}, {
-		col1: 'foo',
-		nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 1218579.81356738
-	}, {
-		col1: 'foo',
-		nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 12545
-	}, {
-		col1: 'foo',
-		nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: Math.PI
-	}, {
-		col1: 'foo',
-		nested1: moment().format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 1218579.81356738
-	}, {
-		col1: 'foo',
-		nested1: moment().add(1, 'days').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: 12545
-	}, {
-		col1: 'foo',
-		nested1: moment().subtract(1, 'month').format('YYYY-MM-DD HH:mm:ss'),
-		nested2: 'bar2',
-		number: Math.PI
-	}];
+	var data = [];
 
-	React.render(React.createElement(ProperTable.Table, { cols: cols, data: data, afterSelect: function (data) {
+	for (var i = 500; i >= 0; i--) {
+		data.push({
+			col1: 'added-' + i,
+			nested1: moment().add(Math.round(Math.random() * 10000) % 2000, 'days').format('YYYY-MM-DD HH:mm:ss'),
+			nested2: 'bar-' + i,
+			number: Math.round(Math.random() * 1000) % 20 + 1
+		});
+	};
+
+	React.render(React.createElement(ProperTable.Table, { key: 'testtable', cols: cols, data: data, afterSelect: function (data) {
 			console.log('selected', data);
 		} }), body);
 });

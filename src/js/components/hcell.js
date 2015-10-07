@@ -14,7 +14,8 @@ export default React.createClass({
 			colspan: null,
 			sortable: true,
 			sorted: false,
-			onSort: null
+			onSort: null,
+			nested: null
 		}
 	},
 
@@ -74,11 +75,14 @@ export default React.createClass({
 			className += ' has-tools'
 		}
 
-		return <th id={this.props.uniqueId} className={"propertable-hcell "+className} {...spans}>
-			<div className="hlabel">
-				{this.props.children}
+		return <div id={this.props.uniqueId} className={"propertable-hcell "+className} {...spans}>
+			<div className="cell-inner">
+				<div className="hlabel">
+					{this.props.children}
+				</div>
+				{tools}
 			</div>
-			{tools}
-		</th>;
+			{this.props.nested}
+		</div>;
 	}
 });

@@ -16,8 +16,10 @@ export default React.createClass({
 	render() {
 		let className = this.props.className;
 
-		return <td id={this.props.uniqueId} className={"propertable-cell "+className}>
-			{this.props.children}
-		</td>;
+		return <div id={this.props.uniqueId} className={"propertable-cell "+className}>
+			<div className="cell-inner">
+				{this.props.children}
+			</div>
+		</div>;
 	}
 });

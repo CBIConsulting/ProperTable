@@ -6,33 +6,10 @@ import Row from "./row";
 import HCell from "./hcell";
 import SelectHeader from "./selectheader";
 import Cell from "./cell";
-import "floatthead";
-
-function countChildren(cell) {
-	let ccount = 0, haschildren = false;
-
-	if (cell.children && cell.children.length) {
-		haschildren = !!_.find(cell.children, (child) => {
-			return child.children && child.children.length;
-		});
-
-		if (!haschildren) {
-			return cell.children.length;
-		} else {
-			_.each(cell.children, (child) => {
-				if (child.children && child.children.length) {
-					ccount += countChildren(child);
-				}
-			});
-
-			return cell.children.length + ccount;
-		}
-	}
-
-	return null;
-}
+import Tbody from "./tbody";
 
 export default React.createClass({
+
 	getDefaultProps() {
 		return {
 			className: '',
@@ -42,28 +19,29 @@ export default React.createClass({
 			afterSort: null,
 			afterSelect: null,
 			fixedHeader: true,
-			selectable: true
+			selectable: true,
+			rowHeight: 50
 		}
 	},
 
 	getInitialState() {
 		return {
-			cols: $.extend(true, this.props.cols, []),
+			cols: _.values($.extend(true, {}, this.props.cols)),
 			data: null,
 			rawdata: null,
 			sort: null,
-			allSelected: false
+			allSelected: false,
+			headerHeight: null
 		};
 	},
 
 	componentDidMount() {
 		this.initData();
-
-		$(window).on('resize', this.fixHeader);
+		this.computeHeaderHeight();
 	},
 
 	initData() {
-		let data = _.values($.extend(true, this.props.data, []));
+		let data = _.clone(this.props.data);
 
 		this.setState({
 			rawdata: data,
@@ -82,7 +60,7 @@ export default React.createClass({
 	},
 
 	updateData() {
-		let data = _.values($.extend(true, this.props.data, []));
+		let data = _.clone(this.props.data);
 		let newdata = [];
 
 		if (this.state.rawdata && !_.isEqual(data, this.state.rawdata)) {
@@ -111,81 +89,22 @@ export default React.createClass({
 
 	componentDidUpdate() {
 		this.updateData();
-		this.fixHeader();
+		this.computeHeaderHeight();
 	},
 
-	componentWillUnmount() {
-		$(window).off('resize', this.fixHeader);
-	},
+	computeHeaderHeight() {
+		if (this.refs.header) {
+			let $head = $(React.findDOMNode(this.refs.header));
+			if ($head.length) {
+				let hh = $head.height();
 
-	fixHeader: _.debounce(function() {
-		let $container = null, $table = null;
-		let parentHeight = null, parentTag;
-
-		if (this.isMounted()) {
-			$container = $(React.findDOMNode(this));
-			$table = $(React.findDOMNode(this.refs.table));
-
-			$container.removeAttr('style');
-			$table.floatThead('destroy');
-		}
-
-		if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
-			$container.css({
-				position: 'relative',
-				height: $container.height() || $container.parent().height()
-			});
-
-			$table.floatThead({
-				scrollContainer: function($table) {
-					return $container;
-				}
-			});
-		}
-	}, 50),
-
-	buildPlainColumns(cols) {
-		let rows = [], row = [], crow = [], nextrow = cols, levels = 0;
-		let haschildren = false;
-
-		while(nextrow && nextrow.length) {
-			levels++;
-			row = [];
-			crow = nextrow;
-			nextrow = [];
-			haschildren = !!_.find(crow, (cell) => {
-				return cell.children && cell.children.length;
-			});
-
-			row = _.map(crow, (cell) => {
-				if (cell.children && cell.children.length) {
-					_.each(cell.children, (child) => {
-						nextrow.push(child);
+				if (hh != this.state.headerHeight) {
+					this.setState({
+						headerHeight: $head.height()
 					});
 				}
-
-				return $.extend(true, cell, {
-					level: levels,
-					colspan: countChildren(cell)
-				});
-			});
-
-			rows.push(row);
+			}
 		}
-
-		rows = _.map(rows, (row) => {
-			let cells = _.map(row, (cell) => {
-				if (!cell.children || !cell.children.length) {
-					cell.rowspan = levels - cell.level || null;
-				}
-
-				return cell;
-			});
-
-			return cells;
-		});
-
-		return rows;
 	},
 
 	handleSort(direction, col) {
@@ -228,46 +147,53 @@ export default React.createClass({
 		}
 	},
 
-	buildCols(cols) {
-		let plain = this.buildPlainColumns(cols), rows = [];
-		let rowcount = 1;
+	buildCols(cols, nested = false) {
+		//let plain = this.buildPlainColumns(cols), rows = [];
+		let result = [];
+		let sorted = false;
 
-		this.fieldsOrder = [];
-		this.columnIndex = {};
+		if (this.state.sort && '_selected' == this.state.sort.field) {
+			sorted = this.state.sort.direction;
+		}
 
-		rows = _.map(plain, (row) => {
-			return _.map(row, (item) => {
-				item.sorted = false;
+		if (!nested) {
+			this.fieldsOrder = [];
+			this.columnIndex = {};
+		}
 
-				if (typeof item.field != 'undefined' && item.field) {
-					this.fieldsOrder.push(item.field);
-					this.columnIndex[item.field] = item;
+		if (this.props.selectable && !nested) {
+			result.push(<SelectHeader key={this.props.uniqueId + '-select-all-header'} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
+		}
 
-					if (this.state.sort && item.field == this.state.sort.field) {
-						item.sorted = this.state.sort.direction;
-					}
+		_.each(cols, (item) => {
+			let rendered = null;
+			let content = [item.label];
+			let nested = null;
+			item.sorted = false;
+
+			if (typeof item.field != 'undefined' && item.field) {
+				this.fieldsOrder.push(item.field);
+				this.columnIndex[item.field] = item;
+
+				if (this.state.sort && item.field == this.state.sort.field) {
+					item.sorted = this.state.sort.direction;
 				}
-
-				return <HCell onSort={this.handleSort} key={'header' + item.name} {...item}>{item.label}</HCell>;
-			});
-		});
-
-		return _.map(rows, (row) => {
-			let selectable = this.props.selectable;
-			let sorted = false;
-
-			if (this.state.sort && '_selected' == this.state.sort.field) {
-				sorted = this.state.sort.direction;
 			}
 
-			if (rowcount === 1 && this.props.selectable) {
-				row = row.reverse();
-				row.push(<SelectHeader key={this.props.uniqueId + '-select-all-header'} rowspan={rows.length} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
-				row = row.reverse();
+			if (typeof item.children != 'undefined' && item.children.length) {
+				nested = (<div className="propertable-table subheader">
+					<div className="propertable-container">
+						{this.buildCols(item.children, true)}
+					</div>
+				</div>);
 			}
 
-			return <Row selectable={false} key={'header-row-'+(rowcount++)}>{row}</Row>;
+			rendered = <HCell nested={nested} onSort={this.handleSort} key={'header' + item.name} {...item}>{content}</HCell>;
+
+			result.push(rendered);
 		});
+
+		return <Row selectable={false} key={'header-row'}>{result}</Row>;
 	},
 
 	selectAll() {
@@ -311,13 +237,37 @@ export default React.createClass({
 		return result;
 	},
 
+	renderRow(rowdata) {
+		//let rowdata = this.state.data[index];
+		let defaults = {
+			visible: true,
+			sortable: true
+		}, curCell = 1;
+
+		let cells = _.map(this.fieldsOrder, (field) => {
+			let col = this.columnIndex[field];
+			let value = rowdata[field];
+
+			if (typeof col.formatter == 'function') {
+				value = col.formatter(value, col, rowdata);
+			}
+
+			return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
+		});
+		let nextRow = rowdata._properId;
+
+		return (<Row rowHeight={this.props.rowHeight} data={rowdata} selected={rowdata._selected} selectable={this.props.selectable} key={'crow-'+rowdata._properId} uniqueId={'propertable-row-' + rowdata._properId} onSelect={this.handleSelect}>
+			{cells}
+		</Row>);
+	},
+
 	handleSelect(row, status) {
 		let curRow = _.findWhere(this.state.data, {_properId: row._properId});
 		let id = row._properId;
 		let newData = null;
 
 		if (curRow._selected != status) {
-			newData = _.map($.extend(true, this.state.data, {}), (crow) => {
+			newData = _.map($.extend(true, {}, this.state.data), (crow) => {
 				if (crow._properId == id) {
 					crow._selected = status;
 				}
@@ -358,25 +308,33 @@ export default React.createClass({
 		let className = this.props.className;
 		let cols = [];
 		let rows = [];
+		let container = window;
+		let content = <div className="empty-msg">
+			<p>{Settings.msg('emptymsg')}</p>
+		</div>;
+		let hclass = '';
 
-		if (!this.state.cols.length) {
-			return <div className={"propertable "+className} id={this.props.uniqueId}>
-				<div className="empty-msg">
-					<p>{Settings.msg('emptymsg')}</p>
+		if (this.props.fixedHeader) {
+			hclass = ' fixedheader';
+		}
+
+		if (this.state.cols.length && this.state.data) {
+			cols = this.buildCols(this.state.cols);
+			rows = this.buildDataRows(this.state.data);
+			content = <div ref="table" className={"propertable-table table-condensed table-bordered table-hover table-responsive propertable-table" + hclass}>
+				<div className="thead-wrapper" ref="header">
+					<div className="propertable-container propertable-thead-container">
+						<div className="propertable-thead" ref="head">{cols}</div>
+					</div>
 				</div>
+				<Tbody fixedHeader={this.props.fixedHeader} headerHeight={this.state.headerHeight}>
+					{rows}
+				</Tbody>
 			</div>;
 		}
 
-		cols = this.buildCols(this.state.cols);
-		rows = this.buildDataRows(this.state.data);
-
-		return <div id={this.props.uniqueId} className={"propertable "+className}>
-			<table ref="table" className="table table-condensed table-bordered table-hover table-responsive propertable-table">
-				<thead ref="head">{cols}</thead>
-				<tbody>
-					{rows}
-				</tbody>
-			</table>
-		</div>;
+		return <div id={this.props.uniqueId} className={"propertable propertable-base"+className}>
+			{content}
+		</div>
 	}
 });

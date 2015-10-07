@@ -14,7 +14,8 @@ export default React.createClass({
 			selectable: true,
 			selected: false,
 			onSelect: null,
-			data: {}
+			data: {},
+			rowHeight: 25
 		}
 	},
 
@@ -40,9 +41,9 @@ export default React.createClass({
 			className += " selected";
 		}
 
-		return <tr id={this.props.uniqueId || _.uniqueId('propertable-row-')} className={"propertable-row "+className} onClick={this.handleSelect}>
+		return <div id={this.props.uniqueId || _.uniqueId('propertable-row-')} className={"propertable-row "+className} onClick={this.handleSelect}>
 			{selectcontent}
 			{this.props.children}
-		</tr>;
+		</div>;
 	}
 });

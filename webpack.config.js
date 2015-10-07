@@ -27,7 +27,9 @@ module.exports = {
     ],
   },
   externals: {
+    'react': 'React',
     'react/addons': 'React',
+    'jquery': 'jQuery',
     'jquery': '$',
     'underscore': '_',
     'moment': 'moment'
@@ -41,6 +43,7 @@ module.exports = {
   plugins: [
     new ExtractTextPlugin('propertable.css', {
       allChunks: true
-    })
+    }),
+    new webpack.optimize.DedupePlugin()
   ]
 }
