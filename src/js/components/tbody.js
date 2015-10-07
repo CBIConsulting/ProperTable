@@ -36,7 +36,13 @@ export default React.createClass({
 		if (!this.state.scrollBound) {
 			let $this = $(React.findDOMNode(this));
 
-			$this.on('scroll', _.throttle(this.onScroll, 50));
+			$this.on('scroll', _.throttle(this.onScroll, 20));
+			$(window).on('resize', _.throttle(() => {
+				this.setState({
+					maxHeight: null,
+					cHeight: null
+				});
+			}, 20));
 		}
 	},
 
@@ -60,12 +66,16 @@ export default React.createClass({
 
 		let scrollerheight = this.state.maxHeight - mtop - 2;
 		let totalHeight = this.state.cHeight * this.props.children.length;
-		let itemsPerVp = Math.ceil(scrollerheight / this.state.cHeight);
+		let itemsPerVp = Math.ceil((scrollerheight / this.state.cHeight) * 1.5);
 
 		let firstElement = Math.floor(scroll / this.state.cHeight) - 1;
 
 		if (!scroll) {
 			firstElement = 0;
+		}
+
+		if ((firstElement + itemsPerVp) >= this.props.children.length) {
+			firstElement = this.props.children.length - itemsPerVp;
 		}
 
 		this.setState({
@@ -102,8 +112,6 @@ export default React.createClass({
 		let scrollerheight = this.state.maxHeight - mtop - 2;
 		let totalHeight = this.state.cHeight * this.props.children.length;
 		let itemsPerVp = Math.ceil((scrollerheight / this.state.cHeight) * 1.5);
-
-		console.log(this.state.currentFirstElement);
 
 		if (!this.state.cHeight) {
 			rendered = this.props.children[0];

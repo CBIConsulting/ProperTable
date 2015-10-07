@@ -63,11 +63,11 @@ var ProperTable =
 
 	var _configSettings2 = _interopRequireDefault(_configSettings);
 
-	var _formattersFormatters = __webpack_require__(18);
+	var _formattersFormatters = __webpack_require__(16);
 
 	var _formattersFormatters2 = _interopRequireDefault(_formattersFormatters);
 
-	__webpack_require__(20);
+	__webpack_require__(18);
 
 	exports["default"] = {
 		Settings: _configSettings2["default"],
@@ -129,10 +129,6 @@ var ProperTable =
 	var _tbody = __webpack_require__(15);
 
 	var _tbody2 = _interopRequireDefault(_tbody);
-
-	var _reactVirtualList = __webpack_require__(16);
-
-	var _reactVirtualList2 = _interopRequireDefault(_reactVirtualList);
 
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "table",
@@ -2895,7 +2891,8 @@ var ProperTable =
 		getDefaultProps: function getDefaultProps() {
 			return {
 				headerHeight: null,
-				fixedHeader: false
+				fixedHeader: false,
+				uniqueId: _underscore2["default"].uniqueId('tbody-')
 			};
 		},
 
@@ -2903,16 +2900,71 @@ var ProperTable =
 			return {
 				maxHeight: null,
 				cHeight: null,
-				currentFirstElement: 0
+				currentFirstElement: 0,
+				scrollBound: false
 			};
 		},
 
 		componentDidMount: function componentDidMount() {
 			this.computeHeights();
+			this.bindScroll();
 		},
 
 		componentDidUpdate: function componentDidUpdate() {
-			//this.computeHeights();
+			this.computeHeights();
+		},
+
+		bindScroll: function bindScroll() {
+			var _this = this;
+
+			if (!this.state.scrollBound) {
+				var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this));
+
+				$this.on('scroll', _underscore2["default"].throttle(this.onScroll, 20));
+				(0, _jquery2["default"])(window).on('resize', _underscore2["default"].trhottle(function () {
+					_this.setState({
+						maxHeight: null,
+						cHeight: null
+					});
+				}, 20));
+			}
+		},
+
+		onScroll: function onScroll(e) {
+			var $el = (0, _jquery2["default"])(e.currentTarget);
+			var position = $el.scrollTop();
+
+			this.setElementInPosition(position);
+		},
+
+		setElementInPosition: function setElementInPosition(scroll) {
+			var mtop = null;
+
+			if (!this.state.cHeight) {
+				return;
+			}
+
+			if (this.props.fixedHeader && this.props.headerHeight > 0) {
+				mtop = this.props.headerHeight - 2;
+			}
+
+			var scrollerheight = this.state.maxHeight - mtop - 2;
+			var totalHeight = this.state.cHeight * this.props.children.length;
+			var itemsPerVp = Math.ceil(scrollerheight / this.state.cHeight * 1.5);
+
+			var firstElement = Math.floor(scroll / this.state.cHeight) - 1;
+
+			if (!scroll) {
+				firstElement = 0;
+			}
+
+			if (firstElement + itemsPerVp >= this.props.children.length) {
+				firstElement = this.props.children.length - itemsPerVp;
+			}
+
+			this.setState({
+				currentFirstElement: firstElement
+			});
 		},
 
 		computeHeights: function computeHeights() {
@@ -2943,17 +2995,19 @@ var ProperTable =
 
 			var scrollerheight = this.state.maxHeight - mtop - 2;
 			var totalHeight = this.state.cHeight * this.props.children.length;
-			var extraHeight = totalHeight - scrollerheight;
-			var itemsPerVp = Math.ceil(scrollerheight / this.state.cHeight);
+			var itemsPerVp = Math.ceil(scrollerheight / this.state.cHeight * 1.5);
+
+			console.log(this.state.currentFirstElement);
 
 			if (!this.state.cHeight) {
 				rendered = this.props.children[0];
 			} else {
-				toRender = this.props.children.slice(this.state.currentFirstElement, itemsPerVp);
-				afterCount = totalHeight - (this.state.currentFirstElement + 1 * this.state.cHeight);
+				toRender = this.props.children.slice(this.state.currentFirstElement, this.state.currentFirstElement + itemsPerVp);
+				afterCount = this.props.children.length - (this.state.currentFirstElement + itemsPerVp);
+				beforeCount = this.state.currentFirstElement;
 
 				if (beforeCount) {
-					rendered.push(_reactAddons2["default"].createElement("div", { key: 'before-' + i, style: { height: this.state.cHeight * beforeCount } }));
+					rendered.push(_reactAddons2["default"].createElement("div", { key: 'before' + this.props.uniqueId, style: { height: this.state.cHeight * beforeCount } }));
 				}
 
 				_underscore2["default"].each(toRender, function (item) {
@@ -2961,11 +3015,9 @@ var ProperTable =
 				});
 
 				if (afterCount) {
-					rendered.push(_reactAddons2["default"].createElement("div", { key: 'after-' + j, style: { height: this.state.cHeight * afterCount } }));
+					rendered.push(_reactAddons2["default"].createElement("div", { key: 'after-' + this.props.uniqueId, style: { height: this.state.cHeight * afterCount } }));
 				}
 			}
-
-			console.log(this.state);
 
 			return _reactAddons2["default"].createElement(
 				"div",
@@ -2993,238 +3045,6 @@ var ProperTable =
 /* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var React = __webpack_require__(2);
-	var utils = __webpack_require__(17);
-
-	var VirtualList = React.createClass({displayName: "VirtualList",
-	    propTypes: {
-	        items: React.PropTypes.array.isRequired,
-	        itemHeight: React.PropTypes.number.isRequired,
-	        renderItem: React.PropTypes.func.isRequired,
-	        container: React.PropTypes.object.isRequired,
-	        tagName: React.PropTypes.string.isRequired,
-	        scrollDelay: React.PropTypes.number,
-	        itemBuffer: React.PropTypes.number
-	    },
-	    getDefaultProps: function() {
-	        return {
-	            container: typeof window !== 'undefined' ? window : undefined,
-	            tagName: 'div',
-	            scrollDelay: 0,
-	            itemBuffer: 0
-	        };
-	    },
-	    getVirtualState: function(props) {
-	        // default values
-	        var state = {
-	            items: [],
-	            bufferStart: 0,
-	            height: 0
-	        };
-	        
-	        // early return if nothing to render
-	        if (typeof props.container === 'undefined' || props.items.length === 0 || props.itemHeight <= 0 || !this.isMounted()) return state;
-	        
-	        var items = props.items;
-	        
-	        state.height = props.items.length * props.itemHeight;
-
-	        var container = props.container;
-
-	        var viewHeight = typeof container.innerHeight !== 'undefined' ? container.innerHeight : container.clientHeight;
-	        
-	        // no space to render
-	        if (viewHeight <= 0) return state;
-	        
-	        var list = this.getDOMNode();
-
-	        var offsetTop = utils.topDifference(list, container);
-
-	        var viewTop = typeof container.scrollY !== 'undefined' ? container.scrollY : container.scrollTop;
-
-	        var renderStats = VirtualList.getItems(viewTop, viewHeight, offsetTop, props.itemHeight, items.length, props.itemBuffer);
-	        
-	        // no items to render
-	        if (renderStats.itemsInView.length === 0) return state;
-
-	        state.items = items.slice(renderStats.firstItemIndex, renderStats.lastItemIndex + 1);
-	        state.bufferStart = renderStats.firstItemIndex * props.itemHeight;
-	        
-	        return state;
-	    },
-	    getInitialState: function() {
-	        return this.getVirtualState(this.props);
-	    },
-	    shouldComponentUpdate: function(nextProps, nextState) {
-	        if (this.state.bufferStart !== nextState.bufferStart) return true;
-
-	        if (this.state.height !== nextState.height) return true;
-	        
-	        var equal = utils.areArraysEqual(this.state.items, nextState.items);
-	        
-	        return !equal;
-	    },
-	    componentWillReceiveProps: function(nextProps) {
-	        var state = this.getVirtualState(nextProps);
-
-	        this.props.container.removeEventListener('scroll', this.onScrollDebounced);
-
-	        this.onScrollDebounced = utils.debounce(this.onScroll, nextProps.scrollDelay, false);
-
-	        nextProps.container.addEventListener('scroll', this.onScrollDebounced);
-	        
-	        this.setState(state);
-	    },
-	    componentWillMount: function() {
-	        this.onScrollDebounced = utils.debounce(this.onScroll, this.props.scrollDelay, false);
-	    },
-	    componentDidMount: function() {
-	        var state = this.getVirtualState(this.props);
-	        
-	        this.setState(state);
-	        
-	        this.props.container.addEventListener('scroll', this.onScrollDebounced);
-	    },
-	    componentWillUnmount: function() {
-	        this.props.container.removeEventListener('scroll', this.onScrollDebounced);
-	    },
-	    onScroll: function() {
-	        var state = this.getVirtualState(this.props);
-	        
-	        this.setState(state);
-	    },
-	    // in case you need to get the currently visible items
-	    visibleItems: function() {
-	        return this.state.items;
-	    },
-	    render: function() {
-	        return (
-	        React.createElement(this.props.tagName, React.__spread({},  this.props, {style: {boxSizing: 'border-box', height: this.state.height, paddingTop: this.state.bufferStart}}), 
-	            this.state.items.map(this.props.renderItem)
-	        )
-	        );
-	    }
-	});
-
-	VirtualList.getBox = function(view, list) {
-	    list.height = list.height || list.bottom - list.top;
-	    
-	    return {
-	        top: Math.max(0, Math.min(view.top - list.top)),
-	        bottom: Math.max(0, Math.min(list.height, view.bottom - list.top))
-	    };
-	};
-
-	VirtualList.getItems = function(viewTop, viewHeight, listTop, itemHeight, itemCount, itemBuffer) {
-	    if (itemCount === 0 || itemHeight === 0) return {
-	        itemsInView: 0
-	    };
-	    
-	    var listHeight = itemHeight * itemCount;
-	    
-	    var listBox = {
-	        top: listTop,
-	        height: listHeight,
-	        bottom: listTop + listHeight
-	    };
-	    
-	    var bufferHeight = itemBuffer * itemHeight;
-	    viewTop -= bufferHeight;
-	    viewHeight += bufferHeight * 2;
-	    
-	    var viewBox = {
-	        top: viewTop,
-	        bottom: viewTop + viewHeight
-	    };
-	    
-	    // list is below viewport
-	    if (viewBox.bottom < listBox.top) return {
-	        itemsInView: 0
-	    };
-	    
-	    // list is above viewport
-	    if (viewBox.top > listBox.bottom) return {
-	        itemsInView: 0
-	    };
-	    
-	    var listViewBox = VirtualList.getBox(viewBox, listBox);
-	    
-	    var firstItemIndex = Math.max(0,  Math.floor(listViewBox.top / itemHeight));
-	    var lastItemIndex = Math.ceil(listViewBox.bottom / itemHeight) - 1;
-	    
-	    var itemsInView = lastItemIndex - firstItemIndex + 1;
-
-	    var result = {
-	        firstItemIndex: firstItemIndex,
-	        lastItemIndex: lastItemIndex,
-	        itemsInView: itemsInView,
-	    };
-	    
-	    return result;
-	};
-
-	module.exports = VirtualList;
-
-/***/ },
-/* 17 */
-/***/ function(module, exports) {
-
-	function areArraysEqual(a, b) {
-	    if (!a || !b) return false;
-
-	    if (a.length != b.length) return false;
-	    
-	    for (var i = 0, length = a.length; i < length; i++) {
-	        if (a[i] != b[i]) return false;   
-	    }
-	    
-	    return true;
-	}
-
-	function topDifference(element, container) {
-	    return topFromWindow(element) - topFromWindow(container);
-	}
-
-	function topFromWindow(element) {
-	    if (!element || element === window) return 0;
-	    
-	    return element.offsetTop + topFromWindow(element.offsetParent);
-	}
-
-	function debounce(func, wait, immediate) {
-	    if (!wait) return func;
-	    
-		var timeout;
-		
-		return function() {
-			var context = this, args = arguments;
-			
-			var later = function() {
-				timeout = null;
-				
-				if (!immediate) func.apply(context, args);
-			};
-			
-			var callNow = immediate && !timeout;
-			
-			clearTimeout(timeout);
-			timeout = setTimeout(later, wait);
-			
-			if (callNow) func.apply(context, args);
-		};
-	}
-
-	module.exports = {
-	    areArraysEqual: areArraysEqual,
-	    topDifference: topDifference,
-	    topFromWindow: topFromWindow,
-	    debounce: debounce
-	};
-
-/***/ },
-/* 18 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
@@ -3235,7 +3055,7 @@ var ProperTable =
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-	var _moment = __webpack_require__(19);
+	var _moment = __webpack_require__(17);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
@@ -3270,13 +3090,13 @@ var ProperTable =
 	/* REACT HOT LOADER */ }).call(this); } finally { if (false) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/makeExportsHot.js"); if (makeExportsHot(module, require("react"))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot not apply hot update to " + "formatters.js" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
 
 /***/ },
-/* 19 */
+/* 17 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 20 */
+/* 18 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
