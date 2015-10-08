@@ -2921,7 +2921,7 @@ var ProperTable =
 				var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this));
 
 				$this.on('scroll', _underscore2["default"].throttle(this.onScroll, 20));
-				(0, _jquery2["default"])(window).on('resize', _underscore2["default"].trhottle(function () {
+				(0, _jquery2["default"])(window).on('resize', _underscore2["default"].throttle(function () {
 					_this.setState({
 						maxHeight: null,
 						cHeight: null
@@ -2996,8 +2996,6 @@ var ProperTable =
 			var scrollerheight = this.state.maxHeight - mtop - 2;
 			var totalHeight = this.state.cHeight * this.props.children.length;
 			var itemsPerVp = Math.ceil(scrollerheight / this.state.cHeight * 1.5);
-
-			console.log(this.state.currentFirstElement);
 
 			if (!this.state.cHeight) {
 				rendered = this.props.children[0];

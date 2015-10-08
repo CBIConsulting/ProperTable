@@ -22,8 +22,7 @@ module.exports = {
       {
         test: /\.scss$/,
         loader: ExtractTextPlugin.extract('css!sass?includePaths[]='+path.resolve(__dirname, "./node_modules/compass-mixins/lib"))
-      },
-      { test: /globalize/, loaders: ["babel-loader", 'imports?define=>false'] }
+      }
     ],
   },
   externals: {

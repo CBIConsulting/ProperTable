@@ -41,7 +41,8 @@ $(function () {
 
 	var data = [];
 
-	for (var i = 500; i >= 0; i--) {
+	console.time('datagen');
+	for (var i = 50; i >= 0; i--) {
 		data.push({
 			col1: 'added-' + i,
 			nested1: moment().add(Math.round(Math.random() * 10000) % 2000, 'days').format('YYYY-MM-DD HH:mm:ss'),
@@ -49,6 +50,7 @@ $(function () {
 			number: Math.round(Math.random() * 1000) % 20 + 1
 		});
 	};
+	console.timeEnd('datagen');
 
 	React.render(React.createElement(ProperTable.Table, { key: 'testtable', cols: cols, data: data, afterSelect: function (data) {
 			console.log('selected', data);

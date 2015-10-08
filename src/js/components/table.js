@@ -31,7 +31,9 @@ export default React.createClass({
 			rawdata: null,
 			sort: null,
 			allSelected: false,
-			headerHeight: null
+			headerHeight: null,
+			firstElement: 0,
+			itemsPerVP: 1
 		};
 	},
 
@@ -304,6 +306,22 @@ export default React.createClass({
 		}
 	}, 25),
 
+	sliceData(data) {
+		let firstElement = this.state.firstElement;
+		let itemsPerVP = this.state.itemsPerVP;
+
+		return data.slice(firstElement, firstElement + itemsPerVP);
+	},
+
+	handleScroll(firstElement, itemsPerVP) {
+		if (this.state.firstElement != firstElement || this.state.itemsPerVP != itemsPerVP) {
+			this.setState({
+				firstElement: firstElement,
+				itemsPerVP: itemsPerVP
+			});
+		}
+	},
+
 	render() {
 		let className = this.props.className;
 		let cols = [];
@@ -318,22 +336,29 @@ export default React.createClass({
 			hclass = ' fixedheader';
 		}
 
-		if (this.state.cols.length && this.state.data) {
+		if (this.state.cols.length && this.state.data && this.state.data.length) {
 			cols = this.buildCols(this.state.cols);
-			rows = this.buildDataRows(this.state.data);
-			content = <div ref="table" className={"propertable-table table-condensed table-bordered table-hover table-responsive propertable-table" + hclass}>
+			let data = this.sliceData(this.state.data);
+			rows = this.buildDataRows(data);
+
+			content = <div ref="table" className={"propertable-table table-condensed table-bordered table-hover table-responsive propertable-table " + hclass}>
 				<div className="thead-wrapper" ref="header">
 					<div className="propertable-container propertable-thead-container">
 						<div className="propertable-thead" ref="head">{cols}</div>
 					</div>
 				</div>
-				<Tbody fixedHeader={this.props.fixedHeader} headerHeight={this.state.headerHeight}>
+				<Tbody
+					totalItems={this.state.data.length}
+					fixedHeader={this.props.fixedHeader}
+					headerHeight={this.state.headerHeight}
+					onScroll={this.handleScroll}
+				>
 					{rows}
 				</Tbody>
 			</div>;
 		}
 
-		return <div id={this.props.uniqueId} className={"propertable propertable-base"+className}>
+		return <div id={this.props.uniqueId} className={"propertable propertable-base "+className}>
 			{content}
 		</div>
 	}

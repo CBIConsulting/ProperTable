@@ -10,7 +10,9 @@ export default React.createClass({
 		return {
 			headerHeight: null,
 			fixedHeader: false,
-			uniqueId: _.uniqueId('tbody-')
+			uniqueId: _.uniqueId('tbody-'),
+			onScroll: null,
+			totalItems: null
 		};
 	},
 
@@ -19,7 +21,11 @@ export default React.createClass({
 			maxHeight: null,
 			cHeight: null,
 			currentFirstElement: 0,
-			scrollBound: false
+			scrollBound: false,
+			mtop: null,
+			scrollerheight: null,
+			totalHeight: null,
+			itemsPerVp: null
 		}
 	},
 
@@ -29,7 +35,20 @@ export default React.createClass({
 	},
 
 	componentDidUpdate() {
-		this.computeHeights();
+		let mtop = 0;
+
+		if (this.props.fixedHeader && this.props.headerHeight > 0) {
+			mtop = this.props.headerHeight - 2;
+		}
+
+		if (mtop != this.state.mtop) {
+			this.setState({
+				mtop: mtop,
+				cHeight: null
+			});
+		} else {
+			this.computeHeights();
+		}
 	},
 
 	bindScroll() {
@@ -40,9 +59,13 @@ export default React.createClass({
 			$(window).on('resize', _.throttle(() => {
 				this.setState({
 					maxHeight: null,
-					cHeight: null
+					cHeight: null,
+					mtop: null,
+					scrollerheight: null,
+					totalHeight: null,
+					itemsPerVp: null
 				});
-			}, 20));
+			}, 50));
 		}
 	},
 
@@ -54,19 +77,10 @@ export default React.createClass({
 	},
 
 	setElementInPosition(scroll) {
-		let mtop = null;
-
-		if (!this.state.cHeight) {
-			return;
-		}
-
-		if (this.props.fixedHeader && this.props.headerHeight > 0) {
-			mtop = this.props.headerHeight - 2;
-		}
-
-		let scrollerheight = this.state.maxHeight - mtop - 2;
-		let totalHeight = this.state.cHeight * this.props.children.length;
-		let itemsPerVp = Math.ceil((scrollerheight / this.state.cHeight) * 1.5);
+		let mtop = this.state.mtop;
+		let scrollerheight = this.state.scrollerheight;
+		let totalHeight = this.state.totalHeight;
+		let itemsPerVp = this.state.itemsPerVp;
 
 		let firstElement = Math.floor(scroll / this.state.cHeight) - 1;
 
@@ -74,12 +88,20 @@ export default React.createClass({
 			firstElement = 0;
 		}
 
-		if ((firstElement + itemsPerVp) >= this.props.children.length) {
-			firstElement = this.props.children.length - itemsPerVp;
+		if ((firstElement + itemsPerVp) >= this.props.totalItems) {
+			firstElement = this.props.totalItems - itemsPerVp;
+		}
+
+		if (firstElement < 0) {
+			firstElement = 0;
 		}
 
 		this.setState({
 			currentFirstElement: firstElement
+		}, () => {
+			if (typeof this.props.onScroll == 'function') {
+				this.props.onScroll(firstElement, itemsPerVp);
+			}
 		});
 	},
 
@@ -87,11 +109,27 @@ export default React.createClass({
 		if (!this.state.cHeight) {
 			let $this = $(React.findDOMNode(this));
 			let $row = $this.find('.propertable-row').eq(0);
+			let sbound = this.state.scrollBound;
 
 			if ($row.height() != this.state.cHeight) {
+				let mtop = this.state.mtop;
+				let maxHeight = $this.parents('.propertable-base').eq(0).height();
+				let cHeight = $row.height();
+				let scrollerheight = maxHeight - mtop - 2;
+				let totalHeight = cHeight * this.props.totalItems;
+				let itemsPerVp = Math.ceil((scrollerheight / cHeight) * 1.5);
+
 				this.setState({
-					maxHeight: $this.parents('.propertable-base').eq(0).height(),
-					cHeight: $row.height()
+					mtop: mtop,
+					maxHeight: maxHeight,
+					cHeight: cHeight,
+					scrollerheight: scrollerheight,
+					totalHeight: totalHeight,
+					itemsPerVp: itemsPerVp
+				}, () => {
+					if (!sbound) {
+						this.setElementInPosition(0);
+					}
 				});
 			}
 		}
@@ -100,25 +138,28 @@ export default React.createClass({
 	render() {
 		let className = this.props.className;
 		let toRender = this.props.children;
-		let mtop = null;
 		let afterCount = 0;
 		let beforeCount = 0;
 		let rendered = [];
-
-		if (this.props.fixedHeader && this.props.headerHeight > 0) {
-			mtop = this.props.headerHeight - 2;
-		}
-
-		let scrollerheight = this.state.maxHeight - mtop - 2;
-		let totalHeight = this.state.cHeight * this.props.children.length;
-		let itemsPerVp = Math.ceil((scrollerheight / this.state.cHeight) * 1.5);
+		let mtop = this.state.mtop;
+		let scrollerheight = this.state.scrollerheight;
+		let totalHeight = this.state.totalHeight;
+		let itemsPerVp = this.state.itemsPerVp;
 
 		if (!this.state.cHeight) {
-			rendered = this.props.children[0];
+			rendered = _.first(this.props.children);
 		} else {
-			toRender = this.props.children.slice(this.state.currentFirstElement, this.state.currentFirstElement + itemsPerVp);
-			afterCount = this.props.children.length - (this.state.currentFirstElement + itemsPerVp);
+			toRender = this.props.children;
+			afterCount = this.props.totalItems - (this.state.currentFirstElement + itemsPerVp);
 			beforeCount = this.state.currentFirstElement;
+
+			if (afterCount < 0) {
+				afterCount = 0;
+			}
+
+			if (beforeCount < 0) {
+				beforeCount = 0;
+			}
 
 			if (beforeCount) {
 				rendered.push(<div key={'before'+this.props.uniqueId} style={{height: this.state.cHeight * beforeCount}} />);

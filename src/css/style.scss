@@ -25,6 +25,8 @@ $selectWidth: 150px;
 			position: relative;
 			display: block;
 			overflow: auto;
+			overflow-y: auto;
+			overflow-x: hidden;
 		}
 
 		.propertable-container {
@@ -52,6 +54,20 @@ $selectWidth: 150px;
 
 			.propertable-thead {
 				display: table-header-group;
+			}
+
+			.propertable-tbody {
+				.propertable-row {
+					background: #fff;
+
+					&:hover {
+						background: #C7EBFF;
+					}
+
+					&.selected {
+						background: #f5f5f5;
+					}
+				}
 			}
 		}
 
