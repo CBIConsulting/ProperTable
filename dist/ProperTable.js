@@ -154,7 +154,9 @@ var ProperTable =
 				rawdata: null,
 				sort: null,
 				allSelected: false,
-				headerHeight: null
+				headerHeight: null,
+				firstElement: 0,
+				itemsPerVP: 1
 			};
 		},
 
@@ -467,6 +469,22 @@ var ProperTable =
 			}
 		}, 25),
 
+		sliceData: function sliceData(data) {
+			var firstElement = this.state.firstElement;
+			var itemsPerVP = this.state.itemsPerVP;
+
+			return data.slice(firstElement, firstElement + itemsPerVP);
+		},
+
+		handleScroll: function handleScroll(firstElement, itemsPerVP) {
+			if (this.state.firstElement != firstElement || this.state.itemsPerVP != itemsPerVP) {
+				this.setState({
+					firstElement: firstElement,
+					itemsPerVP: itemsPerVP
+				});
+			}
+		},
+
 		render: function render() {
 			var className = this.props.className;
 			var cols = [];
@@ -487,12 +505,14 @@ var ProperTable =
 				hclass = ' fixedheader';
 			}
 
-			if (this.state.cols.length && this.state.data) {
+			if (this.state.cols.length && this.state.data && this.state.data.length) {
 				cols = this.buildCols(this.state.cols);
-				rows = this.buildDataRows(this.state.data);
+				var data = this.sliceData(this.state.data);
+				rows = this.buildDataRows(data);
+
 				content = _reactAddons2["default"].createElement(
 					"div",
-					{ ref: "table", className: "propertable-table table-condensed table-bordered table-hover table-responsive propertable-table" + hclass },
+					{ ref: "table", className: "propertable-table table-condensed table-bordered table-hover table-responsive propertable-table " + hclass },
 					_reactAddons2["default"].createElement(
 						"div",
 						{ className: "thead-wrapper", ref: "header" },
@@ -508,7 +528,12 @@ var ProperTable =
 					),
 					_reactAddons2["default"].createElement(
 						_tbody2["default"],
-						{ fixedHeader: this.props.fixedHeader, headerHeight: this.state.headerHeight },
+						{
+							totalItems: this.state.data.length,
+							fixedHeader: this.props.fixedHeader,
+							headerHeight: this.state.headerHeight,
+							onScroll: this.handleScroll
+						},
 						rows
 					)
 				);
@@ -516,7 +541,7 @@ var ProperTable =
 
 			return _reactAddons2["default"].createElement(
 				"div",
-				{ id: this.props.uniqueId, className: "propertable propertable-base" + className },
+				{ id: this.props.uniqueId, className: "propertable propertable-base " + className },
 				content
 			);
 		}
@@ -2892,7 +2917,9 @@ var ProperTable =
 			return {
 				headerHeight: null,
 				fixedHeader: false,
-				uniqueId: _underscore2["default"].uniqueId('tbody-')
+				uniqueId: _underscore2["default"].uniqueId('tbody-'),
+				onScroll: null,
+				totalItems: null
 			};
 		},
 
@@ -2901,7 +2928,11 @@ var ProperTable =
 				maxHeight: null,
 				cHeight: null,
 				currentFirstElement: 0,
-				scrollBound: false
+				scrollBound: false,
+				mtop: null,
+				scrollerheight: null,
+				totalHeight: null,
+				itemsPerVp: null
 			};
 		},
 
@@ -2911,7 +2942,20 @@ var ProperTable =
 		},
 
 		componentDidUpdate: function componentDidUpdate() {
-			this.computeHeights();
+			var mtop = 0;
+
+			if (this.props.fixedHeader && this.props.headerHeight > 0) {
+				mtop = this.props.headerHeight - 2;
+			}
+
+			if (mtop != this.state.mtop) {
+				this.setState({
+					mtop: mtop,
+					cHeight: null
+				});
+			} else {
+				this.computeHeights();
+			}
 		},
 
 		bindScroll: function bindScroll() {
@@ -2924,9 +2968,13 @@ var ProperTable =
 				(0, _jquery2["default"])(window).on('resize', _underscore2["default"].throttle(function () {
 					_this.setState({
 						maxHeight: null,
-						cHeight: null
+						cHeight: null,
+						mtop: null,
+						scrollerheight: null,
+						totalHeight: null,
+						itemsPerVp: null
 					});
-				}, 20));
+				}, 50));
 			}
 		},
 
@@ -2938,19 +2986,12 @@ var ProperTable =
 		},
 
 		setElementInPosition: function setElementInPosition(scroll) {
-			var mtop = null;
+			var _this2 = this;
 
-			if (!this.state.cHeight) {
-				return;
-			}
-
-			if (this.props.fixedHeader && this.props.headerHeight > 0) {
-				mtop = this.props.headerHeight - 2;
-			}
-
-			var scrollerheight = this.state.maxHeight - mtop - 2;
-			var totalHeight = this.state.cHeight * this.props.children.length;
-			var itemsPerVp = Math.ceil(scrollerheight / this.state.cHeight * 1.5);
+			var mtop = this.state.mtop;
+			var scrollerheight = this.state.scrollerheight;
+			var totalHeight = this.state.totalHeight;
+			var itemsPerVp = this.state.itemsPerVp;
 
 			var firstElement = Math.floor(scroll / this.state.cHeight) - 1;
 
@@ -2958,51 +2999,82 @@ var ProperTable =
 				firstElement = 0;
 			}
 
-			if (firstElement + itemsPerVp >= this.props.children.length) {
-				firstElement = this.props.children.length - itemsPerVp;
+			if (firstElement + itemsPerVp >= this.props.totalItems) {
+				firstElement = this.props.totalItems - itemsPerVp;
+			}
+
+			if (firstElement < 0) {
+				firstElement = 0;
 			}
 
 			this.setState({
 				currentFirstElement: firstElement
+			}, function () {
+				if (typeof _this2.props.onScroll == 'function') {
+					_this2.props.onScroll(firstElement, itemsPerVp);
+				}
 			});
 		},
 
 		computeHeights: function computeHeights() {
-			if (!this.state.cHeight) {
-				var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this));
-				var $row = $this.find('.propertable-row').eq(0);
+			var _this3 = this;
 
-				if ($row.height() != this.state.cHeight) {
-					this.setState({
-						maxHeight: $this.parents('.propertable-base').eq(0).height(),
-						cHeight: $row.height()
-					});
-				}
+			if (!this.state.cHeight) {
+				(function () {
+					var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(_this3));
+					var $row = $this.find('.propertable-row').eq(0);
+					var sbound = _this3.state.scrollBound;
+
+					if ($row.height() != _this3.state.cHeight) {
+						var mtop = _this3.state.mtop;
+						var maxHeight = $this.parents('.propertable-base').eq(0).height();
+						var cHeight = $row.height();
+						var scrollerheight = maxHeight - mtop - 2;
+						var totalHeight = cHeight * _this3.props.totalItems;
+						var itemsPerVp = Math.ceil(scrollerheight / cHeight * 1.5);
+
+						_this3.setState({
+							mtop: mtop,
+							maxHeight: maxHeight,
+							cHeight: cHeight,
+							scrollerheight: scrollerheight,
+							totalHeight: totalHeight,
+							itemsPerVp: itemsPerVp
+						}, function () {
+							if (!sbound) {
+								_this3.setElementInPosition(0);
+							}
+						});
+					}
+				})();
 			}
 		},
 
 		render: function render() {
 			var className = this.props.className;
 			var toRender = this.props.children;
-			var mtop = null;
 			var afterCount = 0;
 			var beforeCount = 0;
 			var rendered = [];
-
-			if (this.props.fixedHeader && this.props.headerHeight > 0) {
-				mtop = this.props.headerHeight - 2;
-			}
-
-			var scrollerheight = this.state.maxHeight - mtop - 2;
-			var totalHeight = this.state.cHeight * this.props.children.length;
-			var itemsPerVp = Math.ceil(scrollerheight / this.state.cHeight * 1.5);
+			var mtop = this.state.mtop;
+			var scrollerheight = this.state.scrollerheight;
+			var totalHeight = this.state.totalHeight;
+			var itemsPerVp = this.state.itemsPerVp;
 
 			if (!this.state.cHeight) {
-				rendered = this.props.children[0];
+				rendered = _underscore2["default"].first(this.props.children);
 			} else {
-				toRender = this.props.children.slice(this.state.currentFirstElement, this.state.currentFirstElement + itemsPerVp);
-				afterCount = this.props.children.length - (this.state.currentFirstElement + itemsPerVp);
+				toRender = this.props.children;
+				afterCount = this.props.totalItems - (this.state.currentFirstElement + itemsPerVp);
 				beforeCount = this.state.currentFirstElement;
+
+				if (afterCount < 0) {
+					afterCount = 0;
+				}
+
+				if (beforeCount < 0) {
+					beforeCount = 0;
+				}
 
 				if (beforeCount) {
 					rendered.push(_reactAddons2["default"].createElement("div", { key: 'before' + this.props.uniqueId, style: { height: this.state.cHeight * beforeCount } }));
