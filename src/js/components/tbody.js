@@ -12,7 +12,8 @@ export default React.createClass({
 			fixedHeader: false,
 			uniqueId: _.uniqueId('tbody-'),
 			onScroll: null,
-			totalItems: null
+			totalItems: null,
+			onWidth: null
 		};
 	},
 
@@ -55,7 +56,7 @@ export default React.createClass({
 		if (!this.state.scrollBound) {
 			let $this = $(React.findDOMNode(this));
 
-			$this.on('scroll', _.throttle(this.onScroll, 20));
+			$this.on('scroll', _.throttle(this.onScroll, 250));
 			$(window).on('resize', _.throttle(() => {
 				this.setState({
 					maxHeight: null,
@@ -109,6 +110,8 @@ export default React.createClass({
 		if (!this.state.cHeight) {
 			let $this = $(React.findDOMNode(this));
 			let $row = $this.find('.propertable-row').eq(0);
+			let $cells = $row.children()
+			let widths = [];
 			let sbound = this.state.scrollBound;
 
 			if ($row.height() != this.state.cHeight) {
@@ -117,7 +120,12 @@ export default React.createClass({
 				let cHeight = $row.height();
 				let scrollerheight = maxHeight - mtop - 2;
 				let totalHeight = cHeight * this.props.totalItems;
-				let itemsPerVp = Math.ceil((scrollerheight / cHeight) * 1.5);
+				let itemsPerVp = Math.ceil((scrollerheight / cHeight) * 2);
+
+				$cells.each(function() {
+					let $cell = $(this);
+					widths.push($cell.width());
+				});
 
 				this.setState({
 					mtop: mtop,
@@ -131,6 +139,10 @@ export default React.createClass({
 						this.setElementInPosition(0);
 					}
 				});
+
+				if (typeof this.props.onWidth === 'function') {
+					this.props.onWidth(widths);
+				}
 			}
 		}
 	},

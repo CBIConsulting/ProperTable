@@ -1,6 +1,6 @@
 @import "compass";
 
-$selectWidth: 150px;
+$selectWidth: 71px;
 
 .propertable {
 	position: absolute;
@@ -16,6 +16,7 @@ $selectWidth: 150px;
 		overflow: hidden;
 
 		.thead-wrapper {
+			background: #f3f3f3;
 			position: relative;
 			display: block;
 			width: 100%;
@@ -25,8 +26,6 @@ $selectWidth: 150px;
 			position: relative;
 			display: block;
 			overflow: auto;
-			overflow-y: auto;
-			overflow-x: hidden;
 		}
 
 		.propertable-container {
@@ -45,10 +44,36 @@ $selectWidth: 150px;
 
 			.propertable-cell, .propertable-hcell {
 				display: table-cell;
-				border: 1px solid #ccc;
+				box-sizing: border-box;
+				overflow: hidden;
+				border-bottom: 1px solid #ccc;
+				border-right: 1px solid #ccc;
+
+				.subheader {
+					border-top: 1px solid #ccc;
+
+					.propertable-hcell {
+						border-bottom: none;
+
+						&:last-child {
+							border-right: none;
+						}
+					}
+				}
 
 				>.cell-inner {
+					width: 100%;
+					margin: 0;
 					padding: 5px;
+					@include ellipsis();
+				}
+
+				&:first-child {
+					border-left: none;
+				}
+
+				&:last-child {
+					border-right: none;
 				}
 			}
 
@@ -73,16 +98,30 @@ $selectWidth: 150px;
 
 		&.fixedheader {
 			.thead-wrapper {
-				position: fixed;
+				position: absolute;
 				top: 0;
+				z-index: 1;
 				width: 100%;
+
+				.propertable-thead-container {
+					border-right: 1px solid #ccc;
+				}
+			}
+
+			.tbody-scroller {
+				position: relative;
+				z-index: 0;
+				overflow-y: scroll;
+
+				.propertable-tbody-container {
+					border-right: 1px solid #ccc;
+				}
 			}
 		}
 	}
 }
 
 .propertable-hcell {
-	background: #f3f3f3;
 	position: relative;
 	overflow: hidden;
 
@@ -109,5 +148,9 @@ $selectWidth: 150px;
 	&.select-cell {
 		width: $selectWidth;
 		text-align: center;
+
+		input {
+			margin: 0;
+		}
 	}
 }

@@ -130,6 +130,47 @@ var ProperTable =
 
 	var _tbody2 = _interopRequireDefault(_tbody);
 
+	function getLastLevelCols(cols) {
+		var result = [];
+
+		_underscore2["default"].each(cols, function (col) {
+			if (col.children && col.children.length) {
+				result = _jquery2["default"].merge(result, getLastLevelCols(col.children));
+			} else {
+				result.push(col);
+			}
+		});
+
+		return result;
+	}
+
+	function getScrollbarWidth() {
+		var outer = document.createElement("div");
+		outer.style.visibility = "hidden";
+		outer.style.width = "100px";
+		outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+
+		document.body.appendChild(outer);
+
+		var widthNoScroll = outer.offsetWidth;
+		// force scrollbars
+		outer.style.overflow = "scroll";
+
+		// add innerdiv
+		var inner = document.createElement("div");
+		inner.style.width = "100%";
+		outer.appendChild(inner);
+
+		var widthWithScroll = inner.offsetWidth;
+
+		// remove divs
+		outer.parentNode.removeChild(outer);
+
+		return widthNoScroll - widthWithScroll;
+	}
+
+	var scrollbarWidth = null;
+
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "table",
 
@@ -161,6 +202,7 @@ var ProperTable =
 		},
 
 		componentDidMount: function componentDidMount() {
+			scrollbarWidth = getScrollbarWidth();
 			this.initData();
 			this.computeHeaderHeight();
 		},
@@ -321,9 +363,15 @@ var ProperTable =
 					);
 				}
 
+				var width = item.width || null;
+
+				/*if (width) {
+	   	width -= 4;
+	   }*/
+
 				rendered = _reactAddons2["default"].createElement(
 					_hcell2["default"],
-					_extends({ nested: nested, onSort: _this.handleSort, key: 'header' + item.name }, item),
+					_extends({ width: width, nested: nested, onSort: _this.handleSort, key: 'header' + item.name }, item),
 					content
 				);
 
@@ -373,9 +421,15 @@ var ProperTable =
 						value = col.formatter(value, col, rowdata);
 					}
 
+					var width = col.width || null;
+
+					/*if (width) {
+	    	width += 2;
+	    }*/
+
 					return _reactAddons2["default"].createElement(
 						_cell2["default"],
-						{ key: 'ccel-' + curCell++, className: col.className || '', col: col },
+						{ width: width, key: 'ccel-' + curCell++, className: col.className || '', col: col },
 						value
 					);
 				});
@@ -389,39 +443,6 @@ var ProperTable =
 			});
 
 			return result;
-		},
-
-		renderRow: function renderRow(rowdata) {
-			var _this4 = this;
-
-			//let rowdata = this.state.data[index];
-			var defaults = {
-				visible: true,
-				sortable: true
-			},
-			    curCell = 1;
-
-			var cells = _underscore2["default"].map(this.fieldsOrder, function (field) {
-				var col = _this4.columnIndex[field];
-				var value = rowdata[field];
-
-				if (typeof col.formatter == 'function') {
-					value = col.formatter(value, col, rowdata);
-				}
-
-				return _reactAddons2["default"].createElement(
-					_cell2["default"],
-					{ key: 'ccel-' + curCell++, className: col.className || '', col: col },
-					value
-				);
-			});
-			var nextRow = rowdata._properId;
-
-			return _reactAddons2["default"].createElement(
-				_row2["default"],
-				{ rowHeight: this.props.rowHeight, data: rowdata, selected: rowdata._selected, selectable: this.props.selectable, key: 'crow-' + rowdata._properId, uniqueId: 'propertable-row-' + rowdata._properId, onSelect: this.handleSelect },
-				cells
-			);
 		},
 
 		handleSelect: function handleSelect(row, status) {
@@ -485,6 +506,23 @@ var ProperTable =
 			}
 		},
 
+		updateHeaderWidths: _underscore2["default"].debounce(function (widths) {
+			var newcols = _jquery2["default"].extend(true, [], this.state.cols);
+			var fcols = getLastLevelCols(newcols);
+
+			if (this.props.selectable) {
+				widths = widths.slice(1);
+			}
+
+			_underscore2["default"].each(fcols, function (col, i) {
+				col.width = widths[i];
+			});
+
+			this.setState({
+				cols: newcols
+			});
+		}, 200),
+
 		render: function render() {
 			var className = this.props.className;
 			var cols = [];
@@ -499,6 +537,7 @@ var ProperTable =
 					_configSettings2["default"].msg('emptymsg')
 				)
 			);
+			var hpadding = null;
 			var hclass = '';
 
 			if (this.props.fixedHeader) {
@@ -510,12 +549,18 @@ var ProperTable =
 				var data = this.sliceData(this.state.data);
 				rows = this.buildDataRows(data);
 
+				if (this.props.fixedHeader) {
+					hpadding = scrollbarWidth;
+				}
+
 				content = _reactAddons2["default"].createElement(
 					"div",
 					{ ref: "table", className: "propertable-table table-condensed table-bordered table-hover table-responsive propertable-table " + hclass },
 					_reactAddons2["default"].createElement(
 						"div",
-						{ className: "thead-wrapper", ref: "header" },
+						{ className: "thead-wrapper", ref: "header", style: {
+								paddingRight: hpadding
+							} },
 						_reactAddons2["default"].createElement(
 							"div",
 							{ className: "propertable-container propertable-thead-container" },
@@ -532,7 +577,8 @@ var ProperTable =
 							totalItems: this.state.data.length,
 							fixedHeader: this.props.fixedHeader,
 							headerHeight: this.state.headerHeight,
-							onScroll: this.handleScroll
+							onScroll: this.handleScroll,
+							onWidth: this.updateHeaderWidths
 						},
 						rows
 					)
@@ -2595,7 +2641,8 @@ var ProperTable =
 				sortable: true,
 				sorted: false,
 				onSort: null,
-				nested: null
+				nested: null,
+				width: null
 			};
 		},
 
@@ -2663,7 +2710,9 @@ var ProperTable =
 
 			return _reactAddons2["default"].createElement(
 				"div",
-				_extends({ id: this.props.uniqueId, className: "propertable-hcell " + className }, spans),
+				_extends({ id: this.props.uniqueId, className: "propertable-hcell " + className, style: {
+						width: this.props.width
+					} }, spans),
 				_reactAddons2["default"].createElement(
 					"div",
 					{ className: "cell-inner" },
@@ -2810,7 +2859,11 @@ var ProperTable =
 			return _reactAddons2["default"].createElement(
 				"div",
 				_extends({ id: this.props.uniqueId, className: "propertable-hcell selectheader " + className }, spans),
-				tools
+				_reactAddons2["default"].createElement(
+					"div",
+					{ className: "cell-inner" },
+					tools
+				)
 			);
 		}
 	});
@@ -2856,7 +2909,8 @@ var ProperTable =
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
-				uniqueId: _underscore2["default"].uniqueId('propertable-hcell-')
+				uniqueId: _underscore2["default"].uniqueId('propertable-hcell-'),
+				width: null
 			};
 		},
 
@@ -2868,7 +2922,9 @@ var ProperTable =
 				{ id: this.props.uniqueId, className: "propertable-cell " + className },
 				_reactAddons2["default"].createElement(
 					"div",
-					{ className: "cell-inner" },
+					{ className: "cell-inner", style: {
+							width: this.props.width
+						} },
 					this.props.children
 				)
 			);
@@ -2919,7 +2975,8 @@ var ProperTable =
 				fixedHeader: false,
 				uniqueId: _underscore2["default"].uniqueId('tbody-'),
 				onScroll: null,
-				totalItems: null
+				totalItems: null,
+				onWidth: null
 			};
 		},
 
@@ -2964,7 +3021,7 @@ var ProperTable =
 			if (!this.state.scrollBound) {
 				var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this));
 
-				$this.on('scroll', _underscore2["default"].throttle(this.onScroll, 20));
+				$this.on('scroll', _underscore2["default"].throttle(this.onScroll, 250));
 				(0, _jquery2["default"])(window).on('resize', _underscore2["default"].throttle(function () {
 					_this.setState({
 						maxHeight: null,
@@ -3023,6 +3080,8 @@ var ProperTable =
 				(function () {
 					var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(_this3));
 					var $row = $this.find('.propertable-row').eq(0);
+					var $cells = $row.children();
+					var widths = [];
 					var sbound = _this3.state.scrollBound;
 
 					if ($row.height() != _this3.state.cHeight) {
@@ -3031,7 +3090,12 @@ var ProperTable =
 						var cHeight = $row.height();
 						var scrollerheight = maxHeight - mtop - 2;
 						var totalHeight = cHeight * _this3.props.totalItems;
-						var itemsPerVp = Math.ceil(scrollerheight / cHeight * 1.5);
+						var itemsPerVp = Math.ceil(scrollerheight / cHeight * 2);
+
+						$cells.each(function () {
+							var $cell = (0, _jquery2["default"])(this);
+							widths.push($cell.width());
+						});
 
 						_this3.setState({
 							mtop: mtop,
@@ -3045,6 +3109,10 @@ var ProperTable =
 								_this3.setElementInPosition(0);
 							}
 						});
+
+						if (typeof _this3.props.onWidth === 'function') {
+							_this3.props.onWidth(widths);
+						}
 					}
 				})();
 			}

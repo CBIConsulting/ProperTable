@@ -9,7 +9,8 @@ export default React.createClass({
 	getDefaultProps() {
 		return {
 			className: '',
-			uniqueId: _.uniqueId('propertable-hcell-')
+			uniqueId: _.uniqueId('propertable-hcell-'),
+			width: null
 		}
 	},
 
@@ -17,7 +18,9 @@ export default React.createClass({
 		let className = this.props.className;
 
 		return <div id={this.props.uniqueId} className={"propertable-cell "+className}>
-			<div className="cell-inner">
+			<div className="cell-inner"  style={{
+			width: this.props.width
+		}}>
 				{this.props.children}
 			</div>
 		</div>;

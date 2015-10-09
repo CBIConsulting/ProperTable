@@ -15,7 +15,8 @@ export default React.createClass({
 			sortable: true,
 			sorted: false,
 			onSort: null,
-			nested: null
+			nested: null,
+			width: null
 		}
 	},
 
@@ -75,7 +76,9 @@ export default React.createClass({
 			className += ' has-tools'
 		}
 
-		return <div id={this.props.uniqueId} className={"propertable-hcell "+className} {...spans}>
+		return <div id={this.props.uniqueId} className={"propertable-hcell "+className} style={{
+			width: this.props.width
+		}} {...spans}>
 			<div className="cell-inner">
 				<div className="hlabel">
 					{this.props.children}

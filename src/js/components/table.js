@@ -8,6 +8,47 @@ import SelectHeader from "./selectheader";
 import Cell from "./cell";
 import Tbody from "./tbody";
 
+function getLastLevelCols(cols) {
+	let result = [];
+
+	_.each(cols, (col) => {
+		if (col.children && col.children.length) {
+			result = $.merge(result, getLastLevelCols(col.children));
+		} else {
+			result.push(col);
+		}
+	});
+
+	return result;
+}
+
+function getScrollbarWidth() {
+    var outer = document.createElement("div");
+    outer.style.visibility = "hidden";
+    outer.style.width = "100px";
+    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+
+    document.body.appendChild(outer);
+
+    var widthNoScroll = outer.offsetWidth;
+    // force scrollbars
+    outer.style.overflow = "scroll";
+
+    // add innerdiv
+    var inner = document.createElement("div");
+    inner.style.width = "100%";
+    outer.appendChild(inner);
+
+    var widthWithScroll = inner.offsetWidth;
+
+    // remove divs
+    outer.parentNode.removeChild(outer);
+
+    return widthNoScroll - widthWithScroll;
+}
+
+let scrollbarWidth = null;
+
 export default React.createClass({
 
 	getDefaultProps() {
@@ -38,6 +79,7 @@ export default React.createClass({
 	},
 
 	componentDidMount() {
+		scrollbarWidth = getScrollbarWidth();
 		this.initData();
 		this.computeHeaderHeight();
 	},
@@ -190,7 +232,13 @@ export default React.createClass({
 				</div>);
 			}
 
-			rendered = <HCell nested={nested} onSort={this.handleSort} key={'header' + item.name} {...item}>{content}</HCell>;
+			let width = item.width || null;
+
+			/*if (width) {
+				width -= 4;
+			}*/
+
+			rendered = <HCell width={width} nested={nested} onSort={this.handleSort} key={'header' + item.name} {...item}>{content}</HCell>;
 
 			result.push(rendered);
 		});
@@ -227,7 +275,13 @@ export default React.createClass({
 					value = col.formatter(value, col, rowdata);
 				}
 
-				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
+				let width = col.width || null;
+
+				/*if (width) {
+					width += 2;
+				}*/
+
+				return <Cell width={width} key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
 			});
 			let nextRow = rowdata._properId;
 
@@ -237,30 +291,6 @@ export default React.createClass({
 		});
 
 		return result;
-	},
-
-	renderRow(rowdata) {
-		//let rowdata = this.state.data[index];
-		let defaults = {
-			visible: true,
-			sortable: true
-		}, curCell = 1;
-
-		let cells = _.map(this.fieldsOrder, (field) => {
-			let col = this.columnIndex[field];
-			let value = rowdata[field];
-
-			if (typeof col.formatter == 'function') {
-				value = col.formatter(value, col, rowdata);
-			}
-
-			return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
-		});
-		let nextRow = rowdata._properId;
-
-		return (<Row rowHeight={this.props.rowHeight} data={rowdata} selected={rowdata._selected} selectable={this.props.selectable} key={'crow-'+rowdata._properId} uniqueId={'propertable-row-' + rowdata._properId} onSelect={this.handleSelect}>
-			{cells}
-		</Row>);
 	},
 
 	handleSelect(row, status) {
@@ -322,6 +352,23 @@ export default React.createClass({
 		}
 	},
 
+	updateHeaderWidths: _.debounce(function(widths) {
+		let newcols = $.extend(true, [], this.state.cols);
+		let fcols = getLastLevelCols(newcols);
+
+		if (this.props.selectable) {
+			widths = widths.slice(1);
+		}
+
+		_.each(fcols, (col, i) => {
+			col.width = widths[i];
+		});
+
+		this.setState({
+			cols: newcols
+		});
+	}, 200),
+
 	render() {
 		let className = this.props.className;
 		let cols = [];
@@ -330,6 +377,7 @@ export default React.createClass({
 		let content = <div className="empty-msg">
 			<p>{Settings.msg('emptymsg')}</p>
 		</div>;
+		let hpadding = null;
 		let hclass = '';
 
 		if (this.props.fixedHeader) {
@@ -341,8 +389,14 @@ export default React.createClass({
 			let data = this.sliceData(this.state.data);
 			rows = this.buildDataRows(data);
 
+			if (this.props.fixedHeader) {
+				hpadding = scrollbarWidth;
+			}
+
 			content = <div ref="table" className={"propertable-table table-condensed table-bordered table-hover table-responsive propertable-table " + hclass}>
-				<div className="thead-wrapper" ref="header">
+				<div className="thead-wrapper" ref="header" style={{
+					paddingRight: hpadding
+				}}>
 					<div className="propertable-container propertable-thead-container">
 						<div className="propertable-thead" ref="head">{cols}</div>
 					</div>
@@ -352,6 +406,7 @@ export default React.createClass({
 					fixedHeader={this.props.fixedHeader}
 					headerHeight={this.state.headerHeight}
 					onScroll={this.handleScroll}
+					onWidth={this.updateHeaderWidths}
 				>
 					{rows}
 				</Tbody>
