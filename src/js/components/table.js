@@ -247,16 +247,25 @@ export default React.createClass({
 	},
 
 	selectAll() {
-		let data = $.extend(true, {}, this.state.data);
+		let data = _.values($.extend(true, {}, this.state.data));
 		let selectedState = !this.state.allSelected;
 
-		data = _.each(data, (item) => {
-			this.handleSelect(item, selectedState);
+		_.each(data, (item) => {
+			if (item._selected != selectedState) {
+				item._selected = selectedState;
+			}
 		});
 
 		this.setState({
+			data: data,
 			allSelected: selectedState
 		});
+
+		this.callAfterSelect();
+
+		if (this.state.sort && '_selected' == this.state.sort.field) {
+			this.handleSort(this.state.sort.direction, this.state.sort);
+		}
 	},
 
 	buildDataRows(data) {
@@ -299,7 +308,7 @@ export default React.createClass({
 		let newData = null;
 
 		if (curRow._selected != status) {
-			newData = _.map($.extend(true, {}, this.state.data), (crow) => {
+			newData = _.map(_.values($.extend(true, {}, this.state.data)), (crow) => {
 				if (crow._properId == id) {
 					crow._selected = status;
 				}
@@ -393,7 +402,7 @@ export default React.createClass({
 				hpadding = scrollbarWidth;
 			}
 
-			content = <div ref="table" className={"propertable-table table-condensed table-bordered table-hover table-responsive propertable-table " + hclass}>
+			content = <div ref="table" className={"propertable-table " + hclass}>
 				<div className="thead-wrapper" ref="header" style={{
 					paddingRight: hpadding
 				}}>

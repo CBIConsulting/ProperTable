@@ -56,7 +56,7 @@ export default React.createClass({
 		if (!this.state.scrollBound) {
 			let $this = $(React.findDOMNode(this));
 
-			$this.on('scroll', _.throttle(this.onScroll, 250));
+			$this.on('scroll', _.throttle(this.onScroll, 55));
 			$(window).on('resize', _.throttle(() => {
 				this.setState({
 					maxHeight: null,

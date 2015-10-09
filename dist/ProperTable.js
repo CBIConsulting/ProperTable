@@ -386,22 +386,29 @@ var ProperTable =
 		},
 
 		selectAll: function selectAll() {
-			var _this2 = this;
-
-			var data = _jquery2["default"].extend(true, {}, this.state.data);
+			var data = _underscore2["default"].values(_jquery2["default"].extend(true, {}, this.state.data));
 			var selectedState = !this.state.allSelected;
 
-			data = _underscore2["default"].each(data, function (item) {
-				_this2.handleSelect(item, selectedState);
+			_underscore2["default"].each(data, function (item) {
+				if (item._selected != selectedState) {
+					item._selected = selectedState;
+				}
 			});
 
 			this.setState({
+				data: data,
 				allSelected: selectedState
 			});
+
+			this.callAfterSelect();
+
+			if (this.state.sort && '_selected' == this.state.sort.field) {
+				this.handleSort(this.state.sort.direction, this.state.sort);
+			}
 		},
 
 		buildDataRows: function buildDataRows(data) {
-			var _this3 = this;
+			var _this2 = this;
 
 			var result = null,
 			    rdata = [],
@@ -413,8 +420,8 @@ var ProperTable =
 			};
 
 			result = _underscore2["default"].map(data, function (rowdata) {
-				var cells = _underscore2["default"].map(_this3.fieldsOrder, function (field) {
-					var col = _this3.columnIndex[field];
+				var cells = _underscore2["default"].map(_this2.fieldsOrder, function (field) {
+					var col = _this2.columnIndex[field];
 					var value = rowdata[field];
 
 					if (typeof col.formatter == 'function') {
@@ -437,7 +444,7 @@ var ProperTable =
 
 				return _reactAddons2["default"].createElement(
 					_row2["default"],
-					{ data: rowdata, selected: rowdata._selected, selectable: _this3.props.selectable, key: 'crow-' + nextRow, uniqueId: 'propertable-row-' + nextRow, onSelect: _this3.handleSelect },
+					{ data: rowdata, selected: rowdata._selected, selectable: _this2.props.selectable, key: 'crow-' + nextRow, uniqueId: 'propertable-row-' + nextRow, onSelect: _this2.handleSelect },
 					cells
 				);
 			});
@@ -451,7 +458,7 @@ var ProperTable =
 			var newData = null;
 
 			if (curRow._selected != status) {
-				newData = _underscore2["default"].map(_jquery2["default"].extend(true, {}, this.state.data), function (crow) {
+				newData = _underscore2["default"].map(_underscore2["default"].values(_jquery2["default"].extend(true, {}, this.state.data)), function (crow) {
 					if (crow._properId == id) {
 						crow._selected = status;
 					}
@@ -555,7 +562,7 @@ var ProperTable =
 
 				content = _reactAddons2["default"].createElement(
 					"div",
-					{ ref: "table", className: "propertable-table table-condensed table-bordered table-hover table-responsive propertable-table " + hclass },
+					{ ref: "table", className: "propertable-table " + hclass },
 					_reactAddons2["default"].createElement(
 						"div",
 						{ className: "thead-wrapper", ref: "header", style: {
@@ -2910,7 +2917,8 @@ var ProperTable =
 			return {
 				className: '',
 				uniqueId: _underscore2["default"].uniqueId('propertable-hcell-'),
-				width: null
+				width: null,
+				col: {}
 			};
 		},
 
@@ -2923,7 +2931,7 @@ var ProperTable =
 				_reactAddons2["default"].createElement(
 					"div",
 					{ className: "cell-inner", style: {
-							width: this.props.width
+							width: this.props.col.width || this.props.width
 						} },
 					this.props.children
 				)
@@ -3021,7 +3029,7 @@ var ProperTable =
 			if (!this.state.scrollBound) {
 				var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this));
 
-				$this.on('scroll', _underscore2["default"].throttle(this.onScroll, 250));
+				$this.on('scroll', _underscore2["default"].throttle(this.onScroll, 55));
 				(0, _jquery2["default"])(window).on('resize', _underscore2["default"].throttle(function () {
 					_this.setState({
 						maxHeight: null,

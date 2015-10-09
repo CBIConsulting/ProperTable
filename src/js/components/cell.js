@@ -10,7 +10,8 @@ export default React.createClass({
 		return {
 			className: '',
 			uniqueId: _.uniqueId('propertable-hcell-'),
-			width: null
+			width: null,
+			col: {}
 		}
 	},
 
@@ -19,7 +20,7 @@ export default React.createClass({
 
 		return <div id={this.props.uniqueId} className={"propertable-cell "+className}>
 			<div className="cell-inner"  style={{
-			width: this.props.width
+			width: this.props.col.width || this.props.width
 		}}>
 				{this.props.children}
 			</div>
