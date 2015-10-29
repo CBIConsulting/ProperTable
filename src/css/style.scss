@@ -46,6 +46,7 @@ $selectWidth: 150px;
 			.propertable-cell, .propertable-hcell {
 				display: table-cell;
 				border: 1px solid #ccc;
+				box-sizing: content-box;
 
 				>.cell-inner {
 					padding: 5px;

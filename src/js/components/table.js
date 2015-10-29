@@ -21,7 +21,7 @@ export default React.createClass({
 			fixedHeader: true,
 			selectable: true,
 			rowHeight: 50
-		}
+		};
 	},
 
 	getInitialState() {
@@ -40,6 +40,7 @@ export default React.createClass({
 	componentDidMount() {
 		this.initData();
 		this.computeHeaderHeight();
+		this.computeHeaderWidth();
 	},
 
 	initData() {
@@ -92,6 +93,7 @@ export default React.createClass({
 	componentDidUpdate() {
 		this.updateData();
 		this.computeHeaderHeight();
+		this.computeHeaderWidth();
 	},
 
 	computeHeaderHeight() {
@@ -107,6 +109,22 @@ export default React.createClass({
 				}
 			}
 		}
+	},
+
+	computeHeaderWidth(){
+		if (this.refs.firstRow){
+			let firstRow = React.findDOMNode(this.refs.firstRow);
+			let lengths =  $(firstRow).find('.cell-inner').map((i, cell) => {
+				let $cell = $(cell);
+				let pxSizes = ['width','border-left-width','border-right-width','padding-right','padding-left'];
+				return pxSizes.map(prop => parseInt($cell.css(prop), 10)).reduce((a, b) => a + b);
+			}).get();
+			console.log(lengths)
+			$('.propertable-thead .propertable-row .propertable-hcell.has-tools').each((i, cell) => {
+				$(cell).width(lengths[i]);
+			});
+		}
+
 	},
 
 	handleSort(direction, col) {
@@ -190,7 +208,7 @@ export default React.createClass({
 				</div>);
 			}
 
-			rendered = <HCell nested={nested} onSort={this.handleSort} key={'header' + item.name} {...item}>{content}</HCell>;
+			rendered = <HCell  nested={nested} onSort={this.handleSort} key={'header' + item.name} {...item}>{content}</HCell>;
 
 			result.push(rendered);
 		});
@@ -217,8 +235,9 @@ export default React.createClass({
 			visible: true,
 			sortable: true
 		};
-
+		let firstRow;
 		result = _.map(data, (rowdata) => {
+
 			let cells = _.map(this.fieldsOrder, (field) => {
 				let col = this.columnIndex[field];
 				let value = rowdata[field];
@@ -229,13 +248,16 @@ export default React.createClass({
 
 				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
 			});
+			if (!firstRow){
+				firstRow = cells;
+			}
 			let nextRow = rowdata._properId;
 
-			return <Row data={rowdata} selected={rowdata._selected} selectable={this.props.selectable} key={'crow-'+nextRow} uniqueId={'propertable-row-' + nextRow} onSelect={this.handleSelect}>
+			return <Row ref="firstRow" data={rowdata} selected={rowdata._selected} selectable={this.props.selectable} key={'crow-'+nextRow} uniqueId={'propertable-row-' + nextRow} onSelect={this.handleSelect}>
 				{cells}
 			</Row>;
 		});
-
+		this._firstRow = firstRow;
 		return result;
 	},
 
@@ -337,9 +359,10 @@ export default React.createClass({
 		}
 
 		if (this.state.cols.length && this.state.data && this.state.data.length) {
-			cols = this.buildCols(this.state.cols);
+
 			let data = this.sliceData(this.state.data);
 			rows = this.buildDataRows(data);
+			cols = this.buildCols(this.state.cols);
 
 			content = <div ref="table" className={"propertable-table table-condensed table-bordered table-hover table-responsive propertable-table " + hclass}>
 				<div className="thead-wrapper" ref="header">

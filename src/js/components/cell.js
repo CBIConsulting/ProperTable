@@ -9,7 +9,8 @@ export default React.createClass({
 	getDefaultProps() {
 		return {
 			className: '',
-			uniqueId: _.uniqueId('propertable-hcell-')
+			uniqueId: _.uniqueId('propertable-hcell-'),
+			width: null
 		}
 	},
 
