@@ -59,7 +59,6 @@ export default React.createClass({
 		let spans = {};
 		let sortBtns = this.renderSortOptions();
 		let tools = null;
-		let sortedclass = '';
 
 		if (this.props.rowspan) {
 			spans.rowSpan = this.props.rowspan + 1;
@@ -82,14 +81,14 @@ export default React.createClass({
 		}
 
 		if (this.props.sorted) {
-			sortedclass = 'sorted-'+this.props.sorted;
+			className += ' sorted-'+this.props.sorted;
 		}
-
-		className += ' '+sortedclass;
-
-		return <div id={this.props.uniqueId} className={"propertable-hcell "+className} style={{
-			width: this.props.width
-		}} {...spans} onClick={this.handleSort}>
+		console.log(this.props.nested);
+		if (!this.props.nested){
+			className += ' last-nested-level';
+		}
+		
+		return <div id={this.props.uniqueId} className={"propertable-hcell "+className} {...spans} onClick={this.handleSort}>
 			<div className="cell-inner">
 				<div className="hlabel">
 					{this.props.children}

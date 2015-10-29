@@ -153,17 +153,23 @@ export default React.createClass({
 		}
 	},
 
+	propsList: ['width','border-left-width','border-right-width','padding-right','padding-left'],
+
 	computeHeaderWidth(){
 		if (this.refs.firstRow){
 			let firstRow = React.findDOMNode(this.refs.firstRow);
-			let lengths =  $(firstRow).find('.cell-inner').map((i, cell) => {
+			let lengths =  $(firstRow).find('.propertable-cell').map((i, cell) => {
 				let $cell = $(cell);
-				let pxSizes = ['width','border-left-width','border-right-width','padding-right','padding-left'];
-				return pxSizes.map(prop => parseInt($cell.css(prop), 10)).reduce((a, b) => a + b);
+				let props = {};
+				this.propsList.forEach(prop => props[prop] = $cell.css(prop));
+				return props;
 			}).get();
-			console.log(lengths)
-			$('.propertable-thead .propertable-row .propertable-hcell.has-tools').each((i, cell) => {
-				$(cell).width(lengths[i]);
+			$('.propertable-thead .propertable-row .propertable-hcell.last-nested-level').each((i, cell) => {
+				let $cell = $(cell);
+				this.propsList.forEach(prop => {
+					$cell.css(prop, lengths[i][prop])
+				}
+				);
 			});
 		}
 
@@ -287,11 +293,7 @@ export default React.createClass({
 	},
 
 	buildDataRows(data) {
-		let result = null, rdata = [], curCell = 1, curRow = 1;
-		let defaults = {
-			visible: true,
-			sortable: true
-		};
+		let result = null, curCell = 1
 		let firstRow;
 		result = _.map(data, (rowdata) => {
 
@@ -303,13 +305,13 @@ export default React.createClass({
 					value = col.formatter(value, col, rowdata);
 				}
 
-				let width = col.width || null;
+				//let width = col.width || null;
 
 				/*if (width) {
 					width += 2;
 				}*/
 
-				return <Cell width={width} key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
+				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
 			});
 			if (!firstRow){
 				firstRow = cells;
@@ -404,7 +406,6 @@ export default React.createClass({
 		let className = this.props.className;
 		let cols = [];
 		let rows = [];
-		let container = window;
 		let content = <div className="empty-msg">
 			<p>{Settings.msg('emptymsg')}</p>
 		</div>;

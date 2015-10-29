@@ -1,6 +1,5 @@
 import React from "react/addons";
 import _ from "underscore";
-import $ from "jquery";
 import Settings from "../config/settings";
 
 export default React.createClass({
@@ -20,7 +19,7 @@ export default React.createClass({
 		}
 	},
 
-	handleSort(e) {
+	handleSort() {
 		let next = 'asc';
 
 		if (this.props.sorted == 'asc') {
@@ -36,7 +35,7 @@ export default React.createClass({
 		}
 	},
 
-	handleSelect(e) {
+	handleSelect() {
 		if (typeof this.props.onSelect == 'function') {
 			this.props.onSelect(this.props.data, !this.props.selected);
 		}
@@ -80,7 +79,7 @@ export default React.createClass({
 
 		className += ' '+sortedclass;
 
-		return <div id={this.props.uniqueId} className={"propertable-hcell selectheader "+className} {...spans} >
+		return <div id={this.props.uniqueId} className={"propertable-hcell selectheader last-nested-level"+className} {...spans} >
 			<div className="cell-inner">
 				{tools}
 			</div>
