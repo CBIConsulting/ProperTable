@@ -87,8 +87,12 @@
       float: right; }
   .propertable-hcell.selectheader {
     width: 71px; }
-    .propertable-hcell.selectheader > div.htools {
-      float: none; }
+    .propertable-hcell.selectheader > div {
+      text-align: center; }
+      .propertable-hcell.selectheader > div.htools {
+        float: none; }
+  .propertable-hcell.sortable:hover {
+    cursor: pointer; }
 
 .propertable-cell.select-cell {
   width: 71px;

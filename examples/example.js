@@ -38,6 +38,13 @@ $(function () {
 			label: 'nested2',
 			field: 'nested2'
 		}]
+	}, {
+		name: 'test',
+		label: 'test',
+		field: 'number',
+		formatter: function formatter(value) {
+			return 'test';
+		}
 	}];
 
 	var data = [];

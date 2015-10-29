@@ -42,6 +42,14 @@ $(() => {
 					field: 'nested2'
 				}
 			]
+		},
+		{
+			name: 'test',
+			label: 'test',
+			field: 'number',
+			formatter: function(value) {
+				return 'test';
+			}
 		}
 	];
 

@@ -547,6 +547,12 @@ var ProperTable =
 			var hpadding = null;
 			var hclass = '';
 
+			var pwidth = null;
+
+			if (this.isMounted()) {
+				pwidth = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this)).parent().width();
+			}
+
 			if (this.props.fixedHeader) {
 				hclass = ' fixedheader';
 			}
@@ -562,15 +568,20 @@ var ProperTable =
 
 				content = _reactAddons2["default"].createElement(
 					"div",
-					{ ref: "table", className: "propertable-table " + hclass },
+					{ ref: "table", className: "propertable-table " + hclass, style: {
+							width: pwidth
+						} },
 					_reactAddons2["default"].createElement(
 						"div",
 						{ className: "thead-wrapper", ref: "header", style: {
-								paddingRight: hpadding
+								paddingRight: hpadding,
+								width: pwidth - hpadding
 							} },
 						_reactAddons2["default"].createElement(
 							"div",
-							{ className: "propertable-container propertable-thead-container" },
+							{ className: "propertable-container propertable-thead-container", style: {
+									width: pwidth - hpadding
+								} },
 							_reactAddons2["default"].createElement(
 								"div",
 								{ className: "propertable-thead", ref: "head" },
@@ -585,7 +596,9 @@ var ProperTable =
 							fixedHeader: this.props.fixedHeader,
 							headerHeight: this.state.headerHeight,
 							onScroll: this.handleScroll,
-							onWidth: this.updateHeaderWidths
+							onWidth: this.updateHeaderWidths,
+							parentWidth: pwidth,
+							scrollPadding: hpadding
 						},
 						rows
 					)
@@ -2696,6 +2709,7 @@ var ProperTable =
 			var spans = {};
 			var sortBtns = this.renderSortOptions();
 			var tools = null;
+			var sortedclass = '';
 
 			if (this.props.rowspan) {
 				spans.rowSpan = this.props.rowspan + 1;
@@ -2705,21 +2719,28 @@ var ProperTable =
 				spans.colSpan = this.props.colspan + 1;
 			}
 
-			if (this.props.field) {
-				tools = _reactAddons2["default"].createElement(
-					"div",
-					{ className: "htools" },
-					sortBtns
-				);
+			/*if (this.props.field) {
+	  	tools = <div className="htools">
+	  		{sortBtns}
+	  	</div>;
+	  		className += ' has-tools'
+	  }*/
 
-				className += ' has-tools';
+			if (this.props.sortable) {
+				className += ' sortable';
 			}
+
+			if (this.props.sorted) {
+				sortedclass = 'sorted-' + this.props.sorted;
+			}
+
+			className += ' ' + sortedclass;
 
 			return _reactAddons2["default"].createElement(
 				"div",
 				_extends({ id: this.props.uniqueId, className: "propertable-hcell " + className, style: {
 						width: this.props.width
-					} }, spans),
+					} }, spans, { onClick: this.handleSort }),
 				_reactAddons2["default"].createElement(
 					"div",
 					{ className: "cell-inner" },
@@ -2811,34 +2832,13 @@ var ProperTable =
 			}
 		},
 
-		renderSortOptions: function renderSortOptions() {
-			var next = 'asc';
-
-			if (this.props.sorted == 'asc') {
-				next = 'desc';
-			}
-
-			if (this.props.sorted == 'desc') {
-				next = false;
-			}
-
-			if (!this.props.sortable) {
-				return false;
-			}
-
-			return _reactAddons2["default"].createElement(
-				"button",
-				{ className: "pull-right btn btn-xs sort sort-" + next, onClick: this.handleSort },
-				"sort"
-			);
-		},
-
 		render: function render() {
 			var className = this.props.className;
 			var spans = {};
-			var sortBtns = this.renderSortOptions();
 			var tools = null;
-			var msg = _configSettings2["default"].msg('select_all');
+			var msg = msg = _reactAddons2["default"].createElement("i", { className: "fa fa-square-o" });
+			var title = _configSettings2["default"].msg('select_all');
+			var sortedclass = '';
 
 			spans.rowSpan = this.props.rowspan;
 
@@ -2847,7 +2847,8 @@ var ProperTable =
 			}
 
 			if (this.props.selected) {
-				msg = _configSettings2["default"].msg('deselect_all');
+				title = _configSettings2["default"].msg('deselect_all');
+				msg = _reactAddons2["default"].createElement("i", { className: "fa fa-check-square-o" });
 			}
 
 			tools = _reactAddons2["default"].createElement(
@@ -2855,13 +2856,22 @@ var ProperTable =
 				{ className: "htools" },
 				_reactAddons2["default"].createElement(
 					"button",
-					{ className: "btn btn-xs select-all", onClick: this.handleSelect },
+					{ title: title, className: "btn btn-xs select-all", onClick: this.handleSelect },
 					msg
-				),
-				sortBtns
+				)
 			);
 
 			className += ' has-tools';
+
+			if (this.props.sortable) {
+				className += ' sortable';
+			}
+
+			if (this.props.sorted) {
+				sortedclass = 'sorted-' + this.props.sorted;
+			}
+
+			className += ' ' + sortedclass;
 
 			return _reactAddons2["default"].createElement(
 				"div",
@@ -2984,7 +2994,9 @@ var ProperTable =
 				uniqueId: _underscore2["default"].uniqueId('tbody-'),
 				onScroll: null,
 				totalItems: null,
-				onWidth: null
+				onWidth: null,
+				parentWidth: null,
+				scrollPadding: null
 			};
 		},
 
@@ -3096,9 +3108,9 @@ var ProperTable =
 						var mtop = _this3.state.mtop;
 						var maxHeight = $this.parents('.propertable-base').eq(0).height();
 						var cHeight = $row.height();
-						var scrollerheight = maxHeight - mtop - 2;
+						var scrollerheight = maxHeight;
 						var totalHeight = cHeight * _this3.props.totalItems;
-						var itemsPerVp = Math.ceil(scrollerheight / cHeight * 2);
+						var itemsPerVp = Math.ceil(scrollerheight / cHeight * 1);
 
 						$cells.each(function () {
 							var $cell = (0, _jquery2["default"])(this);
@@ -3168,12 +3180,15 @@ var ProperTable =
 			return _reactAddons2["default"].createElement(
 				"div",
 				{ className: "tbody-scroller", style: {
-						marginTop: mtop,
-						height: scrollerheight
+						paddingTop: mtop,
+						height: scrollerheight,
+						width: this.props.parentWidth
 					} },
 				_reactAddons2["default"].createElement(
 					"div",
-					{ className: "propertable-container propertable-tbody-container" },
+					{ className: "propertable-container propertable-tbody-container", style: {
+							width: this.props.parentWidth - this.props.scrollPadding
+						} },
 					_reactAddons2["default"].createElement(
 						"div",
 						{ className: "propertable-tbody", ref: "body" },

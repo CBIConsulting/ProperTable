@@ -389,6 +389,12 @@ export default React.createClass({
 		let hpadding = null;
 		let hclass = '';
 
+		let pwidth = null;
+
+		if (this.isMounted()) {
+			pwidth = $(React.findDOMNode(this)).parent().width();
+		}
+
 		if (this.props.fixedHeader) {
 			hclass = ' fixedheader';
 		}
@@ -402,11 +408,16 @@ export default React.createClass({
 				hpadding = scrollbarWidth;
 			}
 
-			content = <div ref="table" className={"propertable-table " + hclass}>
+			content = <div ref="table" className={"propertable-table " + hclass} style={{
+				width: pwidth
+			}}>
 				<div className="thead-wrapper" ref="header" style={{
-					paddingRight: hpadding
+					paddingRight: hpadding,
+					width: pwidth - hpadding
 				}}>
-					<div className="propertable-container propertable-thead-container">
+					<div className="propertable-container propertable-thead-container" style={{
+						width: pwidth - hpadding
+					}}>
 						<div className="propertable-thead" ref="head">{cols}</div>
 					</div>
 				</div>
@@ -416,6 +427,8 @@ export default React.createClass({
 					headerHeight={this.state.headerHeight}
 					onScroll={this.handleScroll}
 					onWidth={this.updateHeaderWidths}
+					parentWidth={pwidth}
+					scrollPadding={hpadding}
 				>
 					{rows}
 				</Tbody>

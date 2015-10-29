@@ -137,9 +137,16 @@ $selectWidth: 71px;
 		width: $selectWidth;
 
 		>div {
+			text-align: center;
 			&.htools {
 				float: none;
 			}
+		}
+	}
+
+	&.sortable {
+		&:hover {
+			cursor: pointer;
 		}
 	}
 }

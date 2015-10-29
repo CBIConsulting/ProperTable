@@ -42,30 +42,13 @@ export default React.createClass({
 		}
 	},
 
-	renderSortOptions() {
-		let next = 'asc';
-
-		if (this.props.sorted == 'asc') {
-			next = 'desc';
-		}
-
-		if (this.props.sorted == 'desc') {
-			next = false;
-		}
-
-		if (!this.props.sortable) {
-			return false;
-		}
-
-		return <button className={"pull-right btn btn-xs sort sort-"+next} onClick={this.handleSort}>sort</button>;
-	},
-
 	render() {
 		let className = this.props.className;
 		let spans = {};
-		let sortBtns = this.renderSortOptions();
 		let tools = null;
-		let msg = Settings.msg('select_all');
+		let msg = msg = <i className="fa fa-square-o" />;
+		let title = Settings.msg('select_all');
+		let sortedclass = '';
 
 		spans.rowSpan = this.props.rowspan;
 
@@ -74,19 +57,30 @@ export default React.createClass({
 		}
 
 		if (this.props.selected) {
-			msg = Settings.msg('deselect_all');
+			title = Settings.msg('deselect_all');
+			msg = <i className="fa fa-check-square-o" />;
 		}
 
 		tools = <div className="htools">
-			<button className={"btn btn-xs select-all"} onClick={this.handleSelect}>
+			<button title={title} className={"btn btn-xs select-all"} onClick={this.handleSelect}>
 				{msg}
 			</button>
-			{sortBtns}
 		</div>;
 
 		className += ' has-tools'
 
-		return <div id={this.props.uniqueId} className={"propertable-hcell selectheader "+className} {...spans}>
+
+		if (this.props.sortable) {
+			className += ' sortable';
+		}
+
+		if (this.props.sorted) {
+			sortedclass = 'sorted-'+this.props.sorted;
+		}
+
+		className += ' '+sortedclass;
+
+		return <div id={this.props.uniqueId} className={"propertable-hcell selectheader "+className} {...spans} >
 			<div className="cell-inner">
 				{tools}
 			</div>

@@ -13,7 +13,9 @@ export default React.createClass({
 			uniqueId: _.uniqueId('tbody-'),
 			onScroll: null,
 			totalItems: null,
-			onWidth: null
+			onWidth: null,
+			parentWidth: null,
+			scrollPadding: null
 		};
 	},
 
@@ -118,9 +120,9 @@ export default React.createClass({
 				let mtop = this.state.mtop;
 				let maxHeight = $this.parents('.propertable-base').eq(0).height();
 				let cHeight = $row.height();
-				let scrollerheight = maxHeight - mtop - 2;
+				let scrollerheight = maxHeight;
 				let totalHeight = cHeight * this.props.totalItems;
-				let itemsPerVp = Math.ceil((scrollerheight / cHeight) * 2);
+				let itemsPerVp = Math.ceil((scrollerheight / cHeight) * 1);
 
 				$cells.each(function() {
 					let $cell = $(this);
@@ -187,10 +189,13 @@ export default React.createClass({
 		}
 
 		return <div className="tbody-scroller" style={{
-			marginTop: mtop,
-			height: scrollerheight
+			paddingTop: mtop,
+			height: scrollerheight,
+			width: this.props.parentWidth
 		}}>
-			<div className="propertable-container propertable-tbody-container">
+			<div className="propertable-container propertable-tbody-container" style={{
+				width: this.props.parentWidth - this.props.scrollPadding
+			}}>
 				<div className="propertable-tbody" ref="body" >
 					{rendered}
 				</div>
