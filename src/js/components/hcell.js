@@ -59,6 +59,7 @@ export default React.createClass({
 		let spans = {};
 		let sortBtns = this.renderSortOptions();
 		let tools = null;
+		let sortedclass = '';
 
 		if (this.props.rowspan) {
 			spans.rowSpan = this.props.rowspan + 1;
@@ -68,17 +69,27 @@ export default React.createClass({
 			spans.colSpan = this.props.colspan + 1;
 		}
 
-		if (this.props.field) {
+		/*if (this.props.field) {
 			tools = <div className="htools">
 				{sortBtns}
 			</div>;
 
 			className += ' has-tools'
+		}*/
+
+		if (this.props.sortable) {
+			className += ' sortable';
 		}
 
-		var style = this.props.width !== null  ? {"width": this.props.width + "px"} : {};
+		if (this.props.sorted) {
+			sortedclass = 'sorted-'+this.props.sorted;
+		}
 
-		return <div id={this.props.uniqueId} style={style} className={"propertable-hcell "+className} {...spans}>
+		className += ' '+sortedclass;
+
+		return <div id={this.props.uniqueId} className={"propertable-hcell "+className} style={{
+			width: this.props.width
+		}} {...spans} onClick={this.handleSort}>
 			<div className="cell-inner">
 				<div className="hlabel">
 					{this.props.children}
