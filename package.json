@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "A proper data table for React",
   "scripts": {
-    "test": "karma start --single-run --no-auto-watch karma.conf.js",
+    "test": "webpack && karma start --single-run --no-auto-watch karma.conf.js",
     "watch": "karma start --auto-watch --no-single-run karma.conf.js",
     "start": "webpack-dev-server --hot --inline",
     "build": "webpack",
