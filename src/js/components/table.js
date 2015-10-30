@@ -80,6 +80,9 @@ export default React.createClass({
 
 	componentDidMount() {
 		scrollbarWidth = getScrollbarWidth();
+
+		this.pwidth = $(React.findDOMNode(this)).parent().width();
+
 		this.initData();
 		this.computeHeaderHeight();
 		this.computeHeaderWidth();
@@ -133,6 +136,7 @@ export default React.createClass({
 	},
 
 	componentDidUpdate() {
+		this.pwidth = $(React.findDOMNode(this)).parent().width();
 		this.updateData();
 		this.computeHeaderHeight();
 		this.computeHeaderWidth();
@@ -155,7 +159,7 @@ export default React.createClass({
 
 	propsList: ['width','border-left-width','border-right-width','padding-right','padding-left'],
 
-	computeHeaderWidth(){
+	computeHeaderWidth: _.throttle(function() {
 		if (this.refs.firstRow){
 			let firstRow = React.findDOMNode(this.refs.firstRow);
 			let lengths =  $(firstRow).find('.propertable-cell').map((i, cell) => {
@@ -167,13 +171,13 @@ export default React.createClass({
 			$('.propertable-thead .propertable-row .propertable-hcell.last-nested-level').each((i, cell) => {
 				let $cell = $(cell);
 				this.propsList.forEach(prop => {
-					$cell.css(prop, lengths[i][prop])
-				}
-				);
+					if (lengths[i]) {
+						$cell.css(prop, lengths[i][prop])
+					}
+				});
 			});
 		}
-
-	},
+	}, 100),
 
 	handleSort(direction, col) {
 		let field = col.field || null;
@@ -412,11 +416,7 @@ export default React.createClass({
 		let hpadding = null;
 		let hclass = '';
 
-		let pwidth = null;
-
-		if (this.isMounted()) {
-			pwidth = $(React.findDOMNode(this)).parent().width();
-		}
+		let pwidth = this.pwidth;
 
 		if (this.props.fixedHeader) {
 			hclass = ' fixedheader';

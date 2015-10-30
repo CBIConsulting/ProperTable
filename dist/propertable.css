@@ -28,7 +28,6 @@
         display: table-row; }
       .propertable .propertable-table .propertable-container .propertable-cell, .propertable .propertable-table .propertable-container .propertable-hcell {
         display: table-cell;
-        box-sizing: border-box;
         overflow: hidden;
         border-bottom: 1px solid #ccc;
         border-right: 1px solid #ccc; }

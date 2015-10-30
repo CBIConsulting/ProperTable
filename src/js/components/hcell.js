@@ -83,11 +83,11 @@ export default React.createClass({
 		if (this.props.sorted) {
 			className += ' sorted-'+this.props.sorted;
 		}
-		console.log(this.props.nested);
+		//console.log(this.props.nested);
 		if (!this.props.nested){
 			className += ' last-nested-level';
 		}
-		
+
 		return <div id={this.props.uniqueId} className={"propertable-hcell "+className} {...spans} onClick={this.handleSort}>
 			<div className="cell-inner">
 				<div className="hlabel">
