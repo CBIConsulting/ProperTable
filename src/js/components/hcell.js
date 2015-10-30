@@ -14,7 +14,9 @@ export default React.createClass({
 			colspan: null,
 			sortable: true,
 			sorted: false,
-			onSort: null
+			onSort: null,
+			width: null,
+			nested: null
 		}
 	},
 
@@ -66,19 +68,34 @@ export default React.createClass({
 			spans.colSpan = this.props.colspan + 1;
 		}
 
-		if (this.props.field) {
+		/*if (this.props.field) {
 			tools = <div className="htools">
 				{sortBtns}
 			</div>;
 
 			className += ' has-tools'
+		}*/
+
+		if (this.props.sortable) {
+			className += ' sortable';
 		}
 
-		return <th id={this.props.uniqueId} className={"propertable-hcell "+className} {...spans}>
-			<div className="hlabel">
-				{this.props.children}
+		if (this.props.sorted) {
+			className += ' sorted-'+this.props.sorted;
+		}
+		//console.log(this.props.nested);
+		if (!this.props.nested){
+			className += ' last-nested-level';
+		}
+
+		return <div id={this.props.uniqueId} className={"propertable-hcell "+className} {...spans} onClick={this.handleSort}>
+			<div className="cell-inner">
+				<div className="hlabel">
+					{this.props.children}
+				</div>
+				{tools}
 			</div>
-			{tools}
-		</th>;
+			{this.props.nested}
+		</div>;
 	}
 });

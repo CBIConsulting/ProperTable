@@ -6,33 +6,51 @@ import Row from "./row";
 import HCell from "./hcell";
 import SelectHeader from "./selectheader";
 import Cell from "./cell";
-import "floatthead";
+import Tbody from "./tbody";
 
-function countChildren(cell) {
-	let ccount = 0, haschildren = false;
+function getLastLevelCols(cols) {
+	let result = [];
 
-	if (cell.children && cell.children.length) {
-		haschildren = !!_.find(cell.children, (child) => {
-			return child.children && child.children.length;
-		});
-
-		if (!haschildren) {
-			return cell.children.length;
+	_.each(cols, (col) => {
+		if (col.children && col.children.length) {
+			result = $.merge(result, getLastLevelCols(col.children));
 		} else {
-			_.each(cell.children, (child) => {
-				if (child.children && child.children.length) {
-					ccount += countChildren(child);
-				}
-			});
-
-			return cell.children.length + ccount;
+			result.push(col);
 		}
-	}
+	});
 
-	return null;
+	return result;
 }
 
+function getScrollbarWidth() {
+    var outer = document.createElement("div");
+    outer.style.visibility = "hidden";
+    outer.style.width = "100px";
+    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+
+    document.body.appendChild(outer);
+
+    var widthNoScroll = outer.offsetWidth;
+    // force scrollbars
+    outer.style.overflow = "scroll";
+
+    // add innerdiv
+    var inner = document.createElement("div");
+    inner.style.width = "100%";
+    outer.appendChild(inner);
+
+    var widthWithScroll = inner.offsetWidth;
+
+    // remove divs
+    outer.parentNode.removeChild(outer);
+
+    return widthNoScroll - widthWithScroll;
+}
+
+let scrollbarWidth = null;
+
 export default React.createClass({
+
 	getDefaultProps() {
 		return {
 			className: '',
@@ -42,28 +60,36 @@ export default React.createClass({
 			afterSort: null,
 			afterSelect: null,
 			fixedHeader: true,
-			selectable: true
-		}
+			selectable: true,
+			rowHeight: 50
+		};
 	},
 
 	getInitialState() {
 		return {
-			cols: $.extend(true, this.props.cols, []),
+			cols: _.values($.extend(true, {}, this.props.cols)),
 			data: null,
 			rawdata: null,
 			sort: null,
-			allSelected: false
+			allSelected: false,
+			headerHeight: null,
+			firstElement: 0,
+			itemsPerVP: 1
 		};
 	},
 
 	componentDidMount() {
-		this.initData();
+		scrollbarWidth = getScrollbarWidth();
 
-		$(window).on('resize', this.fixHeader);
+		this.pwidth = $(React.findDOMNode(this)).parent().width();
+
+		this.initData();
+		this.computeHeaderHeight();
+		this.computeHeaderWidth();
 	},
 
 	initData() {
-		let data = _.values($.extend(true, this.props.data, []));
+		let data = _.clone(this.props.data);
 
 		this.setState({
 			rawdata: data,
@@ -82,7 +108,7 @@ export default React.createClass({
 	},
 
 	updateData() {
-		let data = _.values($.extend(true, this.props.data, []));
+		let data = _.clone(this.props.data);
 		let newdata = [];
 
 		if (this.state.rawdata && !_.isEqual(data, this.state.rawdata)) {
@@ -110,83 +136,48 @@ export default React.createClass({
 	},
 
 	componentDidUpdate() {
+		this.pwidth = $(React.findDOMNode(this)).parent().width();
 		this.updateData();
-		this.fixHeader();
+		this.computeHeaderHeight();
+		this.computeHeaderWidth();
 	},
 
-	componentWillUnmount() {
-		$(window).off('resize', this.fixHeader);
-	},
+	computeHeaderHeight() {
+		if (this.refs.header) {
+			let $head = $(React.findDOMNode(this.refs.header));
+			if ($head.length) {
+				let hh = $head.height();
 
-	fixHeader: _.debounce(function() {
-		let $container = null, $table = null;
-		let parentHeight = null, parentTag;
-
-		if (this.isMounted()) {
-			$container = $(React.findDOMNode(this));
-			$table = $(React.findDOMNode(this.refs.table));
-
-			$container.removeAttr('style');
-			$table.floatThead('destroy');
-		}
-
-		if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
-			$container.css({
-				position: 'relative',
-				height: $container.height() || $container.parent().height()
-			});
-
-			$table.floatThead({
-				scrollContainer: function($table) {
-					return $container;
-				}
-			});
-		}
-	}, 50),
-
-	buildPlainColumns(cols) {
-		let rows = [], row = [], crow = [], nextrow = cols, levels = 0;
-		let haschildren = false;
-
-		while(nextrow && nextrow.length) {
-			levels++;
-			row = [];
-			crow = nextrow;
-			nextrow = [];
-			haschildren = !!_.find(crow, (cell) => {
-				return cell.children && cell.children.length;
-			});
-
-			row = _.map(crow, (cell) => {
-				if (cell.children && cell.children.length) {
-					_.each(cell.children, (child) => {
-						nextrow.push(child);
+				if (hh != this.state.headerHeight) {
+					this.setState({
+						headerHeight: $head.height()
 					});
 				}
+			}
+		}
+	},
 
-				return $.extend(true, cell, {
-					level: levels,
-					colspan: countChildren(cell)
+	propsList: ['width','border-left-width','border-right-width','padding-right','padding-left'],
+
+	computeHeaderWidth: _.throttle(function() {
+		if (this.refs.firstRow){
+			let firstRow = React.findDOMNode(this.refs.firstRow);
+			let lengths =  $(firstRow).find('.propertable-cell').map((i, cell) => {
+				let $cell = $(cell);
+				let props = {};
+				this.propsList.forEach(prop => props[prop] = $cell.css(prop));
+				return props;
+			}).get();
+			$('.propertable-thead .propertable-row .propertable-hcell.last-nested-level').each((i, cell) => {
+				let $cell = $(cell);
+				this.propsList.forEach(prop => {
+					if (lengths[i]) {
+						$cell.css(prop, lengths[i][prop])
+					}
 				});
 			});
-
-			rows.push(row);
 		}
-
-		rows = _.map(rows, (row) => {
-			let cells = _.map(row, (cell) => {
-				if (!cell.children || !cell.children.length) {
-					cell.rowspan = levels - cell.level || null;
-				}
-
-				return cell;
-			});
-
-			return cells;
-		});
-
-		return rows;
-	},
+	}, 100),
 
 	handleSort(direction, col) {
 		let field = col.field || null;
@@ -228,69 +219,88 @@ export default React.createClass({
 		}
 	},
 
-	buildCols(cols) {
-		let plain = this.buildPlainColumns(cols), rows = [];
-		let rowcount = 1;
+	buildCols(cols, nested = false) {
+		//let plain = this.buildPlainColumns(cols), rows = [];
+		let result = [];
+		let sorted = false;
 
-		this.fieldsOrder = [];
-		this.columnIndex = {};
+		if (this.state.sort && '_selected' == this.state.sort.field) {
+			sorted = this.state.sort.direction;
+		}
 
-		rows = _.map(plain, (row) => {
-			return _.map(row, (item) => {
-				item.sorted = false;
+		if (!nested) {
+			this.fieldsOrder = [];
+			this.columnIndex = {};
+		}
 
-				if (typeof item.field != 'undefined' && item.field) {
-					this.fieldsOrder.push(item.field);
-					this.columnIndex[item.field] = item;
+		if (this.props.selectable && !nested) {
+			result.push(<SelectHeader key={this.props.uniqueId + '-select-all-header'} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
+		}
 
-					if (this.state.sort && item.field == this.state.sort.field) {
-						item.sorted = this.state.sort.direction;
-					}
+		_.each(cols, (item) => {
+			let rendered = null;
+			let content = [item.label];
+			let nested = null;
+			item.sorted = false;
+
+			if (typeof item.field != 'undefined' && item.field) {
+				this.fieldsOrder.push(item.field);
+				this.columnIndex[item.field] = item;
+
+				if (this.state.sort && item.field == this.state.sort.field) {
+					item.sorted = this.state.sort.direction;
 				}
-
-				return <HCell onSort={this.handleSort} key={'header' + item.name} {...item}>{item.label}</HCell>;
-			});
-		});
-
-		return _.map(rows, (row) => {
-			let selectable = this.props.selectable;
-			let sorted = false;
-
-			if (this.state.sort && '_selected' == this.state.sort.field) {
-				sorted = this.state.sort.direction;
 			}
 
-			if (rowcount === 1 && this.props.selectable) {
-				row = row.reverse();
-				row.push(<SelectHeader rowspan={rows.length} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
-				row = row.reverse();
+			if (typeof item.children != 'undefined' && item.children.length) {
+				nested = (<div className="propertable-table subheader">
+					<div className="propertable-container">
+						{this.buildCols(item.children, true)}
+					</div>
+				</div>);
 			}
 
-			return <Row selectable={false} key={'header-row-'+(rowcount++)}>{row}</Row>;
+			let width = item.width || null;
+
+			/*if (width) {
+				width -= 4;
+			}*/
+
+			rendered = <HCell width={width} nested={nested} onSort={this.handleSort} key={'header' + item.name} {...item}>{content}</HCell>;
+
+			result.push(rendered);
 		});
+
+		return <Row selectable={false} key={'header-row'}>{result}</Row>;
 	},
 
 	selectAll() {
-		let data = $.extend(true, {}, this.state.data);
+		let data = _.values($.extend(true, {}, this.state.data));
 		let selectedState = !this.state.allSelected;
 
-		data = _.each(data, (item) => {
-			this.handleSelect(item, selectedState);
+		_.each(data, (item) => {
+			if (item._selected != selectedState) {
+				item._selected = selectedState;
+			}
 		});
 
 		this.setState({
+			data: data,
 			allSelected: selectedState
 		});
+
+		this.callAfterSelect();
+
+		if (this.state.sort && '_selected' == this.state.sort.field) {
+			this.handleSort(this.state.sort.direction, this.state.sort);
+		}
 	},
 
 	buildDataRows(data) {
-		let result = null, rdata = [], curCell = 1, curRow = 1;
-		let defaults = {
-			visible: true,
-			sortable: true
-		};
-
+		let result = null, curCell = 1
+		let firstRow;
 		result = _.map(data, (rowdata) => {
+
 			let cells = _.map(this.fieldsOrder, (field) => {
 				let col = this.columnIndex[field];
 				let value = rowdata[field];
@@ -299,15 +309,24 @@ export default React.createClass({
 					value = col.formatter(value, col, rowdata);
 				}
 
+				//let width = col.width || null;
+
+				/*if (width) {
+					width += 2;
+				}*/
+
 				return <Cell key={'ccel-'+(curCell++)} className={col.className || ''} col={col}>{value}</Cell>;
 			});
+			if (!firstRow){
+				firstRow = cells;
+			}
 			let nextRow = rowdata._properId;
 
-			return <Row data={rowdata} selected={rowdata._selected} selectable={this.props.selectable} key={'crow-'+nextRow} uniqueId={'propertable-row-' + nextRow} onSelect={this.handleSelect}>
+			return <Row ref="firstRow" data={rowdata} selected={rowdata._selected} selectable={this.props.selectable} key={'crow-'+nextRow} uniqueId={'propertable-row-' + nextRow} onSelect={this.handleSelect}>
 				{cells}
 			</Row>;
 		});
-
+		this._firstRow = firstRow;
 		return result;
 	},
 
@@ -317,7 +336,7 @@ export default React.createClass({
 		let newData = null;
 
 		if (curRow._selected != status) {
-			newData = _.map($.extend(true, this.state.data, {}), (crow) => {
+			newData = _.map(_.values($.extend(true, {}, this.state.data)), (crow) => {
 				if (crow._properId == id) {
 					crow._selected = status;
 				}
@@ -354,29 +373,94 @@ export default React.createClass({
 		}
 	}, 25),
 
+	sliceData(data) {
+		let firstElement = this.state.firstElement;
+		let itemsPerVP = this.state.itemsPerVP;
+
+		return data.slice(firstElement, firstElement + itemsPerVP);
+	},
+
+	handleScroll(firstElement, itemsPerVP) {
+		if (this.state.firstElement != firstElement || this.state.itemsPerVP != itemsPerVP) {
+			this.setState({
+				firstElement: firstElement,
+				itemsPerVP: itemsPerVP
+			});
+		}
+	},
+
+	updateHeaderWidths: _.debounce(function(widths) {
+		let newcols = $.extend(true, [], this.state.cols);
+		let fcols = getLastLevelCols(newcols);
+
+		if (this.props.selectable) {
+			widths = widths.slice(1);
+		}
+
+		_.each(fcols, (col, i) => {
+			col.width = widths[i];
+		});
+
+		this.setState({
+			cols: newcols
+		});
+	}, 200),
+
 	render() {
 		let className = this.props.className;
 		let cols = [];
 		let rows = [];
+		let content = <div className="empty-msg">
+			<p>{Settings.msg('emptymsg')}</p>
+		</div>;
+		let hpadding = null;
+		let hclass = '';
 
-		if (!this.state.cols.length) {
-			return <div className={"propertable "+className} id={this.props.uniqueId}>
-				<div className="empty-msg">
-					<p>{Settings.msg('emptymsg')}</p>
+		let pwidth = this.pwidth;
+
+		if (this.props.fixedHeader) {
+			hclass = ' fixedheader';
+		}
+
+		if (this.state.cols.length && this.state.data && this.state.data.length) {
+
+			let data = this.sliceData(this.state.data);
+			rows = this.buildDataRows(data);
+			cols = this.buildCols(this.state.cols);
+
+			if (this.props.fixedHeader) {
+				hpadding = scrollbarWidth;
+			}
+
+			content = <div ref="table" className={"propertable-table " + hclass} style={{
+				width: pwidth
+			}}>
+				<div className="thead-wrapper" ref="header" style={{
+					paddingRight: hpadding,
+					width: pwidth - hpadding
+				}}>
+					<div className="propertable-container propertable-thead-container" style={{
+						width: pwidth - hpadding
+					}}>
+						<div className="propertable-thead" ref="head">{cols}</div>
+					</div>
 				</div>
+				<Tbody
+					totalItems={this.state.data.length}
+					fixedHeader={this.props.fixedHeader}
+					headerHeight={this.state.headerHeight}
+					onScroll={this.handleScroll}
+					onWidth={this.updateHeaderWidths}
+					parentWidth={pwidth}
+					scrollPadding={hpadding}
+				>
+					{rows}
+				</Tbody>
 			</div>;
 		}
 
-		cols = this.buildCols(this.state.cols);
-		rows = this.buildDataRows(this.state.data);
-
-		return <div id={this.props.uniqueId} className={"propertable "+className}>
-			<table ref="table" className="table table-condensed table-bordered table-hover table-responsive propertable-table">
-				<thead ref="head">{cols}</thead>
-				<tbody>
-					{rows}
-				</tbody>
-			</table>
-		</div>;
+		return <div id={this.props.uniqueId} className={"propertable propertable-base "+className}>
+			{content}
+		</div>
 	}
 });

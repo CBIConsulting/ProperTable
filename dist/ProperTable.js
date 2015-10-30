@@ -45,7 +45,7 @@ var ProperTable =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -82,7 +82,7 @@ var ProperTable =
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -126,32 +126,50 @@ var ProperTable =
 
 	var _cell2 = _interopRequireDefault(_cell);
 
-	__webpack_require__(15);
+	var _tbody = __webpack_require__(15);
 
-	function countChildren(cell) {
-		var ccount = 0,
-		    haschildren = false;
+	var _tbody2 = _interopRequireDefault(_tbody);
 
-		if (cell.children && cell.children.length) {
-			haschildren = !!_underscore2["default"].find(cell.children, function (child) {
-				return child.children && child.children.length;
-			});
+	function getLastLevelCols(cols) {
+		var result = [];
 
-			if (!haschildren) {
-				return cell.children.length;
+		_underscore2["default"].each(cols, function (col) {
+			if (col.children && col.children.length) {
+				result = _jquery2["default"].merge(result, getLastLevelCols(col.children));
 			} else {
-				_underscore2["default"].each(cell.children, function (child) {
-					if (child.children && child.children.length) {
-						ccount += countChildren(child);
-					}
-				});
-
-				return cell.children.length + ccount;
+				result.push(col);
 			}
-		}
+		});
 
-		return null;
+		return result;
 	}
+
+	function getScrollbarWidth() {
+		var outer = document.createElement("div");
+		outer.style.visibility = "hidden";
+		outer.style.width = "100px";
+		outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+
+		document.body.appendChild(outer);
+
+		var widthNoScroll = outer.offsetWidth;
+		// force scrollbars
+		outer.style.overflow = "scroll";
+
+		// add innerdiv
+		var inner = document.createElement("div");
+		inner.style.width = "100%";
+		outer.appendChild(inner);
+
+		var widthWithScroll = inner.offsetWidth;
+
+		// remove divs
+		outer.parentNode.removeChild(outer);
+
+		return widthNoScroll - widthWithScroll;
+	}
+
+	var scrollbarWidth = null;
 
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "table",
@@ -165,28 +183,36 @@ var ProperTable =
 				afterSort: null,
 				afterSelect: null,
 				fixedHeader: true,
-				selectable: true
+				selectable: true,
+				rowHeight: 50
 			};
 		},
 
 		getInitialState: function getInitialState() {
 			return {
-				cols: _jquery2["default"].extend(true, this.props.cols, []),
+				cols: _underscore2["default"].values(_jquery2["default"].extend(true, {}, this.props.cols)),
 				data: null,
 				rawdata: null,
 				sort: null,
-				allSelected: false
+				allSelected: false,
+				headerHeight: null,
+				firstElement: 0,
+				itemsPerVP: 1
 			};
 		},
 
 		componentDidMount: function componentDidMount() {
-			this.initData();
+			scrollbarWidth = getScrollbarWidth();
 
-			(0, _jquery2["default"])(window).on('resize', this.fixHeader);
+			this.pwidth = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this)).parent().width();
+
+			this.initData();
+			this.computeHeaderHeight();
+			this.computeHeaderWidth();
 		},
 
 		initData: function initData() {
-			var data = _underscore2["default"].values(_jquery2["default"].extend(true, this.props.data, []));
+			var data = _underscore2["default"].clone(this.props.data);
 
 			this.setState({
 				rawdata: data,
@@ -205,7 +231,7 @@ var ProperTable =
 		},
 
 		updateData: function updateData() {
-			var data = _underscore2["default"].values(_jquery2["default"].extend(true, this.props.data, []));
+			var data = _underscore2["default"].clone(this.props.data);
 			var newdata = [];
 
 			if (this.state.rawdata && !_underscore2["default"].isEqual(data, this.state.rawdata)) {
@@ -233,89 +259,54 @@ var ProperTable =
 		},
 
 		componentDidUpdate: function componentDidUpdate() {
+			this.pwidth = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this)).parent().width();
 			this.updateData();
-			this.fixHeader();
+			this.computeHeaderHeight();
+			this.computeHeaderWidth();
 		},
 
-		componentWillUnmount: function componentWillUnmount() {
-			(0, _jquery2["default"])(window).off('resize', this.fixHeader);
-		},
+		computeHeaderHeight: function computeHeaderHeight() {
+			if (this.refs.header) {
+				var $head = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this.refs.header));
+				if ($head.length) {
+					var hh = $head.height();
 
-		fixHeader: _underscore2["default"].debounce(function () {
-			var $container = null,
-			    $table = null;
-			var parentHeight = null,
-			    parentTag = undefined;
-
-			if (this.isMounted()) {
-				$container = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this));
-				$table = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this.refs.table));
-
-				$container.removeAttr('style');
-				$table.floatThead('destroy');
-			}
-
-			if (this.isMounted() && this.props.fixedHeader && this.refs.table) {
-				$container.css({
-					position: 'relative',
-					height: $container.height() || $container.parent().height()
-				});
-
-				$table.floatThead({
-					scrollContainer: function scrollContainer($table) {
-						return $container;
-					}
-				});
-			}
-		}, 50),
-
-		buildPlainColumns: function buildPlainColumns(cols) {
-			var rows = [],
-			    row = [],
-			    crow = [],
-			    nextrow = cols,
-			    levels = 0;
-			var haschildren = false;
-
-			while (nextrow && nextrow.length) {
-				levels++;
-				row = [];
-				crow = nextrow;
-				nextrow = [];
-				haschildren = !!_underscore2["default"].find(crow, function (cell) {
-					return cell.children && cell.children.length;
-				});
-
-				row = _underscore2["default"].map(crow, function (cell) {
-					if (cell.children && cell.children.length) {
-						_underscore2["default"].each(cell.children, function (child) {
-							nextrow.push(child);
+					if (hh != this.state.headerHeight) {
+						this.setState({
+							headerHeight: $head.height()
 						});
 					}
-
-					return _jquery2["default"].extend(true, cell, {
-						level: levels,
-						colspan: countChildren(cell)
-					});
-				});
-
-				rows.push(row);
+				}
 			}
-
-			rows = _underscore2["default"].map(rows, function (row) {
-				var cells = _underscore2["default"].map(row, function (cell) {
-					if (!cell.children || !cell.children.length) {
-						cell.rowspan = levels - cell.level || null;
-					}
-
-					return cell;
-				});
-
-				return cells;
-			});
-
-			return rows;
 		},
+
+		propsList: ['width', 'border-left-width', 'border-right-width', 'padding-right', 'padding-left'],
+
+		computeHeaderWidth: _underscore2["default"].throttle(function () {
+			var _this = this;
+
+			if (this.refs.firstRow) {
+				(function () {
+					var firstRow = _reactAddons2["default"].findDOMNode(_this.refs.firstRow);
+					var lengths = (0, _jquery2["default"])(firstRow).find('.propertable-cell').map(function (i, cell) {
+						var $cell = (0, _jquery2["default"])(cell);
+						var props = {};
+						_this.propsList.forEach(function (prop) {
+							return props[prop] = $cell.css(prop);
+						});
+						return props;
+					}).get();
+					(0, _jquery2["default"])('.propertable-thead .propertable-row .propertable-hcell.last-nested-level').each(function (i, cell) {
+						var $cell = (0, _jquery2["default"])(cell);
+						_this.propsList.forEach(function (prop) {
+							if (lengths[i]) {
+								$cell.css(prop, lengths[i][prop]);
+							}
+						});
+					});
+				})();
+			}
+		}, 100),
 
 		handleSort: function handleSort(direction, col) {
 			var field = col.field || null;
@@ -358,86 +349,106 @@ var ProperTable =
 		},
 
 		buildCols: function buildCols(cols) {
-			var _this = this;
+			var _this2 = this;
 
-			var plain = this.buildPlainColumns(cols),
-			    rows = [];
-			var rowcount = 1;
+			var nested = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
-			this.fieldsOrder = [];
-			this.columnIndex = {};
+			//let plain = this.buildPlainColumns(cols), rows = [];
+			var result = [];
+			var sorted = false;
 
-			rows = _underscore2["default"].map(plain, function (row) {
-				return _underscore2["default"].map(row, function (item) {
-					item.sorted = false;
+			if (this.state.sort && '_selected' == this.state.sort.field) {
+				sorted = this.state.sort.direction;
+			}
 
-					if (typeof item.field != 'undefined' && item.field) {
-						_this.fieldsOrder.push(item.field);
-						_this.columnIndex[item.field] = item;
+			if (!nested) {
+				this.fieldsOrder = [];
+				this.columnIndex = {};
+			}
 
-						if (_this.state.sort && item.field == _this.state.sort.field) {
-							item.sorted = _this.state.sort.direction;
-						}
+			if (this.props.selectable && !nested) {
+				result.push(_reactAddons2["default"].createElement(_selectheader2["default"], { key: this.props.uniqueId + '-select-all-header', selected: this.state.allSelected, sorted: sorted, onSelect: this.selectAll, onSort: this.handleSort }));
+			}
+
+			_underscore2["default"].each(cols, function (item) {
+				var rendered = null;
+				var content = [item.label];
+				var nested = null;
+				item.sorted = false;
+
+				if (typeof item.field != 'undefined' && item.field) {
+					_this2.fieldsOrder.push(item.field);
+					_this2.columnIndex[item.field] = item;
+
+					if (_this2.state.sort && item.field == _this2.state.sort.field) {
+						item.sorted = _this2.state.sort.direction;
 					}
+				}
 
-					return _reactAddons2["default"].createElement(
-						_hcell2["default"],
-						_extends({ onSort: _this.handleSort, key: 'header' + item.name }, item),
-						item.label
+				if (typeof item.children != 'undefined' && item.children.length) {
+					nested = _reactAddons2["default"].createElement(
+						"div",
+						{ className: "propertable-table subheader" },
+						_reactAddons2["default"].createElement(
+							"div",
+							{ className: "propertable-container" },
+							_this2.buildCols(item.children, true)
+						)
 					);
-				});
-			});
-
-			return _underscore2["default"].map(rows, function (row) {
-				var selectable = _this.props.selectable;
-				var sorted = false;
-
-				if (_this.state.sort && '_selected' == _this.state.sort.field) {
-					sorted = _this.state.sort.direction;
 				}
 
-				if (rowcount === 1 && _this.props.selectable) {
-					row = row.reverse();
-					row.push(_reactAddons2["default"].createElement(_selectheader2["default"], { rowspan: rows.length, selected: _this.state.allSelected, sorted: sorted, onSelect: _this.selectAll, onSort: _this.handleSort }));
-					row = row.reverse();
-				}
+				var width = item.width || null;
 
-				return _reactAddons2["default"].createElement(
-					_row2["default"],
-					{ selectable: false, key: 'header-row-' + rowcount++ },
-					row
+				/*if (width) {
+	   	width -= 4;
+	   }*/
+
+				rendered = _reactAddons2["default"].createElement(
+					_hcell2["default"],
+					_extends({ width: width, nested: nested, onSort: _this2.handleSort, key: 'header' + item.name }, item),
+					content
 				);
+
+				result.push(rendered);
 			});
+
+			return _reactAddons2["default"].createElement(
+				_row2["default"],
+				{ selectable: false, key: 'header-row' },
+				result
+			);
 		},
 
 		selectAll: function selectAll() {
-			var _this2 = this;
-
-			var data = _jquery2["default"].extend(true, {}, this.state.data);
+			var data = _underscore2["default"].values(_jquery2["default"].extend(true, {}, this.state.data));
 			var selectedState = !this.state.allSelected;
 
-			data = _underscore2["default"].each(data, function (item) {
-				_this2.handleSelect(item, selectedState);
+			_underscore2["default"].each(data, function (item) {
+				if (item._selected != selectedState) {
+					item._selected = selectedState;
+				}
 			});
 
 			this.setState({
+				data: data,
 				allSelected: selectedState
 			});
+
+			this.callAfterSelect();
+
+			if (this.state.sort && '_selected' == this.state.sort.field) {
+				this.handleSort(this.state.sort.direction, this.state.sort);
+			}
 		},
 
 		buildDataRows: function buildDataRows(data) {
 			var _this3 = this;
 
 			var result = null,
-			    rdata = [],
-			    curCell = 1,
-			    curRow = 1;
-			var defaults = {
-				visible: true,
-				sortable: true
-			};
-
+			    curCell = 1;
+			var firstRow = undefined;
 			result = _underscore2["default"].map(data, function (rowdata) {
+
 				var cells = _underscore2["default"].map(_this3.fieldsOrder, function (field) {
 					var col = _this3.columnIndex[field];
 					var value = rowdata[field];
@@ -446,21 +457,30 @@ var ProperTable =
 						value = col.formatter(value, col, rowdata);
 					}
 
+					//let width = col.width || null;
+
+					/*if (width) {
+	    	width += 2;
+	    }*/
+
 					return _reactAddons2["default"].createElement(
 						_cell2["default"],
 						{ key: 'ccel-' + curCell++, className: col.className || '', col: col },
 						value
 					);
 				});
+				if (!firstRow) {
+					firstRow = cells;
+				}
 				var nextRow = rowdata._properId;
 
 				return _reactAddons2["default"].createElement(
 					_row2["default"],
-					{ data: rowdata, selected: rowdata._selected, selectable: _this3.props.selectable, key: 'crow-' + nextRow, uniqueId: 'propertable-row-' + nextRow, onSelect: _this3.handleSelect },
+					{ ref: "firstRow", data: rowdata, selected: rowdata._selected, selectable: _this3.props.selectable, key: 'crow-' + nextRow, uniqueId: 'propertable-row-' + nextRow, onSelect: _this3.handleSelect },
 					cells
 				);
 			});
-
+			this._firstRow = firstRow;
 			return result;
 		},
 
@@ -470,7 +490,7 @@ var ProperTable =
 			var newData = null;
 
 			if (curRow._selected != status) {
-				newData = _underscore2["default"].map(_jquery2["default"].extend(true, this.state.data, {}), function (crow) {
+				newData = _underscore2["default"].map(_underscore2["default"].values(_jquery2["default"].extend(true, {}, this.state.data)), function (crow) {
 					if (crow._properId == id) {
 						crow._selected = status;
 					}
@@ -509,47 +529,114 @@ var ProperTable =
 			}
 		}, 25),
 
+		sliceData: function sliceData(data) {
+			var firstElement = this.state.firstElement;
+			var itemsPerVP = this.state.itemsPerVP;
+
+			return data.slice(firstElement, firstElement + itemsPerVP);
+		},
+
+		handleScroll: function handleScroll(firstElement, itemsPerVP) {
+			if (this.state.firstElement != firstElement || this.state.itemsPerVP != itemsPerVP) {
+				this.setState({
+					firstElement: firstElement,
+					itemsPerVP: itemsPerVP
+				});
+			}
+		},
+
+		updateHeaderWidths: _underscore2["default"].debounce(function (widths) {
+			var newcols = _jquery2["default"].extend(true, [], this.state.cols);
+			var fcols = getLastLevelCols(newcols);
+
+			if (this.props.selectable) {
+				widths = widths.slice(1);
+			}
+
+			_underscore2["default"].each(fcols, function (col, i) {
+				col.width = widths[i];
+			});
+
+			this.setState({
+				cols: newcols
+			});
+		}, 200),
+
 		render: function render() {
 			var className = this.props.className;
 			var cols = [];
 			var rows = [];
+			var content = _reactAddons2["default"].createElement(
+				"div",
+				{ className: "empty-msg" },
+				_reactAddons2["default"].createElement(
+					"p",
+					null,
+					_configSettings2["default"].msg('emptymsg')
+				)
+			);
+			var hpadding = null;
+			var hclass = '';
 
-			if (!this.state.cols.length) {
-				return _reactAddons2["default"].createElement(
+			var pwidth = this.pwidth;
+
+			if (this.props.fixedHeader) {
+				hclass = ' fixedheader';
+			}
+
+			if (this.state.cols.length && this.state.data && this.state.data.length) {
+
+				var data = this.sliceData(this.state.data);
+				rows = this.buildDataRows(data);
+				cols = this.buildCols(this.state.cols);
+
+				if (this.props.fixedHeader) {
+					hpadding = scrollbarWidth;
+				}
+
+				content = _reactAddons2["default"].createElement(
 					"div",
-					{ className: "propertable " + className, id: this.props.uniqueId },
+					{ ref: "table", className: "propertable-table " + hclass, style: {
+							width: pwidth
+						} },
 					_reactAddons2["default"].createElement(
 						"div",
-						{ className: "empty-msg" },
+						{ className: "thead-wrapper", ref: "header", style: {
+								paddingRight: hpadding,
+								width: pwidth - hpadding
+							} },
 						_reactAddons2["default"].createElement(
-							"p",
-							null,
-							_configSettings2["default"].msg('emptymsg')
+							"div",
+							{ className: "propertable-container propertable-thead-container", style: {
+									width: pwidth - hpadding
+								} },
+							_reactAddons2["default"].createElement(
+								"div",
+								{ className: "propertable-thead", ref: "head" },
+								cols
+							)
 						)
+					),
+					_reactAddons2["default"].createElement(
+						_tbody2["default"],
+						{
+							totalItems: this.state.data.length,
+							fixedHeader: this.props.fixedHeader,
+							headerHeight: this.state.headerHeight,
+							onScroll: this.handleScroll,
+							onWidth: this.updateHeaderWidths,
+							parentWidth: pwidth,
+							scrollPadding: hpadding
+						},
+						rows
 					)
 				);
 			}
 
-			cols = this.buildCols(this.state.cols);
-			rows = this.buildDataRows(this.state.data);
-
 			return _reactAddons2["default"].createElement(
 				"div",
-				{ id: this.props.uniqueId, className: "propertable " + className },
-				_reactAddons2["default"].createElement(
-					"table",
-					{ ref: "table", className: "table table-condensed table-bordered table-hover table-responsive propertable-table" },
-					_reactAddons2["default"].createElement(
-						"thead",
-						{ ref: "head" },
-						cols
-					),
-					_reactAddons2["default"].createElement(
-						"tbody",
-						null,
-						rows
-					)
-				)
+				{ id: this.props.uniqueId, className: "propertable propertable-base " + className },
+				content
 			);
 		}
 	});
@@ -579,7 +666,7 @@ var ProperTable =
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -682,7 +769,7 @@ var ProperTable =
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -707,7 +794,7 @@ var ProperTable =
 /* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -2407,7 +2494,7 @@ var ProperTable =
 /* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -2449,7 +2536,8 @@ var ProperTable =
 				selectable: true,
 				selected: false,
 				onSelect: null,
-				data: {}
+				data: {},
+				rowHeight: 25
 			};
 		},
 
@@ -2476,7 +2564,7 @@ var ProperTable =
 			}
 
 			return _reactAddons2["default"].createElement(
-				"tr",
+				"div",
 				{ id: this.props.uniqueId || _underscore2["default"].uniqueId('propertable-row-'), className: "propertable-row " + className, onClick: this.handleSelect },
 				selectcontent,
 				this.props.children
@@ -2491,7 +2579,7 @@ var ProperTable =
 /* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -2541,9 +2629,13 @@ var ProperTable =
 			var className = this.props.className;
 
 			return _reactAddons2["default"].createElement(
-				"td",
+				"div",
 				{ id: this.props.uniqueId || _underscore2["default"].uniqueId('propertable-selectcell-'), className: "propertable-cell select-cell " + className },
-				_reactAddons2["default"].createElement("input", { type: "checkbox", value: 1, checked: this.props.selected, onChange: this.handleChange })
+				_reactAddons2["default"].createElement(
+					"div",
+					{ className: "cell-inner" },
+					_reactAddons2["default"].createElement("input", { type: "checkbox", value: 1, checked: this.props.selected, onChange: this.handleChange })
+				)
 			);
 		}
 	});
@@ -2555,7 +2647,7 @@ var ProperTable =
 /* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -2596,7 +2688,9 @@ var ProperTable =
 				colspan: null,
 				sortable: true,
 				sorted: false,
-				onSort: null
+				onSort: null,
+				width: null,
+				nested: null
 			};
 		},
 
@@ -2652,25 +2746,39 @@ var ProperTable =
 				spans.colSpan = this.props.colspan + 1;
 			}
 
-			if (this.props.field) {
-				tools = _reactAddons2["default"].createElement(
-					"div",
-					{ className: "htools" },
-					sortBtns
-				);
+			/*if (this.props.field) {
+	  	tools = <div className="htools">
+	  		{sortBtns}
+	  	</div>;
+	  		className += ' has-tools'
+	  }*/
 
-				className += ' has-tools';
+			if (this.props.sortable) {
+				className += ' sortable';
+			}
+
+			if (this.props.sorted) {
+				className += ' sorted-' + this.props.sorted;
+			}
+			//console.log(this.props.nested);
+			if (!this.props.nested) {
+				className += ' last-nested-level';
 			}
 
 			return _reactAddons2["default"].createElement(
-				"th",
-				_extends({ id: this.props.uniqueId, className: "propertable-hcell " + className }, spans),
+				"div",
+				_extends({ id: this.props.uniqueId, className: "propertable-hcell " + className }, spans, { onClick: this.handleSort }),
 				_reactAddons2["default"].createElement(
 					"div",
-					{ className: "hlabel" },
-					this.props.children
+					{ className: "cell-inner" },
+					_reactAddons2["default"].createElement(
+						"div",
+						{ className: "hlabel" },
+						this.props.children
+					),
+					tools
 				),
-				tools
+				this.props.nested
 			);
 		}
 	});
@@ -2682,7 +2790,7 @@ var ProperTable =
 /* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -2702,10 +2810,6 @@ var ProperTable =
 
 	var _underscore2 = _interopRequireDefault(_underscore);
 
-	var _jquery = __webpack_require__(4);
-
-	var _jquery2 = _interopRequireDefault(_jquery);
-
 	var _configSettings = __webpack_require__(5);
 
 	var _configSettings2 = _interopRequireDefault(_configSettings);
@@ -2718,7 +2822,7 @@ var ProperTable =
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
-				uniqueId: 'select-all-header',
+				uniqueId: _underscore2["default"].uniqueId('select-all-header'),
 				rowspan: null,
 				colspan: null,
 				sortable: true,
@@ -2729,7 +2833,7 @@ var ProperTable =
 			};
 		},
 
-		handleSort: function handleSort(e) {
+		handleSort: function handleSort() {
 			var next = 'asc';
 
 			if (this.props.sorted == 'asc') {
@@ -2745,40 +2849,19 @@ var ProperTable =
 			}
 		},
 
-		handleSelect: function handleSelect(e) {
+		handleSelect: function handleSelect() {
 			if (typeof this.props.onSelect == 'function') {
 				this.props.onSelect(this.props.data, !this.props.selected);
 			}
 		},
 
-		renderSortOptions: function renderSortOptions() {
-			var next = 'asc';
-
-			if (this.props.sorted == 'asc') {
-				next = 'desc';
-			}
-
-			if (this.props.sorted == 'desc') {
-				next = false;
-			}
-
-			if (!this.props.sortable) {
-				return false;
-			}
-
-			return _reactAddons2["default"].createElement(
-				"button",
-				{ className: "pull-right btn btn-xs sort sort-" + next, onClick: this.handleSort },
-				"sort"
-			);
-		},
-
 		render: function render() {
 			var className = this.props.className;
 			var spans = {};
-			var sortBtns = this.renderSortOptions();
 			var tools = null;
-			var msg = _configSettings2["default"].msg('select_all');
+			var msg = msg = _reactAddons2["default"].createElement("i", { className: "fa fa-square-o" });
+			var title = _configSettings2["default"].msg('select_all');
+			var sortedclass = '';
 
 			spans.rowSpan = this.props.rowspan;
 
@@ -2787,7 +2870,8 @@ var ProperTable =
 			}
 
 			if (this.props.selected) {
-				msg = _configSettings2["default"].msg('deselect_all');
+				title = _configSettings2["default"].msg('deselect_all');
+				msg = _reactAddons2["default"].createElement("i", { className: "fa fa-check-square-o" });
 			}
 
 			tools = _reactAddons2["default"].createElement(
@@ -2795,18 +2879,31 @@ var ProperTable =
 				{ className: "htools" },
 				_reactAddons2["default"].createElement(
 					"button",
-					{ className: "btn btn-xs select-all", onClick: this.handleSelect },
+					{ title: title, className: "btn btn-xs select-all", onClick: this.handleSelect },
 					msg
-				),
-				sortBtns
+				)
 			);
 
 			className += ' has-tools';
 
+			if (this.props.sortable) {
+				className += ' sortable';
+			}
+
+			if (this.props.sorted) {
+				sortedclass = 'sorted-' + this.props.sorted;
+			}
+
+			className += ' ' + sortedclass;
+
 			return _reactAddons2["default"].createElement(
-				"th",
-				_extends({ id: this.props.uniqueId, className: "propertable-hcell selectheader " + className }, spans),
-				tools
+				"div",
+				_extends({ id: this.props.uniqueId, className: "propertable-hcell selectheader last-nested-level" + className }, spans),
+				_reactAddons2["default"].createElement(
+					"div",
+					{ className: "cell-inner" },
+					tools
+				)
 			);
 		}
 	});
@@ -2818,7 +2915,7 @@ var ProperTable =
 /* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -2852,7 +2949,9 @@ var ProperTable =
 		getDefaultProps: function getDefaultProps() {
 			return {
 				className: '',
-				uniqueId: _underscore2["default"].uniqueId('propertable-hcell-')
+				uniqueId: _underscore2["default"].uniqueId('propertable-hcell-'),
+				width: null,
+				col: {}
 			};
 		},
 
@@ -2860,9 +2959,15 @@ var ProperTable =
 			var className = this.props.className;
 
 			return _reactAddons2["default"].createElement(
-				"td",
+				"div",
 				{ id: this.props.uniqueId, className: "propertable-cell " + className },
-				this.props.children
+				_reactAddons2["default"].createElement(
+					"div",
+					{ className: "cell-inner", style: {
+							width: this.props.col.width || this.props.width
+						} },
+					this.props.children
+				)
 			);
 		}
 	});
@@ -2872,943 +2977,259 @@ var ProperTable =
 
 /***/ },
 /* 15 */
-/***/ function(module, exports) {
-
-	// @preserve jQuery.floatThead 1.2.12 - http://mkoryak.github.io/floatThead/ - Copyright (c) 2012 - 2015 Misha Koryak
-	// @license MIT
-
-	/* @author Misha Koryak
-	 * @projectDescription lock a table header in place while scrolling - without breaking styles or events bound to the header
-	 *
-	 * Dependencies:
-	 * jquery 1.9.0 + [required] OR jquery 1.7.0 + jquery UI core
-	 *
-	 * http://mkoryak.github.io/floatThead/
-	 *
-	 * Tested on FF13+, Chrome 21+, IE8, IE9, IE10, IE11
-	 *
-	 */
-	(function( $ ) {
-	  /**
-	   * provides a default config object. You can modify this after including this script if you want to change the init defaults
-	   * @type {Object}
-	   */
-	  $.floatThead = $.floatThead || {};
-	  $.floatThead.defaults = {
-	    cellTag: null, // DEPRECATED - use headerCellSelector instead
-	    headerCellSelector: 'tr:visible:first>*:visible', //thead cells are this.
-	    zIndex: 1001, //zindex of the floating thead (actually a container div)
-	    debounceResizeMs: 10, //Deprecated!
-	    useAbsolutePositioning: true, //if set to NULL - defaults: has scrollContainer=true, doesn't have scrollContainer=false
-	    scrollingTop: 0, //String or function($table) - offset from top of window where the header should not pass above
-	    scrollingBottom: 0, //String or function($table) - offset from the bottom of the table where the header should stop scrolling
-	    scrollContainer: function($table){
-	      return $([]); //if the table has horizontal scroll bars then this is the container that has overflow:auto and causes those scroll bars
-	    },
-	    getSizingRow: function($table, $cols, $fthCells){ // this is only called when using IE,
-	      // override it if the first row of the table is going to contain colgroups (any cell spans greater than one col)
-	      // it should return a jquery object containing a wrapped set of table cells comprising a row that contains no col spans and is visible
-	      return $table.find('tbody tr:visible:first>*:visible');
-	    },
-	    floatTableClass: 'floatThead-table',
-	    floatWrapperClass: 'floatThead-wrapper',
-	    floatContainerClass: 'floatThead-container',
-	    copyTableClass: true, //copy 'class' attribute from table into the floated table so that the styles match.
-	    enableAria: false, //will copy header text from the floated header back into the table for screen readers. Might cause the css styling to be off. beware!
-	    autoReflow: false, //(undocumented) - use MutationObserver api to reflow automatically when internal table DOM changes
-	    debug: false //print possible issues (that don't prevent script loading) to console, if console exists.
-	  };
-
-	  var util = window._;
-
-	  var canObserveMutations = typeof MutationObserver !== 'undefined';
-
-
-	  //browser stuff
-	  var ieVersion = function(){for(var a=3,b=document.createElement("b"),c=b.all||[];a = 1+a,b.innerHTML="<!--[if gt IE "+ a +"]><i><![endif]-->",c[0];);return 4<a?a:document.documentMode}();
-	  var isFF = /Gecko\//.test(navigator.userAgent);
-	  var isWebkit = /WebKit\//.test(navigator.userAgent);
-
-	  //safari 7 (and perhaps others) reports table width to be parent container's width if max-width is set on table. see: https://github.com/mkoryak/floatThead/issues/108
-	  var isTableWidthBug = function(){
-	    if(isWebkit) {
-	      var $test = $('<div style="width:0px"><table style="max-width:100%"><tr><th><div style="min-width:100px;">X</div></th></tr></table></div>');
-	      $("body").append($test);
-	      var ret = ($test.find("table").width() == 0);
-	      $test.remove();
-	      return ret;
-	    }
-	    return false;
-	  };
-
-	  var createElements = !isFF && !ieVersion; //FF can read width from <col> elements, but webkit cannot
-
-	  var $window = $(window);
-
-	  /**
-	   * @param debounceMs
-	   * @param cb
-	   */
-	  function windowResize(debounceMs, eventName, cb){
-	    if(ieVersion == 8){ //ie8 is crap: https://github.com/mkoryak/floatThead/issues/65
-	      var winWidth = $window.width();
-	      var debouncedCb = util.debounce(function(){
-	        var winWidthNew = $window.width();
-	        if(winWidth != winWidthNew){
-	          winWidth = winWidthNew;
-	          cb();
-	        }
-	      }, debounceMs);
-	      $window.on(eventName, debouncedCb);
-	    } else {
-	      $window.on(eventName, util.debounce(cb, debounceMs));
-	    }
-	  }
-
-
-	  function debug(str){
-	    window && window.console && window.console.log && window.console.log("jQuery.floatThead: " + str);
-	  }
-
-	  //returns fractional pixel widths
-	  function getOffsetWidth(el) {
-	    var rect = el.getBoundingClientRect();
-	    return rect.width || rect.right - rect.left;
-	  }
-
-	  /**
-	   * try to calculate the scrollbar width for your browser/os
-	   * @return {Number}
-	   */
-	  function scrollbarWidth() {
-	    var $div = $( //borrowed from anti-scroll
-	        '<div style="width:50px;height:50px;overflow-y:scroll;'
-	        + 'position:absolute;top:-200px;left:-200px;"><div style="height:100px;width:100%">'
-	        + '</div>'
-	    );
-	    $('body').append($div);
-	    var w1 = $div.innerWidth();
-	    var w2 = $('div', $div).innerWidth();
-	    $div.remove();
-	    return w1 - w2;
-	  }
-	  /**
-	   * Check if a given table has been datatableized (http://datatables.net)
-	   * @param $table
-	   * @return {Boolean}
-	   */
-	  function isDatatable($table){
-	    if($table.dataTableSettings){
-	      for(var i = 0; i < $table.dataTableSettings.length; i++){
-	        var table = $table.dataTableSettings[i].nTable;
-	        if($table[0] == table){
-	          return true;
-	        }
-	      }
-	    }
-	    return false;
-	  }
-
-	  function tableWidth($table, $fthCells, isOuter){
-	    // see: https://github.com/mkoryak/floatThead/issues/108
-	    var fn = isOuter ? "outerWidth": "width";
-	    if(isTableWidthBug && $table.css("max-width")){
-	      var w = 0;
-	      if(isOuter) {
-	        w += parseInt($table.css("borderLeft"), 10);
-	        w += parseInt($table.css("borderRight"), 10);
-	      }
-	      for(var i=0; i < $fthCells.length; i++){
-	        w += $fthCells.get(i).offsetWidth;
-	      }
-	      return w;
-	    } else {
-	      return $table[fn]();
-	    }
-	  }
-	  $.fn.floatThead = function(map){
-	    map = map || {};
-	    if(!util){ //may have been included after the script? lets try to grab it again.
-	      util = window._ || $.floatThead._;
-	      if(!util){
-	        throw new Error("jquery.floatThead-slim.js requires underscore. You should use the non-lite version since you do not have underscore.");
-	      }
-	    }
-
-	    if(ieVersion < 8){
-	      return this; //no more crappy browser support.
-	    }
-
-	    var mObs = null; //mutation observer lives in here if we can use it / make it
-
-	    if(util.isFunction(isTableWidthBug)) {
-	      isTableWidthBug = isTableWidthBug();
-	    }
-
-	    if(util.isString(map)){
-	      var command = map;
-	      var ret = this;
-	      this.filter('table').each(function(){
-	        var $this = $(this);
-	        var opts = $this.data('floatThead-lazy');
-	        if(opts){
-	          $this.floatThead(opts);
-	        }
-	        var obj = $this.data('floatThead-attached');
-	        if(obj && util.isFunction(obj[command])){
-	          var r = obj[command]();
-	          if(typeof r !== 'undefined'){
-	            ret = r;
-	          }
-	        }
-	      });
-	      return ret;
-	    }
-	    var opts = $.extend({}, $.floatThead.defaults || {}, map);
-
-	    $.each(map, function(key, val){
-	      if((!(key in $.floatThead.defaults)) && opts.debug){
-	        debug("Used ["+key+"] key to init plugin, but that param is not an option for the plugin. Valid options are: "+ (util.keys($.floatThead.defaults)).join(', '));
-	      }
-	    });
-	    if(opts.debug){
-	      var v = $.fn.jquery.split(".");
-	      if(parseInt(v[0], 10) == 1 && parseInt(v[1], 10) <= 7){
-	        debug("jQuery version "+$.fn.jquery+" detected! This plugin supports 1.8 or better, or 1.7.x with jQuery UI 1.8.24 -> http://jqueryui.com/resources/download/jquery-ui-1.8.24.zip")
-	      }
-	    }
-
-	    this.filter(':not(.'+opts.floatTableClass+')').each(function(){
-	      var floatTheadId = util.uniqueId();
-	      var $table = $(this);
-	      if($table.data('floatThead-attached')){
-	        return true; //continue the each loop
-	      }
-	      if(!$table.is('table')){
-	        throw new Error('jQuery.floatThead must be run on a table element. ex: $("table").floatThead();');
-	      }
-	      canObserveMutations = opts.autoReflow && canObserveMutations; //option defaults to false!
-	      var $header = $table.children('thead:first');
-	      var $tbody = $table.children('tbody:first');
-	      if($header.length == 0 || $tbody.length == 0){
-	        $table.data('floatThead-lazy', opts);
-	        $table.one('reflow', function(){
-	          $table.floatThead(opts);
-	        });
-	        return;
-	      }
-	      if($table.data('floatThead-lazy')){
-	        $table.unbind("reflow");
-	      }
-	      $table.data('floatThead-lazy', false);
-
-	      var headerFloated = false;
-	      var scrollingTop, scrollingBottom;
-	      var scrollbarOffset = {vertical: 0, horizontal: 0};
-	      var scWidth = scrollbarWidth();
-	      var lastColumnCount = 0; //used by columnNum()
-	      var $scrollContainer = opts.scrollContainer($table) || $([]); //guard against returned nulls
-	      var locked = $scrollContainer.length > 0;
-
-	      var useAbsolutePositioning = opts.useAbsolutePositioning;
-	      if(useAbsolutePositioning == null){ //defaults: locked=true, !locked=false
-	        useAbsolutePositioning = locked;
-	      }
-	      if(!useAbsolutePositioning){
-	        headerFloated = true; //#127
-	      }
-	      var $caption = $table.find("caption");
-	      var haveCaption = $caption.length == 1;
-	      if(haveCaption){
-	        var captionAlignTop = ($caption.css("caption-side") || $caption.attr("align") || "top") === "top";
-	      }
-
-	      var $fthGrp = $('<fthfoot style="display:table-footer-group;border-spacing:0;height:0;border-collapse:collapse;"/>');
-
-	      var wrappedContainer = false; //used with absolute positioning enabled. did we need to wrap the scrollContainer/table with a relative div?
-	      var $wrapper = $([]); //used when absolute positioning enabled - wraps the table and the float container
-	      var absoluteToFixedOnScroll = ieVersion <= 9 && !locked && useAbsolutePositioning; //on IE using absolute positioning doesn't look good with window scrolling, so we change position to fixed on scroll, and then change it back to absolute when done.
-	      var $floatTable = $("<table/>");
-	      var $floatColGroup = $("<colgroup/>");
-	      var $tableColGroup = $table.children('colgroup:first');
-	      var existingColGroup = true;
-	      if($tableColGroup.length == 0){
-	        $tableColGroup = $("<colgroup/>");
-	        existingColGroup = false;
-	      }
-	      var $fthRow = $('<fthtr style="display:table-row;border-spacing:0;height:0;border-collapse:collapse"/>'); //created unstyled elements (used for sizing the table because chrome can't read <col> width)
-	      var $floatContainer = $('<div style="overflow: hidden;" aria-hidden="true" class="floatThead-floatContainer"></div>');
-	      var floatTableHidden = false; //this happens when the table is hidden and we do magic when making it visible
-	      var $newHeader = $("<thead/>");
-	      var $sizerRow = $('<tr class="size-row"/>');
-	      var $sizerCells = $([]);
-	      var $tableCells = $([]); //used for sizing - either $sizerCells or $tableColGroup cols. $tableColGroup cols are only created in chrome for borderCollapse:collapse because of a chrome bug.
-	      var $headerCells = $([]);
-	      var $fthCells = $([]); //created elements
-
-	      $newHeader.append($sizerRow);
-	      $table.prepend($tableColGroup);
-	      if(createElements){
-	        $fthGrp.append($fthRow);
-	        $table.append($fthGrp);
-	      }
-
-	      $floatTable.append($floatColGroup);
-	      $floatContainer.append($floatTable);
-	      if(opts.copyTableClass){
-	        $floatTable.attr('class', $table.attr('class'));
-	      }
-	      $floatTable.attr({ //copy over some deprecated table attributes that people still like to use. Good thing people don't use colgroups...
-	        'cellpadding': $table.attr('cellpadding'),
-	        'cellspacing': $table.attr('cellspacing'),
-	        'border': $table.attr('border')
-	      });
-	      var tableDisplayCss = $table.css('display');
-	      $floatTable.css({
-	        'borderCollapse': $table.css('borderCollapse'),
-	        'border': $table.css('border'),
-	        'display': tableDisplayCss
-	      });
-	      if(tableDisplayCss == 'none'){
-	        floatTableHidden = true;
-	      }
-
-	      $floatTable.addClass(opts.floatTableClass).css({'margin': 0, 'border-bottom-width': 0}); //must have no margins or you won't be able to click on things under floating table
-
-	      if(useAbsolutePositioning){
-	        var makeRelative = function($container, alwaysWrap){
-	          var positionCss = $container.css('position');
-	          var relativeToScrollContainer = (positionCss == "relative" || positionCss == "absolute");
-	          if(!relativeToScrollContainer || alwaysWrap){
-	            var css = {"paddingLeft": $container.css('paddingLeft'), "paddingRight": $container.css('paddingRight')};
-	            $floatContainer.css(css);
-	            $container = $container.wrap("<div class='"+opts.floatWrapperClass+"' style='position: relative; clear:both;'></div>").parent();
-	            wrappedContainer = true;
-	          }
-	          return $container;
-	        };
-	        if(locked){
-	          $wrapper = makeRelative($scrollContainer, true);
-	          $wrapper.append($floatContainer);
-	        } else {
-	          $wrapper = makeRelative($table);
-	          $table.after($floatContainer);
-	        }
-	      } else {
-	        $table.after($floatContainer);
-	      }
-
-
-	      $floatContainer.css({
-	        position: useAbsolutePositioning ? 'absolute' : 'fixed',
-	        marginTop: 0,
-	        top:  useAbsolutePositioning ? 0 : 'auto',
-	        zIndex: opts.zIndex
-	      });
-	      $floatContainer.addClass(opts.floatContainerClass);
-	      updateScrollingOffsets();
-
-	      var layoutFixed = {'table-layout': 'fixed'};
-	      var layoutAuto = {'table-layout': $table.css('tableLayout') || 'auto'};
-	      var originalTableWidth = $table[0].style.width || ""; //setting this to auto is bad: #70
-	      var originalTableMinWidth = $table.css('minWidth') || "";
-
-	      function eventName(name){
-	        return name+'.fth-'+floatTheadId+'.floatTHead'
-	      }
-
-	      function setHeaderHeight(){
-	        var headerHeight = 0;
-	        $header.children("tr:visible").each(function(){
-	          headerHeight += $(this).outerHeight(true);
-	        });
-	        if($table.css('border-collapse') == 'collapse') {
-	          var tableBorderTopHeight = parseInt($table.css('border-top-width'), 10);
-	          var cellBorderTopHeight = parseInt($table.find("thead tr:first").find(">*:first").css('border-top-width'), 10);
-	          if(tableBorderTopHeight > cellBorderTopHeight) {
-	            headerHeight -= (tableBorderTopHeight / 2); //id love to see some docs where this magic recipe is found..
-	          }
-	        }
-	        $sizerRow.outerHeight(headerHeight);
-	        $sizerCells.outerHeight(headerHeight);
-	      }
-
-
-	      function setFloatWidth(){
-	        var tw = tableWidth($table, $fthCells, true);
-	        var width = $scrollContainer.width() || tw;
-	        var floatContainerWidth = $scrollContainer.css("overflow-y") != 'hidden' ? width - scrollbarOffset.vertical : width;
-	        $floatContainer.width(floatContainerWidth);
-	        if(locked){
-	          var percent = 100 * tw / (floatContainerWidth);
-	          $floatTable.css('width', percent+'%');
-	        } else {
-	          $floatTable.outerWidth(tw);
-	        }
-	      }
-
-	      function updateScrollingOffsets(){
-	        scrollingTop = (util.isFunction(opts.scrollingTop) ? opts.scrollingTop($table) : opts.scrollingTop) || 0;
-	        scrollingBottom = (util.isFunction(opts.scrollingBottom) ? opts.scrollingBottom($table) : opts.scrollingBottom) || 0;
-	      }
-
-	      /**
-	       * get the number of columns and also rebuild resizer rows if the count is different than the last count
-	       */
-	      function columnNum(){
-	        var count, $headerColumns;
-	        if(existingColGroup){
-	          count = $tableColGroup.find('col').length;
-	        } else {
-	          var selector;
-	          if(opts.cellTag == null && opts.headerCellSelector){ //TODO: once cellTag option is removed, remove this conditional
-	            selector = opts.headerCellSelector;
-	          } else {
-	            selector = 'tr:first>'+opts.cellTag;
-	          }
-	          if(util.isNumber(selector)){
-	            //it's actually a row count. (undocumented, might be removed!)
-	            return selector;
-	          }
-	          $headerColumns = $header.find(selector);
-	          count = 0;
-	          $headerColumns.each(function(){
-	            count += parseInt(($(this).attr('colspan') || 1), 10);
-	          });
-	        }
-	        if(count != lastColumnCount){
-	          lastColumnCount = count;
-	          var cells = [], cols = [], psuedo = [], content;
-	          for(var x = 0; x < count; x++){
-	            if (opts.enableAria && (content = $headerColumns.eq(x).text()) ) {
-	              cells.push('<th scope="col" class="floatThead-col">' + content + '</th>');
-	            } else {
-	              cells.push('<th class="floatThead-col"/>');
-	            }
-	            cols.push('<col/>');
-	            psuedo.push("<fthtd style='display:table-cell;height:0;width:auto;'/>");
-	          }
-
-	          cols = cols.join('');
-	          cells = cells.join('');
-
-	          if(createElements){
-	            psuedo = psuedo.join('');
-	            $fthRow.html(psuedo);
-	            $fthCells = $fthRow.find('fthtd');
-	          }
-
-	          $sizerRow.html(cells);
-	          $sizerCells = $sizerRow.find("th");
-	          if(!existingColGroup){
-	            $tableColGroup.html(cols);
-	          }
-	          $tableCells = $tableColGroup.find('col');
-	          $floatColGroup.html(cols);
-	          $headerCells = $floatColGroup.find("col");
-
-	        }
-	        return count;
-	      }
-
-	      function refloat(){ //make the thing float
-	        if(!headerFloated){
-	          headerFloated = true;
-	          if(useAbsolutePositioning){ //#53, #56
-	            var tw = tableWidth($table, $fthCells, true);
-	            var wrapperWidth = $wrapper.width();
-	            if(tw > wrapperWidth){
-	              $table.css('minWidth', tw);
-	            }
-	          }
-	          $table.css(layoutFixed);
-	          $floatTable.css(layoutFixed);
-	          $floatTable.append($header); //append because colgroup must go first in chrome
-	          $tbody.before($newHeader);
-	          setHeaderHeight();
-	        }
-	      }
-	      function unfloat(){ //put the header back into the table
-	        if(headerFloated){
-	          headerFloated = false;
-	          if(useAbsolutePositioning){ //#53, #56
-	            $table.width(originalTableWidth);
-	          }
-	          $newHeader.detach();
-	          $table.prepend($header);
-	          $table.css(layoutAuto);
-	          $floatTable.css(layoutAuto);
-	          $table.css('minWidth', originalTableMinWidth); //this looks weird, but it's not a bug. Think about it!!
-	          $table.css('minWidth', tableWidth($table, $fthCells)); //#121
-	        }
-	      }
-	      var isHeaderFloatingLogical = false; //for the purpose of this event, the header is/isnt floating, even though the element
-	                                           //might be in some other state. this is what the header looks like to the user
-	      function triggerFloatEvent(isFloating){
-	        if(isHeaderFloatingLogical != isFloating){
-	          isHeaderFloatingLogical = isFloating;
-	          $table.triggerHandler("floatThead", [isFloating, $floatContainer])
-	        }
-	      }
-	      function changePositioning(isAbsolute){
-	        if(useAbsolutePositioning != isAbsolute){
-	          useAbsolutePositioning = isAbsolute;
-	          $floatContainer.css({
-	            position: useAbsolutePositioning ? 'absolute' : 'fixed'
-	          });
-	        }
-	      }
-	      function getSizingRow($table, $cols, $fthCells, ieVersion){
-	        if(createElements){
-	          return $fthCells;
-	        } else if(ieVersion) {
-	          return opts.getSizingRow($table, $cols, $fthCells);
-	        } else {
-	          return $cols;
-	        }
-	      }
-
-	      /**
-	       * returns a function that updates the floating header's cell widths.
-	       * @return {Function}
-	       */
-	      function reflow(){
-	        var i;
-	        var numCols = columnNum(); //if the tables columns changed dynamically since last time (datatables), rebuild the sizer rows and get a new count
-
-	        return function(){
-	          $tableCells = $tableColGroup.find('col');
-	          var $rowCells = getSizingRow($table, $tableCells, $fthCells, ieVersion);
-
-	          if($rowCells.length == numCols && numCols > 0){
-	            if(!existingColGroup){
-	              for(i=0; i < numCols; i++){
-	                $tableCells.eq(i).css('width', '');
-	              }
-	            }
-	            unfloat();
-	            var widths = [];
-	            for(i=0; i < numCols; i++){
-	              widths[i] = getOffsetWidth($rowCells.get(i));
-	            }
-	            for(i=0; i < numCols; i++){
-	              $headerCells.eq(i).width(widths[i]);
-	              $tableCells.eq(i).width(widths[i]);
-	            }
-	            refloat();
-	          } else {
-	            $floatTable.append($header);
-	            $table.css(layoutAuto);
-	            $floatTable.css(layoutAuto);
-	            setHeaderHeight();
-	          }
-	        };
-	      }
-
-	      function floatContainerBorderWidth(side){
-	        var border = $scrollContainer.css("border-"+side+"-width");
-	        var w = 0;
-	        if (border && ~border.indexOf('px')) {
-	          w = parseInt(border, 10);
-	        }
-	        return w;
-	      }
-	      /**
-	       * first performs initial calculations that we expect to not change when the table, window, or scrolling container are scrolled.
-	       * returns a function that calculates the floating container's top and left coords. takes into account if we are using page scrolling or inner scrolling
-	       * @return {Function}
-	       */
-	      function calculateFloatContainerPosFn(){
-	        var scrollingContainerTop = $scrollContainer.scrollTop();
-
-	        //this floatEnd calc was moved out of the returned function because we assume the table height doesn't change (otherwise we must reinit by calling calculateFloatContainerPosFn)
-	        var floatEnd;
-	        var tableContainerGap = 0;
-	        var captionHeight = haveCaption ? $caption.outerHeight(true) : 0;
-	        var captionScrollOffset = captionAlignTop ? captionHeight : -captionHeight;
-
-	        var floatContainerHeight = $floatContainer.height();
-	        var tableOffset = $table.offset();
-	        var tableLeftGap = 0; //can be caused by border on container (only in locked mode)
-	        var tableTopGap = 0;
-	        if(locked){
-	          var containerOffset = $scrollContainer.offset();
-	          tableContainerGap = tableOffset.top - containerOffset.top + scrollingContainerTop;
-	          if(haveCaption && captionAlignTop){
-	            tableContainerGap += captionHeight;
-	          }
-	          tableLeftGap = floatContainerBorderWidth('left');
-	          tableTopGap = floatContainerBorderWidth('top');
-	          tableContainerGap -= tableTopGap;
-	        } else {
-	          floatEnd = tableOffset.top - scrollingTop - floatContainerHeight + scrollingBottom + scrollbarOffset.horizontal;
-	        }
-	        var windowTop = $window.scrollTop();
-	        var windowLeft = $window.scrollLeft();
-	        var scrollContainerLeft =  $scrollContainer.scrollLeft();
-
-	        return function(eventType){
-	          var isTableHidden = $table[0].offsetWidth <= 0 && $table[0].offsetHeight <= 0;
-	          if(!isTableHidden && floatTableHidden) {
-	            floatTableHidden = false;
-	            setTimeout(function(){
-	              $table.triggerHandler("reflow");
-	            }, 1);
-	            return null;
-	          }
-	          if(isTableHidden){ //it's hidden
-	            floatTableHidden = true;
-	            if(!useAbsolutePositioning){
-	              return null;
-	            }
-	          }
-
-	          if(eventType == 'windowScroll'){
-	            windowTop = $window.scrollTop();
-	            windowLeft = $window.scrollLeft();
-	          } else if(eventType == 'containerScroll'){
-	            scrollingContainerTop = $scrollContainer.scrollTop();
-	            scrollContainerLeft =  $scrollContainer.scrollLeft();
-	          } else if(eventType != 'init') {
-	            windowTop = $window.scrollTop();
-	            windowLeft = $window.scrollLeft();
-	            scrollingContainerTop = $scrollContainer.scrollTop();
-	            scrollContainerLeft =  $scrollContainer.scrollLeft();
-	          }
-	          if(isWebkit && (windowTop < 0 || windowLeft < 0)){ //chrome overscroll effect at the top of the page - breaks fixed positioned floated headers
-	            return;
-	          }
-
-	          if(absoluteToFixedOnScroll){
-	            if(eventType == 'windowScrollDone'){
-	              changePositioning(true); //change to absolute
-	            } else {
-	              changePositioning(false); //change to fixed
-	            }
-	          } else if(eventType == 'windowScrollDone'){
-	            return null; //event is fired when they stop scrolling. ignore it if not 'absoluteToFixedOnScroll'
-	          }
-
-	          tableOffset = $table.offset();
-	          if(haveCaption && captionAlignTop){
-	            tableOffset.top += captionHeight;
-	          }
-	          var top, left;
-	          var tableHeight = $table.outerHeight();
-
-	          if(locked && useAbsolutePositioning){ //inner scrolling, absolute positioning
-	            if (tableContainerGap >= scrollingContainerTop) {
-	              var gap = tableContainerGap - scrollingContainerTop + tableTopGap;
-	              top = gap > 0 ? gap : 0;
-	              triggerFloatEvent(false);
-	            } else {
-	              top = wrappedContainer ? tableTopGap : scrollingContainerTop;
-	              //headers stop at the top of the viewport
-	              triggerFloatEvent(true);
-	            }
-	            left = tableLeftGap;
-	          } else if(!locked && useAbsolutePositioning) { //window scrolling, absolute positioning
-	            if(windowTop > floatEnd + tableHeight + captionScrollOffset){
-	              top = tableHeight - floatContainerHeight + captionScrollOffset; //scrolled past table
-	            } else if (tableOffset.top >= windowTop + scrollingTop) {
-	              top = 0; //scrolling to table
-	              unfloat();
-	              triggerFloatEvent(false);
-	            } else {
-	              top = scrollingTop + windowTop - tableOffset.top + tableContainerGap + (captionAlignTop ? captionHeight : 0);
-	              refloat(); //scrolling within table. header floated
-	              triggerFloatEvent(true);
-	            }
-	            left =  0;
-	          } else if(locked && !useAbsolutePositioning){ //inner scrolling, fixed positioning
-	            if (tableContainerGap > scrollingContainerTop || scrollingContainerTop - tableContainerGap > tableHeight) {
-	              top = tableOffset.top - windowTop;
-	              unfloat();
-	              triggerFloatEvent(false);
-	            } else {
-	              top = tableOffset.top + scrollingContainerTop  - windowTop - tableContainerGap;
-	              refloat();
-	              triggerFloatEvent(true);
-	              //headers stop at the top of the viewport
-	            }
-	            left = tableOffset.left + scrollContainerLeft - windowLeft;
-	          } else if(!locked && !useAbsolutePositioning) { //window scrolling, fixed positioning
-	            if(windowTop > floatEnd + tableHeight + captionScrollOffset){
-	              top = tableHeight + scrollingTop - windowTop + floatEnd + captionScrollOffset;
-	              //scrolled past the bottom of the table
-	            } else if (tableOffset.top > windowTop + scrollingTop) {
-	              top = tableOffset.top - windowTop;
-	              refloat();
-	              triggerFloatEvent(false); //this is a weird case, the header never gets unfloated and i have no no way to know
-	              //scrolled past the top of the table
-	            } else {
-	              //scrolling within the table
-	              top = scrollingTop;
-	              triggerFloatEvent(true);
-	            }
-	            left = tableOffset.left - windowLeft;
-	          }
-	          return {top: top, left: left};
-	        };
-	      }
-	      /**
-	       * returns a function that caches old floating container position and only updates css when the position changes
-	       * @return {Function}
-	       */
-	      function repositionFloatContainerFn(){
-	        var oldTop = null;
-	        var oldLeft = null;
-	        var oldScrollLeft = null;
-	        return function(pos, setWidth, setHeight){
-	          if(pos != null && (oldTop != pos.top || oldLeft != pos.left)){
-	            $floatContainer.css({
-	              top: pos.top,
-	              left: pos.left
-	            });
-	            oldTop = pos.top;
-	            oldLeft = pos.left;
-	          }
-	          if(setWidth){
-	            setFloatWidth();
-	          }
-	          if(setHeight){
-	            setHeaderHeight();
-	          }
-	          var scrollLeft = $scrollContainer.scrollLeft();
-	          if(!useAbsolutePositioning || oldScrollLeft != scrollLeft){
-	            $floatContainer.scrollLeft(scrollLeft);
-	            oldScrollLeft = scrollLeft;
-	          }
-	        }
-	      }
-
-	      /**
-	       * checks if THIS table has scrollbars, and finds their widths
-	       */
-	      function calculateScrollBarSize(){ //this should happen after the floating table has been positioned
-	        if($scrollContainer.length){
-	          if($scrollContainer.data().perfectScrollbar){
-	            scrollbarOffset = {horizontal:0, vertical:0};
-	          } else {
-	            var sw = $scrollContainer.width(), sh = $scrollContainer.height(), th = $table.height(), tw = tableWidth($table, $fthCells);
-	            var offseth = sw < tw ? scWidth : 0;
-	            var offsetv = sh < th ? scWidth : 0;
-	            scrollbarOffset.horizontal = sw - offsetv < tw ? scWidth : 0;
-	            scrollbarOffset.vertical = sh - offseth < th ? scWidth : 0;
-	          }
-	        }
-	      }
-	      //finish up. create all calculation functions and bind them to events
-	      calculateScrollBarSize();
-
-	      var flow;
-
-	      var ensureReflow = function(){
-	        flow = reflow();
-	        flow();
-	      };
-
-	      ensureReflow();
-
-	      var calculateFloatContainerPos = calculateFloatContainerPosFn();
-	      var repositionFloatContainer = repositionFloatContainerFn();
-
-	      repositionFloatContainer(calculateFloatContainerPos('init'), true); //this must come after reflow because reflow changes scrollLeft back to 0 when it rips out the thead
-
-	      var windowScrollDoneEvent = util.debounce(function(){
-	        repositionFloatContainer(calculateFloatContainerPos('windowScrollDone'), false);
-	      }, 1);
-
-	      var windowScrollEvent = function(){
-	        repositionFloatContainer(calculateFloatContainerPos('windowScroll'), false);
-	        if(absoluteToFixedOnScroll){
-	          windowScrollDoneEvent();
-	        }
-	      };
-	      var containerScrollEvent = function(){
-	        repositionFloatContainer(calculateFloatContainerPos('containerScroll'), false);
-	      };
-
-
-	      var windowResizeEvent = function(){
-	        updateScrollingOffsets();
-	        calculateScrollBarSize();
-	        ensureReflow();
-	        calculateFloatContainerPos = calculateFloatContainerPosFn();
-	        repositionFloatContainer = repositionFloatContainerFn();
-	        repositionFloatContainer(calculateFloatContainerPos('resize'), true, true);
-	      };
-	      var reflowEvent = util.debounce(function(){
-	        calculateScrollBarSize();
-	        updateScrollingOffsets();
-	        ensureReflow();
-	        calculateFloatContainerPos = calculateFloatContainerPosFn();
-	        repositionFloatContainer(calculateFloatContainerPos('reflow'), true);
-	      }, 1);
-	      if(locked){ //internal scrolling
-	        if(useAbsolutePositioning){
-	          $scrollContainer.on(eventName('scroll'), containerScrollEvent);
-	        } else {
-	          $scrollContainer.on(eventName('scroll'), containerScrollEvent);
-	          $window.on(eventName('scroll'), windowScrollEvent);
-	        }
-	      } else { //window scrolling
-	        $window.on(eventName('scroll'), windowScrollEvent);
-	      }
-
-	      $window.on(eventName('load'), reflowEvent); //for tables with images
-
-	      windowResize(opts.debounceResizeMs, eventName('resize'), windowResizeEvent);
-	      $table.on('reflow', reflowEvent);
-	      if(isDatatable($table)){
-	        $table
-	          .on('filter', reflowEvent)
-	          .on('sort',   reflowEvent)
-	          .on('page',   reflowEvent);
-	      }
-
-
-	      if (canObserveMutations) {
-	        var mutationElement = $scrollContainer.length ? $scrollContainer[0] : $table[0];
-	        mObs = new MutationObserver(function(e){
-	          var wasThead = function(nodes){
-	            return nodes && nodes[0] && nodes[0].nodeName == "THEAD";
-	          };
-	          for(var i=0; i < e.length; i++){
-	            if(!(wasThead(e[i].addedNodes) || wasThead(e[i].removedNodes))){
-	              reflowEvent();
-	              break;
-	            }
-	          }
-	        });
-	        mObs.observe(mutationElement, {
-	            childList: true,
-	            subtree: true
-	        });
-	      }
-
-	      //attach some useful functions to the table.
-	      $table.data('floatThead-attached', {
-	        destroy: function(){
-	          var ns = '.fth-'+floatTheadId;
-	          unfloat();
-	          $table.css(layoutAuto);
-	          $tableColGroup.remove();
-	          createElements && $fthGrp.remove();
-	          if($newHeader.parent().length){ //only if it's in the DOM
-	            $newHeader.replaceWith($header);
-	          }
-	          if(canObserveMutations){
-	            mObs.disconnect();
-	            mObs = null;
-	          }
-	          $table.off('reflow');
-	          $scrollContainer.off(ns);
-	          if (wrappedContainer) {
-	            if ($scrollContainer.length) {
-	              $scrollContainer.unwrap();
-	            }
-	            else {
-	              $table.unwrap();
-	            }
-	          }
-	          $table.css('minWidth', originalTableMinWidth);
-	          $floatContainer.remove();
-	          $table.data('floatThead-attached', false);
-	          $window.off(ns);
-	        },
-	        reflow: function(){
-	          reflowEvent();
-	        },
-	        setHeaderHeight: function(){
-	          setHeaderHeight();
-	        },
-	        getFloatContainer: function(){
-	          return $floatContainer;
-	        },
-	        getRowGroups: function(){
-	          if(headerFloated){
-	            return $floatContainer.children("thead").add($table.children("tbody,tfoot"));
-	          } else {
-	            return $table.children("thead,tbody,tfoot");
-	          }
-	        }
-	      });
-	    });
-	    return this;
-	  };
-	})(jQuery);
-	/* jQuery.floatThead.utils - http://mkoryak.github.io/floatThead/ - Copyright (c) 2012 - 2014 Misha Koryak
-	 * License: MIT
-	 *
-	 * This file is required if you do not use underscore in your project and you want to use floatThead.
-	 * It contains functions from underscore that the plugin uses.
-	 *
-	 * YOU DON'T NEED TO INCLUDE THIS IF YOU ALREADY INCLUDE UNDERSCORE!
-	 *
-	 */
-
-	(function($){
-
-	  $.floatThead = $.floatThead || {};
-
-	  $.floatThead._  = window._ || (function(){
-	    var that = {};
-	    var hasOwnProperty = Object.prototype.hasOwnProperty, isThings = ['Arguments', 'Function', 'String', 'Number', 'Date', 'RegExp'];
-	    that.has = function(obj, key) {
-	      return hasOwnProperty.call(obj, key);
-	    };
-	    that.keys = function(obj) {
-	      if (obj !== Object(obj)) throw new TypeError('Invalid object');
-	      var keys = [];
-	      for (var key in obj) if (that.has(obj, key)) keys.push(key);
-	      return keys;
-	    };
-	    var idCounter = 0;
-	    that.uniqueId = function(prefix) {
-	      var id = ++idCounter + '';
-	      return prefix ? prefix + id : id;
-	    };
-	    $.each(isThings, function(){
-	      var name = this;
-	      that['is' + name] = function(obj) {
-	        return Object.prototype.toString.call(obj) == '[object ' + name + ']';
-	      };
-	    });
-	    that.debounce = function(func, wait, immediate) {
-	      var timeout, args, context, timestamp, result;
-	      return function() {
-	        context = this;
-	        args = arguments;
-	        timestamp = new Date();
-	        var later = function() {
-	          var last = (new Date()) - timestamp;
-	          if (last < wait) {
-	            timeout = setTimeout(later, wait - last);
-	          } else {
-	            timeout = null;
-	            if (!immediate) result = func.apply(context, args);
-	          }
-	        };
-	        var callNow = immediate && !timeout;
-	        if (!timeout) {
-	          timeout = setTimeout(later, wait);
-	        }
-	        if (callNow) result = func.apply(context, args);
-	        return result;
-	      };
-	    };
-	    return that;
-	  })();
-	})(jQuery);
-
-
+/***/ function(module, exports, __webpack_require__) {
+
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+	var _reactAddons = __webpack_require__(2);
+
+	var _reactAddons2 = _interopRequireDefault(_reactAddons);
+
+	var _underscore = __webpack_require__(3);
+
+	var _underscore2 = _interopRequireDefault(_underscore);
+
+	var _jquery = __webpack_require__(4);
+
+	var _jquery2 = _interopRequireDefault(_jquery);
+
+	var _configSettings = __webpack_require__(5);
+
+	var _configSettings2 = _interopRequireDefault(_configSettings);
+
+	exports["default"] = _reactAddons2["default"].createClass({
+		displayName: "tbody",
+
+		mixins: [_reactAddons2["default"].addons.PureRendermixin],
+
+		getDefaultProps: function getDefaultProps() {
+			return {
+				headerHeight: null,
+				fixedHeader: false,
+				uniqueId: _underscore2["default"].uniqueId('tbody-'),
+				onScroll: null,
+				totalItems: null,
+				onWidth: null,
+				parentWidth: null,
+				scrollPadding: null
+			};
+		},
+
+		getInitialState: function getInitialState() {
+			return {
+				maxHeight: null,
+				cHeight: null,
+				currentFirstElement: 0,
+				scrollBound: false,
+				mtop: null,
+				scrollerheight: null,
+				totalHeight: null,
+				itemsPerVp: null
+			};
+		},
+
+		componentDidMount: function componentDidMount() {
+			this.computeHeights();
+			this.bindScroll();
+		},
+
+		componentDidUpdate: function componentDidUpdate() {
+			var mtop = 0;
+
+			if (this.props.fixedHeader && this.props.headerHeight > 0) {
+				mtop = this.props.headerHeight - 2;
+			}
+
+			if (mtop != this.state.mtop) {
+				this.setState({
+					mtop: mtop,
+					cHeight: null
+				});
+			} else {
+				this.computeHeights();
+			}
+		},
+
+		bindScroll: function bindScroll() {
+			var _this = this;
+
+			if (!this.state.scrollBound) {
+				var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this));
+
+				$this.on('scroll', _underscore2["default"].throttle(this.onScroll, 55));
+				(0, _jquery2["default"])(window).on('resize', _underscore2["default"].throttle(function () {
+					_this.setState({
+						maxHeight: null,
+						cHeight: null,
+						mtop: null,
+						scrollerheight: null,
+						totalHeight: null,
+						itemsPerVp: null
+					});
+				}, 50));
+			}
+		},
+
+		onScroll: function onScroll(e) {
+			var $el = (0, _jquery2["default"])(e.currentTarget);
+			var position = $el.scrollTop();
+
+			this.setElementInPosition(position);
+		},
+
+		setElementInPosition: function setElementInPosition(scroll) {
+			var _this2 = this;
+
+			var mtop = this.state.mtop;
+			var scrollerheight = this.state.scrollerheight;
+			var totalHeight = this.state.totalHeight;
+			var itemsPerVp = this.state.itemsPerVp;
+
+			var firstElement = Math.floor(scroll / this.state.cHeight) - 1;
+
+			if (!scroll) {
+				firstElement = 0;
+			}
+
+			if (firstElement + itemsPerVp >= this.props.totalItems) {
+				firstElement = this.props.totalItems - itemsPerVp;
+			}
+
+			if (firstElement < 0) {
+				firstElement = 0;
+			}
+
+			this.setState({
+				currentFirstElement: firstElement
+			}, function () {
+				if (typeof _this2.props.onScroll == 'function') {
+					_this2.props.onScroll(firstElement, itemsPerVp);
+				}
+			});
+		},
+
+		computeHeights: function computeHeights() {
+			var _this3 = this;
+
+			if (!this.state.cHeight) {
+				(function () {
+					var $this = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(_this3));
+					var $row = $this.find('.propertable-row').eq(0);
+					var $cells = $row.children();
+					var widths = [];
+					var sbound = _this3.state.scrollBound;
+
+					if ($row.height() != _this3.state.cHeight) {
+						var mtop = _this3.state.mtop;
+						var maxHeight = $this.parents('.propertable-base').eq(0).height();
+						var cHeight = $row.height();
+						var scrollerheight = maxHeight;
+						var totalHeight = cHeight * _this3.props.totalItems;
+						var itemsPerVp = Math.ceil(scrollerheight / cHeight * 1);
+
+						$cells.each(function () {
+							var $cell = (0, _jquery2["default"])(this);
+							widths.push($cell.width());
+						});
+
+						_this3.setState({
+							mtop: mtop,
+							maxHeight: maxHeight,
+							cHeight: cHeight,
+							scrollerheight: scrollerheight,
+							totalHeight: totalHeight,
+							itemsPerVp: itemsPerVp
+						}, function () {
+							if (!sbound) {
+								_this3.setElementInPosition(0);
+							}
+						});
+
+						if (typeof _this3.props.onWidth === 'function') {
+							_this3.props.onWidth(widths);
+						}
+					}
+				})();
+			}
+		},
+
+		render: function render() {
+			var className = this.props.className;
+			var toRender = this.props.children;
+			var afterCount = 0;
+			var beforeCount = 0;
+			var rendered = [];
+			var mtop = this.state.mtop;
+			var scrollerheight = this.state.scrollerheight;
+			var totalHeight = this.state.totalHeight;
+			var itemsPerVp = this.state.itemsPerVp;
+
+			if (!this.state.cHeight) {
+				rendered = _underscore2["default"].first(this.props.children);
+			} else {
+				toRender = this.props.children;
+				afterCount = this.props.totalItems - (this.state.currentFirstElement + itemsPerVp);
+				beforeCount = this.state.currentFirstElement;
+
+				if (afterCount < 0) {
+					afterCount = 0;
+				}
+
+				if (beforeCount < 0) {
+					beforeCount = 0;
+				}
+
+				if (beforeCount) {
+					rendered.push(_reactAddons2["default"].createElement("div", { key: 'before' + this.props.uniqueId, style: { height: this.state.cHeight * beforeCount } }));
+				}
+
+				_underscore2["default"].each(toRender, function (item) {
+					rendered.push(item);
+				});
+
+				if (afterCount) {
+					rendered.push(_reactAddons2["default"].createElement("div", { key: 'after-' + this.props.uniqueId, style: { height: this.state.cHeight * afterCount } }));
+				}
+			}
+
+			return _reactAddons2["default"].createElement(
+				"div",
+				{ className: "tbody-scroller", style: {
+						paddingTop: mtop,
+						height: scrollerheight,
+						width: this.props.parentWidth
+					} },
+				_reactAddons2["default"].createElement(
+					"div",
+					{ className: "propertable-container propertable-tbody-container", style: {
+							width: this.props.parentWidth - this.props.scrollPadding
+						} },
+					_reactAddons2["default"].createElement(
+						"div",
+						{ className: "propertable-tbody", ref: "body" },
+						rendered
+					)
+				)
+			);
+		}
+	});
+	module.exports = exports["default"];
+
+	/* REACT HOT LOADER */ }).call(this); } finally { if (false) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/makeExportsHot.js"); if (makeExportsHot(module, require("react"))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot not apply hot update to " + "tbody.js" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
 
 /***/ },
 /* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 

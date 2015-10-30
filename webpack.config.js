@@ -22,12 +22,13 @@ module.exports = {
       {
         test: /\.scss$/,
         loader: ExtractTextPlugin.extract('css!sass?includePaths[]='+path.resolve(__dirname, "./node_modules/compass-mixins/lib"))
-      },
-      { test: /globalize/, loaders: ["babel-loader", 'imports?define=>false'] }
+      }
     ],
   },
   externals: {
+    'react': 'React',
     'react/addons': 'React',
+    'jquery': 'jQuery',
     'jquery': '$',
     'underscore': '_',
     'moment': 'moment'
@@ -41,6 +42,7 @@ module.exports = {
   plugins: [
     new ExtractTextPlugin('propertable.css', {
       allChunks: true
-    })
+    }),
+    new webpack.optimize.DedupePlugin()
   ]
 }
