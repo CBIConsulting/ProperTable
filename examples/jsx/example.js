@@ -1,4 +1,4 @@
-let body = document.body;
+let body = document.getElementById('canvas');
 
 $(() => {
 	ProperTable.Settings.set({
@@ -10,8 +10,9 @@ $(() => {
 			name: 'col1',
 			label: 'columna 1',
 			field: 'col1',
+			width: 120,
 			formatter: function(value) {
-				return _.uniqueId(value + '-');
+				return 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
 			}
 		},
 		{
@@ -41,6 +42,14 @@ $(() => {
 					field: 'nested2'
 				}
 			]
+		},
+		{
+			name: 'test',
+			label: 'test',
+			field: 'number',
+			formatter: function(value) {
+				return 'test';
+			}
 		}
 	];
 

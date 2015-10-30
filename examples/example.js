@@ -1,6 +1,6 @@
 'use strict';
 
-var body = document.body;
+var body = document.getElementById('canvas');
 
 $(function () {
 	ProperTable.Settings.set({
@@ -11,8 +11,9 @@ $(function () {
 		name: 'col1',
 		label: 'columna 1',
 		field: 'col1',
+		width: 120,
 		formatter: function formatter(value) {
-			return _.uniqueId(value + '-');
+			return 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
 		}
 	}, {
 		name: 'number',
@@ -37,12 +38,18 @@ $(function () {
 			label: 'nested2',
 			field: 'nested2'
 		}]
+	}, {
+		name: 'test',
+		label: 'test',
+		field: 'number',
+		formatter: function formatter(value) {
+			return 'test';
+		}
 	}];
 
 	var data = [];
 
-	console.time('datagen');
-	for (var i = 50; i >= 0; i--) {
+	for (var i = 500; i >= 0; i--) {
 		data.push({
 			col1: 'added-' + i,
 			nested1: moment().add(Math.round(Math.random() * 10000) % 2000, 'days').format('YYYY-MM-DD HH:mm:ss'),
@@ -50,7 +57,6 @@ $(function () {
 			number: Math.round(Math.random() * 1000) % 20 + 1
 		});
 	};
-	console.timeEnd('datagen');
 
 	React.render(React.createElement(ProperTable.Table, { key: 'testtable', cols: cols, data: data, afterSelect: function (data) {
 			console.log('selected', data);
