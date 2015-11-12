@@ -26,6 +26,10 @@
         display: table-row-group; }
       .propertable .propertable-table .propertable-container .propertable-row {
         display: table-row; }
+      .propertable .propertable-table .propertable-container .propertable-cell {
+        display: table-cell; }
+      .propertable .propertable-table .propertable-container .propertable-hcell {
+        display: inline-block; }
       .propertable .propertable-table .propertable-container .propertable-cell, .propertable .propertable-table .propertable-container .propertable-hcell {
         display: table-cell;
         overflow: hidden;
