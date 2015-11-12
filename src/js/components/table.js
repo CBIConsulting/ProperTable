@@ -450,7 +450,7 @@ export default React.createClass({
 					fixedHeader={this.props.fixedHeader}
 					headerHeight={this.state.headerHeight}
 					onScroll={this.handleScroll}
-					onWidth={this.updateHeaderWidths}
+					//onWidth={this.updateHeaderWidths}
 					parentWidth={pwidth}
 					scrollPadding={hpadding}
 				>

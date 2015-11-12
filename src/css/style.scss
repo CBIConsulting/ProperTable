@@ -42,6 +42,13 @@ $selectWidth: 71px;
 				display: table-row;
 			}
 
+			.propertable-cell {
+				display: table-cell;
+			}
+			.propertable-hcell{
+				display: inline-block;
+			}
+
 			.propertable-cell, .propertable-hcell {
 				display: table-cell;
 				overflow: hidden;
