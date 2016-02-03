@@ -1,7 +1,5 @@
 import React from "react/addons";
 import _ from "underscore";
-import $ from "jquery";
-import Settings from "../config/settings";
 import SelectCell from "./selectcell";
 
 export default React.createClass({

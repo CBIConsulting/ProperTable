@@ -56,7 +56,7 @@ export default React.createClass({
 			className: '',
 			cols: [],
 			data: [],
-			uniqueId: _.uniqueId('propertable-'),
+			uniqueId: null,
 			afterSort: null,
 			afterSelect: null,
 			fixedHeader: true,
@@ -68,6 +68,7 @@ export default React.createClass({
 	getInitialState() {
 		return {
 			cols: _.values($.extend(true, {}, this.props.cols)),
+			uniqueId: this.props.uniqueId || _.uniqueId('propertable-'),
 			data: null,
 			rawdata: null,
 			sort: null,
@@ -78,9 +79,13 @@ export default React.createClass({
 		};
 	},
 
+	componentWillUnmount(){
+		clearTimeout(this.computeWidthInterval);
+	},
+
 	componentDidMount() {
 		scrollbarWidth = getScrollbarWidth();
-
+		this.computeWidthInterval = setInterval(this.computeHeaderWidth.bind(this), 200)
 		this.pwidth = $(React.findDOMNode(this)).parent().width();
 
 		this.initData();
@@ -168,7 +173,7 @@ export default React.createClass({
 				this.propsList.forEach(prop => props[prop] = $cell.css(prop));
 				return props;
 			}).get();
-			$('.propertable-thead .propertable-row .propertable-hcell.last-nested-level').each((i, cell) => {
+			$(firstRow).closest('.propertable-base').find('.propertable-thead .propertable-row .propertable-hcell.last-nested-level').each((i, cell) => {
 				let $cell = $(cell);
 				this.propsList.forEach(prop => {
 					if (lengths[i]) {
@@ -234,7 +239,7 @@ export default React.createClass({
 		}
 
 		if (this.props.selectable && !nested) {
-			result.push(<SelectHeader key={this.props.uniqueId + '-select-all-header'} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
+			result.push(<SelectHeader key={this.state.uniqueId + '-select-all-header'} selected={this.state.allSelected} sorted={sorted} onSelect={this.selectAll} onSort={this.handleSort} />);
 		}
 
 		_.each(cols, (item) => {
@@ -387,6 +392,7 @@ export default React.createClass({
 				itemsPerVP: itemsPerVP
 			});
 		}
+		this.computeHeaderWidth();
 	},
 
 	updateHeaderWidths: _.debounce(function(widths) {
@@ -459,7 +465,7 @@ export default React.createClass({
 			</div>;
 		}
 
-		return <div id={this.props.uniqueId} className={"propertable propertable-base "+className}>
+		return <div id={this.state.uniqueId} className={"propertable propertable-base "+className}>
 			{content}
 		</div>
 	}

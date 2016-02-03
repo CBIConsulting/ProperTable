@@ -1,8 +1,5 @@
 import React from "react/addons";
 import _ from "underscore";
-import $ from "jquery";
-import Settings from "../config/settings";
-
 export default React.createClass({
 	mixins: [React.addons.PureRendermixin],
 
@@ -20,7 +17,7 @@ export default React.createClass({
 		}
 	},
 
-	handleSort(e) {
+	handleSort() {
 		let next = 'asc';
 
 		if (this.props.sorted == 'asc') {
@@ -57,7 +54,7 @@ export default React.createClass({
 	render() {
 		let className = this.props.className;
 		let spans = {};
-		let sortBtns = this.renderSortOptions();
+		//let sortBtns = this.renderSortOptions();
 		let tools = null;
 
 		if (this.props.rowspan) {

@@ -1,7 +1,5 @@
 import React from "react/addons";
 import _ from "underscore";
-import $ from "jquery";
-import Settings from "../config/settings";
 
 export default React.createClass({
 	mixins: [React.addons.PureRendermixin],
@@ -18,10 +16,12 @@ export default React.createClass({
 	render() {
 		let className = this.props.className;
 
-		return <div id={this.props.uniqueId} className={"propertable-cell "+className}>
+		return <div id={this.props.uniqueId} className={"propertable-cell "+className} style={{
+				minWidth: this.props.col.minWidth || this.props.minWidth}}
+			>
 			<div className="cell-inner"  style={{
-			width: this.props.col.width || this.props.width
-		}}>
+				width: this.props.col.width || this.props.width
+			}}>
 				{this.props.children}
 			</div>
 		</div>;

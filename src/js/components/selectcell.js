@@ -1,7 +1,5 @@
 import React from "react/addons";
 import _ from "underscore";
-import $ from "jquery";
-import Settings from "../config/settings";
 
 export default React.createClass({
 	mixins: [React.addons.PureRendermixin],
@@ -15,7 +13,7 @@ export default React.createClass({
 		}
 	},
 
-	handleChange(e) {
+	handleChange() {
 		if (typeof this.props.onChange == 'function') {
 			this.props.onChange(!this.props.selected);
 		}
