@@ -1,7 +1,7 @@
 'use strict';
 
 var body = document.getElementById('canvas');
-
+/* global $, ProperTable, moment, React */
 $(function () {
 	ProperTable.Settings.set({
 		language: 'en'
@@ -12,7 +12,7 @@ $(function () {
 		label: 'columna 1',
 		field: 'col1',
 		width: 120,
-		formatter: function formatter(value) {
+		formatter: function formatter() {
 			return 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
 		}
 	}, {
@@ -21,6 +21,14 @@ $(function () {
 		field: 'number',
 		className: 'number',
 		formatter: ProperTable.formatters.number
+	}, {
+		name: 'number2',
+		label: 'A number',
+		field: 'number',
+		className: 'number',
+		formatter: function formatter(value) {
+			return ProperTable.formatters.number(value + 1);
+		}
 	}, {
 		name: 'nested',
 		label: 'columnas anidadas',
@@ -42,7 +50,7 @@ $(function () {
 		name: 'test',
 		label: 'test',
 		field: 'number',
-		formatter: function formatter(value) {
+		formatter: function formatter() {
 			return 'test';
 		}
 	}];
@@ -56,9 +64,9 @@ $(function () {
 			nested2: 'bar-' + i,
 			number: Math.round(Math.random() * 1000) % 20 + 1
 		});
-	};
+	}
 
-	React.render(React.createElement(ProperTable.Table, { key: 'testtable', cols: cols, data: data, afterSelect: function (data) {
+	React.render(React.createElement(ProperTable.Table, { key: 'testtable', cols: cols, data: data, afterSelect: function afterSelect(data) {
 			console.log('selected', data);
 		} }), body);
 });

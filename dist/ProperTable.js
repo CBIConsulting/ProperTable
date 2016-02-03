@@ -375,8 +375,8 @@ var ProperTable =
 				item.sorted = false;
 
 				if (typeof item.field != 'undefined' && item.field) {
-					_this2.fieldsOrder.push(item.field);
-					_this2.columnIndex[item.field] = item;
+					_this2.fieldsOrder.push({ field: item.field, name: item.name });
+					_this2.columnIndex[item.name] = item;
 
 					if (_this2.state.sort && item.field == _this2.state.sort.field) {
 						item.sorted = _this2.state.sort.direction;
@@ -447,8 +447,11 @@ var ProperTable =
 			var firstRow = undefined;
 			result = _underscore2["default"].map(data, function (rowdata) {
 
-				var cells = _underscore2["default"].map(_this3.fieldsOrder, function (field) {
-					var col = _this3.columnIndex[field];
+				var cells = _underscore2["default"].map(_this3.fieldsOrder, function (_ref) {
+					var field = _ref.field;
+					var name = _ref.name;
+
+					var col = _this3.columnIndex[name];
 					var value = rowdata[field];
 
 					if (typeof col.formatter == 'function') {

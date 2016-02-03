@@ -23,28 +23,28 @@ function getLastLevelCols(cols) {
 }
 
 function getScrollbarWidth() {
-    var outer = document.createElement("div");
-    outer.style.visibility = "hidden";
-    outer.style.width = "100px";
-    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+	var outer = document.createElement("div");
+	outer.style.visibility = "hidden";
+	outer.style.width = "100px";
+	outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
 
-    document.body.appendChild(outer);
+	document.body.appendChild(outer);
 
-    var widthNoScroll = outer.offsetWidth;
-    // force scrollbars
-    outer.style.overflow = "scroll";
+	var widthNoScroll = outer.offsetWidth;
+	// force scrollbars
+	outer.style.overflow = "scroll";
 
-    // add innerdiv
-    var inner = document.createElement("div");
-    inner.style.width = "100%";
-    outer.appendChild(inner);
+	// add innerdiv
+	var inner = document.createElement("div");
+	inner.style.width = "100%";
+	outer.appendChild(inner);
 
-    var widthWithScroll = inner.offsetWidth;
+	var widthWithScroll = inner.offsetWidth;
 
-    // remove divs
-    outer.parentNode.removeChild(outer);
+	// remove divs
+	outer.parentNode.removeChild(outer);
 
-    return widthNoScroll - widthWithScroll;
+	return widthNoScroll - widthWithScroll;
 }
 
 let scrollbarWidth = null;
@@ -244,8 +244,8 @@ export default React.createClass({
 			item.sorted = false;
 
 			if (typeof item.field != 'undefined' && item.field) {
-				this.fieldsOrder.push(item.field);
-				this.columnIndex[item.field] = item;
+				this.fieldsOrder.push({field: item.field, name: item.name});
+				this.columnIndex[item.name] = item;
 
 				if (this.state.sort && item.field == this.state.sort.field) {
 					item.sorted = this.state.sort.direction;
@@ -301,8 +301,8 @@ export default React.createClass({
 		let firstRow;
 		result = _.map(data, (rowdata) => {
 
-			let cells = _.map(this.fieldsOrder, (field) => {
-				let col = this.columnIndex[field];
+			let cells = _.map(this.fieldsOrder, ({field, name}) => {
+				let col = this.columnIndex[name];
 				let value = rowdata[field];
 
 				if (typeof col.formatter == 'function') {
