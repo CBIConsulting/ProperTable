@@ -85,7 +85,7 @@ export default React.createClass({
 
 	componentDidMount() {
 		scrollbarWidth = getScrollbarWidth();
-		this.computeWidthInterval = setInterval(this.computeHeaderWidth.bind(this), 200)
+		this.computeWidthInterval = setInterval(this.computeHeaderWidth, 200)
 		this.pwidth = $(React.findDOMNode(this)).parent().width();
 
 		this.initData();

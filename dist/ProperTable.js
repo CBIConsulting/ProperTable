@@ -208,7 +208,7 @@ var ProperTable =
 
 		componentDidMount: function componentDidMount() {
 			scrollbarWidth = getScrollbarWidth();
-			this.computeWidthInterval = setInterval(this.computeHeaderWidth.bind(this), 200);
+			this.computeWidthInterval = setInterval(this.computeHeaderWidth, 200);
 			this.pwidth = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this)).parent().width();
 
 			this.initData();
