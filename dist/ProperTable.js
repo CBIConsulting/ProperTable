@@ -45,7 +45,7 @@ var ProperTable =
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/mario/repos/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/mario/repos/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -76,13 +76,13 @@ var ProperTable =
 	};
 	module.exports = exports["default"];
 
-	/* REACT HOT LOADER */ }).call(this); } finally { if (false) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/makeExportsHot.js"); if (makeExportsHot(module, require("react"))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot not apply hot update to " + "ProperTable.js" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
+	/* REACT HOT LOADER */ }).call(this); } finally { if (false) { (function () { var foundReactClasses = module.hot.data && module.hot.data.foundReactClasses || false; if (module.exports && module.makeHot) { var makeExportsHot = require("/home/mario/repos/ProperTable/node_modules/react-hot-loader/makeExportsHot.js"); if (makeExportsHot(module, require("react"))) { foundReactClasses = true; } var shouldAcceptModule = true && foundReactClasses; if (shouldAcceptModule) { module.hot.accept(function (err) { if (err) { console.error("Cannot not apply hot update to " + "ProperTable.js" + ": " + err.message); } }); } } module.hot.dispose(function (data) { data.makeHot = module.makeHot; data.foundReactClasses = foundReactClasses; }); })(); } }
 
 /***/ },
 /* 1 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/agazquez/git/ProperTable/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/agazquez/git/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
+	/* REACT HOT LOADER */ if (false) { (function () { var ReactHotAPI = require("/home/mario/repos/ProperTable/node_modules/react-hot-loader/node_modules/react-hot-api/modules/index.js"), RootInstanceProvider = require("/home/mario/repos/ProperTable/node_modules/react-hot-loader/RootInstanceProvider.js"), ReactMount = require("react/lib/ReactMount"), React = require("react"); module.makeHot = module.hot.data ? module.hot.data.makeHot : ReactHotAPI(function () { return RootInstanceProvider.getRootInstances(ReactMount); }, React); })(); } try { (function () {
 
 	"use strict";
 
@@ -179,7 +179,7 @@ var ProperTable =
 				className: '',
 				cols: [],
 				data: [],
-				uniqueId: _underscore2["default"].uniqueId('propertable-'),
+				uniqueId: null,
 				afterSort: null,
 				afterSelect: null,
 				fixedHeader: true,
@@ -191,6 +191,7 @@ var ProperTable =
 		getInitialState: function getInitialState() {
 			return {
 				cols: _underscore2["default"].values(_jquery2["default"].extend(true, {}, this.props.cols)),
+				uniqueId: this.props.uniqueId || _underscore2["default"].uniqueId('propertable-'),
 				data: null,
 				rawdata: null,
 				sort: null,
@@ -201,9 +202,13 @@ var ProperTable =
 			};
 		},
 
+		componentWillUnmount: function componentWillUnmount() {
+			clearTimeout(this.computeWidthInterval);
+		},
+
 		componentDidMount: function componentDidMount() {
 			scrollbarWidth = getScrollbarWidth();
-
+			this.computeWidthInterval = setInterval(this.computeHeaderWidth.bind(this), 200);
 			this.pwidth = (0, _jquery2["default"])(_reactAddons2["default"].findDOMNode(this)).parent().width();
 
 			this.initData();
@@ -282,7 +287,7 @@ var ProperTable =
 
 		propsList: ['width', 'border-left-width', 'border-right-width', 'padding-right', 'padding-left'],
 
-		computeHeaderWidth: function computeHeaderWidth() {
+		computeHeaderWidth: _underscore2["default"].throttle(function () {
 			var _this = this;
 
 			if (this.refs.firstRow) {
@@ -296,15 +301,17 @@ var ProperTable =
 						});
 						return props;
 					}).get();
-					(0, _jquery2["default"])('.propertable-thead .propertable-row .propertable-hcell.last-nested-level').each(function (i, cell) {
+					(0, _jquery2["default"])(firstRow).closest('.propertable-base').find('.propertable-thead .propertable-row .propertable-hcell.last-nested-level').each(function (i, cell) {
 						var $cell = (0, _jquery2["default"])(cell);
 						_this.propsList.forEach(function (prop) {
-							return $cell.css(prop, lengths[i][prop]);
+							if (lengths[i]) {
+								$cell.css(prop, lengths[i][prop]);
+							}
 						});
 					});
 				})();
 			}
-		},
+		}, 100),
 
 		handleSort: function handleSort(direction, col) {
 			var field = col.field || null;
@@ -365,7 +372,7 @@ var ProperTable =
 			}
 
 			if (this.props.selectable && !nested) {
-				result.push(_reactAddons2["default"].createElement(_selectheader2["default"], { key: this.props.uniqueId + '-select-all-header', selected: this.state.allSelected, sorted: sorted, onSelect: this.selectAll, onSort: this.handleSort }));
+				result.push(_reactAddons2["default"].createElement(_selectheader2["default"], { key: this.state.uniqueId + '-select-all-header', selected: this.state.allSelected, sorted: sorted, onSelect: this.selectAll, onSort: this.handleSort }));
 			}
 
 			_underscore2["default"].each(cols, function (item) {
@@ -544,6 +551,7 @@ var ProperTable =
 					itemsPerVP: itemsPerVP
 				});
 			}
+			this.computeHeaderWidth();
 		},
 
 		updateHeaderWidths: _underscore2["default"].debounce(function (widths) {
@@ -636,7 +644,7 @@ var ProperTable =
 
 			return _reactAddons2["default"].createElement(
 				"div",
-				{ id: this.props.uniqueId, className: "propertable propertable-base " + className },
+				{ id: this.state.uniqueId, className: "propertable propertable-base " + className },
 				content
 			);
 		}
@@ -2513,14 +2521,6 @@ var ProperTable =
 
 	var _underscore2 = _interopRequireDefault(_underscore);
 
-	var _jquery = __webpack_require__(4);
-
-	var _jquery2 = _interopRequireDefault(_jquery);
-
-	var _configSettings = __webpack_require__(5);
-
-	var _configSettings2 = _interopRequireDefault(_configSettings);
-
 	var _selectcell = __webpack_require__(11);
 
 	var _selectcell2 = _interopRequireDefault(_selectcell);
@@ -2598,14 +2598,6 @@ var ProperTable =
 
 	var _underscore2 = _interopRequireDefault(_underscore);
 
-	var _jquery = __webpack_require__(4);
-
-	var _jquery2 = _interopRequireDefault(_jquery);
-
-	var _configSettings = __webpack_require__(5);
-
-	var _configSettings2 = _interopRequireDefault(_configSettings);
-
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "selectcell",
 
@@ -2620,7 +2612,7 @@ var ProperTable =
 			};
 		},
 
-		handleChange: function handleChange(e) {
+		handleChange: function handleChange() {
 			if (typeof this.props.onChange == 'function') {
 				this.props.onChange(!this.props.selected);
 			}
@@ -2668,14 +2660,6 @@ var ProperTable =
 
 	var _underscore2 = _interopRequireDefault(_underscore);
 
-	var _jquery = __webpack_require__(4);
-
-	var _jquery2 = _interopRequireDefault(_jquery);
-
-	var _configSettings = __webpack_require__(5);
-
-	var _configSettings2 = _interopRequireDefault(_configSettings);
-
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "hcell",
 
@@ -2695,7 +2679,7 @@ var ProperTable =
 			};
 		},
 
-		handleSort: function handleSort(e) {
+		handleSort: function handleSort() {
 			var next = 'asc';
 
 			if (this.props.sorted == 'asc') {
@@ -2736,7 +2720,7 @@ var ProperTable =
 		render: function render() {
 			var className = this.props.className;
 			var spans = {};
-			var sortBtns = this.renderSortOptions();
+			//let sortBtns = this.renderSortOptions();
 			var tools = null;
 
 			if (this.props.rowspan) {
@@ -2761,7 +2745,7 @@ var ProperTable =
 			if (this.props.sorted) {
 				className += ' sorted-' + this.props.sorted;
 			}
-			console.log(this.props.nested);
+			//console.log(this.props.nested);
 			if (!this.props.nested) {
 				className += ' last-nested-level';
 			}
@@ -2934,14 +2918,6 @@ var ProperTable =
 
 	var _underscore2 = _interopRequireDefault(_underscore);
 
-	var _jquery = __webpack_require__(4);
-
-	var _jquery2 = _interopRequireDefault(_jquery);
-
-	var _configSettings = __webpack_require__(5);
-
-	var _configSettings2 = _interopRequireDefault(_configSettings);
-
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "cell",
 
@@ -2961,7 +2937,9 @@ var ProperTable =
 
 			return _reactAddons2["default"].createElement(
 				"div",
-				{ id: this.props.uniqueId, className: "propertable-cell " + className },
+				{ id: this.props.uniqueId, className: "propertable-cell " + className, style: {
+						minWidth: this.props.col.minWidth || this.props.minWidth }
+				},
 				_reactAddons2["default"].createElement(
 					"div",
 					{ className: "cell-inner", style: {
@@ -3001,10 +2979,6 @@ var ProperTable =
 	var _jquery = __webpack_require__(4);
 
 	var _jquery2 = _interopRequireDefault(_jquery);
-
-	var _configSettings = __webpack_require__(5);
-
-	var _configSettings2 = _interopRequireDefault(_configSettings);
 
 	exports["default"] = _reactAddons2["default"].createClass({
 		displayName: "tbody",
@@ -3089,9 +3063,6 @@ var ProperTable =
 		setElementInPosition: function setElementInPosition(scroll) {
 			var _this2 = this;
 
-			var mtop = this.state.mtop;
-			var scrollerheight = this.state.scrollerheight;
-			var totalHeight = this.state.totalHeight;
 			var itemsPerVp = this.state.itemsPerVp;
 
 			var firstElement = Math.floor(scroll / this.state.cHeight) - 1;
@@ -3163,14 +3134,12 @@ var ProperTable =
 		},
 
 		render: function render() {
-			var className = this.props.className;
 			var toRender = this.props.children;
 			var afterCount = 0;
 			var beforeCount = 0;
 			var rendered = [];
 			var mtop = this.state.mtop;
 			var scrollerheight = this.state.scrollerheight;
-			var totalHeight = this.state.totalHeight;
 			var itemsPerVp = this.state.itemsPerVp;
 
 			if (!this.state.cHeight) {

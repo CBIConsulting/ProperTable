@@ -1,7 +1,6 @@
 import React from "react/addons";
 import _ from "underscore";
 import $ from "jquery";
-import Settings from "../config/settings";
 
 export default React.createClass({
 	mixins: [React.addons.PureRendermixin],
@@ -80,9 +79,6 @@ export default React.createClass({
 	},
 
 	setElementInPosition(scroll) {
-		let mtop = this.state.mtop;
-		let scrollerheight = this.state.scrollerheight;
-		let totalHeight = this.state.totalHeight;
 		let itemsPerVp = this.state.itemsPerVp;
 
 		let firstElement = Math.floor(scroll / this.state.cHeight) - 1;
@@ -150,14 +146,12 @@ export default React.createClass({
 	},
 
 	render() {
-		let className = this.props.className;
 		let toRender = this.props.children;
 		let afterCount = 0;
 		let beforeCount = 0;
 		let rendered = [];
 		let mtop = this.state.mtop;
 		let scrollerheight = this.state.scrollerheight;
-		let totalHeight = this.state.totalHeight;
 		let itemsPerVp = this.state.itemsPerVp;
 
 		if (!this.state.cHeight) {
