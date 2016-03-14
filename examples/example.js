@@ -1,12 +1,8 @@
 'use strict';
 
 var body = document.getElementById('canvas');
-/* global $, ProperTable, moment, React */
-$(function () {
-	ProperTable.Settings.set({
-		language: 'en'
-	});
 
+$(function () {
 	var cols = [{
 		name: 'col1',
 		label: 'columna 1',
@@ -66,7 +62,9 @@ $(function () {
 		});
 	}
 
-	React.render(React.createElement(ProperTable.Table, { key: 'testtable', cols: cols, data: data, afterSelect: function afterSelect(data) {
+	};
+
+	ReactDOM.render(React.createElement(ProperTable.Table, { key: 'testtable', cols: cols, data: data, afterSelect: function afterSelect(data) {
 			console.log('selected', data);
 		} }), body);
 });

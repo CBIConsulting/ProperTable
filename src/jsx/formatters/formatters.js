@@ -1,5 +1,4 @@
 import moment from "moment";
-import Settings from "../config/settings";
 import numeral from "numeral";
 
 export default {

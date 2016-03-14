@@ -1,10 +1,8 @@
-let body = document.getElementById('canvas');
-/* global $, ProperTable, moment, React */
-$(() => {
-	ProperTable.Settings.set({
-		language: 'en'
-	});
+import ProperTable from "../../src/jsx/ProperTable";
 
+let body = document.getElementById('canvas');
+
+$(function() {
 	var cols = [
 		{
 			name: 'col1',
@@ -71,7 +69,7 @@ $(() => {
 		});
 	}
 
-	React.render(<ProperTable.Table key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
+	ReactDOM.render(<ProperTable.Table key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
 		console.log('selected', data);
 	}} />, body);
 });
