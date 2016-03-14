@@ -5,7 +5,7 @@
   "scripts": {
     "test": "webpack && karma start --single-run --no-auto-watch karma.conf.js",
     "watch": "karma start --auto-watch --no-single-run karma.conf.js",
-    "start": "webpack-dev-server --hot --inline",
+    "start": "webpack-dev-server --hot --inline --config webpack.config.example.js",
     "build": "webpack",
     "release": "webpack --config webpack.config.min.js"
   },
