@@ -19,6 +19,21 @@ function defaultProps() {
 	};
 }
 
+function hasNested(cols) {
+	let result = false;
+
+	if (cols.size) {
+		cols.forEach((c) => {
+			if (c.get('children') && c.get('children').size) {
+				result = true;
+				return false;
+			}
+		});
+	}
+
+	return result;
+}
+
 const ParseCell = (props) => {
 	let row = props.data.get(props.rowIndex), val = null, formatted = null;
 	let colData = props.colData;
@@ -77,7 +92,7 @@ class ProperTable extends React.Component {
 		});
 	}
 
-	parseColumn(colData, isChildren = false) {
+	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, extraProps = {
 			width: 100
 		};
@@ -99,10 +114,11 @@ class ProperTable extends React.Component {
 				key={_.uniqueId(colname)}
 				header={<Cell>{colData.label}</Cell>}
 				cell={<ParseCell data={this.state.data} colData={colData} col={colData.field} />}
+				allowCellsRecycling
 				{...extraProps}
 			/>;
 
-			if (!isChildren) {
+			if (!isChildren && hasNested) {
 				col = <ColumnGroup key={_.uniqueId(colname+'-group')}>{col}</ColumnGroup>
 			}
 		} else {
@@ -122,10 +138,10 @@ class ProperTable extends React.Component {
 	}
 
 	buildTable() {
-		let columns = [];
+		let columns = [], isNested = hasNested(this.state.cols);
 
 		this.state.cols.forEach((col) => {
-			columns.push(this.parseColumn(col.toJSON()));
+			columns.push(this.parseColumn(col.toJSON(), false, isNested));
 		});
 
 		return columns;
