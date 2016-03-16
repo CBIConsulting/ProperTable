@@ -1,3 +1,18 @@
 @import "compass";
 @import "fixed-data-table";
 
+.propertable {
+	.fixedDataTableRowLayout_rowWrapper{
+		&:hover .public_fixedDataTableCell_main {
+		  background-color: #C7EBFF;
+		}
+
+		.public_fixedDataTableRow_main {
+			&.selected {
+				.public_fixedDataTableCell_main{
+					background-color: darken(#C7EBFF, 3%);
+				}
+			}
+		}
+	}
+}

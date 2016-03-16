@@ -4,6 +4,7 @@ import Immutable from 'immutable';
 import _ from 'underscore';
 import messages from "../lang/messages";
 import Dimensions from 'react-dimensions';
+import Selector from './selector';
 
 function defaultProps() {
 	return {
@@ -14,7 +15,9 @@ function defaultProps() {
 		afterSort: null,
 		afterSelect: null,
 		selectable: true,
+		selected: null,
 		rowHeight: 50,
+		idField: null,
 		msgs: messages
 	};
 }
@@ -37,10 +40,13 @@ function hasNested(cols) {
 const ParseCell = (props) => {
 	let row = props.data.get(props.rowIndex), val = null, formatted = null;
 	let colData = props.colData;
+	let selected = false;
 
 	if (row) {
 		val = row.get(props.col);
 		formatted = val;
+
+		selected = row.get('_selected');
 	}
 
 	if (typeof colData.formatter == 'function') {
@@ -63,9 +69,11 @@ class ProperTable extends React.Component {
 		this.state = {
 			cols: Immutable.fromJS(this.props.cols),
 			data: null,
+			indexed: null,
 			rawdata: null,
 			sort: null,
-			allSelected: false
+			allSelected: false,
+			selection: []
 		};
 	}
 
@@ -74,21 +82,31 @@ class ProperTable extends React.Component {
 	}
 
 	initData() {
-		let data = Immutable.fromJS(this.props.data);
+		let data = Immutable.fromJS(this.props.data), index = 0;
+		let indexed = [], parsed = [];
+
+		parsed = data.map(row => {
+			let rdata = row.toJSON();
+
+			if (!rdata._properId) {
+				rdata._properId = _.uniqueId()
+			}
+
+			if (typeof rdata._selected == 'undefined') {
+				rdata._selected = false
+			}
+
+			rdata._rowIndex = index++;
+
+			return Immutable.fromJS(rdata);
+		});
+
+		indexed = _.indexBy(parsed.toJSON(), '_properId');
 
 		this.setState({
 			rawdata: data,
-			data: data.map(row => {
-				if (!row._properId) {
-					row._properId = _.uniqueId()
-				}
-
-				if (typeof row._selected == 'undefined') {
-					row._selected = false
-				}
-
-				return row;
-			})
+			data: parsed,
+			indexed: indexed
 		});
 	}
 
@@ -115,6 +133,7 @@ class ProperTable extends React.Component {
 				header={<Cell>{colData.label}</Cell>}
 				cell={<ParseCell data={this.state.data} colData={colData} col={colData.field} />}
 				allowCellsRecycling
+				align='center'
 				{...extraProps}
 			/>;
 
@@ -138,13 +157,134 @@ class ProperTable extends React.Component {
 	}
 
 	buildTable() {
-		let columns = [], isNested = hasNested(this.state.cols);
+		let columns = [], isNested = hasNested(this.state.cols), selColumn = null;
+
+		if (this.props.selectable == 'multiple') {
+			let somethingSelected = this.state.selection.length > 0;
+
+			selColumn = <Column
+				columnKey={_.uniqueId('selector-')}
+				key={_.uniqueId('selector-')}
+				header={<Selector
+					onClick={this.handleSelectAll.bind(this)}
+					somethingSelected={somethingSelected}
+					allSelected={this.state.allSelected}
+				/>}
+				cell={<Selector
+					data={this.state.data}
+				/>}
+				allowCellsRecycling
+				width={50}
+			/>
+
+			if (isNested) {
+				selColumn = <ColumnGroup key={_.uniqueId('selector-group-')}>{selColumn}</ColumnGroup>;
+			}
+
+			columns.push(selColumn);
+		}
 
 		this.state.cols.forEach((col) => {
 			columns.push(this.parseColumn(col.toJSON(), false, isNested));
 		});
 
 		return columns;
+	}
+
+	handleSelectAll(e) {
+		let somethingSelected = this.state.selection.length > 0;
+		let allSelected = this.state.allSelected;
+		let newSelection = [];
+
+		if (!allSelected) {
+			newSelection = _.keys(this.state.indexed);
+		}
+
+		this.triggerSelection(newSelection.sort());
+	}
+
+	handleRowClick(e, rowIndex) {
+		let clickedId = this.state.data.get(rowIndex).get('_properId');
+
+		this.toggleSelected(clickedId);
+	}
+
+	toggleSelected(properId) {
+		let selection = _.clone(this.state.selection);
+
+		if (_.indexOf(selection, properId.toString()) != -1) {
+			selection = _.without(selection, properId);
+		} else {
+			if (this.props.selectable == 'multiple') {
+				selection.push(properId);
+			} else {
+				selection = [properId];
+			}
+		}
+
+		this.triggerSelection(selection.sort());
+	}
+
+	componentWillUpdate(nextProps, nextState) {
+		if (!_.isEqual(nextState.selection, this.state.selection)) {
+			this.updateSelectionData(nextState.selection);
+		}
+	}
+
+	updateSelectionData(newSelection) {
+		let newData = this.state.data.map((row) => {
+			let rdata = row.toJSON();
+
+			rdata._selected = _.indexOf(newSelection, rdata._properId) >= 0;
+
+			return Immutable.fromJS(rdata);
+		});
+
+		let newIndexed = _.indexBy(newData.toJSON(), '_properId');
+
+		this.setState({
+			data: newData,
+			indexed: newIndexed
+		});
+	}
+
+	triggerSelection(newSelection = []) {
+		if (!_.isEqual(newSelection, this.state.selection)) {
+			this.setState({
+				selection: newSelection,
+				allSelected: newSelection.length == this.state.data.size
+			}, this.sendSelection);
+		}
+	}
+
+	sendSelection() {
+		if (typeof this.props.afterSelect == 'function') {
+			let {selection, indexed, rawdata} = this.state;
+			let output = [];
+
+			output = _.map(selection, (pId) => {
+				let rowIndex = indexed[pId]._rowIndex;
+
+				return rawdata.get(rowIndex).toJSON();
+			});
+
+			if (this.props.selectable === true) {
+				output = output[0];
+			}
+
+			this.props.afterSelect(output);
+		}
+	}
+
+	getRowClassName(index) {
+		let addClass = null;
+		let selected = this.state.data.get(index).get('_selected');
+
+		if (selected) {
+			addClass = 'selected';
+		}
+
+		return addClass;
 	}
 
 	render() {
@@ -165,6 +305,8 @@ class ProperTable extends React.Component {
 				groupHeaderHeight={this.props.rowHeight}
 				rowHeight={this.props.rowHeight}
 				rowsCount={this.state.data.size}
+				onRowClick={this.handleRowClick.bind(this)}
+				rowClassNameGetter={this.getRowClassName.bind(this)}
 				{...this.props}
 			>
 				{tableContent}

@@ -55,7 +55,7 @@ var ProperTable =
 
 	var _table2 = _interopRequireDefault(_table);
 
-	var _formatters = __webpack_require__(59);
+	var _formatters = __webpack_require__(60);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -65,7 +65,9 @@ var ProperTable =
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	__webpack_require__(62);
+	__webpack_require__(63);
+
+	"use strict";
 
 	exports.default = {
 		Table: _table2.default,
@@ -109,6 +111,10 @@ var ProperTable =
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
+	var _selector = __webpack_require__(59);
+
+	var _selector2 = _interopRequireDefault(_selector);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -126,9 +132,26 @@ var ProperTable =
 			afterSort: null,
 			afterSelect: null,
 			selectable: true,
+			selected: null,
 			rowHeight: 50,
+			idField: null,
 			msgs: _messages2.default
 		};
+	}
+
+	function hasNested(cols) {
+		var result = false;
+
+		if (cols.size) {
+			cols.forEach(function (c) {
+				if (c.get('children') && c.get('children').size) {
+					result = true;
+					return false;
+				}
+			});
+		}
+
+		return result;
 	}
 
 	var ParseCell = function ParseCell(props) {
@@ -136,10 +159,13 @@ var ProperTable =
 		    val = null,
 		    formatted = null;
 		var colData = props.colData;
+		var selected = false;
 
 		if (row) {
 			val = row.get(props.col);
 			formatted = val;
+
+			selected = row.get('_selected');
 		}
 
 		if (typeof colData.formatter == 'function') {
@@ -171,9 +197,11 @@ var ProperTable =
 			_this.state = {
 				cols: _immutable2.default.fromJS(_this.props.cols),
 				data: null,
+				indexed: null,
 				rawdata: null,
 				sort: null,
-				allSelected: false
+				allSelected: false,
+				selection: []
 			};
 			return _this;
 		}
@@ -186,21 +214,33 @@ var ProperTable =
 		}, {
 			key: 'initData',
 			value: function initData() {
-				var data = _immutable2.default.fromJS(this.props.data);
+				var data = _immutable2.default.fromJS(this.props.data),
+				    index = 0;
+				var indexed = [],
+				    parsed = [];
+
+				parsed = data.map(function (row) {
+					var rdata = row.toJSON();
+
+					if (!rdata._properId) {
+						rdata._properId = _underscore2.default.uniqueId();
+					}
+
+					if (typeof rdata._selected == 'undefined') {
+						rdata._selected = false;
+					}
+
+					rdata._rowIndex = index++;
+
+					return _immutable2.default.fromJS(rdata);
+				});
+
+				indexed = _underscore2.default.indexBy(parsed.toJSON(), '_properId');
 
 				this.setState({
 					rawdata: data,
-					data: data.map(function (row) {
-						if (!row._properId) {
-							row._properId = _underscore2.default.uniqueId();
-						}
-
-						if (typeof row._selected == 'undefined') {
-							row._selected = false;
-						}
-
-						return row;
-					})
+					data: parsed,
+					indexed: indexed
 				});
 			}
 		}, {
@@ -209,6 +249,7 @@ var ProperTable =
 				var _this2 = this;
 
 				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
 
 				var col = null,
 				    colname = null,
@@ -236,10 +277,12 @@ var ProperTable =
 							null,
 							colData.label
 						),
-						cell: _react2.default.createElement(ParseCell, { data: this.state.data, colData: colData, col: colData.field })
+						cell: _react2.default.createElement(ParseCell, { data: this.state.data, colData: colData, col: colData.field }),
+						allowCellsRecycling: true,
+						align: 'center'
 					}, extraProps));
 
-					if (!isChildren) {
+					if (!isChildren && hasNested) {
 						col = _react2.default.createElement(
 							_fixedDataTable.ColumnGroup,
 							{ key: _underscore2.default.uniqueId(colname + '-group') },
@@ -273,13 +316,158 @@ var ProperTable =
 			value: function buildTable() {
 				var _this3 = this;
 
-				var columns = [];
+				var columns = [],
+				    isNested = hasNested(this.state.cols),
+				    selColumn = null;
+
+				if (this.props.selectable == 'multiple') {
+					var somethingSelected = this.state.selection.length > 0;
+
+					selColumn = _react2.default.createElement(_fixedDataTable.Column, {
+						columnKey: _underscore2.default.uniqueId('selector-'),
+						key: _underscore2.default.uniqueId('selector-'),
+						header: _react2.default.createElement(_selector2.default, {
+							onClick: this.handleSelectAll.bind(this),
+							somethingSelected: somethingSelected,
+							allSelected: this.state.allSelected
+						}),
+						cell: _react2.default.createElement(_selector2.default, {
+							data: this.state.data
+						}),
+						allowCellsRecycling: true,
+						width: 50
+					});
+
+					if (isNested) {
+						selColumn = _react2.default.createElement(
+							_fixedDataTable.ColumnGroup,
+							{ key: _underscore2.default.uniqueId('selector-group-') },
+							selColumn
+						);
+					}
+
+					columns.push(selColumn);
+				}
 
 				this.state.cols.forEach(function (col) {
-					columns.push(_this3.parseColumn(col.toJSON()));
+					columns.push(_this3.parseColumn(col.toJSON(), false, isNested));
 				});
 
 				return columns;
+			}
+		}, {
+			key: 'handleSelectAll',
+			value: function handleSelectAll(e) {
+				var somethingSelected = this.state.selection.length > 0;
+				var allSelected = this.state.allSelected;
+				var newSelection = [];
+
+				if (!allSelected) {
+					newSelection = _underscore2.default.keys(this.state.indexed);
+				}
+
+				this.triggerSelection(newSelection.sort());
+			}
+		}, {
+			key: 'handleRowClick',
+			value: function handleRowClick(e, rowIndex) {
+				var clickedId = this.state.data.get(rowIndex).get('_properId');
+
+				this.toggleSelected(clickedId);
+			}
+		}, {
+			key: 'toggleSelected',
+			value: function toggleSelected(properId) {
+				var selection = _underscore2.default.clone(this.state.selection);
+
+				if (_underscore2.default.indexOf(selection, properId.toString()) != -1) {
+					selection = _underscore2.default.without(selection, properId);
+				} else {
+					if (this.props.selectable == 'multiple') {
+						selection.push(properId);
+					} else {
+						selection = [properId];
+					}
+				}
+
+				this.triggerSelection(selection.sort());
+			}
+		}, {
+			key: 'componentWillUpdate',
+			value: function componentWillUpdate(nextProps, nextState) {
+				if (!_underscore2.default.isEqual(nextState.selection, this.state.selection)) {
+					this.updateSelectionData(nextState.selection);
+				}
+			}
+		}, {
+			key: 'updateSelectionData',
+			value: function updateSelectionData(newSelection) {
+				var newData = this.state.data.map(function (row) {
+					var rdata = row.toJSON();
+
+					rdata._selected = _underscore2.default.indexOf(newSelection, rdata._properId) >= 0;
+
+					return _immutable2.default.fromJS(rdata);
+				});
+
+				var newIndexed = _underscore2.default.indexBy(newData.toJSON(), '_properId');
+
+				this.setState({
+					data: newData,
+					indexed: newIndexed
+				});
+			}
+		}, {
+			key: 'triggerSelection',
+			value: function triggerSelection() {
+				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+
+				if (!_underscore2.default.isEqual(newSelection, this.state.selection)) {
+					this.setState({
+						selection: newSelection,
+						allSelected: newSelection.length == this.state.data.size
+					}, this.sendSelection);
+				}
+			}
+		}, {
+			key: 'sendSelection',
+			value: function sendSelection() {
+				var _this4 = this;
+
+				if (typeof this.props.afterSelect == 'function') {
+					(function () {
+						var _state = _this4.state;
+						var selection = _state.selection;
+						var indexed = _state.indexed;
+						var rawdata = _state.rawdata;
+
+						var output = [];
+
+						output = _underscore2.default.map(selection, function (pId) {
+							var rowIndex = indexed[pId]._rowIndex;
+
+							return rawdata.get(rowIndex).toJSON();
+						});
+
+						if (_this4.props.selectable === true) {
+							output = output[0];
+						}
+
+						_this4.props.afterSelect(output);
+					})();
+				}
+			}
+		}, {
+			key: 'getRowClassName',
+			value: function getRowClassName(index) {
+				var addClass = null;
+				var selected = this.state.data.get(index).get('_selected');
+
+				if (selected) {
+					addClass = 'selected';
+				}
+
+				return addClass;
 			}
 		}, {
 			key: 'render',
@@ -310,7 +498,9 @@ var ProperTable =
 							headerHeight: this.props.rowHeight,
 							groupHeaderHeight: this.props.rowHeight,
 							rowHeight: this.props.rowHeight,
-							rowsCount: this.state.data.size
+							rowsCount: this.state.data.size,
+							onRowClick: this.handleRowClick.bind(this),
+							rowClassNameGetter: this.getRowClassName.bind(this)
 						}, this.props),
 						tableContent
 					);
@@ -12308,17 +12498,95 @@ var ProperTable =
 /* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _fixedDataTable = __webpack_require__(3);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var Selector = function Selector(props) {
+		var allSelected = false,
+		    somethingSelected = false,
+		    content = _react2.default.createElement('i', { className: 'fa fa-square-o selector-button' });
+		var addClass = 'unchecked';
+		var selected = false;
+		var row = null;
+		var _onClick = props.onClick;
+
+		if (!_onClick) {
+			_onClick = function onClick() {};
+		}
+
+		if (typeof props.rowIndex != 'undefined') {
+			row = props.data.get(props.rowIndex).toJSON();
+		}
+
+		if (typeof props.allSelected !== 'undefined') {
+			allSelected = props.allSelected;
+		}
+
+		if (typeof props.somethingSelected !== 'undefined') {
+			somethingSelected = props.somethingSelected;
+		}
+
+		if (somethingSelected) {
+			addClass = 'partial';
+		}
+
+		if (allSelected) {
+			addClass = 'complete';
+		}
+
+		if (somethingSelected && !allSelected) {
+			content = _react2.default.createElement('i', { className: 'fa fa-minus-square-o' });
+		}
+
+		if (allSelected || row && row._selected) {
+			content = _react2.default.createElement('i', { className: 'fa fa-check-square-o' });
+		}
+
+		if (row && row._selected) {
+			selected = true;
+		}
+
+		return _react2.default.createElement(
+			_fixedDataTable.Cell,
+			null,
+			_react2.default.createElement(
+				'div',
+				{ className: "propertable-selector " + addClass, onClick: function onClick(e) {
+						_onClick(e, row);
+					} },
+				content
+			)
+		);
+	};
+
+	exports.default = Selector;
+
+/***/ },
+/* 60 */
+/***/ function(module, exports, __webpack_require__) {
+
 	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
 
-	var _moment = __webpack_require__(60);
+	var _moment = __webpack_require__(61);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(61);
+	var _numeral = __webpack_require__(62);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -12344,13 +12612,13 @@ var ProperTable =
 	};
 
 /***/ },
-/* 60 */
+/* 61 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -13035,7 +13303,7 @@ var ProperTable =
 
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin

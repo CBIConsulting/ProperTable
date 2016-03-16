@@ -1,21 +1,28 @@
 import ProperTable from "../../src/jsx/ProperTable";
 
-let body = document.getElementById('canvas');
+let body1 = document.getElementById('canvas1');
+let body2 = document.getElementById('canvas2');
 
 $(function() {
 	var cols = [
 		{
+			name: 'id',
+			label: 'ID',
+			field: 'id',
+			width: 50
+		},
+		{
 			name: 'col1',
 			label: 'columna 1',
-			field: 'col1',
+			field: 'col1'/*,
 			width: 400,
 			formatter: function() {
 				return 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-			}
+			}*/
 		},
 		{
 			name: 'number',
-			label: <span><i className="fa fa-arrow-up" />A number</span>,
+			label: <span>A number</span>,
 			field: 'number',
 			className: 'number',
 			width: 100,
@@ -23,7 +30,7 @@ $(function() {
 		},
 		{
 			name: 'number2',
-			label: <span><i className="fa fa-arrow-down" />A number</span>,
+			label: <span>A number</span>,
 			field: 'number',
 			className: 'number',
 			width: 100,
@@ -62,8 +69,9 @@ $(function() {
 
 	var data = [];
 
-	for (var i = 500; i >= 0; i--) {
+	for (var i = 1000; i > 0; i--) {
 		data.push({
+			id: i,
 			col1: 'added-'+i,
 			nested1: moment().add((Math.round(Math.random() * 10000) % 2000), 'days').format('YYYY-MM-DD HH:mm:ss'),
 			nested2: 'bar-'+i,
@@ -71,7 +79,10 @@ $(function() {
 		});
 	}
 
-	ReactDOM.render(<ProperTable.Table rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
-		console.log('selected', data);
-	}} />, body);
+	ReactDOM.render(<ProperTable.Table key='pt1' uniqueId={1} rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
+		console.log('selected1', data);
+	}} />, body1);
+	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
+		console.log('selected2', data);
+	}} selectable="multiple" />, body2);
 });

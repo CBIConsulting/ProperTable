@@ -283,3 +283,9 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
 .fixedDataTableRowLayout_rowWrapper {
   position: absolute;
   top: 0; }
+
+.propertable .fixedDataTableRowLayout_rowWrapper:hover .public_fixedDataTableCell_main {
+  background-color: #C7EBFF; }
+
+.propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.selected .public_fixedDataTableCell_main {
+  background-color: #b8e6ff; }
