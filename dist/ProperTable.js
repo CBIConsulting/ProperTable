@@ -74,6 +74,7 @@ var ProperTable =
 		formatters: _formatters2.default,
 		lang: _messages2.default
 	};
+	module.exports = exports['default'];
 
 /***/ },
 /* 1 */
@@ -518,6 +519,7 @@ var ProperTable =
 	}(_react2.default.Component);
 
 	exports.default = (0, _reactDimensions2.default)()(ProperTable);
+	module.exports = exports['default'];
 
 /***/ },
 /* 2 */
@@ -12321,6 +12323,7 @@ var ProperTable =
 		loading: 'loading...',
 		empty: 'No data found'
 	};
+	module.exports = exports['default'];
 
 /***/ },
 /* 58 */
@@ -12571,6 +12574,7 @@ var ProperTable =
 	};
 
 	exports.default = Selector;
+	module.exports = exports['default'];
 
 /***/ },
 /* 60 */
@@ -12593,23 +12597,48 @@ var ProperTable =
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	exports.default = {
-		string: function string(value) {
+		string: function string() {
+			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+			if (value === null) {
+				return null;
+			}
+
 			return value.toString();
 		},
-		number: function number(value) {
+		number: function number() {
+			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+			if (value === null) {
+				return null;
+			}
+
 			if (typeof value == 'string') {
 				value = (0, _numeral2.default)().unformat(value);
 			}
 
 			return (0, _numeral2.default)(value).format('0,0[.]00');
 		},
-		date: function date(value) {
+		date: function date() {
+			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+			if (value === null) {
+				return null;
+			}
+
 			return (0, _moment2.default)(value).format('LL');
 		},
-		datetime: function datetime(value) {
+		datetime: function datetime() {
+			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+			if (value === null) {
+				return null;
+			}
+
 			return (0, _moment2.default)(value).format('LLL');
 		}
 	};
+	module.exports = exports['default'];
 
 /***/ },
 /* 61 */
