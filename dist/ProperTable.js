@@ -12596,6 +12596,10 @@ var ProperTable =
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+	function isNumeric(n) {
+		return !isNaN(parseFloat(n)) && isFinite(n);
+	}
+
 	exports.default = {
 		string: function string() {
 			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
@@ -12609,7 +12613,7 @@ var ProperTable =
 		number: function number() {
 			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
-			if (value === null) {
+			if (value === null || !isNumeric(value)) {
 				return null;
 			}
 
@@ -12626,7 +12630,13 @@ var ProperTable =
 				return null;
 			}
 
-			return (0, _moment2.default)(value).format('LL');
+			var result = (0, _moment2.default)(value).format('LL');
+
+			if (result == 'Invalid date') {
+				return null;
+			}
+
+			return result;
 		},
 		datetime: function datetime() {
 			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
@@ -12635,7 +12645,13 @@ var ProperTable =
 				return null;
 			}
 
-			return (0, _moment2.default)(value).format('LLL');
+			var result = (0, _moment2.default)(value).format('LLL');
+
+			if (result == 'Invalid date') {
+				return null;
+			}
+
+			return result;
 		}
 	};
 	module.exports = exports['default'];
