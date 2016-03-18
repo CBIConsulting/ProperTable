@@ -55,7 +55,7 @@ var ProperTable =
 
 	var _table2 = _interopRequireDefault(_table);
 
-	var _formatters = __webpack_require__(60);
+	var _formatters = __webpack_require__(61);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -65,7 +65,7 @@ var ProperTable =
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	__webpack_require__(63);
+	__webpack_require__(64);
 
 	"use strict";
 
@@ -116,6 +116,10 @@ var ProperTable =
 
 	var _selector2 = _interopRequireDefault(_selector);
 
+	var _cellRenderer = __webpack_require__(60);
+
+	var _cellRenderer2 = _interopRequireDefault(_cellRenderer);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -154,31 +158,6 @@ var ProperTable =
 
 		return result;
 	}
-
-	var ParseCell = function ParseCell(props) {
-		var row = props.data.get(props.rowIndex),
-		    val = null,
-		    formatted = null;
-		var colData = props.colData;
-		var selected = false;
-
-		if (row) {
-			val = row.get(props.col);
-			formatted = val;
-
-			selected = row.get('_selected');
-		}
-
-		if (typeof colData.formatter == 'function') {
-			formatted = colData.formatter(val, colData, row.toJSON());
-		}
-
-		return _react2.default.createElement(
-			_fixedDataTable.Cell,
-			null,
-			formatted
-		);
-	};
 
 	var ProperTable = function (_React$Component) {
 		_inherits(ProperTable, _React$Component);
@@ -275,10 +254,10 @@ var ProperTable =
 						key: _underscore2.default.uniqueId(colname),
 						header: _react2.default.createElement(
 							_fixedDataTable.Cell,
-							null,
+							{ className: 'propertable-hcell' },
 							colData.label
 						),
-						cell: _react2.default.createElement(ParseCell, { data: this.state.data, colData: colData, col: colData.field }),
+						cell: _react2.default.createElement(_cellRenderer2.default, { data: this.state.data, colData: colData, col: colData.field }),
 						allowCellsRecycling: true,
 						align: 'center'
 					}, extraProps));
@@ -461,11 +440,11 @@ var ProperTable =
 		}, {
 			key: 'getRowClassName',
 			value: function getRowClassName(index) {
-				var addClass = null;
+				var addClass = 'propertable-row';
 				var selected = this.state.data.get(index).get('_selected');
 
 				if (selected) {
-					addClass = 'selected';
+					addClass += ' selected';
 				}
 
 				return addClass;
@@ -501,7 +480,8 @@ var ProperTable =
 							rowHeight: this.props.rowHeight,
 							rowsCount: this.state.data.size,
 							onRowClick: this.handleRowClick.bind(this),
-							rowClassNameGetter: this.getRowClassName.bind(this)
+							rowClassNameGetter: this.getRowClassName.bind(this),
+							className: 'propertable-table'
 						}, this.props),
 						tableContent
 					);
@@ -12562,7 +12542,7 @@ var ProperTable =
 
 		return _react2.default.createElement(
 			_fixedDataTable.Cell,
-			null,
+			{ className: 'propertable-cell select-cell' },
 			_react2.default.createElement(
 				'div',
 				{ className: "propertable-selector " + addClass, onClick: function onClick(e) {
@@ -12580,17 +12560,68 @@ var ProperTable =
 /* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _fixedDataTable = __webpack_require__(3);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var CellRenderer = function CellRenderer(props) {
+		var row = props.data.get(props.rowIndex),
+		    val = null,
+		    formatted = null;
+		var colData = props.colData;
+		var selected = false;
+
+		if (row) {
+			val = row.get(props.col);
+
+			if (typeof val.toJSON == 'function') {
+				val = val.toJSON();
+			}
+
+			formatted = val;
+
+			selected = row.get('_selected');
+		}
+
+		if (typeof colData.formatter == 'function') {
+			formatted = colData.formatter(val, colData, row.toJSON());
+		}
+
+		return _react2.default.createElement(
+			_fixedDataTable.Cell,
+			{ className: 'propertable-cell' },
+			formatted
+		);
+	};
+
+	exports.default = CellRenderer;
+	module.exports = exports['default'];
+
+/***/ },
+/* 61 */
+/***/ function(module, exports, __webpack_require__) {
+
 	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
 
-	var _moment = __webpack_require__(61);
+	var _moment = __webpack_require__(62);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(62);
+	var _numeral = __webpack_require__(63);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -12657,13 +12688,13 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -13348,7 +13379,7 @@ var ProperTable =
 
 
 /***/ },
-/* 63 */
+/* 64 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
