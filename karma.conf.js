@@ -1,6 +1,6 @@
 module.exports = function(config) {
   config.set({
-    browsers: ['PhantomJS'],
+    browsers: ['PhantomJS', 'Chrome'],
     files: [
       'tests.webpack.js',
       {

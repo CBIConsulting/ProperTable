@@ -174,11 +174,13 @@ var ProperTable =
 
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProperTable).call(this, props));
 
+			var initialData = _this.prepareData();
+
 			_this.state = {
 				cols: _immutable2.default.fromJS(_this.props.cols),
-				data: null,
-				indexed: null,
-				rawdata: null,
+				data: initialData.data,
+				indexed: initialData.indexed,
+				rawdata: initialData.rawdata,
 				sort: null,
 				allSelected: false,
 				selection: []
@@ -187,13 +189,8 @@ var ProperTable =
 		}
 
 		_createClass(ProperTable, [{
-			key: 'componentWillMount',
-			value: function componentWillMount() {
-				this.initData();
-			}
-		}, {
-			key: 'initData',
-			value: function initData() {
+			key: 'prepareData',
+			value: function prepareData() {
 				var data = _immutable2.default.fromJS(this.props.data),
 				    index = 0;
 				var indexed = [],
@@ -217,11 +214,18 @@ var ProperTable =
 
 				indexed = _underscore2.default.indexBy(parsed.toJSON(), '_properId');
 
-				this.setState({
+				return {
 					rawdata: data,
 					data: parsed,
-					indexed: indexed
-				});
+					index: indexed
+				};
+			}
+		}, {
+			key: 'initData',
+			value: function initData() {
+				var newdata = this.prepareData();
+
+				this.setState(newData);
 			}
 		}, {
 			key: 'parseColumn',
@@ -485,6 +489,8 @@ var ProperTable =
 						}, this.props),
 						tableContent
 					);
+				} else {
+					console.log('pinto SIN datos');
 				}
 
 				return _react2.default.createElement(
