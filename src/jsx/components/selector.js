@@ -44,7 +44,7 @@ const Selector = (props) => {
 		selected = true;
 	}
 
-	return <Cell><div className={"propertable-selector "+addClass} onClick={(e) => {
+	return <Cell className="propertable-cell select-cell"><div className={"propertable-selector "+addClass} onClick={(e) => {
 		onClick(e, row);
 	}}>{content}</div></Cell>;
 };

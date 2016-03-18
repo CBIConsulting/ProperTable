@@ -5,6 +5,7 @@ import _ from 'underscore';
 import messages from "../lang/messages";
 import Dimensions from 'react-dimensions';
 import Selector from './selector';
+import CellRenderer from './cellRenderer';
 
 function defaultProps() {
 	return {
@@ -36,27 +37,6 @@ function hasNested(cols) {
 
 	return result;
 }
-
-const ParseCell = (props) => {
-	let row = props.data.get(props.rowIndex), val = null, formatted = null;
-	let colData = props.colData;
-	let selected = false;
-
-	if (row) {
-		val = row.get(props.col);
-		formatted = val;
-
-		selected = row.get('_selected');
-	}
-
-	if (typeof colData.formatter == 'function') {
-		formatted = colData.formatter(val, colData, row.toJSON());
-	}
-
-	return <Cell>
-		{formatted}
-	</Cell>;
-};
 
 class ProperTable extends React.Component {
 	static get defaultProps() {
@@ -130,8 +110,8 @@ class ProperTable extends React.Component {
 			col = <Column
 				columnKey={_.uniqueId(colname)}
 				key={_.uniqueId(colname)}
-				header={<Cell>{colData.label}</Cell>}
-				cell={<ParseCell data={this.state.data} colData={colData} col={colData.field} />}
+				header={<Cell className="propertable-hcell">{colData.label}</Cell>}
+				cell={<CellRenderer data={this.state.data} colData={colData} col={colData.field} />}
 				allowCellsRecycling
 				align='center'
 				{...extraProps}
@@ -277,11 +257,11 @@ class ProperTable extends React.Component {
 	}
 
 	getRowClassName(index) {
-		let addClass = null;
+		let addClass = 'propertable-row';
 		let selected = this.state.data.get(index).get('_selected');
 
 		if (selected) {
-			addClass = 'selected';
+			addClass += ' selected';
 		}
 
 		return addClass;
@@ -307,6 +287,7 @@ class ProperTable extends React.Component {
 				rowsCount={this.state.data.size}
 				onRowClick={this.handleRowClick.bind(this)}
 				rowClassNameGetter={this.getRowClassName.bind(this)}
+				className="propertable-table"
 				{...this.props}
 			>
 				{tableContent}
