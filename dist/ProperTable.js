@@ -184,6 +184,7 @@ var ProperTable =
 				indexed: initialData.indexed,
 				rawdata: initialData.rawdata,
 				sort: null,
+				sizes: _immutable2.default.fromJS({}),
 				allSelected: false,
 				selection: []
 			};
@@ -199,19 +200,16 @@ var ProperTable =
 				    parsed = [];
 
 				parsed = data.map(function (row) {
-					var rdata = row.toJSON();
-
-					if (!rdata._properId) {
-						rdata._properId = _underscore2.default.uniqueId();
+					if (!row.get('_properId', false)) {
+						row = row.set('_properId', _underscore2.default.uniqueId());
+					}
+					if (!row.get('_selected', false)) {
+						row = row.set('_selected', false);
 					}
 
-					if (typeof rdata._selected == 'undefined') {
-						rdata._selected = false;
-					}
+					row = row.set('_rowIndex', index++);
 
-					rdata._rowIndex = index++;
-
-					return _immutable2.default.fromJS(rdata);
+					return row;
 				});
 
 				indexed = _underscore2.default.indexBy(parsed.toJSON(), '_properId');
@@ -241,27 +239,40 @@ var ProperTable =
 				    colname = null,
 				    extraProps = {
 					width: 100,
-					fixed: false
+					fixed: false,
+					isResizable: true
 				};
 
 				colname = colData.name || _underscore2.default.uniqueId('col-');
 
+				if (this.state.sizes.get(colname)) {
+					colData.width = this.state.sizes.get(colname);
+					colData.flex = 0;
+				}
+
+				if (colData.width) {
+					extraProps.width = colData.width;
+				}
+
+				if (!colData.width && !colData.maxWidth) {
+					extraProps.flexGrow = 1;
+
+					if (typeof colData.flex != 'undefined') {
+						extraProps.flexGrow = colData.flex;
+					}
+				}
+
+				if (typeof colData.fixed !== 'undefined') {
+					extraProps.fixed = colData.fixed;
+				}
+
+				if (typeof colData.isResizable !== 'undefined') {
+					extraProps.isResizable = colData.isResizable;
+				}
+
 				if (typeof colData.children == 'undefined' || !colData.children.length) {
-
-					if (colData.width) {
-						extraProps.width = colData.width;
-					}
-
-					if (!colData.width && !colData.maxWidth) {
-						extraProps.flexGrow = colData.flex || 1;
-					}
-
-					if (typeof colData.fixed !== 'undefined') {
-						extraProps.fixed = colData.fixed;
-					}
-
 					col = _react2.default.createElement(_fixedDataTable.Column, _extends({
-						columnKey: _underscore2.default.uniqueId(colname),
+						columnKey: colname,
 						key: _underscore2.default.uniqueId(colname),
 						header: _react2.default.createElement(
 							_fixedDataTable.Cell,
@@ -285,14 +296,10 @@ var ProperTable =
 						return _this2.parseColumn(c, true);
 					});
 
-					if (typeof colData.fixed !== 'undefined') {
-						extraProps.fixed = colData.fixed;
-					}
-
 					col = _react2.default.createElement(
 						_fixedDataTable.ColumnGroup,
 						_extends({
-							columnKey: _underscore2.default.uniqueId(colname),
+							columnKey: colname,
 							key: _underscore2.default.uniqueId(colname),
 							header: _react2.default.createElement(
 								_fixedDataTable.Cell,
@@ -466,6 +473,14 @@ var ProperTable =
 				return addClass;
 			}
 		}, {
+			key: 'onResize',
+			value: function onResize(width, column) {
+				var sizes = this.state.sizes;
+				var newsizes = sizes.set(column, width);
+
+				this.setState({ sizes: newsizes });
+			}
+		}, {
 			key: 'render',
 			value: function render() {
 				var content = _react2.default.createElement(
@@ -495,8 +510,10 @@ var ProperTable =
 							groupHeaderHeight: this.props.rowHeight,
 							rowHeight: this.props.rowHeight,
 							rowsCount: this.state.data.size,
+							isColumnResizing: false,
 							onRowClick: this.handleRowClick.bind(this),
 							rowClassNameGetter: this.getRowClassName.bind(this),
+							onColumnResizeEndCallback: this.onResize.bind(this),
 							className: 'propertable-table'
 						}, this.props),
 						tableContent
