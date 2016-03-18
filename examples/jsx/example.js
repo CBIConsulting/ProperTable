@@ -61,6 +61,9 @@ $(function() {
 			name: 'test',
 			label: 'test',
 			field: 'number',
+			sortVal: function(val) {
+				return parseInt(val).toFixed(2);
+			},
 			formatter: function() {
 				return 'test';
 			}

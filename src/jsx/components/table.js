@@ -5,6 +5,7 @@ import _ from 'underscore';
 import messages from "../lang/messages";
 import Dimensions from 'react-dimensions';
 import Selector from './selector';
+import SortHeaderCell from './sortHeaderCell';
 
 function defaultProps() {
 	return {
@@ -68,13 +69,16 @@ class ProperTable extends React.Component {
 
 		this.state = {
 			cols: Immutable.fromJS(this.props.cols),
+			colSortDirs: null,
 			data: null,
 			indexed: null,
 			rawdata: null,
+			unSortedData: null,
 			sort: null,
 			allSelected: false,
 			selection: []
 		};
+
 	}
 
 	componentWillMount() {
@@ -110,15 +114,57 @@ class ProperTable extends React.Component {
 		});
 	}
 
+	/**
+	 * Function called each time the user click on the header of a column, then apply a sortBy function in that column.
+	 * After that, update the state of the component
+	 *
+	 * @param {String} 		columnKey 	The key of the column which will be resort.
+	 * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
+	 * @param {function}	iteratee	Function for iteratee.
+	 * @param {object}		colData		Data of the given colunm
+	 */
+	onSortChange(columnKey, sortDir, iteratee, colData) {
+  		let data = this.state.data;
+  		let sortedData = null;
+
+  		if (sortDir != 'DEF') {
+	  		sortedData = data.sortBy((row, rowIndex, allData) => {
+	  			return iteratee(row.get(colData.field));
+			}, (val1, val2) => {
+				if (val1 == val2) {
+					return 0;
+				} else if (sortDir == 'ASC') {
+					return val1 > val2? -1 : 1;
+				} else if (sortDir == 'DESC'){
+				 	return val1 > val2? 1 : -1;
+				}
+			});
+		} else {
+			//  Set to default
+			sortedData = data.sortBy((row, rowIndex, allData) => {
+	  			return row.get('_rowIndex');
+			}, (val1, val2) => {
+				return val1 > val2? 1 : (val1 == val2 ? 0:-1);
+			});
+		}
+
+  		this.setState({
+  			data: sortedData,
+	      	colSortDirs: {
+	        	[columnKey]: sortDir,
+	      	},
+	    });
+	}
+
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, extraProps = {
-			width: 100
+			width: 100,
+			sortVal: val => val
 		};
 
 		colname = colData.name || _.uniqueId('col-');
 
 		if (typeof colData.children == 'undefined' || !colData.children.length) {
-
 			if (colData.width) {
 				extraProps.width = colData.width;
 			}
@@ -127,10 +173,22 @@ class ProperTable extends React.Component {
 				extraProps.flexGrow = colData.flex || 1;
 			}
 
+			if (colData.sortVal) {
+				extraProps.sortVal = colData.sortVal;
+			}
+
 			col = <Column
-				columnKey={_.uniqueId(colname)}
+				columnKey={colname}
 				key={_.uniqueId(colname)}
-				header={<Cell>{colData.label}</Cell>}
+				header={
+					<SortHeaderCell
+						onSortChange={this.onSortChange.bind(this)}
+						sortDir={_.property(colname)(this.state.colSortDirs)}
+						children={colData.label}
+						sortVal={extraProps.sortVal}
+						colData={colData}
+					/>
+				}
 				cell={<ParseCell data={this.state.data} colData={colData} col={colData.field} />}
 				allowCellsRecycling
 				align='center'
