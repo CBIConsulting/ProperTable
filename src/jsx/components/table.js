@@ -3,7 +3,6 @@ import {Table, Column, Cell, ColumnGroup} from 'fixed-data-table';
 import Immutable from 'immutable';
 import _ from 'underscore';
 import messages from "../lang/messages";
-import Dimensions from 'react-dimensions';
 import Selector from './selector';
 import CellRenderer from './cellRenderer';
 
@@ -295,8 +294,8 @@ class ProperTable extends React.Component {
 			tableContent = this.buildTable();
 
 			content = <Table
-				width={this.props.containerWidth}
-				height={this.props.containerHeight}
+				width={this.props.containerWidth || 100}
+				height={this.props.containerHeight || 100}
 				headerHeight={this.props.rowHeight}
 				groupHeaderHeight={this.props.rowHeight}
 				rowHeight={this.props.rowHeight}
@@ -314,4 +313,5 @@ class ProperTable extends React.Component {
 	}
 }
 
-export default Dimensions()(ProperTable);
+
+export default ProperTable;
