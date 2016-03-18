@@ -69,7 +69,7 @@ $(function() {
 
 	var data = [];
 
-	for (var i = 1000; i > 0; i--) {
+	for (var i = 10; i > 0; i--) {
 		data.push({
 			id: i,
 			col1: 'added-'+i,

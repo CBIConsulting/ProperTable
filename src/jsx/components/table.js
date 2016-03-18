@@ -64,19 +64,16 @@ class ProperTable extends React.Component {
 		let indexed = [], parsed = [];
 
 		parsed = data.map(row => {
-			let rdata = row.toJSON();
-
-			if (!rdata._properId) {
-				rdata._properId = _.uniqueId()
+			if (!row.get('_properId',false)) {
+				row = row.set('_properId', _.uniqueId());
+			}
+			if (!row.get('_selected',false)) {
+				row = row.set('_selected', false);
 			}
 
-			if (typeof rdata._selected == 'undefined') {
-				rdata._selected = false
-			}
+			row = row.set('_rowIndex', index++);
 
-			rdata._rowIndex = index++;
-
-			return Immutable.fromJS(rdata);
+			return row;
 		});
 
 		indexed = _.indexBy(parsed.toJSON(), '_properId');
