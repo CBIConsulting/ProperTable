@@ -48,6 +48,8 @@ class ProperTable extends React.Component {
 
 		let initialData = this.prepareData();
 
+		this.hasFixedColumns = false;
+
 		this.state = {
 			cols: Immutable.fromJS(this.props.cols),
 			data: initialData.data,
@@ -96,7 +98,8 @@ class ProperTable extends React.Component {
 
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, extraProps = {
-			width: 100
+			width: 100,
+			fixed: false
 		};
 
 		colname = colData.name || _.uniqueId('col-');
@@ -111,6 +114,10 @@ class ProperTable extends React.Component {
 				extraProps.flexGrow = colData.flex || 1;
 			}
 
+			if (typeof colData.fixed !== 'undefined') {
+				extraProps.fixed = colData.fixed;
+			}
+
 			col = <Column
 				columnKey={_.uniqueId(colname)}
 				key={_.uniqueId(colname)}
@@ -122,10 +129,14 @@ class ProperTable extends React.Component {
 			/>;
 
 			if (!isChildren && hasNested) {
-				col = <ColumnGroup key={_.uniqueId(colname+'-group')}>{col}</ColumnGroup>
+				col = <ColumnGroup key={_.uniqueId(colname+'-group')} fixed={extraProps.fixed}>{col}</ColumnGroup>
 			}
 		} else {
 			let inner = colData.children.map((c) => this.parseColumn(c, true));
+
+			if (typeof colData.fixed !== 'undefined') {
+				extraProps.fixed = colData.fixed;
+			}
 
 			col = <ColumnGroup
 				columnKey={_.uniqueId(colname)}
@@ -159,10 +170,11 @@ class ProperTable extends React.Component {
 				/>}
 				allowCellsRecycling
 				width={50}
+				fixed
 			/>
 
 			if (isNested) {
-				selColumn = <ColumnGroup key={_.uniqueId('selector-group-')}>{selColumn}</ColumnGroup>;
+				selColumn = <ColumnGroup fixed key={_.uniqueId('selector-group-')}>{selColumn}</ColumnGroup>;
 			}
 
 			columns.push(selColumn);
