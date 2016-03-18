@@ -46,22 +46,20 @@ class ProperTable extends React.Component {
 	constructor(props) {
 		super(props);
 
+		let initialData = this.prepareData();
+
 		this.state = {
 			cols: Immutable.fromJS(this.props.cols),
-			data: null,
-			indexed: null,
-			rawdata: null,
+			data: initialData.data,
+			indexed: initialData.indexed,
+			rawdata: initialData.rawdata,
 			sort: null,
 			allSelected: false,
 			selection: []
 		};
 	}
 
-	componentWillMount() {
-		this.initData();
-	}
-
-	initData() {
+	prepareData() {
 		let data = Immutable.fromJS(this.props.data), index = 0;
 		let indexed = [], parsed = [];
 
@@ -83,11 +81,17 @@ class ProperTable extends React.Component {
 
 		indexed = _.indexBy(parsed.toJSON(), '_properId');
 
-		this.setState({
+		return {
 			rawdata: data,
 			data: parsed,
-			indexed: indexed
-		});
+			index: indexed
+		};
+	}
+
+	initData() {
+		let newdata = this.prepareData();
+
+		this.setState(newData);
 	}
 
 	parseColumn(colData, isChildren = false, hasNested = false) {
