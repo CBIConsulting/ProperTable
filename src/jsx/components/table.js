@@ -55,6 +55,7 @@ class ProperTable extends React.Component {
 			indexed: initialData.indexed,
 			rawdata: initialData.rawdata,
 			sort: null,
+			sizes: Immutable.fromJS({}),
 			allSelected: false,
 			selection: []
 		};
@@ -95,27 +96,41 @@ class ProperTable extends React.Component {
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, extraProps = {
 			width: 100,
-			fixed: false
+			fixed: false,
+			isResizable: true
 		};
 
 		colname = colData.name || _.uniqueId('col-');
 
+		if (this.state.sizes.get(colname)) {
+			colData.width = this.state.sizes.get(colname);
+			colData.flex = 0;
+		}
+
+		if (colData.width) {
+			extraProps.width = colData.width;
+		}
+
+		if (!colData.width && !colData.maxWidth) {
+			extraProps.flexGrow = 1;
+
+			if (typeof colData.flex != 'undefined') {
+				extraProps.flexGrow = colData.flex;
+			}
+		}
+
+		if (typeof colData.fixed !== 'undefined') {
+			extraProps.fixed = colData.fixed;
+		}
+
+		if (typeof colData.isResizable !== 'undefined') {
+			extraProps.isResizable = colData.isResizable;
+		}
+
+
 		if (typeof colData.children == 'undefined' || !colData.children.length) {
-
-			if (colData.width) {
-				extraProps.width = colData.width;
-			}
-
-			if (!colData.width && !colData.maxWidth) {
-				extraProps.flexGrow = colData.flex || 1;
-			}
-
-			if (typeof colData.fixed !== 'undefined') {
-				extraProps.fixed = colData.fixed;
-			}
-
 			col = <Column
-				columnKey={_.uniqueId(colname)}
+				columnKey={colname}
 				key={_.uniqueId(colname)}
 				header={<Cell className="propertable-hcell">{colData.label}</Cell>}
 				cell={<CellRenderer data={this.state.data} colData={colData} col={colData.field} />}
@@ -130,12 +145,8 @@ class ProperTable extends React.Component {
 		} else {
 			let inner = colData.children.map((c) => this.parseColumn(c, true));
 
-			if (typeof colData.fixed !== 'undefined') {
-				extraProps.fixed = colData.fixed;
-			}
-
 			col = <ColumnGroup
-				columnKey={_.uniqueId(colname)}
+				columnKey={colname}
 				key={_.uniqueId(colname)}
 				header={<Cell>{colData.label}</Cell>}
 				{...extraProps}
@@ -279,6 +290,13 @@ class ProperTable extends React.Component {
 		return addClass;
 	}
 
+	onResize(width, column) {
+		let sizes = this.state.sizes;
+		let newsizes = sizes.set(column, width);
+
+		this.setState({sizes: newsizes});
+	}
+
 	render() {
 		let content = <div className="propertable-empty">{this.props.msgs.empty}</div>
 		let tableContent = null;
@@ -297,8 +315,10 @@ class ProperTable extends React.Component {
 				groupHeaderHeight={this.props.rowHeight}
 				rowHeight={this.props.rowHeight}
 				rowsCount={this.state.data.size}
+				isColumnResizing={false}
 				onRowClick={this.handleRowClick.bind(this)}
 				rowClassNameGetter={this.getRowClassName.bind(this)}
+				onColumnResizeEndCallback={this.onResize.bind(this)}
 				className="propertable-table"
 				{...this.props}
 			>
