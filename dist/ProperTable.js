@@ -67,16 +67,16 @@ var ProperTable =
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	__webpack_require__(64);
 
 	"use strict";
 
-	exports.default = {
-		Table: (0, _reactDimensions2.default)()(_table2.default),
-		formatters: _formatters2.default,
-		lang: _messages2.default
+	exports["default"] = {
+		Table: (0, _reactDimensions2["default"])()(_table2["default"]),
+		formatters: _formatters2["default"],
+		lang: _messages2["default"]
 	};
 	module.exports = exports['default'];
 
@@ -133,14 +133,15 @@ var ProperTable =
 			className: '',
 			cols: [],
 			data: [],
-			uniqueId: _underscore2.default.uniqueId('propertable-'),
+			uniqueId: _underscore2['default'].uniqueId('propertable-'),
 			afterSort: null,
 			afterSelect: null,
 			selectable: true,
 			selected: null,
 			rowHeight: 50,
 			idField: null,
-			msgs: _messages2.default
+			selectorWidth: 27,
+			msgs: _messages2['default']
 		};
 	}
 
@@ -162,12 +163,9 @@ var ProperTable =
 	var ProperTable = function (_React$Component) {
 		_inherits(ProperTable, _React$Component);
 
-		_createClass(ProperTable, null, [{
-			key: 'defaultProps',
-			get: function get() {
-				return defaultProps();
-			}
-		}]);
+		/*static get defaultProps() {
+	 	return defaultProps();
+	 }*/
 
 		function ProperTable(props) {
 			_classCallCheck(this, ProperTable);
@@ -179,12 +177,12 @@ var ProperTable =
 			_this.hasFixedColumns = false;
 
 			_this.state = {
-				cols: _immutable2.default.fromJS(_this.props.cols),
+				cols: _immutable2['default'].fromJS(_this.props.cols),
 				data: initialData.data,
 				indexed: initialData.indexed,
 				rawdata: initialData.rawdata,
 				sort: null,
-				sizes: _immutable2.default.fromJS({}),
+				sizes: _immutable2['default'].fromJS({}),
 				allSelected: false,
 				selection: []
 			};
@@ -194,14 +192,14 @@ var ProperTable =
 		_createClass(ProperTable, [{
 			key: 'prepareData',
 			value: function prepareData() {
-				var data = _immutable2.default.fromJS(this.props.data),
+				var data = _immutable2['default'].fromJS(this.props.data),
 				    index = 0;
 				var indexed = [],
 				    parsed = [];
 
 				parsed = data.map(function (row) {
 					if (!row.get('_properId', false)) {
-						row = row.set('_properId', _underscore2.default.uniqueId());
+						row = row.set('_properId', _underscore2['default'].uniqueId());
 					}
 					if (!row.get('_selected', false)) {
 						row = row.set('_selected', false);
@@ -212,7 +210,7 @@ var ProperTable =
 					return row;
 				});
 
-				indexed = _underscore2.default.indexBy(parsed.toJSON(), '_properId');
+				indexed = _underscore2['default'].indexBy(parsed.toJSON(), '_properId');
 
 				return {
 					rawdata: data,
@@ -243,7 +241,7 @@ var ProperTable =
 					isResizable: true
 				};
 
-				colname = colData.name || _underscore2.default.uniqueId('col-');
+				colname = colData.name || _underscore2['default'].uniqueId('col-');
 
 				if (this.state.sizes.get(colname)) {
 					colData.width = this.state.sizes.get(colname);
@@ -271,23 +269,23 @@ var ProperTable =
 				}
 
 				if (typeof colData.children == 'undefined' || !colData.children.length) {
-					col = _react2.default.createElement(_fixedDataTable.Column, _extends({
+					col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
 						columnKey: colname,
-						key: _underscore2.default.uniqueId(colname),
-						header: _react2.default.createElement(
+						key: _underscore2['default'].uniqueId(colname),
+						header: _react2['default'].createElement(
 							_fixedDataTable.Cell,
 							{ className: 'propertable-hcell' },
 							colData.label
 						),
-						cell: _react2.default.createElement(_cellRenderer2.default, { data: this.state.data, colData: colData, col: colData.field }),
+						cell: _react2['default'].createElement(_cellRenderer2['default'], { data: this.state.data, colData: colData, col: colData.field }),
 						allowCellsRecycling: true,
 						align: 'center'
 					}, extraProps));
 
 					if (!isChildren && hasNested) {
-						col = _react2.default.createElement(
+						col = _react2['default'].createElement(
 							_fixedDataTable.ColumnGroup,
-							{ key: _underscore2.default.uniqueId(colname + '-group'), fixed: extraProps.fixed },
+							{ key: _underscore2['default'].uniqueId(colname + '-group'), fixed: extraProps.fixed },
 							col
 						);
 					}
@@ -296,12 +294,12 @@ var ProperTable =
 						return _this2.parseColumn(c, true);
 					});
 
-					col = _react2.default.createElement(
+					col = _react2['default'].createElement(
 						_fixedDataTable.ColumnGroup,
 						_extends({
 							columnKey: colname,
-							key: _underscore2.default.uniqueId(colname),
-							header: _react2.default.createElement(
+							key: _underscore2['default'].uniqueId(colname),
+							header: _react2['default'].createElement(
 								_fixedDataTable.Cell,
 								null,
 								colData.label
@@ -325,26 +323,26 @@ var ProperTable =
 				if (this.props.selectable == 'multiple') {
 					var somethingSelected = this.state.selection.length > 0;
 
-					selColumn = _react2.default.createElement(_fixedDataTable.Column, {
-						columnKey: _underscore2.default.uniqueId('selector-'),
-						key: _underscore2.default.uniqueId('selector-'),
-						header: _react2.default.createElement(_selector2.default, {
+					selColumn = _react2['default'].createElement(_fixedDataTable.Column, {
+						columnKey: _underscore2['default'].uniqueId('selector-'),
+						key: _underscore2['default'].uniqueId('selector-'),
+						header: _react2['default'].createElement(_selector2['default'], {
 							onClick: this.handleSelectAll.bind(this),
 							somethingSelected: somethingSelected,
 							allSelected: this.state.allSelected
 						}),
-						cell: _react2.default.createElement(_selector2.default, {
+						cell: _react2['default'].createElement(_selector2['default'], {
 							data: this.state.data
 						}),
 						allowCellsRecycling: true,
-						width: 50,
+						width: this.props.selectorWidth,
 						fixed: true
 					});
 
 					if (isNested) {
-						selColumn = _react2.default.createElement(
+						selColumn = _react2['default'].createElement(
 							_fixedDataTable.ColumnGroup,
-							{ fixed: true, key: _underscore2.default.uniqueId('selector-group-') },
+							{ fixed: true, key: _underscore2['default'].uniqueId('selector-group-') },
 							selColumn
 						);
 					}
@@ -366,7 +364,7 @@ var ProperTable =
 				var newSelection = [];
 
 				if (!allSelected) {
-					newSelection = _underscore2.default.keys(this.state.indexed);
+					newSelection = _underscore2['default'].keys(this.state.indexed);
 				}
 
 				this.triggerSelection(newSelection.sort());
@@ -381,10 +379,10 @@ var ProperTable =
 		}, {
 			key: 'toggleSelected',
 			value: function toggleSelected(properId) {
-				var selection = _underscore2.default.clone(this.state.selection);
+				var selection = _underscore2['default'].clone(this.state.selection);
 
-				if (_underscore2.default.indexOf(selection, properId.toString()) != -1) {
-					selection = _underscore2.default.without(selection, properId);
+				if (_underscore2['default'].indexOf(selection, properId.toString()) != -1) {
+					selection = _underscore2['default'].without(selection, properId);
 				} else {
 					if (this.props.selectable == 'multiple') {
 						selection.push(properId);
@@ -398,7 +396,7 @@ var ProperTable =
 		}, {
 			key: 'componentWillUpdate',
 			value: function componentWillUpdate(nextProps, nextState) {
-				if (!_underscore2.default.isEqual(nextState.selection, this.state.selection)) {
+				if (!_underscore2['default'].isEqual(nextState.selection, this.state.selection)) {
 					this.updateSelectionData(nextState.selection);
 				}
 			}
@@ -408,12 +406,12 @@ var ProperTable =
 				var newData = this.state.data.map(function (row) {
 					var rdata = row.toJSON();
 
-					rdata._selected = _underscore2.default.indexOf(newSelection, rdata._properId) >= 0;
+					rdata._selected = _underscore2['default'].indexOf(newSelection, rdata._properId) >= 0;
 
-					return _immutable2.default.fromJS(rdata);
+					return _immutable2['default'].fromJS(rdata);
 				});
 
-				var newIndexed = _underscore2.default.indexBy(newData.toJSON(), '_properId');
+				var newIndexed = _underscore2['default'].indexBy(newData.toJSON(), '_properId');
 
 				this.setState({
 					data: newData,
@@ -425,7 +423,7 @@ var ProperTable =
 			value: function triggerSelection() {
 				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
-				if (!_underscore2.default.isEqual(newSelection, this.state.selection)) {
+				if (!_underscore2['default'].isEqual(newSelection, this.state.selection)) {
 					this.setState({
 						selection: newSelection,
 						allSelected: newSelection.length == this.state.data.size
@@ -446,7 +444,7 @@ var ProperTable =
 
 						var output = [];
 
-						output = _underscore2.default.map(selection, function (pId) {
+						output = _underscore2['default'].map(selection, function (pId) {
 							var rowIndex = indexed[pId]._rowIndex;
 
 							return rawdata.get(rowIndex).toJSON();
@@ -483,25 +481,17 @@ var ProperTable =
 		}, {
 			key: 'render',
 			value: function render() {
-				var content = _react2.default.createElement(
+				var content = _react2['default'].createElement(
 					'div',
 					{ className: 'propertable-empty' },
 					this.props.msgs.empty
 				);
 				var tableContent = null;
 
-				if (this.state.data === null) {
-					content = _react2.default.createElement(
-						'div',
-						{ className: 'propertable-loading' },
-						this.props.msgs.loading
-					);
-				}
-
 				if (this.state.data && this.state.data.size) {
 					tableContent = this.buildTable();
 
-					content = _react2.default.createElement(
+					content = _react2['default'].createElement(
 						_fixedDataTable.Table,
 						_extends({
 							width: this.props.containerWidth || 100,
@@ -520,7 +510,7 @@ var ProperTable =
 					);
 				}
 
-				return _react2.default.createElement(
+				return _react2['default'].createElement(
 					'div',
 					{ id: this.props.uniqueId, className: 'propertable ' + this.props.className },
 					content
@@ -529,9 +519,11 @@ var ProperTable =
 		}]);
 
 		return ProperTable;
-	}(_react2.default.Component);
+	}(_react2['default'].Component);
 
-	exports.default = ProperTable;
+	ProperTable.defaultProps = defaultProps();
+
+	exports['default'] = ProperTable;
 	module.exports = exports['default'];
 
 /***/ },
@@ -12332,7 +12324,7 @@ var ProperTable =
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	exports.default = {
+	exports['default'] = {
 		loading: 'loading...',
 		empty: 'No data found'
 	};
@@ -12354,12 +12346,12 @@ var ProperTable =
 
 	var _fixedDataTable = __webpack_require__(3);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	var Selector = function Selector(props) {
 		var allSelected = false,
 		    somethingSelected = false,
-		    content = _react2.default.createElement('i', { className: 'fa fa-square-o selector-button' });
+		    content = _react2['default'].createElement('i', { className: 'fa fa-square-o selector-button' });
 		var addClass = 'unchecked';
 		var selected = false;
 		var row = null;
@@ -12390,21 +12382,21 @@ var ProperTable =
 		}
 
 		if (somethingSelected && !allSelected) {
-			content = _react2.default.createElement('i', { className: 'fa fa-minus-square-o' });
+			content = _react2['default'].createElement('i', { className: 'fa fa-minus-square-o' });
 		}
 
 		if (allSelected || row && row._selected) {
-			content = _react2.default.createElement('i', { className: 'fa fa-check-square-o' });
+			content = _react2['default'].createElement('i', { className: 'fa fa-check-square-o' });
 		}
 
 		if (row && row._selected) {
 			selected = true;
 		}
 
-		return _react2.default.createElement(
+		return _react2['default'].createElement(
 			_fixedDataTable.Cell,
 			{ className: 'propertable-cell select-cell' },
-			_react2.default.createElement(
+			_react2['default'].createElement(
 				'div',
 				{ className: "propertable-selector " + addClass, onClick: function onClick(e) {
 						_onClick(e, row);
@@ -12414,7 +12406,7 @@ var ProperTable =
 		);
 	};
 
-	exports.default = Selector;
+	exports['default'] = Selector;
 	module.exports = exports['default'];
 
 /***/ },
@@ -12433,7 +12425,7 @@ var ProperTable =
 
 	var _fixedDataTable = __webpack_require__(3);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	var CellRenderer = function CellRenderer(props) {
 		var row = props.data.get(props.rowIndex),
@@ -12458,14 +12450,14 @@ var ProperTable =
 			formatted = colData.formatter(val, colData, row.toJSON());
 		}
 
-		return _react2.default.createElement(
+		return _react2['default'].createElement(
 			_fixedDataTable.Cell,
 			{ className: 'propertable-cell' },
 			formatted
 		);
 	};
 
-	exports.default = CellRenderer;
+	exports['default'] = CellRenderer;
 	module.exports = exports['default'];
 
 /***/ },
@@ -12486,13 +12478,13 @@ var ProperTable =
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	function isNumeric(n) {
 		return !isNaN(parseFloat(n)) && isFinite(n);
 	}
 
-	exports.default = {
+	exports["default"] = {
 		string: function string() {
 			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
@@ -12510,10 +12502,10 @@ var ProperTable =
 			}
 
 			if (typeof value == 'string') {
-				value = (0, _numeral2.default)().unformat(value);
+				value = (0, _numeral2["default"])().unformat(value);
 			}
 
-			return (0, _numeral2.default)(value).format('0,0[.]00');
+			return (0, _numeral2["default"])(value).format('0,0[.]00');
 		},
 		date: function date() {
 			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
@@ -12522,7 +12514,7 @@ var ProperTable =
 				return null;
 			}
 
-			var result = (0, _moment2.default)(value).format('LL');
+			var result = (0, _moment2["default"])(value).format('LL');
 
 			if (result == 'Invalid date') {
 				return null;
@@ -12537,7 +12529,7 @@ var ProperTable =
 				return null;
 			}
 
-			var result = (0, _moment2.default)(value).format('LLL');
+			var result = (0, _moment2["default"])(value).format('LLL');
 
 			if (result == 'Invalid date') {
 				return null;

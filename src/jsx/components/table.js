@@ -20,6 +20,7 @@ function defaultProps() {
 		rowHeight: 50,
 		idField: null,
 		msgs: messages,
+		selectorWidth: 27,
 		colSortDirs: null, // [{name: fieldName,  direction: 'DEF'},{},{}]
 		multisort: false
 	};
@@ -41,11 +42,12 @@ function hasNested(cols) {
 }
 
 class ProperTable extends React.Component {
-	static get defaultProps() {
+	/*static get defaultProps() {
 		return defaultProps();
-	}
+	}*/
 
 	constructor(props) {
+
 		super(props);
 
 		let initialData = this.prepareData();
@@ -372,7 +374,7 @@ class ProperTable extends React.Component {
 					data={this.state.data}
 				/>}
 				allowCellsRecycling
-				width={50}
+				width={this.props.selectorWidth}
 				fixed
 			/>
 
@@ -497,10 +499,6 @@ class ProperTable extends React.Component {
 		let content = <div className="propertable-empty">{this.props.msgs.empty}</div>
 		let tableContent = null;
 
-		if (this.state.data === null) {
-			content = <div className="propertable-loading">{this.props.msgs.loading}</div>
-		}
-
 		if (this.state.data && this.state.data.size) {
 			tableContent = this.buildTable();
 
@@ -525,5 +523,8 @@ class ProperTable extends React.Component {
 		return <div id={this.props.uniqueId} className={'propertable '+this.props.className}>{content}</div>;
 	}
 }
+
+ProperTable.defaultProps = defaultProps();
+
 
 export default ProperTable;
