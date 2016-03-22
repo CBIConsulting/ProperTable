@@ -34,6 +34,7 @@ $(function() {
 			label: <span>A number</span>,
 			field: 'number',
 			className: 'number',
+			sortable: false,
 			width: 100,
 			formatter: value => ProperTable.formatters.number(value+1)
 		},
@@ -46,6 +47,7 @@ $(function() {
 					name: 'nested1',
 					label: 'nested1',
 					field: 'nested1',
+					sortable: false,
 					sortVal: function(value) {
 						return moment(value).unix();
 					},

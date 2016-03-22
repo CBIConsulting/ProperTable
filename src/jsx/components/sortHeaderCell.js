@@ -35,10 +35,11 @@ const SortHeaderCell = props => {
 	let sortable = props.sortable;
 	let children = props.children || null;
 	let sortIcon = sortDir && sortable? SortIcons[sortDir] : SortIcons['DEF'];
+  let className = sortable ? "propertable-header-cell sortable" : "propertable-header-cell not-sortable";
 
 	return (
   		<Cell
-        className="centrardiv"
+        className={className}
         onClick={(e) => {
           onSortChange(e, props, sortable);
         }}
