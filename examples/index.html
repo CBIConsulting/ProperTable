@@ -9,12 +9,24 @@
     <link rel="stylesheet" type="text/css" href="../dist/propertable.css">
   </head>
   <body>
-    <div id="canvas" style="position: relative; margin: 1em auto; width: 80%; height: 500px; border: 1px solid red; overflow: auto">loading...</div>
+    <div style="position: absolute; width: 100%; top: 0; bottom: 50%;">
+      <div style="position: absolute; top: 0; bottom: 0; width: 50%;">
+        <div id="canvas1" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+      </div>
+      <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 50%;">
+        <div id="canvas2" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+      </div>
+    </div>
+    <div style="position: absolute; width: 100%; top: 50%; bottom: 0">
+      <div style="position: absolute; top: 0; bottom: 0; left: 33%;  width: 33%;">
+        <div id="canvas3" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+      </div>
+    </div>
   </body>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/0.13.3/react-with-addons.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react-with-addons.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react-dom.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.3/underscore-min.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.10.6/moment.min.js"></script>
-  <script src="ProperTable.js"></script>
-  <script src="../examples/example.js"></script>
+  <script src="example.js"></script>
 </html>

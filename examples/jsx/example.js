@@ -1,26 +1,41 @@
-let body = document.getElementById('canvas');
+import ProperTable from "../../src/jsx/ProperTable";
 
-$(() => {
-	ProperTable.Settings.set({
-		language: 'en'
-	});
+let body1 = document.getElementById('canvas1');
+let body2 = document.getElementById('canvas2');
+let body3 = document.getElementById('canvas3');
 
+$(function() {
 	var cols = [
+		{
+			name: 'id',
+			label: 'ID',
+			field: 'id',
+			width: 50
+		},
 		{
 			name: 'col1',
 			label: 'columna 1',
-			field: 'col1',
-			width: 120,
-			formatter: function(value) {
+			field: 'col1'/*,
+			width: 400,
+			formatter: function() {
 				return 'Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.';
-			}
+			}*/
 		},
 		{
 			name: 'number',
-			label: 'A number',
+			label: <span>A number</span>,
 			field: 'number',
 			className: 'number',
+			width: 100,
 			formatter: ProperTable.formatters.number
+		},
+		{
+			name: 'number2',
+			label: <span>A number</span>,
+			field: 'number',
+			className: 'number',
+			width: 100,
+			formatter: value => ProperTable.formatters.number(value+1)
 		},
 		{
 			name: 'nested',
@@ -47,7 +62,7 @@ $(() => {
 			name: 'test',
 			label: 'test',
 			field: 'number',
-			formatter: function(value) {
+			formatter: function() {
 				return 'test';
 			}
 		}
@@ -55,16 +70,94 @@ $(() => {
 
 	var data = [];
 
-	for (var i = 500; i >= 0; i--) {
+	for (var i = 10; i > 0; i--) {
 		data.push({
+			id: i,
 			col1: 'added-'+i,
 			nested1: moment().add((Math.round(Math.random() * 10000) % 2000), 'days').format('YYYY-MM-DD HH:mm:ss'),
 			nested2: 'bar-'+i,
 			number: (Math.round(Math.random() * 1000) % 20) + 1
 		});
-	};
+	}
 
-	React.render(<ProperTable.Table key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
-		console.log('selected', data);
-	}} />, body);
+	const ex3cols = [
+		{
+			name: 'col1',
+			label: 'col1',
+			field: 'col1',
+			fixed: true
+		},{
+			name: 'col2',
+			label: 'col2',
+			field: 'col2'
+		},{
+			name: 'col3',
+			label: 'col3',
+			field: 'col3'
+		},{
+			name: 'col4',
+			label: 'col4',
+			field: 'col4'
+		},{
+			name: 'col5',
+			label: 'col5',
+			field: 'col5'
+		},{
+			name: 'col7',
+			label: 'col7',
+			field: 'col7'
+		},{
+			name: 'col8',
+			label: 'col8',
+			field: 'col8'
+		},{
+			name: 'col9',
+			label: 'col9',
+			field: 'col9'
+		},{
+			name: 'col10',
+			label: 'col10',
+			field: 'col10'
+		},{
+			name: 'col11',
+			label: 'col11',
+			field: 'col11'
+		},{
+			name: 'col12',
+			label: 'col12',
+			field: 'col12'
+		}
+	];
+
+	let ex3data = [];
+	let k = 0;
+
+	for (i = 10000 - 1; i >= 0; i--) {
+		let row = {
+			col1: _.uniqueId('row-')
+		};
+
+		for (k = 2; k <= 12; k++) {
+			row['col'+k] = i * k;
+		}
+
+		ex3data.push(row);
+	}
+
+	ReactDOM.render(<ProperTable.Table key='pt1' uniqueId={1} rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
+		console.log('selected1', data);
+	}} />, body1);
+	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} key={'testtable2'} cols={cols} data={data} afterSelect={function(data) {
+		console.log('selected2', data);
+	}} selectable="multiple" />, body2);
+
+	ReactDOM.render(<ProperTable.Table
+		key='pt3'
+		uniqueId={3}
+		rowHeight={40}
+		key={'testtable3'}
+		cols={ex3cols}
+		data={ex3data}
+		selectable="multiple"
+	/>, body3);
 });
