@@ -55,7 +55,7 @@ var ProperTable =
 
 	var _table2 = _interopRequireDefault(_table);
 
-	var _formatters = __webpack_require__(60);
+	var _formatters = __webpack_require__(61);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -63,13 +63,13 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(63);
+	var _reactDimensions = __webpack_require__(64);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-	__webpack_require__(64);
+	__webpack_require__(65);
 
 	"use strict";
 
@@ -120,6 +120,10 @@ var ProperTable =
 
 	var _cellRenderer2 = _interopRequireDefault(_cellRenderer);
 
+	var _sortHeaderCell = __webpack_require__(60);
+
+	var _sortHeaderCell2 = _interopRequireDefault(_sortHeaderCell);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -140,8 +144,10 @@ var ProperTable =
 			selected: null,
 			rowHeight: 50,
 			idField: null,
+			msgs: _messages2['default'],
 			selectorWidth: 27,
-			msgs: _messages2['default']
+			colSortDirs: null, // [{name: fieldName,  direction: 'DEF'},{},{}]
+			multisort: false
 		};
 	}
 
@@ -173,15 +179,17 @@ var ProperTable =
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProperTable).call(this, props));
 
 			var initialData = _this.prepareData();
+			var initialColSort = _this.prepareColSort();
 
 			_this.hasFixedColumns = false;
 
 			_this.state = {
 				cols: _immutable2['default'].fromJS(_this.props.cols),
+				colSortDirs: initialColSort.colSortDirs,
+				colSortVals: initialColSort.sortValues,
 				data: initialData.data,
 				indexed: initialData.indexed,
 				rawdata: initialData.rawdata,
-				sort: null,
 				sizes: _immutable2['default'].fromJS({}),
 				allSelected: false,
 				selection: []
@@ -190,6 +198,11 @@ var ProperTable =
 		}
 
 		_createClass(ProperTable, [{
+			key: 'componentDidMount',
+			value: function componentDidMount() {
+				this.sortTable(this.state.colSortDirs);
+			}
+		}, {
 			key: 'prepareData',
 			value: function prepareData() {
 				var data = _immutable2['default'].fromJS(this.props.data),
@@ -226,15 +239,216 @@ var ProperTable =
 				this.setState(newData);
 			}
 		}, {
+			key: 'prepareColSort',
+			value: function prepareColSort() {
+				var colSortDirs = this.props.colSortDirs,
+				    cols = this.props.cols;
+				var sort = [],
+				    multisort = this.props.multisort;
+				var sortData = this.buildColSortDirs(cols);
+				var direction = null,
+				    sortable = null,
+				    colData = null;
+
+				if (_underscore2['default'].isNull(colSortDirs)) {
+					colSortDirs = sortData.colSortDirs;
+				}
+
+				for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
+					colData = sortData.colSortDirs[i];
+					direction = colData.direction;
+					sortable = colData.sortable !== null ? colData.sortable : true;
+
+					colSortDirs.forEach(function (element) {
+						if (element.column == colData.column) direction = element.direction;
+					});
+
+					sort.push({
+						column: colData.column, // Column name
+						field: colData.field,
+						direction: direction,
+						position: i + 1,
+						sorted: false,
+						multisort: multisort, // single (false) (in this case only one at a time could be true at this field) or multisort (true - all true)
+						sortable: sortable
+					});
+				}
+
+				return {
+					colSortDirs: sort,
+					sortValues: sortData.sortVals
+				};
+			}
+		}, {
+			key: 'buildColSortDirs',
+			value: function buildColSortDirs(cols) {
+				var _this2 = this;
+
+				var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+				var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
+				cols.forEach(function (element) {
+					if (!element.children) {
+						var sortable = _underscore2['default'].isUndefined(element.sortable) ? null : element.sortable;
+
+						sortVals[element.name] = element.sortVal || function (val) {
+							return val;
+						}; // Function to iterate
+
+						colSortDirs.push({
+							column: element.name,
+							field: element.field,
+							direction: 'DEF',
+							sortable: sortable
+						});
+					} else {
+						_this2.buildColSortDirs(element.children, colSortDirs, sortVals);
+					}
+				});
+
+				return {
+					colSortDirs: colSortDirs,
+					sortVals: sortVals
+				};
+			}
+
+			/**
+	   * Function called each time the user click on the header of a column, then apply a sortBy function in that column.
+	   * After that, update the state of the component
+	   *
+	   * @param {String} 		columnKey 	The name of the column which will be resort.
+	   * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
+	   */
+
+		}, {
+			key: 'onSortChange',
+			value: function onSortChange(columnKey, sortDir) {
+				var newData = null;
+				var colSortDirs = this.updateSortDir(columnKey, sortDir);
+				newData = this.sortTable(colSortDirs);
+
+				this.setState({
+					data: newData.data,
+					colSortDirs: newData.colSortDirs
+				});
+			}
+		}, {
+			key: 'updateSortDir',
+			value: function updateSortDir(columnKey, sortDir) {
+				var colSortDirs = this.state.colSortDirs || [],
+				    position = 1;
+
+				if (!this.props.multisort) {
+					for (var i = 0; i <= colSortDirs.length - 1; i++) {
+						if (colSortDirs[i].column == columnKey) {
+							colSortDirs[i].direction = sortDir;
+							colSortDirs[i].multisort = true;
+						} else {
+							colSortDirs[i].direction = 'DEF';
+							colSortDirs[i].multisort = false;
+						}
+					}
+				} else {
+					var initialPos = 0,
+					    index = 0;
+
+					for (var _i = 0; _i <= colSortDirs.length - 1; _i++) {
+						if (colSortDirs[_i].sorted) initialPos++;
+
+						if (colSortDirs[_i].column == columnKey) {
+							colSortDirs[_i].direction = sortDir;
+							position = colSortDirs[_i].position;
+							index = _i;
+							if (sortDir != 'DEF' && !colSortDirs[_i].sorted) {
+								initialPos++;
+								colSortDirs[_i].sorted = true;
+							} else if (sortDir == 'DEF') {
+								colSortDirs[_i].sorted = false;
+							}
+						}
+					}
+
+					for (var _i2 = 0; _i2 <= colSortDirs.length - 1; _i2++) {
+						if (colSortDirs[_i2].position < position && colSortDirs[_i2].position >= initialPos) {
+							if (colSortDirs[_i2].direction == 'DEF') colSortDirs[_i2].position = colSortDirs[_i2].position + 1;
+						}
+					}
+
+					if (colSortDirs[index].position != 'DEF' && initialPos < colSortDirs[index].position) colSortDirs[index].position = initialPos;
+				}
+
+				return colSortDirs;
+			}
+		}, {
+			key: 'sortTable',
+			value: function sortTable(colSortDirs) {
+				var data = this.state.data;
+
+				colSortDirs = _underscore2['default'].sortBy(colSortDirs, function (element) {
+					return element.position;
+				});
+				data = this.sortColumns(data, colSortDirs);
+
+				return {
+					data: data,
+					colSortDirs: colSortDirs
+				};
+			}
+		}, {
+			key: 'sortColumns',
+			value: function sortColumns(data, colSortDirs) {
+				var sortedData = data;
+				var sortVals = this.state.colSortVals,
+				    sortVal = null;
+				var defaultSort = true,
+				    element = null,
+				    position = null;
+
+				for (var i = 0; i <= colSortDirs.length - 1; i++) {
+					position = colSortDirs[i].position - 1;
+					element = colSortDirs[position];
+
+					// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
+					if (element.direction != 'DEF' && element.multisort && element.sortable) {
+						sortVal = sortVals[element.column];
+						sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
+							return sortVal(row.get(element.field));
+						}, function (val1, val2) {
+							if (val1 == val2) {
+								return 0;
+							} else if (element.direction == 'ASC') {
+								return val1 > val2 ? -1 : 1;
+							} else if (element.direction == 'DESC') {
+								return val1 > val2 ? 1 : -1;
+							}
+						});
+						defaultSort = false;
+					}
+				}
+
+				if (defaultSort) {
+					//  Set to default
+					sortedData = data.sortBy(function (row, rowIndex, allData) {
+						return row.get('_rowIndex');
+					}, function (val1, val2) {
+						return val1 > val2 ? 1 : val1 == val2 ? 0 : -1;
+					});
+				}
+
+				return sortedData;
+			}
+		}, {
 			key: 'parseColumn',
 			value: function parseColumn(colData) {
-				var _this2 = this;
+				var _this3 = this;
 
 				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
 
 				var col = null,
 				    colname = null,
+				    sortDir = 'DEF',
+				    sortable = null,
 				    extraProps = {
 					width: 100,
 					fixed: false,
@@ -269,14 +483,21 @@ var ProperTable =
 				}
 
 				if (typeof colData.children == 'undefined' || !colData.children.length) {
+					this.state.colSortDirs.forEach(function (element) {
+						if (element.column === colname) sortDir = element.direction;
+					});
+
+					sortable = _underscore2['default'].isUndefined(colData.sortable) ? true : colData.sortable;
+
 					col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
 						columnKey: colname,
 						key: _underscore2['default'].uniqueId(colname),
-						header: _react2['default'].createElement(
-							_fixedDataTable.Cell,
-							{ className: 'propertable-hcell' },
-							colData.label
-						),
+						header: _react2['default'].createElement(_sortHeaderCell2['default'], {
+							onSortChange: this.onSortChange.bind(this),
+							sortDir: sortDir,
+							children: colData.label,
+							sortable: sortable
+						}),
 						cell: _react2['default'].createElement(_cellRenderer2['default'], { data: this.state.data, colData: colData, col: colData.field }),
 						allowCellsRecycling: true,
 						align: 'center'
@@ -291,7 +512,7 @@ var ProperTable =
 					}
 				} else {
 					var inner = colData.children.map(function (c) {
-						return _this2.parseColumn(c, true);
+						return _this3.parseColumn(c, true);
 					});
 
 					col = _react2['default'].createElement(
@@ -314,7 +535,7 @@ var ProperTable =
 		}, {
 			key: 'buildTable',
 			value: function buildTable() {
-				var _this3 = this;
+				var _this4 = this;
 
 				var columns = [],
 				    isNested = hasNested(this.state.cols),
@@ -351,7 +572,7 @@ var ProperTable =
 				}
 
 				this.state.cols.forEach(function (col) {
-					columns.push(_this3.parseColumn(col.toJSON(), false, isNested));
+					columns.push(_this4.parseColumn(col.toJSON(), false, isNested));
 				});
 
 				return columns;
@@ -433,11 +654,11 @@ var ProperTable =
 		}, {
 			key: 'sendSelection',
 			value: function sendSelection() {
-				var _this4 = this;
+				var _this5 = this;
 
 				if (typeof this.props.afterSelect == 'function') {
 					(function () {
-						var _state = _this4.state;
+						var _state = _this5.state;
 						var selection = _state.selection;
 						var indexed = _state.indexed;
 						var rawdata = _state.rawdata;
@@ -450,11 +671,11 @@ var ProperTable =
 							return rawdata.get(rowIndex).toJSON();
 						});
 
-						if (_this4.props.selectable === true) {
+						if (_this5.props.selectable === true) {
 							output = output[0];
 						}
 
-						_this4.props.afterSelect(output);
+						_this5.props.afterSelect(output);
 					})();
 				}
 			}
@@ -12464,17 +12685,90 @@ var ProperTable =
 /* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _fixedDataTable = __webpack_require__(3);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var SortTypes = {
+	  ASC: 'ASC',
+	  DESC: 'DESC',
+	  DEF: 'DEF'
+	};
+
+	var SortIcons = {
+	  ASC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-up' }),
+	  DESC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-down' }),
+	  DEF: null // Default
+	};
+
+	var reverseSortDirection = function reverseSortDirection(sortDir) {
+	  if (sortDir) {
+	    // Second sort
+	    if (sortDir === SortTypes.DEF) return reverseSortDirection(null); // From default start again
+	    else return sortDir === SortTypes.ASC ? SortTypes.DESC : SortTypes.DEF; // Third sort from ASC to DESC then from DESC back to default
+	  }
+	  return SortTypes.ASC; // First sort
+	};
+
+	var onSortChange = function onSortChange(e, props, sortable) {
+	  e.preventDefault();
+	  if (sortable) {
+	    if (typeof props.onSortChange === 'function') {
+	      props.onSortChange(props.columnKey, reverseSortDirection(props.sortDir));
+	    }
+	  }
+	};
+
+	var SortHeaderCell = function SortHeaderCell(props) {
+	  var sortDir = props.sortDir || null;
+	  var sortable = props.sortable;
+	  var children = props.children || null;
+	  var sortIcon = sortDir && sortable ? SortIcons[sortDir] : SortIcons['DEF'];
+
+	  return _react2['default'].createElement(
+	    _fixedDataTable.Cell,
+	    _extends({
+	      className: 'centrardiv',
+	      onClick: function onClick(e) {
+	        onSortChange(e, props, sortable);
+	      }
+	    }, props),
+	    children,
+	    '   ',
+	    sortIcon
+	  );
+	};
+
+	exports['default'] = SortHeaderCell;
+	module.exports = exports['default'];
+
+/***/ },
+/* 61 */
+/***/ function(module, exports, __webpack_require__) {
+
 	"use strict";
 
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
 
-	var _moment = __webpack_require__(61);
+	var _moment = __webpack_require__(62);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(62);
+	var _numeral = __webpack_require__(63);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -12541,13 +12835,13 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 61 */
+/* 62 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 62 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -13232,7 +13526,7 @@ var ProperTable =
 
 
 /***/ },
-/* 63 */
+/* 64 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -13404,7 +13698,7 @@ var ProperTable =
 
 
 /***/ },
-/* 64 */
+/* 65 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
