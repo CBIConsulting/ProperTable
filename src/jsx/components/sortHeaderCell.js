@@ -2,9 +2,9 @@ import React from 'react';
 import {Cell} from 'fixed-data-table';
 
 const SortTypes = {
-  	ASC: 'ASC',
-  	DESC: 'DESC',
-  	DEF: 'DEF'
+  ASC: 'ASC',
+  DESC: 'DESC',
+  DEF: 'DEF'
 };
 
 const SortIcons = {
@@ -21,24 +21,26 @@ const reverseSortDirection = sortDir => {
   	return SortTypes.ASC; // First sort
 };
 
-const onSortChange = (e, props) => {
+const onSortChange = (e, props, sortable) => {
   e.preventDefault();
-
-	if (typeof props.onSortChange === 'function') {
-      props.onSortChange(props.columnKey, reverseSortDirection(props.sortDir), props.sortVal, props.colData);
-	}
+  if (sortable) {
+      if (typeof props.onSortChange === 'function') {
+        props.onSortChange(props.columnKey, reverseSortDirection(props.sortDir));
+      }
+  }
 };
 
 const SortHeaderCell = props => {
-	let sortDir = props.sortDir || null;
+  let sortDir = props.sortDir || null;
+	let sortable = props.sortable;
 	let children = props.children || null;
-	let sortIcon = sortDir ? SortIcons[sortDir] : SortIcons['DEF'];
+	let sortIcon = sortDir && sortable? SortIcons[sortDir] : SortIcons['DEF'];
 
 	return (
   		<Cell
         className="centrardiv"
         onClick={(e) => {
-          onSortChange(e, props);
+          onSortChange(e, props, sortable);
         }}
         {...props}
       >

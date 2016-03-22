@@ -48,6 +48,7 @@ $(function() {
 					sortVal: function(value) {
 						return moment(value).unix();
 					},
+					sortable: false,
 					formatter: ProperTable.formatters.date
 				},
 				{
@@ -72,14 +73,32 @@ $(function() {
 
 	var data = [];
 
-	for (var i = 1000; i > 0; i--) {
-		data.push({
-			id: i,
-			col1: 'added-'+i,
-			nested1: moment().add((Math.round(Math.random() * 10000) % 2000), 'days').format('YYYY-MM-DD HH:mm:ss'),
-			nested2: 'bar-'+i,
-			number: (Math.round(Math.random() * 1000) % 20) + 1
-		});
+	for (var i = 180; i > 0; i--) {
+		if (i < 40){
+			data.push({
+				id: i,
+				col1: 'menor que 4',
+				nested1: moment().add((Math.round(Math.random() * 10000) % 2000), 'days').format('YYYY-MM-DD HH:mm:ss'),
+				nested2: 'c'+i,
+				number: (Math.round(Math.random() * 1000) % 20) + 1
+			});
+		} else if (i < 80) {
+			data.push({
+				id: i,
+				col1: 'entre 4 y 8',
+				nested1: moment().add((Math.round(Math.random() * 10000) % 2000), 'days').format('YYYY-MM-DD HH:mm:ss'),
+				nested2: 'b'+i,
+				number: (Math.round(Math.random() * 1000) % 20) + 1
+			});
+		} else {
+			data.push({
+				id: i,
+				col1: 'mayor que 8',
+				nested1: moment().add((Math.round(Math.random() * 10000) % 2000), 'days').format('YYYY-MM-DD HH:mm:ss'),
+				nested2: 'a'+i,
+				number: (Math.round(Math.random() * 1000) % 20) + 1
+			});
+		}
 	}
 
 	ReactDOM.render(<ProperTable.Table key='pt1' uniqueId={1} rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
