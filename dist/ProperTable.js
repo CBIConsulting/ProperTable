@@ -55,13 +55,17 @@ var ProperTable =
 
 	var _table2 = _interopRequireDefault(_table);
 
-	var _formatters = __webpack_require__(61);
+	var _formatters = __webpack_require__(60);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
 	var _messages = __webpack_require__(57);
 
 	var _messages2 = _interopRequireDefault(_messages);
+
+	var _reactDimensions = __webpack_require__(63);
+
+	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -70,7 +74,7 @@ var ProperTable =
 	"use strict";
 
 	exports.default = {
-		Table: _table2.default,
+		Table: (0, _reactDimensions2.default)()(_table2.default),
 		formatters: _formatters2.default,
 		lang: _messages2.default
 	};
@@ -108,15 +112,11 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(58);
-
-	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
-
-	var _selector = __webpack_require__(59);
+	var _selector = __webpack_require__(58);
 
 	var _selector2 = _interopRequireDefault(_selector);
 
-	var _cellRenderer = __webpack_require__(60);
+	var _cellRenderer = __webpack_require__(59);
 
 	var _cellRenderer2 = _interopRequireDefault(_cellRenderer);
 
@@ -174,12 +174,17 @@ var ProperTable =
 
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProperTable).call(this, props));
 
+			var initialData = _this.prepareData();
+
+			_this.hasFixedColumns = false;
+
 			_this.state = {
 				cols: _immutable2.default.fromJS(_this.props.cols),
-				data: null,
-				indexed: null,
-				rawdata: null,
+				data: initialData.data,
+				indexed: initialData.indexed,
+				rawdata: initialData.rawdata,
 				sort: null,
+				sizes: _immutable2.default.fromJS({}),
 				allSelected: false,
 				selection: []
 			};
@@ -187,41 +192,40 @@ var ProperTable =
 		}
 
 		_createClass(ProperTable, [{
-			key: 'componentWillMount',
-			value: function componentWillMount() {
-				this.initData();
-			}
-		}, {
-			key: 'initData',
-			value: function initData() {
+			key: 'prepareData',
+			value: function prepareData() {
 				var data = _immutable2.default.fromJS(this.props.data),
 				    index = 0;
 				var indexed = [],
 				    parsed = [];
 
 				parsed = data.map(function (row) {
-					var rdata = row.toJSON();
-
-					if (!rdata._properId) {
-						rdata._properId = _underscore2.default.uniqueId();
+					if (!row.get('_properId', false)) {
+						row = row.set('_properId', _underscore2.default.uniqueId());
+					}
+					if (!row.get('_selected', false)) {
+						row = row.set('_selected', false);
 					}
 
-					if (typeof rdata._selected == 'undefined') {
-						rdata._selected = false;
-					}
+					row = row.set('_rowIndex', index++);
 
-					rdata._rowIndex = index++;
-
-					return _immutable2.default.fromJS(rdata);
+					return row;
 				});
 
 				indexed = _underscore2.default.indexBy(parsed.toJSON(), '_properId');
 
-				this.setState({
+				return {
 					rawdata: data,
 					data: parsed,
-					indexed: indexed
-				});
+					index: indexed
+				};
+			}
+		}, {
+			key: 'initData',
+			value: function initData() {
+				var newdata = this.prepareData();
+
+				this.setState(newData);
 			}
 		}, {
 			key: 'parseColumn',
@@ -234,23 +238,41 @@ var ProperTable =
 				var col = null,
 				    colname = null,
 				    extraProps = {
-					width: 100
+					width: 100,
+					fixed: false,
+					isResizable: true
 				};
 
 				colname = colData.name || _underscore2.default.uniqueId('col-');
 
+				if (this.state.sizes.get(colname)) {
+					colData.width = this.state.sizes.get(colname);
+					colData.flex = 0;
+				}
+
+				if (colData.width) {
+					extraProps.width = colData.width;
+				}
+
+				if (!colData.width && !colData.maxWidth) {
+					extraProps.flexGrow = 1;
+
+					if (typeof colData.flex != 'undefined') {
+						extraProps.flexGrow = colData.flex;
+					}
+				}
+
+				if (typeof colData.fixed !== 'undefined') {
+					extraProps.fixed = colData.fixed;
+				}
+
+				if (typeof colData.isResizable !== 'undefined') {
+					extraProps.isResizable = colData.isResizable;
+				}
+
 				if (typeof colData.children == 'undefined' || !colData.children.length) {
-
-					if (colData.width) {
-						extraProps.width = colData.width;
-					}
-
-					if (!colData.width && !colData.maxWidth) {
-						extraProps.flexGrow = colData.flex || 1;
-					}
-
 					col = _react2.default.createElement(_fixedDataTable.Column, _extends({
-						columnKey: _underscore2.default.uniqueId(colname),
+						columnKey: colname,
 						key: _underscore2.default.uniqueId(colname),
 						header: _react2.default.createElement(
 							_fixedDataTable.Cell,
@@ -265,7 +287,7 @@ var ProperTable =
 					if (!isChildren && hasNested) {
 						col = _react2.default.createElement(
 							_fixedDataTable.ColumnGroup,
-							{ key: _underscore2.default.uniqueId(colname + '-group') },
+							{ key: _underscore2.default.uniqueId(colname + '-group'), fixed: extraProps.fixed },
 							col
 						);
 					}
@@ -277,7 +299,7 @@ var ProperTable =
 					col = _react2.default.createElement(
 						_fixedDataTable.ColumnGroup,
 						_extends({
-							columnKey: _underscore2.default.uniqueId(colname),
+							columnKey: colname,
 							key: _underscore2.default.uniqueId(colname),
 							header: _react2.default.createElement(
 								_fixedDataTable.Cell,
@@ -315,13 +337,14 @@ var ProperTable =
 							data: this.state.data
 						}),
 						allowCellsRecycling: true,
-						width: 50
+						width: 50,
+						fixed: true
 					});
 
 					if (isNested) {
 						selColumn = _react2.default.createElement(
 							_fixedDataTable.ColumnGroup,
-							{ key: _underscore2.default.uniqueId('selector-group-') },
+							{ fixed: true, key: _underscore2.default.uniqueId('selector-group-') },
 							selColumn
 						);
 					}
@@ -450,6 +473,14 @@ var ProperTable =
 				return addClass;
 			}
 		}, {
+			key: 'onResize',
+			value: function onResize(width, column) {
+				var sizes = this.state.sizes;
+				var newsizes = sizes.set(column, width);
+
+				this.setState({ sizes: newsizes });
+			}
+		}, {
 			key: 'render',
 			value: function render() {
 				var content = _react2.default.createElement(
@@ -473,14 +504,16 @@ var ProperTable =
 					content = _react2.default.createElement(
 						_fixedDataTable.Table,
 						_extends({
-							width: this.props.containerWidth,
-							height: this.props.containerHeight,
+							width: this.props.containerWidth || 100,
+							height: this.props.containerHeight || 100,
 							headerHeight: this.props.rowHeight,
 							groupHeaderHeight: this.props.rowHeight,
 							rowHeight: this.props.rowHeight,
 							rowsCount: this.state.data.size,
+							isColumnResizing: false,
 							onRowClick: this.handleRowClick.bind(this),
 							rowClassNameGetter: this.getRowClassName.bind(this),
+							onColumnResizeEndCallback: this.onResize.bind(this),
 							className: 'propertable-table'
 						}, this.props),
 						tableContent
@@ -498,7 +531,7 @@ var ProperTable =
 		return ProperTable;
 	}(_react2.default.Component);
 
-	exports.default = (0, _reactDimensions2.default)()(ProperTable);
+	exports.default = ProperTable;
 	module.exports = exports['default'];
 
 /***/ },
@@ -12311,178 +12344,6 @@ var ProperTable =
 
 	'use strict';
 
-	exports.__esModule = true;
-
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-	exports['default'] = Dimensions;
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	var _react = __webpack_require__(2);
-
-	var _react2 = _interopRequireDefault(_react);
-
-	var style = {
-	  width: '100%',
-	  height: '100%',
-	  padding: 0,
-	  border: 0
-	};
-
-	function defaultGetWidth(element) {
-	  return element.clientWidth;
-	}
-
-	function defaultGetHeight(element) {
-	  return element.clientHeight;
-	}
-
-	/**
-	 * Wraps a react component and adds properties `containerHeight` and
-	 * `containerWidth`. Useful for responsive design. Properties update on
-	 * window resize. **Note** that the parent element must have either a
-	 * height or a width, or nothing will be rendered
-	 *
-	 * Can be used as a
-	 * [higher-order component](http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers)
-	 * or as an [ES7 class decorator](https://github.com/wycats/javascript-decorators)
-	 * (see examples)
-	 *
-	 * v1.0.0 is for React v0.14 only. Use ^0.1.0 for React v0.13
-	 *
-	 * @param {object} [options] Options
-	 * @param {function} [options.getHeight] `getHeight(element)` should return element
-	 * height, where element is the wrapper div. Defaults to `element.clientHeight`
-	 * @param {function} [options.getWidth]  `getWidth(element)` should return element
-	 * width, where element is the wrapper div. Defaults to `element.clientWidth`
-	 * @return {function}                   Returns a higher-order component that can be
-	 * used to enhance a react component `Dimensions()(MyComponent)`
-	 *
-	 * ### Live Example
-	 *
-	 * Will open a browser window for localhost:9966
-	 *
-	 * `npm i && npm i react react-dom && npm start`
-	 *
-	 * @example
-	 * // ES2015
-	 * import React from 'react'
-	 * import Dimensions from 'react-dimensions'
-	 *
-	 * class MyComponent extends React.Component {
-	 *   render() (
-	 *     <div
-	 *       containerWidth={this.props.containerWidth}
-	 *       containerHeight={this.props.containerHeight}
-	 *     >
-	 *     </div>
-	 *   )
-	 * }
-	 *
-	 * export default Dimensions()(MyComponent) // Enhanced component
-	 *
-	 * @example
-	 * // ES5
-	 * var React = require('react')
-	 * var Dimensions = require('react-dimensions')
-	 *
-	 * var MyComponent = React.createClass({
-	 *   render: function() {(
-	 *     <div
-	 *       containerWidth={this.props.containerWidth}
-	 *       containerHeight={this.props.containerHeight}
-	 *     >
-	 *     </div>
-	 *   )}
-	 * }
-	 *
-	 * module.exports = Dimensions()(MyComponent) // Enhanced component
-	 *
-	 */
-
-	function Dimensions() {
-	  var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-	  var _ref$getHeight = _ref.getHeight;
-	  var getHeight = _ref$getHeight === undefined ? defaultGetHeight : _ref$getHeight;
-	  var _ref$getWidth = _ref.getWidth;
-	  var getWidth = _ref$getWidth === undefined ? defaultGetWidth : _ref$getWidth;
-
-	  return function (ComposedComponent) {
-	    return (function (_React$Component) {
-	      _inherits(DimensionsHOC, _React$Component);
-
-	      function DimensionsHOC() {
-	        var _this = this;
-
-	        _classCallCheck(this, DimensionsHOC);
-
-	        _React$Component.apply(this, arguments);
-
-	        this.state = {};
-
-	        this.updateDimensions = function () {
-	          var container = _this.refs.container;
-	          if (!container) {
-	            throw new Error('Cannot find container div');
-	          }
-	          _this.setState({
-	            containerWidth: getWidth(container),
-	            containerHeight: getHeight(container)
-	          });
-	        };
-
-	        this.onResize = function () {
-	          if (_this.rqf) return;
-	          _this.rqf = window.requestAnimationFrame(function () {
-	            _this.rqf = null;
-	            _this.updateDimensions();
-	          });
-	        };
-	      }
-
-	      DimensionsHOC.prototype.componentDidMount = function componentDidMount() {
-	        this.updateDimensions();
-	        window.addEventListener('resize', this.onResize, false);
-	      };
-
-	      DimensionsHOC.prototype.componentWillUnmount = function componentWillUnmount() {
-	        window.removeEventListener('resize', this.onResize);
-	      };
-
-	      DimensionsHOC.prototype.render = function render() {
-	        return _react2['default'].createElement(
-	          'div',
-	          { style: style, ref: 'container' },
-	          (this.state.containerWidth || this.state.containerHeight) && _react2['default'].createElement(ComposedComponent, _extends({}, this.state, this.props))
-	        );
-	      };
-
-	      return DimensionsHOC;
-	    })(_react2['default'].Component);
-	  };
-	}
-
-	module.exports = exports['default'];
-
-	// ES7 Class properties
-	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers
-
-	// Using arrow functions and ES7 Class properties to autobind
-	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#arrow-functions
-
-
-/***/ },
-/* 59 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
@@ -12557,7 +12418,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 60 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -12584,7 +12445,7 @@ var ProperTable =
 		if (row) {
 			val = row.get(props.col);
 
-			if (typeof val.toJSON == 'function') {
+			if (val && typeof val.toJSON == 'function') {
 				val = val.toJSON();
 			}
 
@@ -12608,7 +12469,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 61 */
+/* 60 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -12617,11 +12478,11 @@ var ProperTable =
 		value: true
 	});
 
-	var _moment = __webpack_require__(62);
+	var _moment = __webpack_require__(61);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(63);
+	var _numeral = __webpack_require__(62);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -12688,13 +12549,13 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 62 */
+/* 61 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 63 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -13376,6 +13237,178 @@ var ProperTable =
 	        }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    }
 	}).call(this);
+
+
+/***/ },
+/* 63 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	exports.__esModule = true;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	exports['default'] = Dimensions;
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var style = {
+	  width: '100%',
+	  height: '100%',
+	  padding: 0,
+	  border: 0
+	};
+
+	function defaultGetWidth(element) {
+	  return element.clientWidth;
+	}
+
+	function defaultGetHeight(element) {
+	  return element.clientHeight;
+	}
+
+	/**
+	 * Wraps a react component and adds properties `containerHeight` and
+	 * `containerWidth`. Useful for responsive design. Properties update on
+	 * window resize. **Note** that the parent element must have either a
+	 * height or a width, or nothing will be rendered
+	 *
+	 * Can be used as a
+	 * [higher-order component](http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers)
+	 * or as an [ES7 class decorator](https://github.com/wycats/javascript-decorators)
+	 * (see examples)
+	 *
+	 * v1.0.0 is for React v0.14 only. Use ^0.1.0 for React v0.13
+	 *
+	 * @param {object} [options] Options
+	 * @param {function} [options.getHeight] `getHeight(element)` should return element
+	 * height, where element is the wrapper div. Defaults to `element.clientHeight`
+	 * @param {function} [options.getWidth]  `getWidth(element)` should return element
+	 * width, where element is the wrapper div. Defaults to `element.clientWidth`
+	 * @return {function}                   Returns a higher-order component that can be
+	 * used to enhance a react component `Dimensions()(MyComponent)`
+	 *
+	 * ### Live Example
+	 *
+	 * Will open a browser window for localhost:9966
+	 *
+	 * `npm i && npm i react react-dom && npm start`
+	 *
+	 * @example
+	 * // ES2015
+	 * import React from 'react'
+	 * import Dimensions from 'react-dimensions'
+	 *
+	 * class MyComponent extends React.Component {
+	 *   render() (
+	 *     <div
+	 *       containerWidth={this.props.containerWidth}
+	 *       containerHeight={this.props.containerHeight}
+	 *     >
+	 *     </div>
+	 *   )
+	 * }
+	 *
+	 * export default Dimensions()(MyComponent) // Enhanced component
+	 *
+	 * @example
+	 * // ES5
+	 * var React = require('react')
+	 * var Dimensions = require('react-dimensions')
+	 *
+	 * var MyComponent = React.createClass({
+	 *   render: function() {(
+	 *     <div
+	 *       containerWidth={this.props.containerWidth}
+	 *       containerHeight={this.props.containerHeight}
+	 *     >
+	 *     </div>
+	 *   )}
+	 * }
+	 *
+	 * module.exports = Dimensions()(MyComponent) // Enhanced component
+	 *
+	 */
+
+	function Dimensions() {
+	  var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+	  var _ref$getHeight = _ref.getHeight;
+	  var getHeight = _ref$getHeight === undefined ? defaultGetHeight : _ref$getHeight;
+	  var _ref$getWidth = _ref.getWidth;
+	  var getWidth = _ref$getWidth === undefined ? defaultGetWidth : _ref$getWidth;
+
+	  return function (ComposedComponent) {
+	    return (function (_React$Component) {
+	      _inherits(DimensionsHOC, _React$Component);
+
+	      function DimensionsHOC() {
+	        var _this = this;
+
+	        _classCallCheck(this, DimensionsHOC);
+
+	        _React$Component.apply(this, arguments);
+
+	        this.state = {};
+
+	        this.updateDimensions = function () {
+	          var container = _this.refs.container;
+	          if (!container) {
+	            throw new Error('Cannot find container div');
+	          }
+	          _this.setState({
+	            containerWidth: getWidth(container),
+	            containerHeight: getHeight(container)
+	          });
+	        };
+
+	        this.onResize = function () {
+	          if (_this.rqf) return;
+	          _this.rqf = window.requestAnimationFrame(function () {
+	            _this.rqf = null;
+	            _this.updateDimensions();
+	          });
+	        };
+	      }
+
+	      DimensionsHOC.prototype.componentDidMount = function componentDidMount() {
+	        this.updateDimensions();
+	        window.addEventListener('resize', this.onResize, false);
+	      };
+
+	      DimensionsHOC.prototype.componentWillUnmount = function componentWillUnmount() {
+	        window.removeEventListener('resize', this.onResize);
+	      };
+
+	      DimensionsHOC.prototype.render = function render() {
+	        return _react2['default'].createElement(
+	          'div',
+	          { style: style, ref: 'container' },
+	          (this.state.containerWidth || this.state.containerHeight) && _react2['default'].createElement(ComposedComponent, _extends({}, this.state, this.props))
+	        );
+	      };
+
+	      return DimensionsHOC;
+	    })(_react2['default'].Component);
+	  };
+	}
+
+	module.exports = exports['default'];
+
+	// ES7 Class properties
+	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers
+
+	// Using arrow functions and ES7 Class properties to autobind
+	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#arrow-functions
 
 
 /***/ },

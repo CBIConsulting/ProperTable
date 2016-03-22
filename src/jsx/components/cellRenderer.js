@@ -9,7 +9,7 @@ const CellRenderer = (props) => {
 	if (row) {
 		val = row.get(props.col);
 
-		if (typeof val.toJSON == 'function') {
+		if (val && typeof val.toJSON == 'function') {
 			val = val.toJSON();
 		}
 

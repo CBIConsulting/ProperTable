@@ -3,7 +3,6 @@ import {Table, Column, Cell, ColumnGroup} from 'fixed-data-table';
 import Immutable from 'immutable';
 import _ from 'underscore';
 import messages from "../lang/messages";
-import Dimensions from 'react-dimensions';
 import Selector from './selector';
 import CellRenderer from './cellRenderer';
 import SortHeaderCell from './sortHeaderCell';
@@ -22,7 +21,7 @@ function defaultProps() {
 		idField: null,
 		msgs: messages,
 		colSortDirs: null, // [{name: fieldName,  direction: 'DEF'},{},{}]
-		multisort: true
+		multisort: false
 	};
 }
 
@@ -52,6 +51,8 @@ class ProperTable extends React.Component {
 		let initialData = this.prepareData();
 		let initialColSort = this.prepareColSort();
 
+		this.hasFixedColumns = false;
+
 		this.state = {
 			cols: Immutable.fromJS(this.props.cols),
 			colSortDirs: initialColSort.colSortDirs,
@@ -59,6 +60,7 @@ class ProperTable extends React.Component {
 			data: initialData.data,
 			indexed: initialData.indexed,
 			rawdata: initialData.rawdata,
+			sizes: Immutable.fromJS({}),
 			allSelected: false,
 			selection: []
 		};
@@ -73,19 +75,16 @@ class ProperTable extends React.Component {
 		let indexed = [], parsed = [];
 
 		parsed = data.map(row => {
-			let rdata = row.toJSON();
-
-			if (!rdata._properId) {
-				rdata._properId = _.uniqueId()
+			if (!row.get('_properId',false)) {
+				row = row.set('_properId', _.uniqueId());
+			}
+			if (!row.get('_selected',false)) {
+				row = row.set('_selected', false);
 			}
 
-			if (typeof rdata._selected == 'undefined') {
-				rdata._selected = false
-			}
+			row = row.set('_rowIndex', index++);
 
-			rdata._rowIndex = index++;
-
-			return Immutable.fromJS(rdata);
+			return row;
 		});
 
 		indexed = _.indexBy(parsed.toJSON(), '_properId');
@@ -280,20 +279,39 @@ class ProperTable extends React.Component {
 
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, sortDir = 'DEF', sortable = null, extraProps = {
-			width: 100
+			width: 100,
+			fixed: false,
+			isResizable: true
 		};
 
 		colname = colData.name || _.uniqueId('col-');
 
+		if (this.state.sizes.get(colname)) {
+			colData.width = this.state.sizes.get(colname);
+			colData.flex = 0;
+		}
+
+		if (colData.width) {
+			extraProps.width = colData.width;
+		}
+
+		if (!colData.width && !colData.maxWidth) {
+			extraProps.flexGrow = 1;
+
+			if (typeof colData.flex != 'undefined') {
+				extraProps.flexGrow = colData.flex;
+			}
+		}
+
+		if (typeof colData.fixed !== 'undefined') {
+			extraProps.fixed = colData.fixed;
+		}
+
+		if (typeof colData.isResizable !== 'undefined') {
+			extraProps.isResizable = colData.isResizable;
+		}
+
 		if (typeof colData.children == 'undefined' || !colData.children.length) {
-			if (colData.width) {
-				extraProps.width = colData.width;
-			}
-
-			if (!colData.width && !colData.maxWidth) {
-				extraProps.flexGrow = colData.flex || 1;
-			}
-
 			this.state.colSortDirs.forEach(element => {
 				if (element.column === colname) sortDir = element.direction;
 			});
@@ -318,13 +336,13 @@ class ProperTable extends React.Component {
 			/>;
 
 			if (!isChildren && hasNested) {
-				col = <ColumnGroup key={_.uniqueId(colname+'-group')}>{col}</ColumnGroup>
+				col = <ColumnGroup key={_.uniqueId(colname+'-group')} fixed={extraProps.fixed}>{col}</ColumnGroup>
 			}
 		} else {
 			let inner = colData.children.map((c) => this.parseColumn(c, true));
 
 			col = <ColumnGroup
-				columnKey={_.uniqueId(colname)}
+				columnKey={colname}
 				key={_.uniqueId(colname)}
 				header={<Cell>{colData.label}</Cell>}
 				{...extraProps}
@@ -355,10 +373,11 @@ class ProperTable extends React.Component {
 				/>}
 				allowCellsRecycling
 				width={50}
+				fixed
 			/>
 
 			if (isNested) {
-				selColumn = <ColumnGroup key={_.uniqueId('selector-group-')}>{selColumn}</ColumnGroup>;
+				selColumn = <ColumnGroup fixed key={_.uniqueId('selector-group-')}>{selColumn}</ColumnGroup>;
 			}
 
 			columns.push(selColumn);
@@ -467,6 +486,13 @@ class ProperTable extends React.Component {
 		return addClass;
 	}
 
+	onResize(width, column) {
+		let sizes = this.state.sizes;
+		let newsizes = sizes.set(column, width);
+
+		this.setState({sizes: newsizes});
+	}
+
 	render() {
 		let content = <div className="propertable-empty">{this.props.msgs.empty}</div>
 		let tableContent = null;
@@ -479,14 +505,16 @@ class ProperTable extends React.Component {
 			tableContent = this.buildTable();
 
 			content = <Table
-				width={this.props.containerWidth}
-				height={this.props.containerHeight}
+				width={this.props.containerWidth || 100}
+				height={this.props.containerHeight || 100}
 				headerHeight={this.props.rowHeight}
 				groupHeaderHeight={this.props.rowHeight}
 				rowHeight={this.props.rowHeight}
 				rowsCount={this.state.data.size}
+				isColumnResizing={false}
 				onRowClick={this.handleRowClick.bind(this)}
 				rowClassNameGetter={this.getRowClassName.bind(this)}
+				onColumnResizeEndCallback={this.onResize.bind(this)}
 				className="propertable-table"
 				{...this.props}
 			>
@@ -494,8 +522,8 @@ class ProperTable extends React.Component {
 			</Table>;
 		}
 
-		return 	<div id={this.props.uniqueId} className={'propertable '+this.props.className}>{content}</div>;
+		return <div id={this.props.uniqueId} className={'propertable '+this.props.className}>{content}</div>;
 	}
 }
 
-export default Dimensions()(ProperTable);
+export default ProperTable;
