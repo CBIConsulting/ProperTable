@@ -146,9 +146,19 @@ $(function() {
 		ex3data.push(row);
 	}
 
-	ReactDOM.render(<ProperTable.Table key='pt1' uniqueId={1} rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
-		console.log('selected1', data);
-	}} />, body1);
+	ReactDOM.render(<ProperTable.Table
+		key='pt1'
+		idField="id"
+		selected={3}
+		uniqueId={1}
+		rowHeight={40}
+		key={'testtable'}
+		cols={cols}
+		data={data}
+		afterSelect={function(data) {
+			console.log('selected1', data);
+		}}
+	/>, body1);
 	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} key={'testtable2'} cols={cols} data={data} afterSelect={function(data) {
 		console.log('selected2', data);
 	}} selectable="multiple" />, body2);
