@@ -12736,11 +12736,12 @@ var ProperTable =
 	  var sortable = props.sortable;
 	  var children = props.children || null;
 	  var sortIcon = sortDir && sortable ? SortIcons[sortDir] : SortIcons['DEF'];
+	  var className = sortable ? "propertable-header-cell sortable" : "propertable-header-cell not-sortable";
 
 	  return _react2['default'].createElement(
 	    _fixedDataTable.Cell,
 	    _extends({
-	      className: 'centrardiv',
+	      className: className,
 	      onClick: function onClick(e) {
 	        onSortChange(e, props, sortable);
 	      }
