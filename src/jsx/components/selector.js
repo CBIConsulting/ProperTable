@@ -13,6 +13,7 @@ import {Cell} from 'fixed-data-table';
  *					onClick={this.handleSelectAll.bind(this)}
  *					somethingSelected={true || false}
  *					allSelected={true || false}
+ *					isHeader={true}
  *				/>
  *          }
  * 			cell={
@@ -30,7 +31,9 @@ const Selector = (props) => {
 	let addClass = 'unchecked';
 	let selected = false;
 	let row = null;
+	let render = null;
 	let onClick = props.onClick;
+	let isHeader = props.isHeader;
 
 	// Default callback function
 	if (!onClick) {
@@ -69,14 +72,26 @@ const Selector = (props) => {
 		content = <i className="fa fa-check-square-o"/>;
 	}
 
+	if (isHeader) { // It's render inside the sortHeaderCell component
+		render = (
+			<div className="propertable-cell select-cell">
+				<div className={"propertable-selector "+addClass} onClick={(e) => {
+					onClick(e, row);
+				}}>{content}</div>
+			</div>
+		);
+	} else {
+		render = (
+			<Cell className="propertable-cell select-cell">
+				<div className={"propertable-selector "+addClass} onClick={(e) => {
+					onClick(e, row);
+				}}>{content}</div>
+			</Cell>
+		);
+	}
+
 	// Render
-	return (
-		<Cell className="propertable-cell select-cell" onClick={(e) => {
-			onClick(e, row);
-		}}>
-			<div className={"propertable-selector "+addClass}>{content}</div>
-		</Cell>
-	);
+	return render;
 };
 
 export default Selector;

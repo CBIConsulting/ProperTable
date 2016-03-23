@@ -11,9 +11,10 @@ import {Cell} from 'fixed-data-table';
  *        header={
  *            <SortHeaderCell
  *              sortDir={ASC || DESC || DEF}
- *              children={label}
  *              sortable={true || false}
  *            />
+ *              {children (label || Component)}
+ *            </SortHeaderCell>
  *        }
  *        ...
  *     />
@@ -21,11 +22,11 @@ import {Cell} from 'fixed-data-table';
  * ```
  */
 const SortHeaderCell = props => {
-  let sortDir = props.sortDir || null;
-  let sortable = props.sortable;
+  let sortDir = props.sortDir || null, sortable = props.sortable;
   let children = props.children || null;
   let sortIcon = sortDir && sortable? SortIcons[sortDir] : SortIcons['DEF'];
   let className = sortable ? "propertable-header-cell sortable" : "propertable-header-cell not-sortable";
+  className = props.className ? props.className : className;
 
   return (
       <Cell
