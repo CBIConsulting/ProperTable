@@ -18,7 +18,7 @@ function defaultProps() {
 		selectable: true,
 		selected: null,
 		rowHeight: 50,
-		idField: null,
+		idField: '_properId',
 		msgs: messages,
 		selectorWidth: 27,
 		colSortDirs: null, // [{name: fieldName,  direction: 'DEF'},{},{}]
@@ -42,9 +42,6 @@ function hasNested(cols) {
 }
 
 class ProperTable extends React.Component {
-	/*static get defaultProps() {
-		return defaultProps();
-	}*/
 
 	constructor(props) {
 
@@ -70,17 +67,19 @@ class ProperTable extends React.Component {
 
 	componentDidMount() {
 		this.sortTable(this.state.colSortDirs);
+		this.setDefaultSelection();
 	}
 
 	prepareData() {
 		let data = Immutable.fromJS(this.props.data), index = 0;
 		let indexed = [], parsed = [];
+		let keyField = this.props.idField || this.props.idField;
 
 		parsed = data.map(row => {
-			if (!row.get('_properId',false)) {
-				row = row.set('_properId', _.uniqueId());
+			if (!row.get(this.props.idField,false)) {
+				row = row.set(this.props.idField, _.uniqueId());
 			}
-			if (!row.get('_selected',false)) {
+			if (!row.get('_selected', false)) {
 				row = row.set('_selected', false);
 			}
 
@@ -89,7 +88,7 @@ class ProperTable extends React.Component {
 			return row;
 		});
 
-		indexed = _.indexBy(parsed.toJSON(), '_properId');
+		indexed = _.indexBy(parsed.toJSON(), this.props.idField);
 
 		return {
 			rawdata: data,
@@ -102,6 +101,19 @@ class ProperTable extends React.Component {
 		let newdata = this.prepareData();
 
 		this.setState(newData);
+		//this.setDefaultSelection();
+	}
+
+	setDefaultSelection() {
+		if (this.props.selected) {
+			let selection = this.props.selected;
+
+			if (!_.isArray(selection)) {
+				selection = [selection];
+			}
+
+			this.triggerSelection(selection.sort());
+		}
 	}
 
 	prepareColSort() {
@@ -405,7 +417,7 @@ class ProperTable extends React.Component {
 	}
 
 	handleRowClick(e, rowIndex) {
-		let clickedId = this.state.data.get(rowIndex).get('_properId');
+		let clickedId = this.state.data.get(rowIndex).get(this.props.idField);
 
 		this.toggleSelected(clickedId);
 	}
@@ -436,12 +448,12 @@ class ProperTable extends React.Component {
 		let newData = this.state.data.map((row) => {
 			let rdata = row.toJSON();
 
-			rdata._selected = _.indexOf(newSelection, rdata._properId) >= 0;
+			rdata._selected = _.indexOf(newSelection, rdata[this.props.idField]) >= 0;
 
 			return Immutable.fromJS(rdata);
 		});
 
-		let newIndexed = _.indexBy(newData.toJSON(), '_properId');
+		let newIndexed = _.indexBy(newData.toJSON(), this.props.idField);
 
 		this.setState({
 			data: newData,

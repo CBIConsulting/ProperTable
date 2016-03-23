@@ -47,6 +47,7 @@ describe('ProperTable', () => {
 				};
 
 				testProps = {
+					idField: 'id',
 					height: 500,
 					width: 500,
 					cols: cols,
@@ -68,6 +69,18 @@ describe('ProperTable', () => {
 				TestUtils.Simulate.click(node);
 				expect(result).toEqual(testProps.data[2]);
 			});
+
+			it('allows default selected row', () => {
+				let result = null;
+				let component = TestUtils.renderIntoDocument(<ProperTable {...testProps} selected={3} afterSelect={
+					selection => {
+						result = selection;
+					}
+				}/>);
+
+				expect(result).toEqual(testProps.data[2]);
+			});
 		});
+
 	});
 });
