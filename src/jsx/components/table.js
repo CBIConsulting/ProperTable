@@ -134,6 +134,19 @@ class ProperTable extends React.Component {
          	});
         }
 
+        // Ordering by selected rows. Virtual column
+        if (this.props.selectable == 'multiple') {
+        	sort.push({
+         		column: 'selector-multiple-column', // Column name
+         		field: '_selected',
+         		direction: 'DEF',
+         		position: sortData.colSortDirs.length + 1, // Last
+         		sorted: false,
+         		multisort: multisort,
+         		sortable: true
+         	});
+        }
+
         return {
             colSortDirs: sort,
             sortValues: sortData.sortVals
@@ -157,6 +170,10 @@ class ProperTable extends React.Component {
 				this.buildColSortDirs(element.children, colSortDirs, sortVals);
 			}
 		});
+
+		if (this.props.selectable == 'multiple') {
+		  	sortVals['selector-multiple-column'] = function(val) {return val};
+		}
 
 		return {
 			colSortDirs: colSortDirs,
@@ -246,7 +263,7 @@ class ProperTable extends React.Component {
 		let defaultSort = true, element = null, position = null;
 
 		for (let i = 0; i <= colSortDirs.length - 1; i++) {
-			position = colSortDirs[i].position -1;
+			position = colSortDirs[i].position - 1;
 			element = colSortDirs[position];
 
 			// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
@@ -361,15 +378,30 @@ class ProperTable extends React.Component {
 
 		if (this.props.selectable == 'multiple') {
 			let somethingSelected = this.state.selection.length > 0;
+			let sortDir = 'DEF';
+
+			this.state.colSortDirs.forEach(element => {
+				if (element.column === 'selector-multiple-column') sortDir = element.direction;
+			});
 
 			selColumn = <Column
-				columnKey={_.uniqueId('selector-')}
+				columnKey={'selector-multiple-column'}
 				key={_.uniqueId('selector-')}
-				header={<Selector
-					onClick={this.handleSelectAll.bind(this)}
-					somethingSelected={somethingSelected}
-					allSelected={this.state.allSelected}
-				/>}
+				header={
+					<SortHeaderCell
+						className={''}
+						onSortChange={this.onSortChange.bind(this)}
+						sortDir={sortDir}
+						sortable={true}
+					>
+						<Selector
+							onClick={this.handleSelectAll.bind(this)}
+							somethingSelected={somethingSelected}
+							allSelected={this.state.allSelected}
+							isHeader={true}
+						/>
+					</SortHeaderCell>
+				}
 				cell={<Selector
 					data={this.state.data}
 				/>}
