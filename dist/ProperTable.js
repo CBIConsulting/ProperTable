@@ -63,16 +63,20 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	var _reactDimensions = __webpack_require__(64);
 
-	__webpack_require__(64);
+	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+	__webpack_require__(65);
 
 	"use strict";
 
-	exports.default = {
-		Table: _table2.default,
-		formatters: _formatters2.default,
-		lang: _messages2.default
+	exports["default"] = {
+		Table: (0, _reactDimensions2["default"])()(_table2["default"]),
+		formatters: _formatters2["default"],
+		lang: _messages2["default"]
 	};
 	module.exports = exports['default'];
 
@@ -108,17 +112,17 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(58);
-
-	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
-
-	var _selector = __webpack_require__(59);
+	var _selector = __webpack_require__(58);
 
 	var _selector2 = _interopRequireDefault(_selector);
 
-	var _cellRenderer = __webpack_require__(60);
+	var _cellRenderer = __webpack_require__(59);
 
 	var _cellRenderer2 = _interopRequireDefault(_cellRenderer);
+
+	var _sortHeaderCell = __webpack_require__(60);
+
+	var _sortHeaderCell2 = _interopRequireDefault(_sortHeaderCell);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -133,14 +137,17 @@ var ProperTable =
 			className: '',
 			cols: [],
 			data: [],
-			uniqueId: _underscore2.default.uniqueId('propertable-'),
+			uniqueId: _underscore2['default'].uniqueId('propertable-'),
 			afterSort: null,
 			afterSelect: null,
 			selectable: true,
 			selected: null,
 			rowHeight: 50,
 			idField: null,
-			msgs: _messages2.default
+			msgs: _messages2['default'],
+			selectorWidth: 27,
+			colSortDirs: null, // [{name: fieldName,  direction: 'DEF'},{},{}]
+			multisort: false
 		};
 	}
 
@@ -162,12 +169,9 @@ var ProperTable =
 	var ProperTable = function (_React$Component) {
 		_inherits(ProperTable, _React$Component);
 
-		_createClass(ProperTable, null, [{
-			key: 'defaultProps',
-			get: function get() {
-				return defaultProps();
-			}
-		}]);
+		/*static get defaultProps() {
+	 	return defaultProps();
+	 }*/
 
 		function ProperTable(props) {
 			_classCallCheck(this, ProperTable);
@@ -175,13 +179,18 @@ var ProperTable =
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProperTable).call(this, props));
 
 			var initialData = _this.prepareData();
+			var initialColSort = _this.prepareColSort();
+
+			_this.hasFixedColumns = false;
 
 			_this.state = {
-				cols: _immutable2.default.fromJS(_this.props.cols),
+				cols: _immutable2['default'].fromJS(_this.props.cols),
+				colSortDirs: initialColSort.colSortDirs,
+				colSortVals: initialColSort.sortValues,
 				data: initialData.data,
 				indexed: initialData.indexed,
 				rawdata: initialData.rawdata,
-				sort: null,
+				sizes: _immutable2['default'].fromJS({}),
 				allSelected: false,
 				selection: []
 			};
@@ -189,30 +198,32 @@ var ProperTable =
 		}
 
 		_createClass(ProperTable, [{
+			key: 'componentDidMount',
+			value: function componentDidMount() {
+				this.sortTable(this.state.colSortDirs);
+			}
+		}, {
 			key: 'prepareData',
 			value: function prepareData() {
-				var data = _immutable2.default.fromJS(this.props.data),
+				var data = _immutable2['default'].fromJS(this.props.data),
 				    index = 0;
 				var indexed = [],
 				    parsed = [];
 
 				parsed = data.map(function (row) {
-					var rdata = row.toJSON();
-
-					if (!rdata._properId) {
-						rdata._properId = _underscore2.default.uniqueId();
+					if (!row.get('_properId', false)) {
+						row = row.set('_properId', _underscore2['default'].uniqueId());
+					}
+					if (!row.get('_selected', false)) {
+						row = row.set('_selected', false);
 					}
 
-					if (typeof rdata._selected == 'undefined') {
-						rdata._selected = false;
-					}
+					row = row.set('_rowIndex', index++);
 
-					rdata._rowIndex = index++;
-
-					return _immutable2.default.fromJS(rdata);
+					return row;
 				});
 
-				indexed = _underscore2.default.indexBy(parsed.toJSON(), '_properId');
+				indexed = _underscore2['default'].indexBy(parsed.toJSON(), '_properId');
 
 				return {
 					rawdata: data,
@@ -228,62 +239,288 @@ var ProperTable =
 				this.setState(newData);
 			}
 		}, {
+			key: 'prepareColSort',
+			value: function prepareColSort() {
+				var colSortDirs = this.props.colSortDirs,
+				    cols = this.props.cols;
+				var sort = [],
+				    multisort = this.props.multisort;
+				var sortData = this.buildColSortDirs(cols);
+				var direction = null,
+				    sortable = null,
+				    colData = null;
+
+				if (_underscore2['default'].isNull(colSortDirs)) {
+					colSortDirs = sortData.colSortDirs;
+				}
+
+				for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
+					colData = sortData.colSortDirs[i];
+					direction = colData.direction;
+					sortable = colData.sortable !== null ? colData.sortable : true;
+
+					colSortDirs.forEach(function (element) {
+						if (element.column == colData.column) direction = element.direction;
+					});
+
+					sort.push({
+						column: colData.column, // Column name
+						field: colData.field,
+						direction: direction,
+						position: i + 1,
+						sorted: false,
+						multisort: multisort, // single (false) (in this case only one at a time could be true at this field) or multisort (true - all true)
+						sortable: sortable
+					});
+				}
+
+				return {
+					colSortDirs: sort,
+					sortValues: sortData.sortVals
+				};
+			}
+		}, {
+			key: 'buildColSortDirs',
+			value: function buildColSortDirs(cols) {
+				var _this2 = this;
+
+				var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+				var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
+				cols.forEach(function (element) {
+					if (!element.children) {
+						var sortable = _underscore2['default'].isUndefined(element.sortable) ? null : element.sortable;
+
+						sortVals[element.name] = element.sortVal || function (val) {
+							return val;
+						}; // Function to iterate
+
+						colSortDirs.push({
+							column: element.name,
+							field: element.field,
+							direction: 'DEF',
+							sortable: sortable
+						});
+					} else {
+						_this2.buildColSortDirs(element.children, colSortDirs, sortVals);
+					}
+				});
+
+				return {
+					colSortDirs: colSortDirs,
+					sortVals: sortVals
+				};
+			}
+
+			/**
+	   * Function called each time the user click on the header of a column, then apply a sortBy function in that column.
+	   * After that, update the state of the component
+	   *
+	   * @param {String} 		columnKey 	The name of the column which will be resort.
+	   * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
+	   */
+
+		}, {
+			key: 'onSortChange',
+			value: function onSortChange(columnKey, sortDir) {
+				var newData = null;
+				var colSortDirs = this.updateSortDir(columnKey, sortDir);
+				newData = this.sortTable(colSortDirs);
+
+				this.setState({
+					data: newData.data,
+					colSortDirs: newData.colSortDirs
+				});
+			}
+		}, {
+			key: 'updateSortDir',
+			value: function updateSortDir(columnKey, sortDir) {
+				var colSortDirs = this.state.colSortDirs || [],
+				    position = 1;
+
+				if (!this.props.multisort) {
+					for (var i = 0; i <= colSortDirs.length - 1; i++) {
+						if (colSortDirs[i].column == columnKey) {
+							colSortDirs[i].direction = sortDir;
+							colSortDirs[i].multisort = true;
+						} else {
+							colSortDirs[i].direction = 'DEF';
+							colSortDirs[i].multisort = false;
+						}
+					}
+				} else {
+					var initialPos = 0,
+					    index = 0;
+
+					for (var _i = 0; _i <= colSortDirs.length - 1; _i++) {
+						if (colSortDirs[_i].sorted) initialPos++;
+
+						if (colSortDirs[_i].column == columnKey) {
+							colSortDirs[_i].direction = sortDir;
+							position = colSortDirs[_i].position;
+							index = _i;
+							if (sortDir != 'DEF' && !colSortDirs[_i].sorted) {
+								initialPos++;
+								colSortDirs[_i].sorted = true;
+							} else if (sortDir == 'DEF') {
+								colSortDirs[_i].sorted = false;
+							}
+						}
+					}
+
+					for (var _i2 = 0; _i2 <= colSortDirs.length - 1; _i2++) {
+						if (colSortDirs[_i2].position < position && colSortDirs[_i2].position >= initialPos) {
+							if (colSortDirs[_i2].direction == 'DEF') colSortDirs[_i2].position = colSortDirs[_i2].position + 1;
+						}
+					}
+
+					if (colSortDirs[index].position != 'DEF' && initialPos < colSortDirs[index].position) colSortDirs[index].position = initialPos;
+				}
+
+				return colSortDirs;
+			}
+		}, {
+			key: 'sortTable',
+			value: function sortTable(colSortDirs) {
+				var data = this.state.data;
+
+				colSortDirs = _underscore2['default'].sortBy(colSortDirs, function (element) {
+					return element.position;
+				});
+				data = this.sortColumns(data, colSortDirs);
+
+				return {
+					data: data,
+					colSortDirs: colSortDirs
+				};
+			}
+		}, {
+			key: 'sortColumns',
+			value: function sortColumns(data, colSortDirs) {
+				var sortedData = data;
+				var sortVals = this.state.colSortVals,
+				    sortVal = null;
+				var defaultSort = true,
+				    element = null,
+				    position = null;
+
+				for (var i = 0; i <= colSortDirs.length - 1; i++) {
+					position = colSortDirs[i].position - 1;
+					element = colSortDirs[position];
+
+					// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
+					if (element.direction != 'DEF' && element.multisort && element.sortable) {
+						sortVal = sortVals[element.column];
+						sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
+							return sortVal(row.get(element.field));
+						}, function (val1, val2) {
+							if (val1 == val2) {
+								return 0;
+							} else if (element.direction == 'ASC') {
+								return val1 > val2 ? -1 : 1;
+							} else if (element.direction == 'DESC') {
+								return val1 > val2 ? 1 : -1;
+							}
+						});
+						defaultSort = false;
+					}
+				}
+
+				if (defaultSort) {
+					//  Set to default
+					sortedData = data.sortBy(function (row, rowIndex, allData) {
+						return row.get('_rowIndex');
+					}, function (val1, val2) {
+						return val1 > val2 ? 1 : val1 == val2 ? 0 : -1;
+					});
+				}
+
+				return sortedData;
+			}
+		}, {
 			key: 'parseColumn',
 			value: function parseColumn(colData) {
-				var _this2 = this;
+				var _this3 = this;
 
 				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
 
 				var col = null,
 				    colname = null,
+				    sortDir = 'DEF',
+				    sortable = null,
 				    extraProps = {
-					width: 100
+					width: 100,
+					fixed: false,
+					isResizable: true
 				};
 
-				colname = colData.name || _underscore2.default.uniqueId('col-');
+				colname = colData.name || _underscore2['default'].uniqueId('col-');
+
+				if (this.state.sizes.get(colname)) {
+					colData.width = this.state.sizes.get(colname);
+					colData.flex = 0;
+				}
+
+				if (colData.width) {
+					extraProps.width = colData.width;
+				}
+
+				if (!colData.width && !colData.maxWidth) {
+					extraProps.flexGrow = 1;
+
+					if (typeof colData.flex != 'undefined') {
+						extraProps.flexGrow = colData.flex;
+					}
+				}
+
+				if (typeof colData.fixed !== 'undefined') {
+					extraProps.fixed = colData.fixed;
+				}
+
+				if (typeof colData.isResizable !== 'undefined') {
+					extraProps.isResizable = colData.isResizable;
+				}
 
 				if (typeof colData.children == 'undefined' || !colData.children.length) {
+					this.state.colSortDirs.forEach(function (element) {
+						if (element.column === colname) sortDir = element.direction;
+					});
 
-					if (colData.width) {
-						extraProps.width = colData.width;
-					}
+					sortable = _underscore2['default'].isUndefined(colData.sortable) ? true : colData.sortable;
 
-					if (!colData.width && !colData.maxWidth) {
-						extraProps.flexGrow = colData.flex || 1;
-					}
-
-					col = _react2.default.createElement(_fixedDataTable.Column, _extends({
-						columnKey: _underscore2.default.uniqueId(colname),
-						key: _underscore2.default.uniqueId(colname),
-						header: _react2.default.createElement(
-							_fixedDataTable.Cell,
-							{ className: 'propertable-hcell' },
-							colData.label
-						),
-						cell: _react2.default.createElement(_cellRenderer2.default, { data: this.state.data, colData: colData, col: colData.field }),
+					col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
+						columnKey: colname,
+						key: _underscore2['default'].uniqueId(colname),
+						header: _react2['default'].createElement(_sortHeaderCell2['default'], {
+							onSortChange: this.onSortChange.bind(this),
+							sortDir: sortDir,
+							children: colData.label,
+							sortable: sortable
+						}),
+						cell: _react2['default'].createElement(_cellRenderer2['default'], { data: this.state.data, colData: colData, col: colData.field }),
 						allowCellsRecycling: true,
 						align: 'center'
 					}, extraProps));
 
 					if (!isChildren && hasNested) {
-						col = _react2.default.createElement(
+						col = _react2['default'].createElement(
 							_fixedDataTable.ColumnGroup,
-							{ key: _underscore2.default.uniqueId(colname + '-group') },
+							{ key: _underscore2['default'].uniqueId(colname + '-group'), fixed: extraProps.fixed },
 							col
 						);
 					}
 				} else {
 					var inner = colData.children.map(function (c) {
-						return _this2.parseColumn(c, true);
+						return _this3.parseColumn(c, true);
 					});
 
-					col = _react2.default.createElement(
+					col = _react2['default'].createElement(
 						_fixedDataTable.ColumnGroup,
 						_extends({
-							columnKey: _underscore2.default.uniqueId(colname),
-							key: _underscore2.default.uniqueId(colname),
-							header: _react2.default.createElement(
+							columnKey: colname,
+							key: _underscore2['default'].uniqueId(colname),
+							header: _react2['default'].createElement(
 								_fixedDataTable.Cell,
 								null,
 								colData.label
@@ -298,7 +535,7 @@ var ProperTable =
 		}, {
 			key: 'buildTable',
 			value: function buildTable() {
-				var _this3 = this;
+				var _this4 = this;
 
 				var columns = [],
 				    isNested = hasNested(this.state.cols),
@@ -307,25 +544,26 @@ var ProperTable =
 				if (this.props.selectable == 'multiple') {
 					var somethingSelected = this.state.selection.length > 0;
 
-					selColumn = _react2.default.createElement(_fixedDataTable.Column, {
-						columnKey: _underscore2.default.uniqueId('selector-'),
-						key: _underscore2.default.uniqueId('selector-'),
-						header: _react2.default.createElement(_selector2.default, {
+					selColumn = _react2['default'].createElement(_fixedDataTable.Column, {
+						columnKey: _underscore2['default'].uniqueId('selector-'),
+						key: _underscore2['default'].uniqueId('selector-'),
+						header: _react2['default'].createElement(_selector2['default'], {
 							onClick: this.handleSelectAll.bind(this),
 							somethingSelected: somethingSelected,
 							allSelected: this.state.allSelected
 						}),
-						cell: _react2.default.createElement(_selector2.default, {
+						cell: _react2['default'].createElement(_selector2['default'], {
 							data: this.state.data
 						}),
 						allowCellsRecycling: true,
-						width: 50
+						width: this.props.selectorWidth,
+						fixed: true
 					});
 
 					if (isNested) {
-						selColumn = _react2.default.createElement(
+						selColumn = _react2['default'].createElement(
 							_fixedDataTable.ColumnGroup,
-							{ key: _underscore2.default.uniqueId('selector-group-') },
+							{ fixed: true, key: _underscore2['default'].uniqueId('selector-group-') },
 							selColumn
 						);
 					}
@@ -334,7 +572,7 @@ var ProperTable =
 				}
 
 				this.state.cols.forEach(function (col) {
-					columns.push(_this3.parseColumn(col.toJSON(), false, isNested));
+					columns.push(_this4.parseColumn(col.toJSON(), false, isNested));
 				});
 
 				return columns;
@@ -347,7 +585,7 @@ var ProperTable =
 				var newSelection = [];
 
 				if (!allSelected) {
-					newSelection = _underscore2.default.keys(this.state.indexed);
+					newSelection = _underscore2['default'].keys(this.state.indexed);
 				}
 
 				this.triggerSelection(newSelection.sort());
@@ -362,10 +600,10 @@ var ProperTable =
 		}, {
 			key: 'toggleSelected',
 			value: function toggleSelected(properId) {
-				var selection = _underscore2.default.clone(this.state.selection);
+				var selection = _underscore2['default'].clone(this.state.selection);
 
-				if (_underscore2.default.indexOf(selection, properId.toString()) != -1) {
-					selection = _underscore2.default.without(selection, properId);
+				if (_underscore2['default'].indexOf(selection, properId.toString()) != -1) {
+					selection = _underscore2['default'].without(selection, properId);
 				} else {
 					if (this.props.selectable == 'multiple') {
 						selection.push(properId);
@@ -379,7 +617,7 @@ var ProperTable =
 		}, {
 			key: 'componentWillUpdate',
 			value: function componentWillUpdate(nextProps, nextState) {
-				if (!_underscore2.default.isEqual(nextState.selection, this.state.selection)) {
+				if (!_underscore2['default'].isEqual(nextState.selection, this.state.selection)) {
 					this.updateSelectionData(nextState.selection);
 				}
 			}
@@ -389,12 +627,12 @@ var ProperTable =
 				var newData = this.state.data.map(function (row) {
 					var rdata = row.toJSON();
 
-					rdata._selected = _underscore2.default.indexOf(newSelection, rdata._properId) >= 0;
+					rdata._selected = _underscore2['default'].indexOf(newSelection, rdata._properId) >= 0;
 
-					return _immutable2.default.fromJS(rdata);
+					return _immutable2['default'].fromJS(rdata);
 				});
 
-				var newIndexed = _underscore2.default.indexBy(newData.toJSON(), '_properId');
+				var newIndexed = _underscore2['default'].indexBy(newData.toJSON(), '_properId');
 
 				this.setState({
 					data: newData,
@@ -406,7 +644,7 @@ var ProperTable =
 			value: function triggerSelection() {
 				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
-				if (!_underscore2.default.isEqual(newSelection, this.state.selection)) {
+				if (!_underscore2['default'].isEqual(newSelection, this.state.selection)) {
 					this.setState({
 						selection: newSelection,
 						allSelected: newSelection.length == this.state.data.size
@@ -416,28 +654,28 @@ var ProperTable =
 		}, {
 			key: 'sendSelection',
 			value: function sendSelection() {
-				var _this4 = this;
+				var _this5 = this;
 
 				if (typeof this.props.afterSelect == 'function') {
 					(function () {
-						var _state = _this4.state;
+						var _state = _this5.state;
 						var selection = _state.selection;
 						var indexed = _state.indexed;
 						var rawdata = _state.rawdata;
 
 						var output = [];
 
-						output = _underscore2.default.map(selection, function (pId) {
+						output = _underscore2['default'].map(selection, function (pId) {
 							var rowIndex = indexed[pId]._rowIndex;
 
 							return rawdata.get(rowIndex).toJSON();
 						});
 
-						if (_this4.props.selectable === true) {
+						if (_this5.props.selectable === true) {
 							output = output[0];
 						}
 
-						_this4.props.afterSelect(output);
+						_this5.props.afterSelect(output);
 					})();
 				}
 			}
@@ -454,46 +692,46 @@ var ProperTable =
 				return addClass;
 			}
 		}, {
+			key: 'onResize',
+			value: function onResize(width, column) {
+				var sizes = this.state.sizes;
+				var newsizes = sizes.set(column, width);
+
+				this.setState({ sizes: newsizes });
+			}
+		}, {
 			key: 'render',
 			value: function render() {
-				var content = _react2.default.createElement(
+				var content = _react2['default'].createElement(
 					'div',
 					{ className: 'propertable-empty' },
 					this.props.msgs.empty
 				);
 				var tableContent = null;
 
-				if (this.state.data === null) {
-					content = _react2.default.createElement(
-						'div',
-						{ className: 'propertable-loading' },
-						this.props.msgs.loading
-					);
-				}
-
 				if (this.state.data && this.state.data.size) {
 					tableContent = this.buildTable();
 
-					content = _react2.default.createElement(
+					content = _react2['default'].createElement(
 						_fixedDataTable.Table,
 						_extends({
-							width: this.props.containerWidth,
-							height: this.props.containerHeight,
+							width: this.props.containerWidth || 100,
+							height: this.props.containerHeight || 100,
 							headerHeight: this.props.rowHeight,
 							groupHeaderHeight: this.props.rowHeight,
 							rowHeight: this.props.rowHeight,
 							rowsCount: this.state.data.size,
+							isColumnResizing: false,
 							onRowClick: this.handleRowClick.bind(this),
 							rowClassNameGetter: this.getRowClassName.bind(this),
+							onColumnResizeEndCallback: this.onResize.bind(this),
 							className: 'propertable-table'
 						}, this.props),
 						tableContent
 					);
-				} else {
-					console.log('pinto SIN datos');
 				}
 
-				return _react2.default.createElement(
+				return _react2['default'].createElement(
 					'div',
 					{ id: this.props.uniqueId, className: 'propertable ' + this.props.className },
 					content
@@ -502,9 +740,11 @@ var ProperTable =
 		}]);
 
 		return ProperTable;
-	}(_react2.default.Component);
+	}(_react2['default'].Component);
 
-	exports.default = (0, _reactDimensions2.default)()(ProperTable);
+	ProperTable.defaultProps = defaultProps();
+
+	exports['default'] = ProperTable;
 	module.exports = exports['default'];
 
 /***/ },
@@ -12305,7 +12545,7 @@ var ProperTable =
 	Object.defineProperty(exports, "__esModule", {
 		value: true
 	});
-	exports.default = {
+	exports['default'] = {
 		loading: 'loading...',
 		empty: 'No data found'
 	};
@@ -12313,178 +12553,6 @@ var ProperTable =
 
 /***/ },
 /* 58 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	exports.__esModule = true;
-
-	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
-
-	exports['default'] = Dimensions;
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	var _react = __webpack_require__(2);
-
-	var _react2 = _interopRequireDefault(_react);
-
-	var style = {
-	  width: '100%',
-	  height: '100%',
-	  padding: 0,
-	  border: 0
-	};
-
-	function defaultGetWidth(element) {
-	  return element.clientWidth;
-	}
-
-	function defaultGetHeight(element) {
-	  return element.clientHeight;
-	}
-
-	/**
-	 * Wraps a react component and adds properties `containerHeight` and
-	 * `containerWidth`. Useful for responsive design. Properties update on
-	 * window resize. **Note** that the parent element must have either a
-	 * height or a width, or nothing will be rendered
-	 *
-	 * Can be used as a
-	 * [higher-order component](http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers)
-	 * or as an [ES7 class decorator](https://github.com/wycats/javascript-decorators)
-	 * (see examples)
-	 *
-	 * v1.0.0 is for React v0.14 only. Use ^0.1.0 for React v0.13
-	 *
-	 * @param {object} [options] Options
-	 * @param {function} [options.getHeight] `getHeight(element)` should return element
-	 * height, where element is the wrapper div. Defaults to `element.clientHeight`
-	 * @param {function} [options.getWidth]  `getWidth(element)` should return element
-	 * width, where element is the wrapper div. Defaults to `element.clientWidth`
-	 * @return {function}                   Returns a higher-order component that can be
-	 * used to enhance a react component `Dimensions()(MyComponent)`
-	 *
-	 * ### Live Example
-	 *
-	 * Will open a browser window for localhost:9966
-	 *
-	 * `npm i && npm i react react-dom && npm start`
-	 *
-	 * @example
-	 * // ES2015
-	 * import React from 'react'
-	 * import Dimensions from 'react-dimensions'
-	 *
-	 * class MyComponent extends React.Component {
-	 *   render() (
-	 *     <div
-	 *       containerWidth={this.props.containerWidth}
-	 *       containerHeight={this.props.containerHeight}
-	 *     >
-	 *     </div>
-	 *   )
-	 * }
-	 *
-	 * export default Dimensions()(MyComponent) // Enhanced component
-	 *
-	 * @example
-	 * // ES5
-	 * var React = require('react')
-	 * var Dimensions = require('react-dimensions')
-	 *
-	 * var MyComponent = React.createClass({
-	 *   render: function() {(
-	 *     <div
-	 *       containerWidth={this.props.containerWidth}
-	 *       containerHeight={this.props.containerHeight}
-	 *     >
-	 *     </div>
-	 *   )}
-	 * }
-	 *
-	 * module.exports = Dimensions()(MyComponent) // Enhanced component
-	 *
-	 */
-
-	function Dimensions() {
-	  var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
-	  var _ref$getHeight = _ref.getHeight;
-	  var getHeight = _ref$getHeight === undefined ? defaultGetHeight : _ref$getHeight;
-	  var _ref$getWidth = _ref.getWidth;
-	  var getWidth = _ref$getWidth === undefined ? defaultGetWidth : _ref$getWidth;
-
-	  return function (ComposedComponent) {
-	    return (function (_React$Component) {
-	      _inherits(DimensionsHOC, _React$Component);
-
-	      function DimensionsHOC() {
-	        var _this = this;
-
-	        _classCallCheck(this, DimensionsHOC);
-
-	        _React$Component.apply(this, arguments);
-
-	        this.state = {};
-
-	        this.updateDimensions = function () {
-	          var container = _this.refs.container;
-	          if (!container) {
-	            throw new Error('Cannot find container div');
-	          }
-	          _this.setState({
-	            containerWidth: getWidth(container),
-	            containerHeight: getHeight(container)
-	          });
-	        };
-
-	        this.onResize = function () {
-	          if (_this.rqf) return;
-	          _this.rqf = window.requestAnimationFrame(function () {
-	            _this.rqf = null;
-	            _this.updateDimensions();
-	          });
-	        };
-	      }
-
-	      DimensionsHOC.prototype.componentDidMount = function componentDidMount() {
-	        this.updateDimensions();
-	        window.addEventListener('resize', this.onResize, false);
-	      };
-
-	      DimensionsHOC.prototype.componentWillUnmount = function componentWillUnmount() {
-	        window.removeEventListener('resize', this.onResize);
-	      };
-
-	      DimensionsHOC.prototype.render = function render() {
-	        return _react2['default'].createElement(
-	          'div',
-	          { style: style, ref: 'container' },
-	          (this.state.containerWidth || this.state.containerHeight) && _react2['default'].createElement(ComposedComponent, _extends({}, this.state, this.props))
-	        );
-	      };
-
-	      return DimensionsHOC;
-	    })(_react2['default'].Component);
-	  };
-	}
-
-	module.exports = exports['default'];
-
-	// ES7 Class properties
-	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers
-
-	// Using arrow functions and ES7 Class properties to autobind
-	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#arrow-functions
-
-
-/***/ },
-/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -12499,12 +12567,12 @@ var ProperTable =
 
 	var _fixedDataTable = __webpack_require__(3);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	var Selector = function Selector(props) {
 		var allSelected = false,
 		    somethingSelected = false,
-		    content = _react2.default.createElement('i', { className: 'fa fa-square-o selector-button' });
+		    content = _react2['default'].createElement('i', { className: 'fa fa-square-o selector-button' });
 		var addClass = 'unchecked';
 		var selected = false;
 		var row = null;
@@ -12535,21 +12603,21 @@ var ProperTable =
 		}
 
 		if (somethingSelected && !allSelected) {
-			content = _react2.default.createElement('i', { className: 'fa fa-minus-square-o' });
+			content = _react2['default'].createElement('i', { className: 'fa fa-minus-square-o' });
 		}
 
 		if (allSelected || row && row._selected) {
-			content = _react2.default.createElement('i', { className: 'fa fa-check-square-o' });
+			content = _react2['default'].createElement('i', { className: 'fa fa-check-square-o' });
 		}
 
 		if (row && row._selected) {
 			selected = true;
 		}
 
-		return _react2.default.createElement(
+		return _react2['default'].createElement(
 			_fixedDataTable.Cell,
 			{ className: 'propertable-cell select-cell' },
-			_react2.default.createElement(
+			_react2['default'].createElement(
 				'div',
 				{ className: "propertable-selector " + addClass, onClick: function onClick(e) {
 						_onClick(e, row);
@@ -12559,11 +12627,11 @@ var ProperTable =
 		);
 	};
 
-	exports.default = Selector;
+	exports['default'] = Selector;
 	module.exports = exports['default'];
 
 /***/ },
-/* 60 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -12578,7 +12646,7 @@ var ProperTable =
 
 	var _fixedDataTable = __webpack_require__(3);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	var CellRenderer = function CellRenderer(props) {
 		var row = props.data.get(props.rowIndex),
@@ -12590,7 +12658,7 @@ var ProperTable =
 		if (row) {
 			val = row.get(props.col);
 
-			if (typeof val.toJSON == 'function') {
+			if (val && typeof val.toJSON == 'function') {
 				val = val.toJSON();
 			}
 
@@ -12603,14 +12671,87 @@ var ProperTable =
 			formatted = colData.formatter(val, colData, row.toJSON());
 		}
 
-		return _react2.default.createElement(
+		return _react2['default'].createElement(
 			_fixedDataTable.Cell,
 			{ className: 'propertable-cell' },
 			formatted
 		);
 	};
 
-	exports.default = CellRenderer;
+	exports['default'] = CellRenderer;
+	module.exports = exports['default'];
+
+/***/ },
+/* 60 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _fixedDataTable = __webpack_require__(3);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var SortTypes = {
+	  ASC: 'ASC',
+	  DESC: 'DESC',
+	  DEF: 'DEF'
+	};
+
+	var SortIcons = {
+	  ASC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-up' }),
+	  DESC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-down' }),
+	  DEF: null // Default
+	};
+
+	var reverseSortDirection = function reverseSortDirection(sortDir) {
+	  if (sortDir) {
+	    // Second sort
+	    if (sortDir === SortTypes.DEF) return reverseSortDirection(null); // From default start again
+	    else return sortDir === SortTypes.ASC ? SortTypes.DESC : SortTypes.DEF; // Third sort from ASC to DESC then from DESC back to default
+	  }
+	  return SortTypes.ASC; // First sort
+	};
+
+	var onSortChange = function onSortChange(e, props, sortable) {
+	  e.preventDefault();
+	  if (sortable) {
+	    if (typeof props.onSortChange === 'function') {
+	      props.onSortChange(props.columnKey, reverseSortDirection(props.sortDir));
+	    }
+	  }
+	};
+
+	var SortHeaderCell = function SortHeaderCell(props) {
+	  var sortDir = props.sortDir || null;
+	  var sortable = props.sortable;
+	  var children = props.children || null;
+	  var sortIcon = sortDir && sortable ? SortIcons[sortDir] : SortIcons['DEF'];
+
+	  return _react2['default'].createElement(
+	    _fixedDataTable.Cell,
+	    _extends({
+	      className: 'centrardiv',
+	      onClick: function onClick(e) {
+	        onSortChange(e, props, sortable);
+	      }
+	    }, props),
+	    children,
+	    '   ',
+	    sortIcon
+	  );
+	};
+
+	exports['default'] = SortHeaderCell;
 	module.exports = exports['default'];
 
 /***/ },
@@ -12631,13 +12772,13 @@ var ProperTable =
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	function isNumeric(n) {
 		return !isNaN(parseFloat(n)) && isFinite(n);
 	}
 
-	exports.default = {
+	exports["default"] = {
 		string: function string() {
 			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
@@ -12655,10 +12796,10 @@ var ProperTable =
 			}
 
 			if (typeof value == 'string') {
-				value = (0, _numeral2.default)().unformat(value);
+				value = (0, _numeral2["default"])().unformat(value);
 			}
 
-			return (0, _numeral2.default)(value).format('0,0[.]00');
+			return (0, _numeral2["default"])(value).format('0,0[.]00');
 		},
 		date: function date() {
 			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
@@ -12667,7 +12808,7 @@ var ProperTable =
 				return null;
 			}
 
-			var result = (0, _moment2.default)(value).format('LL');
+			var result = (0, _moment2["default"])(value).format('LL');
 
 			if (result == 'Invalid date') {
 				return null;
@@ -12682,7 +12823,7 @@ var ProperTable =
 				return null;
 			}
 
-			var result = (0, _moment2.default)(value).format('LLL');
+			var result = (0, _moment2["default"])(value).format('LLL');
 
 			if (result == 'Invalid date') {
 				return null;
@@ -13386,6 +13527,178 @@ var ProperTable =
 
 /***/ },
 /* 64 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	exports.__esModule = true;
+
+	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+	exports['default'] = Dimensions;
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var style = {
+	  width: '100%',
+	  height: '100%',
+	  padding: 0,
+	  border: 0
+	};
+
+	function defaultGetWidth(element) {
+	  return element.clientWidth;
+	}
+
+	function defaultGetHeight(element) {
+	  return element.clientHeight;
+	}
+
+	/**
+	 * Wraps a react component and adds properties `containerHeight` and
+	 * `containerWidth`. Useful for responsive design. Properties update on
+	 * window resize. **Note** that the parent element must have either a
+	 * height or a width, or nothing will be rendered
+	 *
+	 * Can be used as a
+	 * [higher-order component](http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers)
+	 * or as an [ES7 class decorator](https://github.com/wycats/javascript-decorators)
+	 * (see examples)
+	 *
+	 * v1.0.0 is for React v0.14 only. Use ^0.1.0 for React v0.13
+	 *
+	 * @param {object} [options] Options
+	 * @param {function} [options.getHeight] `getHeight(element)` should return element
+	 * height, where element is the wrapper div. Defaults to `element.clientHeight`
+	 * @param {function} [options.getWidth]  `getWidth(element)` should return element
+	 * width, where element is the wrapper div. Defaults to `element.clientWidth`
+	 * @return {function}                   Returns a higher-order component that can be
+	 * used to enhance a react component `Dimensions()(MyComponent)`
+	 *
+	 * ### Live Example
+	 *
+	 * Will open a browser window for localhost:9966
+	 *
+	 * `npm i && npm i react react-dom && npm start`
+	 *
+	 * @example
+	 * // ES2015
+	 * import React from 'react'
+	 * import Dimensions from 'react-dimensions'
+	 *
+	 * class MyComponent extends React.Component {
+	 *   render() (
+	 *     <div
+	 *       containerWidth={this.props.containerWidth}
+	 *       containerHeight={this.props.containerHeight}
+	 *     >
+	 *     </div>
+	 *   )
+	 * }
+	 *
+	 * export default Dimensions()(MyComponent) // Enhanced component
+	 *
+	 * @example
+	 * // ES5
+	 * var React = require('react')
+	 * var Dimensions = require('react-dimensions')
+	 *
+	 * var MyComponent = React.createClass({
+	 *   render: function() {(
+	 *     <div
+	 *       containerWidth={this.props.containerWidth}
+	 *       containerHeight={this.props.containerHeight}
+	 *     >
+	 *     </div>
+	 *   )}
+	 * }
+	 *
+	 * module.exports = Dimensions()(MyComponent) // Enhanced component
+	 *
+	 */
+
+	function Dimensions() {
+	  var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+
+	  var _ref$getHeight = _ref.getHeight;
+	  var getHeight = _ref$getHeight === undefined ? defaultGetHeight : _ref$getHeight;
+	  var _ref$getWidth = _ref.getWidth;
+	  var getWidth = _ref$getWidth === undefined ? defaultGetWidth : _ref$getWidth;
+
+	  return function (ComposedComponent) {
+	    return (function (_React$Component) {
+	      _inherits(DimensionsHOC, _React$Component);
+
+	      function DimensionsHOC() {
+	        var _this = this;
+
+	        _classCallCheck(this, DimensionsHOC);
+
+	        _React$Component.apply(this, arguments);
+
+	        this.state = {};
+
+	        this.updateDimensions = function () {
+	          var container = _this.refs.container;
+	          if (!container) {
+	            throw new Error('Cannot find container div');
+	          }
+	          _this.setState({
+	            containerWidth: getWidth(container),
+	            containerHeight: getHeight(container)
+	          });
+	        };
+
+	        this.onResize = function () {
+	          if (_this.rqf) return;
+	          _this.rqf = window.requestAnimationFrame(function () {
+	            _this.rqf = null;
+	            _this.updateDimensions();
+	          });
+	        };
+	      }
+
+	      DimensionsHOC.prototype.componentDidMount = function componentDidMount() {
+	        this.updateDimensions();
+	        window.addEventListener('resize', this.onResize, false);
+	      };
+
+	      DimensionsHOC.prototype.componentWillUnmount = function componentWillUnmount() {
+	        window.removeEventListener('resize', this.onResize);
+	      };
+
+	      DimensionsHOC.prototype.render = function render() {
+	        return _react2['default'].createElement(
+	          'div',
+	          { style: style, ref: 'container' },
+	          (this.state.containerWidth || this.state.containerHeight) && _react2['default'].createElement(ComposedComponent, _extends({}, this.state, this.props))
+	        );
+	      };
+
+	      return DimensionsHOC;
+	    })(_react2['default'].Component);
+	  };
+	}
+
+	module.exports = exports['default'];
+
+	// ES7 Class properties
+	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers
+
+	// Using arrow functions and ES7 Class properties to autobind
+	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#arrow-functions
+
+
+/***/ },
+/* 65 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin

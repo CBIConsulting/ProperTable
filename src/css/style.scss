@@ -16,3 +16,18 @@
 		}
 	}
 }
+
+.propertable-header-cell {
+
+	&.sortable {
+		cursor: pointer;
+		span:hover,
+		i.fa:hover {
+			color: #5B5F5F;
+		}
+	}
+
+	&.not-sortable{
+		cursor: not-allowed;
+	}
+}

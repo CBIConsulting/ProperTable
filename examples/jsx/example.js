@@ -2,6 +2,7 @@ import ProperTable from "../../src/jsx/ProperTable";
 
 let body1 = document.getElementById('canvas1');
 let body2 = document.getElementById('canvas2');
+let body3 = document.getElementById('canvas3');
 
 $(function() {
 	var cols = [
@@ -33,6 +34,7 @@ $(function() {
 			label: <span>A number</span>,
 			field: 'number',
 			className: 'number',
+			sortable: false,
 			width: 100,
 			formatter: value => ProperTable.formatters.number(value+1)
 		},
@@ -45,6 +47,7 @@ $(function() {
 					name: 'nested1',
 					label: 'nested1',
 					field: 'nested1',
+					sortable: false,
 					sortVal: function(value) {
 						return moment(value).unix();
 					},
@@ -69,7 +72,7 @@ $(function() {
 
 	var data = [];
 
-	for (var i = 1000; i > 0; i--) {
+	for (var i = 10; i > 0; i--) {
 		data.push({
 			id: i,
 			col1: 'added-'+i,
@@ -79,10 +82,84 @@ $(function() {
 		});
 	}
 
+	const ex3cols = [
+		{
+			name: 'col1',
+			label: 'col1',
+			field: 'col1',
+			fixed: true
+		},{
+			name: 'col2',
+			label: 'col2',
+			field: 'col2'
+		},{
+			name: 'col3',
+			label: 'col3',
+			field: 'col3'
+		},{
+			name: 'col4',
+			label: 'col4',
+			field: 'col4'
+		},{
+			name: 'col5',
+			label: 'col5',
+			field: 'col5'
+		},{
+			name: 'col7',
+			label: 'col7',
+			field: 'col7'
+		},{
+			name: 'col8',
+			label: 'col8',
+			field: 'col8'
+		},{
+			name: 'col9',
+			label: 'col9',
+			field: 'col9'
+		},{
+			name: 'col10',
+			label: 'col10',
+			field: 'col10'
+		},{
+			name: 'col11',
+			label: 'col11',
+			field: 'col11'
+		},{
+			name: 'col12',
+			label: 'col12',
+			field: 'col12'
+		}
+	];
+
+	let ex3data = [];
+	let k = 0;
+
+	for (i = 10000 - 1; i >= 0; i--) {
+		let row = {
+			col1: _.uniqueId('row-')
+		};
+
+		for (k = 2; k <= 12; k++) {
+			row['col'+k] = i * k;
+		}
+
+		ex3data.push(row);
+	}
+
 	ReactDOM.render(<ProperTable.Table key='pt1' uniqueId={1} rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
 		console.log('selected1', data);
 	}} />, body1);
-	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
+	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} key={'testtable2'} cols={cols} data={data} afterSelect={function(data) {
 		console.log('selected2', data);
 	}} selectable="multiple" />, body2);
+
+	ReactDOM.render(<ProperTable.Table
+		key='pt3'
+		uniqueId={3}
+		rowHeight={40}
+		key={'testtable3'}
+		cols={ex3cols}
+		data={ex3data}
+		selectable="multiple"
+	/>, body3);
 });
