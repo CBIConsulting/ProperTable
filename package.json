@@ -66,8 +66,11 @@
     "webpack-dev-server": "^1.10.1"
   },
   "dependencies": {
+    "binarysearch": "^1.0.0",
+    "clone": "^1.0.2",
     "fixed-data-table": "^0.6.0",
     "immutable": "^3.7.6",
+    "kind-of": "^3.0.2",
     "moment": "^2.10.6",
     "numeral": "^1.5.3",
     "react": "^0.14.7",

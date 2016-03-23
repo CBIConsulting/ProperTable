@@ -80,6 +80,20 @@ describe('ProperTable', () => {
 
 				expect(result).toEqual(testProps.data[2]);
 			});
+
+			it('allows deselecting', () => {
+				let result = null;
+				let component = TestUtils.renderIntoDocument(<ProperTable {...testProps} selected={3} afterSelect={
+					selection => {
+						result = selection;
+					}
+				}/>);
+				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
+
+				expect(result).toEqual(testProps.data[2]);
+				TestUtils.Simulate.click(node);
+				expect(result).toBeFalsy();
+			});
 		});
 
 	});
