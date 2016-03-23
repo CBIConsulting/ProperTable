@@ -27,7 +27,7 @@ describe('ProperTable', () => {
 
 	describe('selection', () => {
 		describe('single selection', () => {
-			let testProps = {}, component;
+			let testProps = {};
 
 			beforeEach(() => {
 				let cols = [{
@@ -35,7 +35,6 @@ describe('ProperTable', () => {
 					label: 'col1',
 					field: 'id',
 					formatter: (value) => {
-						console.log(value);
 						return <span id={"id_"+value} className={"id_"+value}>{value}</span>;
 					}
 				}];
@@ -48,16 +47,26 @@ describe('ProperTable', () => {
 				};
 
 				testProps = {
+					height: 500,
+					width: 500,
 					cols: cols,
 					data: data
 				};
 
-				component = TestUtils.renderIntoDocument(<ProperTable {...testProps} />)
 			});
 
 			it('selects a single row', () => {
-			//	let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
-				console.log(component, document.getElementById('id_1'));
+				let result = null;
+				let component = TestUtils.renderIntoDocument(<ProperTable {...testProps} afterSelect={
+					selection => {
+						result = selection;
+					}
+				}/>);
+				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
+
+				expect(result).toBe(null);
+				TestUtils.Simulate.click(node);
+				expect(result).toEqual(testProps.data[2]);
 			});
 		});
 	});
