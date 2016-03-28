@@ -43,7 +43,8 @@ function defaultProps() {
 }
 
 /**
- * Check if one or more of the columns has some nested columns. Columns inside other columns.
+ * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
+ * column inside a ColumnGroup even if the column has not childrens.
  *
  * @param (array)		cols  	Describe columns
  * @return (boolean)	result	True if has nested columns or false otherwhise
@@ -401,7 +402,7 @@ class ProperTable extends React.Component {
 		let defaultSort = true, element = null, position = null;
 
 		for (let i = 0; i <= colSortDirs.length - 1; i++) {
-			position = colSortDirs[i].position - 1;
+			position = colSortDirs[i].position - 1; // Pos starts on 1,2,3,4... but array pos should start on 0 to length -1.
 			element = colSortDirs[position];
 
 			// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
@@ -422,6 +423,7 @@ class ProperTable extends React.Component {
 			}
 		}
 
+		// If all the cols are default then sort the data by the rowIndex (virtual field added on componnent's create.)
 		if (defaultSort) {
 			//  Set to default
 			sortedData = data.sortBy((row, rowIndex, allData) => {
@@ -434,6 +436,16 @@ class ProperTable extends React.Component {
 		return sortedData;
 	}
 
+
+/**
+ * Recursive function that build the nested columns. If the column has childrens then call itself and put the column into
+ * a ColumnGroup.
+ *
+ * @param 	{array}		colData 	Data to be parsed
+ * @param 	{boolean}	isChildren	Is a children of another column or not
+ * @param 	{boolean}	hasNested	The whole table has nested columns or not
+ * @return 	{object}	col 		The builded column or tree of columns
+ */
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, sortDir = 'DEF', sortable = null, extraProps = {
 			width: 100,
@@ -468,11 +480,16 @@ class ProperTable extends React.Component {
 			extraProps.isResizable = colData.isResizable;
 		}
 
+		// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
+		// setting the result inside this columns group.
 		if (typeof colData.children == 'undefined' || !colData.children.length) {
+
+			// Get the initial dir of this column
 			this.state.colSortDirs.forEach(element => {
 				if (element.column === colname) sortDir = element.direction;
 			});
 
+			// If this column can be sort or not.
 			sortable = _.isUndefined(colData.sortable) ? true : colData.sortable;
 
 			col = <Column
@@ -492,10 +509,12 @@ class ProperTable extends React.Component {
 				{...extraProps}
 			/>;
 
+			// If isn't a children but the table has nested columns set the column into a group.
 			if (!isChildren && hasNested) {
 				col = <ColumnGroup key={_.uniqueId(colname+'-group')} fixed={extraProps.fixed}>{col}</ColumnGroup>
 			}
 		} else {
+			// Call the method recursively to all the childrens of this column.
 			let inner = colData.children.map((c) => this.parseColumn(c, true));
 
 			col = <ColumnGroup
@@ -511,6 +530,12 @@ class ProperTable extends React.Component {
 		return col;
 	}
 
+/**
+ * Build the table calling the parsecolumn() method for each column in props.cols and saving it to an array to be render into
+ * a react fixed-datatable Table. If multiple rows can be selected then build a column with checkboxes to show which rows are seleted.
+ *
+ * @return {array} 	columns 	Array with all the columns to be rendered.
+ */
 	buildTable() {
 		let columns = [], isNested = hasNested(this.state.cols), selColumn = null;
 
@@ -562,6 +587,12 @@ class ProperTable extends React.Component {
 		return columns;
 	}
 
+/**
+ * Set all columns to selected or to not selected. Callback for the onclick of the Selector component, in the top of the table, in
+ * the case that the Table allows multiple selection.
+ *
+ * @param {object}	e  	Event which call the function.
+ */
 	handleSelectAll(e) {
 		let somethingSelected = this.state.selection.length > 0;
 		let allSelected = this.state.allSelected;
@@ -574,17 +605,28 @@ class ProperTable extends React.Component {
 		this.triggerSelection(newSelection.sort());
 	}
 
+/**
+ * Toogle the selected state of a column. Callback for the onRowClick of the react fixed-dataTable.
+ *
+ * @param {object}	e  			Event which call the function
+ * @param {integer}	rowIndex  	Index of the clicked row.
+ */
 	handleRowClick(e, rowIndex) {
 		let clickedId = this.state.data.get(rowIndex).get('_properId');
 
 		this.toggleSelected(clickedId);
 	}
 
+/**
+ * Toogle the selected state of the column that has the same properId as in the parameters.
+ *
+ * @param {integet}	properId  	Virtual field added to each row data on componnent's create
+ */
 	toggleSelected(properId) {
 		let selection = _.clone(this.state.selection);
 
-		if (_.indexOf(selection, properId.toString()) != -1) {
-			selection = _.without(selection, properId);
+		if (_.indexOf(selection, properId.toString()) != -1) { // If it was seleted then remove it from selected.
+			selection = _.without(selection, properId); // Returns a copy of the array with all instances with that properId deleted.
 		} else {
 			if (this.props.selectable == 'multiple') {
 				selection.push(properId);
@@ -593,15 +635,26 @@ class ProperTable extends React.Component {
 			}
 		}
 
-		this.triggerSelection(selection.sort());
+		this.triggerSelection(selection.sort()); // Set the new selection to the components state.
 	}
 
+/**
+ * Before the components update set the updated selection data to the components state.
+ *
+ * @param {object}	nextProps	The props that will be set for the updated component
+ * @param {object}	nextState	The state that will be set for the updated component
+ */
 	componentWillUpdate(nextProps, nextState) {
 		if (!_.isEqual(nextState.selection, this.state.selection)) {
 			this.updateSelectionData(nextState.selection);
 		}
 	}
 
+/**
+ * Method called before the components update to set the new selection to states component.
+ *
+ * @param {array}	newSelection	The selected rows
+ */
 	updateSelectionData(newSelection) {
 		let newData = this.state.data.map((row) => {
 			let rdata = row.toJSON();
@@ -619,6 +672,12 @@ class ProperTable extends React.Component {
 		});
 	}
 
+/**
+ * In case that the new selection array be different than the selection array in the components state, then update
+ * the components state with the new data.
+ *
+ * @param {array}	newSelection	The selected rows
+ */
 	triggerSelection(newSelection = []) {
 		if (!_.isEqual(newSelection, this.state.selection)) {
 			this.setState({
@@ -628,6 +687,9 @@ class ProperTable extends React.Component {
 		}
 	}
 
+/**
+ * If the method afterSelect in the components props has a function then call it sending the selected rows in rawdata.
+ */
 	sendSelection() {
 		if (typeof this.props.afterSelect == 'function') {
 			let {selection, indexed, rawdata} = this.state;
@@ -647,6 +709,10 @@ class ProperTable extends React.Component {
 		}
 	}
 
+
+/**
+ * If the method afterSort in the components props has a function then call it sending the sorted data in the rawdata.
+ */
 	sendSortedData() {
 		if (typeof this.props.afterSort == 'function') {
 			let {data, indexed, rawdata} = this.state;
@@ -662,6 +728,12 @@ class ProperTable extends React.Component {
 		}
 	}
 
+/**
+ * Add a custom class to each row of the table. If that row is selected then add one more class to apply different css to seleted
+ * rows.
+ *
+ * @param {integer}	index	Index of the row which will get the new classes.
+ */
 	getRowClassName(index) {
 		let addClass = 'propertable-row';
 		let selected = this.state.data.get(index).get('_selected');
