@@ -141,6 +141,10 @@ ReactDOM.render(
 );
 ```
 
+## Preview
+![screen shot 2016-03-28 at 16 30 00] (examples/screenshots/screenshot_ex.png "Example with some tables and different configurations") 
+
+
 Contributions
 ------------
 
