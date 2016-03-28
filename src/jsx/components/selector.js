@@ -13,6 +13,7 @@ import {Cell} from 'fixed-data-table';
  *					onClick={this.handleSelectAll.bind(this)}
  *					somethingSelected={true || false}
  *					allSelected={true || false}
+ *					isHeader={true}
  *				/>
  *          }
  * 			cell={

@@ -11,9 +11,10 @@ import {Cell} from 'fixed-data-table';
  *        header={
  *            <SortHeaderCell
  *              sortDir={ASC || DESC || DEF}
- *              children={label}
  *              sortable={true || false}
  *            />
+ *              {children (label || Component)}
+ *            </SortHeaderCell>
  *        }
  *        ...
  *     />
