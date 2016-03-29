@@ -466,13 +466,14 @@ class ProperTable extends React.Component {
  * @return 	{object}	col 		The builded column or tree of columns
  */
 	parseColumn(colData, isChildren = false, hasNested = false) {
-		let col = null, colname = null, sortDir = 'DEF', sortable = null, extraProps = {
+		let col = null, colname = null, sortDir = 'DEF', sortable = null, className = null, extraProps = {
 			width: 100,
 			fixed: false,
 			isResizable: true
 		};
 
 		colname = colData.name || _.uniqueId('col-');
+		className = colData.className || null;
 
 		if (this.state.sizes.get(colname)) {
 			colData.width = this.state.sizes.get(colname);
@@ -520,9 +521,10 @@ class ProperTable extends React.Component {
 						sortDir={sortDir}
 						children={colData.label}
 						sortable={sortable}
+						userClassName={className}
 					/>
 				}
-				cell={<CellRenderer data={this.state.data} colData={colData} col={colData.field} />}
+				cell={<CellRenderer data={this.state.data} colData={colData} col={colData.field}/>}
 				allowCellsRecycling
 				align='center'
 				{...extraProps}
@@ -646,7 +648,7 @@ class ProperTable extends React.Component {
 		let selection = new Set(this.state.selection);
 
 		if (selection.has(id)) {
-			selection.delete(id);  // Returns a copy of the array with all instances with that properId deleted.
+			selection.delete(id);  // Returns a copy of the array with the instance with that properId deleted.
 		} else {
 			if (this.props.selectable == 'multiple') {
 				selection.add(id);
@@ -665,8 +667,17 @@ class ProperTable extends React.Component {
  * @param {object}	nextState	The state that will be set for the updated component
  */
 	componentWillUpdate(nextProps, nextState) {
-		if (nextState.selection.size !== this.state.selection.size) {
-			this.updateSelectionData(nextState.selection, nextState.allSelected);
+		if (this.props.selectable == 'multiple') {
+			if (nextState.selection.size !== this.state.selection.size) {
+				this.updateSelectionData(nextState.selection, nextState.allSelected);
+			}
+		} else {
+			let next = nextState.selection.values().next().value || null;
+			let old = this.state.selection.values().next().value || null;
+
+			if (next !== old){
+				this.updateSelectionData(next);
+			}
 		}
 	}
 
@@ -676,12 +687,29 @@ class ProperTable extends React.Component {
  * @param {array}	newSelection	The new selected rows (Set object)
  * @param {array}	newAllSelected	If the new state has all the rows selected
  */
-	updateSelectionData(newSelection, newAllSelected) {
+	updateSelectionData(newSelection, newAllSelected = false) {
 		let newIndexed = _.clone(this.state.indexed);
 		let oldSelection = this.state.selection;
 		let rowid = null, selected = null, rdata = null, curIndex = null, newData = this.state.data, rowIndex = null;
 
-		if (!newAllSelected && newSelection.size > 0) { // Change one row data at a time
+		if (this.props.selectable != 'multiple') {
+			let oldId = oldSelection.values().next().value || null;
+
+			if (!_.isNull(oldId)) {
+				newIndexed[oldId]._selected = false; // Update indexed data
+				rowIndex =  newIndexed[oldId]._rowIndex; // Get data index
+				rdata = newData.get(rowIndex).set('_selected', false); // Change the row in that index
+				newData = newData.set(rowIndex, rdata); // Set that row in the data object
+			}
+
+			if (!_.isNull(newSelection)) {
+				newIndexed[newSelection]._selected = true; // Update indexed data
+				rowIndex =  newIndexed[newSelection]._rowIndex; // Get data index
+				rdata = newData.get(rowIndex).set('_selected', true); // Change the row in that index
+				newData = newData.set(rowIndex, rdata); // Set that row in the data object
+			}
+
+		} else if (!newAllSelected && newSelection.size > 0) { // Change one row data at a time
 			let changedId = null, selected = null;
 
 			// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
@@ -738,12 +766,10 @@ class ProperTable extends React.Component {
  * @param {array}	newSelection	The selected rows
  */
 	triggerSelection(newSelection = new Set()) {
-		if (newSelection.size !== this.state.selection.size) {
-			this.setState({
-				selection: newSelection,
-				allSelected: newSelection.size == this.state.data.size
-			}, this.sendSelection);
-		}
+		this.setState({
+			selection: newSelection,
+			allSelected: newSelection.size == this.state.data.size
+		}, this.sendSelection);
 	}
 
 /**

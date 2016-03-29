@@ -23,6 +23,7 @@ import {Cell} from 'fixed-data-table';
 const CellRenderer = (props) => {
 	let row = props.data.get(props.rowIndex), val = null, formatted = null;
 	let colData = props.colData;
+	let className = colData.className || '';
 	let selected = false;
 
 	if (row) {
@@ -44,7 +45,7 @@ const CellRenderer = (props) => {
 		formatted = colData.formatter(val, colData, row.toJSON());
 	}
 
-	return <Cell className="propertable-cell">
+	return <Cell className={"propertable-cell " + className}>
 		{formatted}
 	</Cell>;
 };

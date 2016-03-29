@@ -2,6 +2,12 @@
 @import "fixed-data-table";
 
 .propertable {
+	.fa-square-o{
+		&:hover {
+			cursor: pointer;
+		}
+	}
+
 	.fixedDataTableRowLayout_rowWrapper{
 		&:hover .public_fixedDataTableCell_main {
 		  background-color: #C7EBFF;

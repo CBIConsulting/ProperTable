@@ -284,6 +284,9 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
   position: absolute;
   top: 0; }
 
+.propertable .fa-square-o:hover {
+  cursor: pointer; }
+
 .propertable .fixedDataTableRowLayout_rowWrapper:hover .public_fixedDataTableCell_main {
   background-color: #C7EBFF; }
 
