@@ -128,7 +128,7 @@ class ProperTable extends React.Component {
 			rawdata: initialData.rawdata,
 			sizes: Immutable.fromJS({}),
 			allSelected: false,
-			selection: []
+			selection: new Set()
 		};
 	}
 
@@ -182,18 +182,22 @@ class ProperTable extends React.Component {
 		let newdata = this.prepareData();
 
 		this.setState(newData);
-		//this.setDefaultSelection();
 	}
 
 	setDefaultSelection() {
 		if (this.props.selected) {
-			let selection = this.props.selected;
+			let selected = this.props.selected;
+			let selection = new Set();
 
-			if (!_.isArray(selection)) {
-				selection = [selection];
+			if (!_.isArray(selected)) {
+				selection.add(selected.toString());
+			} else {
+				selected.forEach( element => {
+					selection.add(element.toString());
+				});
 			}
 
-			this.triggerSelection(selection.sort());
+			this.triggerSelection(selection);
 		}
 	}
 
@@ -554,7 +558,7 @@ class ProperTable extends React.Component {
 		let columns = [], isNested = hasNested(this.state.cols), selColumn = null;
 
 		if (this.props.selectable == 'multiple') {
-			let somethingSelected = this.state.selection.length > 0;
+			let somethingSelected = this.state.selection.size > 0;
 			let sortDir = 'DEF';
 
 			this.state.colSortDirs.forEach(element => {
@@ -608,15 +612,17 @@ class ProperTable extends React.Component {
  * @param {object}	e  	Event which call the function.
  */
 	handleSelectAll(e) {
-		let somethingSelected = this.state.selection.length > 0;
 		let allSelected = this.state.allSelected;
 		let newSelection = [];
+		let selection = null;
 
 		if (!allSelected) {
 			newSelection = _.keys(this.state.indexed);
 		}
 
-		this.triggerSelection(newSelection.sort());
+		selection = new Set(newSelection);
+
+		this.triggerSelection(selection);
 	}
 
 /**
@@ -627,7 +633,7 @@ class ProperTable extends React.Component {
  */
 	handleRowClick(e, rowIndex) {
 		let clickedId = this.state.data.get(rowIndex).get(this.props.idField);
-		this.toggleSelected(clickedId);
+		this.toggleSelected(clickedId.toString());
 	}
 
 /**
@@ -636,19 +642,19 @@ class ProperTable extends React.Component {
  * @param {integet}	id  	Virtual field added to each row data on componnent's create
  */
 	toggleSelected(id) {
-		let selection = clone(this.state.selection);
+		let selection = new Set(this.state.selection);
 
-		if (bs(selection, id) != -1) {
-			selection = _.without(selection, id);  // Returns a copy of the array with all instances with that properId deleted.
+		if (selection.has(id)) {
+			selection.delete(id);  // Returns a copy of the array with all instances with that properId deleted.
 		} else {
 			if (this.props.selectable == 'multiple') {
-				selection.push(id);
+				selection.add(id);
 			} else {
-				selection = [id];
+				selection = new Set([id]);
 			}
 		}
 
-		this.triggerSelection(selection.sort()); // Set the new selection to the components state.
+		this.triggerSelection(selection); // Set the new selection to the components state.
 	}
 
 /**
@@ -658,31 +664,65 @@ class ProperTable extends React.Component {
  * @param {object}	nextState	The state that will be set for the updated component
  */
 	componentWillUpdate(nextProps, nextState) {
-		if (!_.isEqual(nextState.selection, this.state.selection)) {
-			this.updateSelectionData(nextState.selection);
+		if (nextState.selection.size !== this.state.selection.size) {
+			this.updateSelectionData(nextState.selection, nextState.allSelected);
 		}
 	}
 
 /**
- * Method called before the components update to set the new selection to states component.
+ * Method called before the components update to set the new selection to states component and update the data
  *
- * @param {array}	newSelection	The selected rows
+ * @param {array}	newSelection	The new selected rows (Set object)
+ * @param {array}	newAllSelected	If the new state has all the rows selected
  */
-	updateSelectionData(newSelection) {
+	updateSelectionData(newSelection, newAllSelected) {
 		let newIndexed = _.clone(this.state.indexed);
-		let newData = this.state.data.map((row) => {
-			let rowid = row.get(this.props.idField);
-			let selected = bs(newSelection, rowid) >= 0;
-			let rdata = row.set('_selected', selected);
-			let curIndex = newIndexed[rowid];
+		let oldSelection = this.state.selection;
+		let rowid = null, selected = null, rdata = null, curIndex = null, newData = this.state.data, rowIndex = null;
 
-			if (curIndex._selected != selected) {
-				curIndex._selected = selected;
-				newIndexed[rowid] = curIndex;
+		if (!newAllSelected && newSelection.size > 0) { // Change one row data at a time
+			let changedId = null, selected = null;
+
+			// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
+			oldSelection.forEach(id => {
+				if (!newSelection.has(id)) {
+					changedId = id;
+					selected = false;
+					return false;
+				}
+			});
+
+			// Otherwise a new row has been selected. Look through the new selection for the new element.
+			if (!changedId) {
+				selected = true;
+				newSelection.forEach(id => {
+					if (!oldSelection.has(id)) {
+						changedId = id;
+						return false;
+					}
+				});
 			}
 
-			return rdata;
-		});
+			newIndexed[changedId]._selected = selected; // Update indexed data
+			rowIndex =  newIndexed[changedId]._rowIndex; // Get data index
+			rdata = newData.get(rowIndex).set('_selected', selected); // Change the row in that index
+			newData = newData.set(rowIndex, rdata); // Set that row in the data object
+
+		} else { // Change all data
+			newData = newData.map((row) => {
+				rowid = row.get(this.props.idField);
+				selected = newSelection.has(rowid.toString());
+				rdata = row.set('_selected', selected);
+				curIndex = newIndexed[rowid];
+
+				if (curIndex._selected != selected) { // update indexed data
+					curIndex._selected = selected;
+					newIndexed[rowid] = curIndex;
+				}
+
+				return rdata;
+			});
+		}
 
 		this.setState({
 			data: newData,
@@ -696,11 +736,11 @@ class ProperTable extends React.Component {
  *
  * @param {array}	newSelection	The selected rows
  */
-	triggerSelection(newSelection = []) {
-		if (!_.isEqual(newSelection, this.state.selection)) {
+	triggerSelection(newSelection = new Set()) {
+		if (newSelection.size !== this.state.selection.size) {
 			this.setState({
 				selection: newSelection,
-				allSelected: newSelection.length == this.state.data.size
+				allSelected: newSelection.size == this.state.data.size
 			}, this.sendSelection);
 		}
 	}
@@ -712,6 +752,8 @@ class ProperTable extends React.Component {
 		if (typeof this.props.afterSelect == 'function') {
 			let {selection, indexed, rawdata} = this.state;
 			let output = [];
+
+			selection = [...selection];// Parse from Set to Array
 
 			output = _.map(selection, (pId) => {
 				let rowIndex = indexed[pId]._rowIndex;
