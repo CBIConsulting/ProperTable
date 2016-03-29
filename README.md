@@ -61,10 +61,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 
 `npm test`
 
-### Basic Example
-------------
-
-#### Component properties
+### Component properties
 
 * cols: Describe columns data. (Array)
  	* name: Internal name. (String)
@@ -146,6 +143,10 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		<ProperTable idField="id" selected={[3,5,23]}.../>
 	```
 * multisort: Multisort allowed or not. (Boolean)
+
+
+### Basic Example
+------------
 
 ```javascript
 import React from 'react';
