@@ -694,6 +694,7 @@ var ProperTable =
 				    colname = null,
 				    sortDir = 'DEF',
 				    sortable = null,
+				    className = null,
 				    extraProps = {
 					width: 100,
 					fixed: false,
@@ -701,6 +702,7 @@ var ProperTable =
 				};
 
 				colname = colData.name || _underscore2['default'].uniqueId('col-');
+				className = colData.className || null;
 
 				if (this.state.sizes.get(colname)) {
 					colData.width = this.state.sizes.get(colname);
@@ -746,7 +748,8 @@ var ProperTable =
 							onSortChange: this.onSortChange.bind(this),
 							sortDir: sortDir,
 							children: colData.label,
-							sortable: sortable
+							sortable: sortable,
+							userClassName: className
 						}),
 						cell: _react2['default'].createElement(_cellRenderer2['default'], { data: this.state.data, colData: colData, col: colData.field }),
 						allowCellsRecycling: true,
@@ -13137,6 +13140,7 @@ var ProperTable =
 		    val = null,
 		    formatted = null;
 		var colData = props.colData;
+		var className = colData.className || '';
 		var selected = false;
 
 		if (row) {
@@ -13160,7 +13164,7 @@ var ProperTable =
 
 		return _react2['default'].createElement(
 			_fixedDataTable.Cell,
-			{ className: 'propertable-cell' },
+			{ className: "propertable-cell " + className },
 			formatted
 		);
 	};
@@ -13213,8 +13217,8 @@ var ProperTable =
 	      sortable = props.sortable;
 	  var children = props.children || null;
 	  var sortIcon = sortDir && sortable ? SortIcons[sortDir] : SortIcons['DEF'];
-	  var className = sortable ? "propertable-header-cell sortable" : "propertable-header-cell not-sortable";
-	  className = props.className ? props.className : className;
+	  var userClass = props.userClassName || '';
+	  var className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
 
 	  return _react2['default'].createElement(
 	    _fixedDataTable.Cell,

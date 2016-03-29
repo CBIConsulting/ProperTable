@@ -25,8 +25,8 @@ const SortHeaderCell = props => {
   let sortDir = props.sortDir || null, sortable = props.sortable;
   let children = props.children || null;
   let sortIcon = sortDir && sortable? SortIcons[sortDir] : SortIcons['DEF'];
-  let className = sortable ? "propertable-header-cell sortable" : "propertable-header-cell not-sortable";
-  className = props.className ? props.className : className;
+  let userClass = props.userClassName || '';
+  let className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
 
   return (
       <Cell
