@@ -155,6 +155,7 @@ class ProperTable extends React.Component {
 				this.sortTable(nextState.colSortDirs);
 			});
 		}
+		this.checkSelectionChange(nextProps, nextState);
 
 		return true;
 	}
@@ -686,7 +687,7 @@ class ProperTable extends React.Component {
  * @param {object}	nextProps	The props that will be set for the updated component
  * @param {object}	nextState	The state that will be set for the updated component
  */
-	componentWillUpdate(nextProps, nextState) {
+	checkSelectionChange(nextProps, nextState) {
 		if (this.props.selectable == 'multiple') {
 			if (nextState.selection.size !== this.state.selection.size) {
 				this.updateSelectionData(nextState.selection, nextState.allSelected);
