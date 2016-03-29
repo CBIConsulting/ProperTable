@@ -138,6 +138,27 @@ class ProperTable extends React.Component {
 		this.setDefaultSelection();
 	}
 
+	shouldComponentUpdate(nextProps, nextState) {
+		let changed = false;
+
+		if (!_.isEqual(nextProps.data, this.props.data)) {
+			this.initData();
+			this.setDefaultSelection();
+			this.sortTable(this.state.colSortDirs);
+			changed = true;
+		}
+
+		if (!_.isEqual(nextProps.cols, this.props.cols)) {
+			this.setState({
+				cols: Immutable.fromJS(this.props.cols)
+			});
+			this.sortTable(this.state.colSortDirs);
+			changed = true;
+		}
+
+		return !changed;
+	}
+
 /**
  * Prepare the data received by the component for the internal working.
  *
