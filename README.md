@@ -39,7 +39,7 @@ Features of ProperTable:
 
 
   
-The compile and compressed ProperTable distribution file can be found in the dist folder along with the css file. Add the default stylesheet `dist/propertable.min.css`, then import it into any module.
+The compiled and compressed ProperTable distribution file can be found in the dist folder along with the css file. Add the default stylesheet `dist/propertable.min.css`, then import it into any module.
 
 
 
