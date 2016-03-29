@@ -8,6 +8,7 @@ import CellRenderer from './cellRenderer';
 import SortHeaderCell from './sortHeaderCell';
 import bs from 'binarysearch';
 import clone from 'clone';
+const Set = require('es6-set');
 
 /**
  * Component properties.
@@ -752,10 +753,13 @@ class ProperTable extends React.Component {
 		if (typeof this.props.afterSelect == 'function') {
 			let {selection, indexed, rawdata} = this.state;
 			let output = [];
+			let selectionArray = [];
 
-			selection = [...selection];// Parse from Set to Array
+			selection.forEach( element => {
+				selectionArray.push(element);
+			});
 
-			output = _.map(selection, (pId) => {
+			output = _.map(selectionArray, (pId) => {
 				let rowIndex = indexed[pId]._rowIndex;
 
 				return rawdata.get(rowIndex).toJSON();

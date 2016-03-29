@@ -68,6 +68,7 @@
   "dependencies": {
     "binarysearch": "^1.0.0",
     "clone": "^1.0.2",
+    "es6-set": "^0.1.4",
     "fixed-data-table": "^0.6.0",
     "immutable": "^3.7.6",
     "moment": "^2.10.6",

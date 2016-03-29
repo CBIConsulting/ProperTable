@@ -129,6 +129,7 @@ describe('ProperTable', () => {
 
 			it('selects multiple rows', () => {
 				let result = null;
+				let data1 = [], data2 = [];
 				let component = TestUtils.renderIntoDocument(<ProperTable {...testProps} afterSelect={
 					selection => {
 						result = selection;
@@ -140,7 +141,8 @@ describe('ProperTable', () => {
 				expect(result).toBe(null);
 				TestUtils.Simulate.click(node1);
 				TestUtils.Simulate.click(node2);
-				expect(result).toEqual([testProps.data[1], testProps.data[2]]);
+
+				expect(result).toEqual([testProps.data[2], testProps.data[1]]);
 			});
 
 			it('allows default selected rows', () => {
@@ -151,7 +153,7 @@ describe('ProperTable', () => {
 					}
 				}/>);
 
-				expect(result).toEqual([testProps.data[1], testProps.data[2]]);
+				expect(result).toEqual([testProps.data[2], testProps.data[1]]);
 			});
 
 			it('allows deselecting', () => {
