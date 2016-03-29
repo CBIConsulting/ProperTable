@@ -140,24 +140,23 @@ class ProperTable extends React.Component {
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
-		let changed = false;
-
-		if (!_.isEqual(nextProps.data, this.props.data)) {
-			this.initData();
-			this.setDefaultSelection();
-			this.sortTable(this.state.colSortDirs);
-			changed = true;
-		}
-
-		if (!_.isEqual(nextProps.cols, this.props.cols)) {
+		if (nextProps.cols.length != this.props.cols.length || !_.isEqual(nextProps.cols, this.props.cols)) {
 			this.setState({
-				cols: Immutable.fromJS(this.props.cols)
+				cols: Immutable.fromJS(nextProps.cols)
 			});
-			this.sortTable(this.state.colSortDirs);
-			changed = true;
+			this.sortTable(nextState.colSortDirs);
 		}
 
-		return !changed;
+		if (nextProps.data.length != this.props.data.length || !_.isEqual(nextProps.data, this.props.data)) {
+			let prepared = this.prepareData(nextProps.data);
+
+			this.setState(prepared, () => {
+				this.setDefaultSelection(nextProps);
+				this.sortTable(nextState.colSortDirs);
+			});
+		}
+
+		return true;
 	}
 
 /**
@@ -167,9 +166,9 @@ class ProperTable extends React.Component {
  *					-indexed: Same as rawdata but indexed by the properId
  *					-data: Parsed data to add some fields necesary to internal working.
  */
-	prepareData() {
+	prepareData(newdata = this.props.data) {
 		// The data will be inmutable inside the component
-		let data = Immutable.fromJS(this.props.data), index = 0;
+		let data = Immutable.fromJS(newdata), index = 0;
 		let indexed = [], parsed = [];
 		let keyField = this.props.idField;
 
@@ -200,15 +199,15 @@ class ProperTable extends React.Component {
 /**
  * Prepare data or restart the data to default.
  */
-	initData() {
-		let newdata = this.prepareData();
+	initData(data = this.props.data) {
+		let newdata = this.prepareData(data);
 
-		this.setState(newData);
+		this.setState(newdata);
 	}
 
-	setDefaultSelection() {
-		if (this.props.selected) {
-			let selected = this.props.selected;
+	setDefaultSelection(props = this.props) {
+		if (props.selected) {
+			let selected = props.selected;
 			let selection = new Set();
 
 			if (!_.isArray(selected)) {

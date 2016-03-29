@@ -1,10 +1,57 @@
 import ProperTable from "../table";
 import TestUtils from "react-addons-test-utils";
 import React from 'react';
+import ReactDOM from 'react-dom';
 
 describe('ProperTable', () => {
+
+	let wrapper = null;
+
+	beforeEach(function() {
+	    wrapper = document.createElement('div');
+	});
+
 	it('is available', () => {
 		expect(typeof ProperTable !== 'undefined').toBe(true);
+	});
+
+	it('correctly updates data', () => {
+		let cols = [
+			{
+				name: 'col1',
+				label: 'col1',
+				field: 'id',
+				formatter: (value) => <span className={"value-cell value-"+value}>{value}</span>
+			}
+		];
+		let firstdata = [{id: 1}, {id: 2}, {id: 3}];
+		let newdata = [{id: 2}];
+		let extraProps = {
+			idField: 'id',
+			height: 500,
+			width: 500
+		};
+		let nodes = null;
+
+		let component = ReactDOM.render(<ProperTable
+			cols={cols}
+			data={firstdata}
+			{...extraProps}
+		/>, wrapper);
+		spyOn(ProperTable.prototype, 'componentDidMount');
+
+		nodes = TestUtils.scryRenderedDOMComponentsWithClass(component, 'value-cell');
+
+		expect(nodes.length).toBe(3);
+
+		component = ReactDOM.render(<ProperTable
+			cols={cols}
+			data={newdata}
+			{...extraProps}
+		/>, wrapper);
+
+		expect(ProperTable.prototype.componentDidMount.calls.any()).toBe(false);
+		expect(component.state.data.size).toBe(1);
 	});
 
 	describe('column definitions', () => {

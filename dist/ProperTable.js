@@ -132,7 +132,7 @@ var ProperTable =
 
 	var _clone2 = _interopRequireDefault(_clone);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -277,6 +277,29 @@ var ProperTable =
 				this.sortTable(this.state.colSortDirs);
 				this.setDefaultSelection();
 			}
+		}, {
+			key: 'shouldComponentUpdate',
+			value: function shouldComponentUpdate(nextProps, nextState) {
+				var _this2 = this;
+
+				if (nextProps.cols.length != this.props.cols.length || !_underscore2['default'].isEqual(nextProps.cols, this.props.cols)) {
+					this.setState({
+						cols: _immutable2['default'].fromJS(nextProps.cols)
+					});
+					this.sortTable(nextState.colSortDirs);
+				}
+
+				if (nextProps.data.length != this.props.data.length || !_underscore2['default'].isEqual(nextProps.data, this.props.data)) {
+					var prepared = this.prepareData(nextProps.data);
+
+					this.setState(prepared, function () {
+						_this2.setDefaultSelection(nextProps);
+						_this2.sortTable(nextState.colSortDirs);
+					});
+				}
+
+				return true;
+			}
 
 			/**
 	   * Prepare the data received by the component for the internal working.
@@ -289,8 +312,10 @@ var ProperTable =
 		}, {
 			key: 'prepareData',
 			value: function prepareData() {
+				var newdata = arguments.length <= 0 || arguments[0] === undefined ? this.props.data : arguments[0];
+
 				// The data will be inmutable inside the component
-				var data = _immutable2['default'].fromJS(this.props.data),
+				var data = _immutable2['default'].fromJS(newdata),
 				    index = 0;
 				var indexed = [],
 				    parsed = [];
@@ -327,18 +352,22 @@ var ProperTable =
 		}, {
 			key: 'initData',
 			value: function initData() {
-				var newdata = this.prepareData();
+				var data = arguments.length <= 0 || arguments[0] === undefined ? this.props.data : arguments[0];
 
-				this.setState(newData);
+				var newdata = this.prepareData(data);
+
+				this.setState(newdata);
 			}
 		}, {
 			key: 'setDefaultSelection',
 			value: function setDefaultSelection() {
-				var _this2 = this;
+				var _this3 = this;
 
-				if (this.props.selected) {
+				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+
+				if (props.selected) {
 					(function () {
-						var selected = _this2.props.selected;
+						var selected = props.selected;
 						var selection = new Set();
 
 						if (!_underscore2['default'].isArray(selected)) {
@@ -349,7 +378,7 @@ var ProperTable =
 							});
 						}
 
-						_this2.triggerSelection(selection);
+						_this3.triggerSelection(selection);
 					})();
 				}
 			}
@@ -435,7 +464,7 @@ var ProperTable =
 		}, {
 			key: 'buildColSortDirs',
 			value: function buildColSortDirs(cols) {
-				var _this3 = this;
+				var _this4 = this;
 
 				var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
 				var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
@@ -455,7 +484,7 @@ var ProperTable =
 							sortable: sortable
 						});
 					} else {
-						_this3.buildColSortDirs(element.children, colSortDirs, sortVals);
+						_this4.buildColSortDirs(element.children, colSortDirs, sortVals);
 					}
 				});
 
@@ -656,7 +685,7 @@ var ProperTable =
 		}, {
 			key: 'parseColumn',
 			value: function parseColumn(colData) {
-				var _this4 = this;
+				var _this5 = this;
 
 				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
@@ -735,7 +764,7 @@ var ProperTable =
 				} else {
 					// Call the method recursively to all the childrens of this column.
 					var inner = colData.children.map(function (c) {
-						return _this4.parseColumn(c, true);
+						return _this5.parseColumn(c, true);
 					});
 
 					col = _react2['default'].createElement(
@@ -766,7 +795,7 @@ var ProperTable =
 		}, {
 			key: 'buildTable',
 			value: function buildTable() {
-				var _this5 = this;
+				var _this6 = this;
 
 				var columns = [],
 				    isNested = hasNested(this.state.cols),
@@ -818,7 +847,7 @@ var ProperTable =
 				}
 
 				this.state.cols.forEach(function (col) {
-					columns.push(_this5.parseColumn(col.toJSON(), false, isNested));
+					columns.push(_this6.parseColumn(col.toJSON(), false, isNested));
 				});
 
 				return columns;
@@ -910,7 +939,7 @@ var ProperTable =
 		}, {
 			key: 'updateSelectionData',
 			value: function updateSelectionData(newSelection, newAllSelected) {
-				var _this6 = this;
+				var _this7 = this;
 
 				var newIndexed = _underscore2['default'].clone(this.state.indexed);
 				var oldSelection = this.state.selection;
@@ -953,7 +982,7 @@ var ProperTable =
 				} else {
 						// Change all data
 						newData = newData.map(function (row) {
-							rowid = row.get(_this6.props.idField);
+							rowid = row.get(_this7.props.idField);
 							selected = newSelection.has(rowid.toString());
 							rdata = row.set('_selected', selected);
 							curIndex = newIndexed[rowid];
@@ -1001,11 +1030,11 @@ var ProperTable =
 		}, {
 			key: 'sendSelection',
 			value: function sendSelection() {
-				var _this7 = this;
+				var _this8 = this;
 
 				if (typeof this.props.afterSelect == 'function') {
 					(function () {
-						var _state = _this7.state;
+						var _state = _this8.state;
 						var selection = _state.selection;
 						var indexed = _state.indexed;
 						var rawdata = _state.rawdata;
@@ -1023,11 +1052,11 @@ var ProperTable =
 							return rawdata.get(rowIndex).toJSON();
 						});
 
-						if (_this7.props.selectable === true) {
+						if (_this8.props.selectable === true) {
 							output = output[0];
 						}
 
-						_this7.props.afterSelect(output);
+						_this8.props.afterSelect(output);
 					})();
 				}
 			}
@@ -1039,11 +1068,11 @@ var ProperTable =
 		}, {
 			key: 'sendSortedData',
 			value: function sendSortedData() {
-				var _this8 = this;
+				var _this9 = this;
 
 				if (typeof this.props.afterSort == 'function') {
 					(function () {
-						var _state2 = _this8.state;
+						var _state2 = _this9.state;
 						var data = _state2.data;
 						var indexed = _state2.indexed;
 						var rawdata = _state2.rawdata;
@@ -1056,7 +1085,7 @@ var ProperTable =
 							return rawdata.get(rowIndex).toJSON();
 						});
 
-						_this8.props.afterSort(output);
+						_this9.props.afterSort(output);
 					})();
 				}
 			}
@@ -13157,7 +13186,7 @@ var ProperTable =
 
 	var _fixedDataTable = __webpack_require__(3);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	/**
 	 * Stateless component which render the header cell of a column.
