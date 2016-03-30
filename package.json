@@ -1,5 +1,5 @@
 {
-  "name": "ProperTable",
+  "name": "propertable",
   "version": "0.1.0",
   "description": "A proper data table for React",
   "scripts": {
