@@ -2,6 +2,12 @@
 @import "fixed-data-table";
 
 .propertable {
+	.fa-square-o{
+		&:hover {
+			cursor: pointer;
+		}
+	}
+
 	.fixedDataTableRowLayout_rowWrapper{
 		&:hover .public_fixedDataTableCell_main {
 		  background-color: #C7EBFF;
@@ -14,5 +20,20 @@
 				}
 			}
 		}
+	}
+}
+
+.propertable-header-cell {
+
+	&.sortable {
+		cursor: pointer;
+		span:hover,
+		i.fa:hover {
+			color: #5B5F5F;
+		}
+	}
+
+	&.not-sortable{
+		cursor: not-allowed;
 	}
 }

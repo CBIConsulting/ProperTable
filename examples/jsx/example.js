@@ -34,6 +34,7 @@ $(function() {
 			label: <span>A number</span>,
 			field: 'number',
 			className: 'number',
+			sortable: false,
 			width: 100,
 			formatter: value => ProperTable.formatters.number(value+1)
 		},
@@ -46,6 +47,7 @@ $(function() {
 					name: 'nested1',
 					label: 'nested1',
 					field: 'nested1',
+					sortable: false,
 					sortVal: function(value) {
 						return moment(value).unix();
 					},
@@ -144,9 +146,19 @@ $(function() {
 		ex3data.push(row);
 	}
 
-	ReactDOM.render(<ProperTable.Table key='pt1' uniqueId={1} rowHeight={40} key={'testtable'} cols={cols} data={data} afterSelect={function(data) {
-		console.log('selected1', data);
-	}} />, body1);
+	ReactDOM.render(<ProperTable.Table
+		key='pt1'
+		idField="id"
+		selected={3}
+		uniqueId={1}
+		rowHeight={40}
+		key={'testtable'}
+		cols={cols}
+		data={data}
+		afterSelect={function(data) {
+			console.log('selected1', data);
+		}}
+	/>, body1);
 	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} key={'testtable2'} cols={cols} data={data} afterSelect={function(data) {
 		console.log('selected2', data);
 	}} selectable="multiple" />, body2);

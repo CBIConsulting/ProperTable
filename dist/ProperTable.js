@@ -55,7 +55,7 @@ var ProperTable =
 
 	var _table2 = _interopRequireDefault(_table);
 
-	var _formatters = __webpack_require__(61);
+	var _formatters = __webpack_require__(123);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -63,13 +63,13 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(64);
+	var _reactDimensions = __webpack_require__(126);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-	__webpack_require__(65);
+	__webpack_require__(127);
 
 	"use strict";
 
@@ -124,7 +124,17 @@ var ProperTable =
 
 	var _sortHeaderCell2 = _interopRequireDefault(_sortHeaderCell);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	var _binarysearch = __webpack_require__(61);
+
+	var _binarysearch2 = _interopRequireDefault(_binarysearch);
+
+	var _clone = __webpack_require__(62);
+
+	var _clone2 = _interopRequireDefault(_clone);
+
+	var _reactImmutableRenderMixin = __webpack_require__(67);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -132,25 +142,50 @@ var ProperTable =
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+	var Set = __webpack_require__(72);
+
+	/**
+	 * Component properties.
+	 *
+	 * cols: Describe columns data [name: colName, field: colField, formated: valFormater(), sortable: false ...]
+	 * data: Data of the table
+	 * afterSort: Function called after the data has been sorted. Return the rawdata sorted.
+	 * afterSelect: Function called after select a row. Return the seleted rows.
+	 * selectable: If the rows can be selected or not, and if that selection is multiple. Values: True || 'Multiple' || False
+	 * rowHeight: Height of each row in numerical value.
+	 * msgs: Get the translated messages of the current lang.
+	 * selectorWidth: Width of the selector column, checkboxes.
+	 * colSortDirs: To sort by default, direction (ASC, DESC, DEF(default)) of the columns. [{name: fieldName,  direction: 'DEF'},{},{}]
+	 * multisort: Multisort allowed or not. True || False
+	 * selected: Rows selected by default. Get an array of ids or an id
+	 * idField: Field that can be used as an id for the default selected rows.
+	 */
 	function defaultProps() {
 		return {
 			className: '',
 			cols: [],
 			data: [],
-			uniqueId: _underscore2['default'].uniqueId('propertable-'),
+			uniqueId: null,
 			afterSort: null,
 			afterSelect: null,
 			selectable: true,
 			selected: null,
 			rowHeight: 50,
-			idField: null,
+			idField: '_properId',
 			msgs: _messages2['default'],
 			selectorWidth: 27,
-			colSortDirs: null, // [{name: fieldName,  direction: 'DEF'},{},{}]
+			colSortDirs: null,
 			multisort: false
 		};
 	}
 
+	/**
+	 * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
+	 * column inside a ColumnGroup even if the column has not childrens.
+	 *
+	 * @param (array)		cols  	Describe columns
+	 * @return (boolean)	result	True if has nested columns or false otherwhise
+	 */
 	function hasNested(cols) {
 		var result = false;
 
@@ -166,19 +201,59 @@ var ProperTable =
 		return result;
 	}
 
+	/**
+	 * A proper table component based on react Fixed-DataTables with an amount of new functionalities.
+	 * Rows selection with callback, sorting (single, multisorting), cell formating, fixed columns when scrolling, etc...
+	 * See Examples folder for more detail.
+	 *
+	 * Simple example usage:
+	 *
+	 * let cols = [
+	 *		{
+	 *			name: 'col1',
+	 *			label: <span>A number</span>,
+	 *			field: 'number',
+	 *			fixed: true
+	 *		},{
+	 *			name: 'col2',
+	 *			label: 'col2',
+	 *			field: 'col2'
+	 *		}
+	 *	]
+	 *
+	 * let data = [];
+	 *	  data.push({
+	 *		  col1: 5,
+	 *		  col2: 'abcde'
+	 *	  });
+	 *
+	 * 	<ProperTable.Table
+	 *		key='TableKey'
+	 *		uniqueId={1}
+	 *		rowHeight={40}
+	 *		cols={cols}
+	 *		data={data}
+	 *		afterSelect={
+	 *			function(rows) {
+	 *				console.log('selected', rows);
+	 *			}
+	 *		}
+	 *	/>
+	 * ```
+	 */
+
 	var ProperTable = function (_React$Component) {
 		_inherits(ProperTable, _React$Component);
-
-		/*static get defaultProps() {
-	 	return defaultProps();
-	 }*/
 
 		function ProperTable(props) {
 			_classCallCheck(this, ProperTable);
 
+			// Get initial data
+
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProperTable).call(this, props));
 
 			var initialData = _this.prepareData();
+			// Get initial columns sort
 			var initialColSort = _this.prepareColSort();
 
 			_this.hasFixedColumns = false;
@@ -192,30 +267,107 @@ var ProperTable =
 				rawdata: initialData.rawdata,
 				sizes: _immutable2['default'].fromJS({}),
 				allSelected: false,
-				selection: []
+				selection: new Set()
 			};
 			return _this;
 		}
 
 		_createClass(ProperTable, [{
+			key: 'componentWillMount',
+			value: function componentWillMount() {
+				this.uniqueId = this.props.uniqueId || _underscore2['default'].uniqueId('propertable-');
+			}
+		}, {
 			key: 'componentDidMount',
 			value: function componentDidMount() {
+				// Sort the table if the sort direction of one or more columns are diferent than default.
 				this.sortTable(this.state.colSortDirs);
+				this.setDefaultSelection();
 			}
+		}, {
+			key: 'shouldComponentUpdate',
+			value: function shouldComponentUpdate(nextProps, nextState) {
+				var _this2 = this;
+
+				var propschanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props, nextProps);
+				var statechanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.state, nextState);
+				var somethingchanged = propschanged || statechanged;
+
+				if (propschanged) {
+					if (nextProps.cols.length != this.props.cols.length || !_underscore2['default'].isEqual(nextProps.cols, this.props.cols)) {
+						this.setState({
+							cols: _immutable2['default'].fromJS(nextProps.cols)
+						});
+						this.sortTable(nextState.colSortDirs);
+					}
+
+					if (nextProps.data.length != this.props.data.length || !_underscore2['default'].isEqual(nextProps.data, this.props.data)) {
+						var prepared = this.prepareData(nextProps.data);
+
+						this.setState(prepared, function () {
+							_this2.sortTable(nextState.colSortDirs);
+						});
+					}
+				}
+
+				if (somethingchanged) {
+					this.checkSelectionChange(nextProps, nextState);
+				}
+
+				return somethingchanged;
+			}
+
+			/**
+	   * Prepare the data received by the component for the internal working.
+	   *
+	   * @return (array)	-rawdata: The same data as the props.
+	   *					-indexed: Same as rawdata but indexed by the properId
+	   *					-data: Parsed data to add some fields necesary to internal working.
+	   */
+
 		}, {
 			key: 'prepareData',
 			value: function prepareData() {
-				var data = _immutable2['default'].fromJS(this.props.data),
-				    index = 0;
-				var indexed = [],
-				    parsed = [];
+				var newdata = arguments.length <= 0 || arguments[0] === undefined ? this.props.data : arguments[0];
 
-				parsed = data.map(function (row) {
-					if (!row.get('_properId', false)) {
-						row = row.set('_properId', _underscore2['default'].uniqueId());
+				// The data will be inmutable inside the component
+				var data = _immutable2['default'].fromJS(newdata),
+				    index = 0;
+				var indexed = {},
+				    parsed = [],
+				    selectedarr = [];
+				var keyField = this.props.idField;
+
+				if (this.props.selected) {
+					if (!_underscore2['default'].isArray(this.props.selected)) {
+						selectedarr = [this.props.selected];
+					} else {
+						selectedarr = this.props.selected;
 					}
+				} else {
+					if (this.state && this.state.selection) {
+						this.state.selection.forEach(function (id) {
+							selectedarr.push(id);
+						});
+					}
+				}
+
+				selectedarr = new Set(selectedarr);
+
+				// Parsing data to add new fields (selected or not, properId, rowIndex)
+				parsed = data.map(function (row) {
+					if (!row.get(keyField, false)) {
+						row = row.set(keyField, _underscore2['default'].uniqueId());
+					}
+
+					var id = row.get(keyField);
+
 					if (!row.get('_selected', false)) {
 						row = row.set('_selected', false);
+					}
+
+					if (selectedarr.has(id)) {
+						row = row.set('_selected', true);
 					}
 
 					row = row.set('_rowIndex', index++);
@@ -223,21 +375,61 @@ var ProperTable =
 					return row;
 				});
 
-				indexed = _underscore2['default'].indexBy(parsed.toJSON(), '_properId');
+				// Prepare indexed data.
+				indexed = _underscore2['default'].indexBy(parsed.toJSON(), keyField);
 
 				return {
 					rawdata: data,
 					data: parsed,
-					index: indexed
+					indexed: indexed
 				};
 			}
+
+			/**
+	   * Prepare data or restart the data to default.
+	   */
+
 		}, {
 			key: 'initData',
 			value: function initData() {
-				var newdata = this.prepareData();
+				var data = arguments.length <= 0 || arguments[0] === undefined ? this.props.data : arguments[0];
 
-				this.setState(newData);
+				var newdata = this.prepareData(data);
+
+				this.setState(newdata);
 			}
+		}, {
+			key: 'setDefaultSelection',
+			value: function setDefaultSelection() {
+				var _this3 = this;
+
+				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+
+				if (props.selected) {
+					(function () {
+						var selected = props.selected;
+						var selection = new Set();
+
+						if (!_underscore2['default'].isArray(selected)) {
+							selection.add(selected.toString());
+						} else {
+							selected.forEach(function (element) {
+								selection.add(element.toString());
+							});
+						}
+
+						_this3.triggerSelection(selection);
+					})();
+				}
+			}
+
+			/**
+	   * Prepare the columns sort data to all columns and the array of functions to parse the data of each column before sorting.
+	   *
+	   * @return (array)	-colSortDirs: Sort settings of each column.
+	   *					-sortValues: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
+	   */
+
 		}, {
 			key: 'prepareColSort',
 			value: function prepareColSort() {
@@ -245,15 +437,20 @@ var ProperTable =
 				    cols = this.props.cols;
 				var sort = [],
 				    multisort = this.props.multisort;
-				var sortData = this.buildColSortDirs(cols);
 				var direction = null,
 				    sortable = null,
 				    colData = null;
+				var sortData = this.buildColSortDirs(cols); // Build the initial colsortdirs using the cols array.
 
+				// If the component doesn't receive the colSortDirs array with a diferent direction than default then set to
+				// colSortDirs the default values.
 				if (_underscore2['default'].isNull(colSortDirs)) {
 					colSortDirs = sortData.colSortDirs;
 				}
 
+				// Through each element of the colSortDirs builded data build the colSortDirs with the default directions received,
+				// setting a position (position of priority to sort (it will be modified after click on the diferent columns)), if
+				// the column is sortable or not and if the Table has multisort or just only single.
 				for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
 					colData = sortData.colSortDirs[i];
 					direction = colData.direction;
@@ -269,8 +466,21 @@ var ProperTable =
 						direction: direction,
 						position: i + 1,
 						sorted: false,
-						multisort: multisort, // single (false) (in this case only one at a time could be true at this field) or multisort (true - all true)
+						multisort: multisort, // single (false) (in this case only one at a time can be sorted) or multisort (true - all true)
 						sortable: sortable
+					});
+				}
+
+				// Ordering by selected rows. Virtual column
+				if (this.props.selectable == 'multiple') {
+					sort.push({
+						column: 'selector-multiple-column', // Column name
+						field: '_selected',
+						direction: 'DEF',
+						position: sortData.colSortDirs.length + 1, // Last
+						sorted: false,
+						multisort: multisort,
+						sortable: true
 					});
 				}
 
@@ -279,10 +489,22 @@ var ProperTable =
 					sortValues: sortData.sortVals
 				};
 			}
+
+			/**
+	   * Build the structure of the colSortDirs array and the sortVals array with the functions received in cols or a default function to parse.
+	   * In fact this method look through all the columns in props.cols recursively and add all that aren't a ColumnGroup,
+	   * the columns that may be sorted.
+	   *
+	   * @param 	(array)	cols Describe each column data. (name, sortable, fixed...)
+	   *
+	   * @return 	(array)	-colSortDirs: Sort settings of each column.
+	   *					-sortValues: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
+	   */
+
 		}, {
 			key: 'buildColSortDirs',
 			value: function buildColSortDirs(cols) {
-				var _this2 = this;
+				var _this4 = this;
 
 				var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
 				var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
@@ -302,9 +524,15 @@ var ProperTable =
 							sortable: sortable
 						});
 					} else {
-						_this2.buildColSortDirs(element.children, colSortDirs, sortVals);
+						_this4.buildColSortDirs(element.children, colSortDirs, sortVals);
 					}
 				});
+
+				if (this.props.selectable == 'multiple') {
+					sortVals['selector-multiple-column'] = function (val) {
+						return val;
+					};
+				}
 
 				return {
 					colSortDirs: colSortDirs,
@@ -330,14 +558,27 @@ var ProperTable =
 				this.setState({
 					data: newData.data,
 					colSortDirs: newData.colSortDirs
-				});
+				}, this.sendSortedData());
 			}
+
+			/**
+	   * Receive the column name and a sort direction and change the direction of that column, then set the proper position
+	   * of all the columns (just if the Table have multisorting allowed). The position will be used to set which columns
+	   * will be sorted first. If there are some columns with sortDir ASC or DESC the data will be sorted in function of
+	   * what element was clicked before.
+	   *
+	   * @param {String} 		columnKey 	The name of the column which will be resort.
+	   * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
+	   * @return {array}		colSortDirs Updated colSortDirs array.
+	   */
+
 		}, {
 			key: 'updateSortDir',
 			value: function updateSortDir(columnKey, sortDir) {
 				var colSortDirs = this.state.colSortDirs || [],
 				    position = 1;
 
+				// Single sorting.
 				if (!this.props.multisort) {
 					for (var i = 0; i <= colSortDirs.length - 1; i++) {
 						if (colSortDirs[i].column == columnKey) {
@@ -349,16 +590,23 @@ var ProperTable =
 						}
 					}
 				} else {
+					// Multisort
 					var initialPos = 0,
 					    index = 0;
 
 					for (var _i = 0; _i <= colSortDirs.length - 1; _i++) {
+						// If some columns were sorted before then the position of the sorted columns wont be changed, so the initial
+						// position will be the next. If 2 columns are already sorted and we sort by a new one then the position of this
+						// last column will be 3 and will change to 2 or 1 if the sorted columns back to default.
 						if (colSortDirs[_i].sorted) initialPos++;
 
 						if (colSortDirs[_i].column == columnKey) {
-							colSortDirs[_i].direction = sortDir;
-							position = colSortDirs[_i].position;
+							colSortDirs[_i].direction = sortDir; // Set the new direction
+							position = colSortDirs[_i].position; // Save the current position
 							index = _i;
+
+							// If the sort direction is not default and the column isn't already sorted then add one to the initial position
+							// and set the column to sorted. Otherwise if the sort direction is default set it to unsorted.
 							if (sortDir != 'DEF' && !colSortDirs[_i].sorted) {
 								initialPos++;
 								colSortDirs[_i].sorted = true;
@@ -368,17 +616,33 @@ var ProperTable =
 						}
 					}
 
+					// Change the priority position to sort of the elements.
 					for (var _i2 = 0; _i2 <= colSortDirs.length - 1; _i2++) {
+
+						// When the position of the current element is lower than the position of the changed element and bigger or equals to the
+						// initial position to change.
 						if (colSortDirs[_i2].position < position && colSortDirs[_i2].position >= initialPos) {
+							// Move element to the next position only if the new sort direction wasn't default, in that case keep the element in the same
+							// sorting priority position.
 							if (colSortDirs[_i2].direction == 'DEF') colSortDirs[_i2].position = colSortDirs[_i2].position + 1;
 						}
 					}
 
-					if (colSortDirs[index].position != 'DEF' && initialPos < colSortDirs[index].position) colSortDirs[index].position = initialPos;
+					// After change the sort position priority of the other elements if the new position is lower than the current position set new position.
+					if (initialPos < colSortDirs[index].position) colSortDirs[index].position = initialPos;
 				}
 
 				return colSortDirs;
 			}
+
+			/**
+	   * Receive the current colSortDirs state, sort it by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
+	   *
+	   * @param 	{array}		colSortDirs Sort settings of each column
+	   * @return 	{array}		-colSortDirs: Sorted colSortDirs
+	   *						-data: Sorted data to be updated in the component state.
+	   */
+
 		}, {
 			key: 'sortTable',
 			value: function sortTable(colSortDirs) {
@@ -394,6 +658,15 @@ var ProperTable =
 					colSortDirs: colSortDirs
 				};
 			}
+
+			/**
+	   * Receive the current colSortDirs state, sort it by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
+	   *
+	   * @param 	{array}		data 		Data to be render in the Table
+	   * @param 	{array}		colSortDirs Sort settings of each column. Sorted by its .position
+	   * @return 	{array}		sortedData 	Sorted data to be updated in the component state.
+	   */
+
 		}, {
 			key: 'sortColumns',
 			value: function sortColumns(data, colSortDirs) {
@@ -405,7 +678,7 @@ var ProperTable =
 				    position = null;
 
 				for (var i = 0; i <= colSortDirs.length - 1; i++) {
-					position = colSortDirs[i].position - 1;
+					position = colSortDirs[i].position - 1; // Pos starts on 1,2,3,4... but array pos should start on 0 to length -1.
 					element = colSortDirs[position];
 
 					// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
@@ -426,6 +699,7 @@ var ProperTable =
 					}
 				}
 
+				// If all the cols are default then sort the data by the rowIndex (virtual field added on componnent's create.)
 				if (defaultSort) {
 					//  Set to default
 					sortedData = data.sortBy(function (row, rowIndex, allData) {
@@ -437,10 +711,21 @@ var ProperTable =
 
 				return sortedData;
 			}
+
+			/**
+	   * Recursive function that build the nested columns. If the column has childrens then call itself and put the column into
+	   * a ColumnGroup.
+	   *
+	   * @param 	{array}		colData 	Data to be parsed
+	   * @param 	{boolean}	isChildren	Is a children of another column or not
+	   * @param 	{boolean}	hasNested	The whole table has nested columns or not
+	   * @return 	{object}	col 		The builded column or tree of columns
+	   */
+
 		}, {
 			key: 'parseColumn',
 			value: function parseColumn(colData) {
-				var _this3 = this;
+				var _this5 = this;
 
 				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
@@ -449,6 +734,7 @@ var ProperTable =
 				    colname = null,
 				    sortDir = 'DEF',
 				    sortable = null,
+				    className = null,
 				    extraProps = {
 					width: 100,
 					fixed: false,
@@ -456,6 +742,7 @@ var ProperTable =
 				};
 
 				colname = colData.name || _underscore2['default'].uniqueId('col-');
+				className = colData.className || null;
 
 				if (this.state.sizes.get(colname)) {
 					colData.width = this.state.sizes.get(colname);
@@ -482,11 +769,16 @@ var ProperTable =
 					extraProps.isResizable = colData.isResizable;
 				}
 
+				// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
+				// setting the result inside this columns group.
 				if (typeof colData.children == 'undefined' || !colData.children.length) {
+
+					// Get the initial dir of this column
 					this.state.colSortDirs.forEach(function (element) {
 						if (element.column === colname) sortDir = element.direction;
 					});
 
+					// If this column can be sort or not.
 					sortable = _underscore2['default'].isUndefined(colData.sortable) ? true : colData.sortable;
 
 					col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
@@ -496,13 +788,15 @@ var ProperTable =
 							onSortChange: this.onSortChange.bind(this),
 							sortDir: sortDir,
 							children: colData.label,
-							sortable: sortable
+							sortable: sortable,
+							userClassName: className
 						}),
 						cell: _react2['default'].createElement(_cellRenderer2['default'], { data: this.state.data, colData: colData, col: colData.field }),
 						allowCellsRecycling: true,
 						align: 'center'
 					}, extraProps));
 
+					// If isn't a children but the table has nested columns set the column into a group.
 					if (!isChildren && hasNested) {
 						col = _react2['default'].createElement(
 							_fixedDataTable.ColumnGroup,
@@ -511,8 +805,9 @@ var ProperTable =
 						);
 					}
 				} else {
+					// Call the method recursively to all the childrens of this column.
 					var inner = colData.children.map(function (c) {
-						return _this3.parseColumn(c, true);
+						return _this5.parseColumn(c, true);
 					});
 
 					col = _react2['default'].createElement(
@@ -532,28 +827,64 @@ var ProperTable =
 
 				return col;
 			}
+
+			/**
+	   * Build the table calling the parsecolumn() method for each column in props.cols and saving it to an array to be render into
+	   * a react fixed-datatable Table. If multiple rows can be selected then build a column with checkboxes to show which rows are seleted.
+	   *
+	   * @return {array} 	columns 	Array with all the columns to be rendered.
+	   */
+
 		}, {
 			key: 'buildTable',
 			value: function buildTable() {
-				var _this4 = this;
+				var _this6 = this;
 
 				var columns = [],
 				    isNested = hasNested(this.state.cols),
 				    selColumn = null;
 
 				if (this.props.selectable == 'multiple') {
-					var somethingSelected = this.state.selection.length > 0;
+					var somethingSelected = this.state.selection.size > 0;
+					var sortDir = 'DEF';
+					var selectedSet = null;
+
+					if (this.props.selected) {
+						if (!_underscore2['default'].isArray(this.props.selected)) {
+							selectedSet = new Set([this.props.selected]);
+						} else {
+							selectedSet = new Set(this.props.selected);
+						}
+					} else {
+						selectedSet = this.state.selection;
+					}
+
+					this.state.colSortDirs.forEach(function (element) {
+						if (element.column === 'selector-multiple-column') sortDir = element.direction;
+					});
 
 					selColumn = _react2['default'].createElement(_fixedDataTable.Column, {
-						columnKey: _underscore2['default'].uniqueId('selector-'),
+						columnKey: 'selector-multiple-column',
 						key: _underscore2['default'].uniqueId('selector-'),
-						header: _react2['default'].createElement(_selector2['default'], {
-							onClick: this.handleSelectAll.bind(this),
-							somethingSelected: somethingSelected,
-							allSelected: this.state.allSelected
-						}),
+						header: _react2['default'].createElement(
+							_sortHeaderCell2['default'],
+							{
+								className: '',
+								onSortChange: this.onSortChange.bind(this),
+								sortDir: sortDir,
+								sortable: true
+							},
+							_react2['default'].createElement(_selector2['default'], {
+								onClick: this.handleSelectAll.bind(this),
+								somethingSelected: somethingSelected,
+								allSelected: this.state.allSelected,
+								isHeader: true
+							})
+						),
 						cell: _react2['default'].createElement(_selector2['default'], {
-							data: this.state.data
+							data: this.state.data,
+							selected: selectedSet,
+							idField: this.props.idField
 						}),
 						allowCellsRecycling: true,
 						width: this.props.selectorWidth,
@@ -572,118 +903,350 @@ var ProperTable =
 				}
 
 				this.state.cols.forEach(function (col) {
-					columns.push(_this4.parseColumn(col.toJSON(), false, isNested));
+					columns.push(_this6.parseColumn(col.toJSON(), false, isNested));
 				});
 
 				return columns;
 			}
+
+			/**
+	   * Set all columns to selected or to not selected. Callback for the onclick of the Selector component, in the top of the table, in
+	   * the case that the Table allows multiple selection.
+	   *
+	   * @param {object}	e  	Event which call the function.
+	   */
+
 		}, {
 			key: 'handleSelectAll',
 			value: function handleSelectAll(e) {
-				var somethingSelected = this.state.selection.length > 0;
 				var allSelected = this.state.allSelected;
 				var newSelection = [];
+				var selection = null;
 
 				if (!allSelected) {
 					newSelection = _underscore2['default'].keys(this.state.indexed);
 				}
 
-				this.triggerSelection(newSelection.sort());
+				selection = new Set(newSelection);
+
+				this.triggerSelection(selection);
 			}
+
+			/**
+	   * Toogle the selected state of a column. Callback for the onRowClick of the react fixed-dataTable.
+	   *
+	   * @param {object}	e  			Event which call the function
+	   * @param {integer}	rowIndex  	Index of the clicked row.
+	   */
+
 		}, {
 			key: 'handleRowClick',
 			value: function handleRowClick(e, rowIndex) {
-				var clickedId = this.state.data.get(rowIndex).get('_properId');
-
-				this.toggleSelected(clickedId);
+				var clickedId = this.state.data.get(rowIndex).get(this.props.idField);
+				this.toggleSelected(clickedId.toString());
 			}
+
+			/**
+	   * Toogle the selected state of the column that has the same properId as in the parameters.
+	   *
+	   * @param {integet}	id  	Virtual field added to each row data on componnent's create
+	   */
+
 		}, {
 			key: 'toggleSelected',
-			value: function toggleSelected(properId) {
-				var selection = _underscore2['default'].clone(this.state.selection);
+			value: function toggleSelected(id) {
+				var selection = null;
 
-				if (_underscore2['default'].indexOf(selection, properId.toString()) != -1) {
-					selection = _underscore2['default'].without(selection, properId);
-				} else {
-					if (this.props.selectable == 'multiple') {
-						selection.push(properId);
+				if (this.props.selected) {
+					if (!_underscore2['default'].isArray(this.props.selected)) {
+						selection = new Set([this.props.selected.toString()]);
 					} else {
-						selection = [properId];
+						selection = new Set(_underscore2['default'].map(this.props.selected, function (v) {
+							return v.toString();
+						}));
+					}
+				} else {
+					selection = new Set(this.state.selection);
+				}
+
+				if (selection.has(id)) {
+					selection['delete'](id); // Returns a copy of the array with the instance with that properId deleted.
+				} else {
+						if (this.props.selectable == 'multiple') {
+							selection.add(id);
+						} else {
+							selection = new Set([id]);
+						}
+					}
+
+				this.triggerSelection(selection); // Set the new selection to the components state.
+			}
+
+			/**
+	   * Before the components update set the updated selection data to the components state.
+	   *
+	   * @param {object}	nextProps	The props that will be set for the updated component
+	   * @param {object}	nextState	The state that will be set for the updated component
+	   */
+
+		}, {
+			key: 'checkSelectionChange',
+			value: function checkSelectionChange(nextProps, nextState) {
+				if (!this.props.selected) {
+					if (this.props.selectable == 'multiple') {
+						if (nextState.selection.size !== this.state.selection.size) {
+							this.updateSelectionData(nextState.selection, nextState.allSelected);
+						}
+					} else {
+						var next = nextState.selection.values().next().value || null;
+						var old = this.state.selection.values().next().value || null;
+
+						if (next !== old) {
+							this.updateSelectionData(next);
+						}
 					}
 				}
+			}
 
-				this.triggerSelection(selection.sort());
-			}
-		}, {
-			key: 'componentWillUpdate',
-			value: function componentWillUpdate(nextProps, nextState) {
-				if (!_underscore2['default'].isEqual(nextState.selection, this.state.selection)) {
-					this.updateSelectionData(nextState.selection);
-				}
-			}
+			/**
+	   * Method called before the components update to set the new selection to states component and update the data
+	   *
+	   * @param {array}	newSelection	The new selected rows (Set object)
+	   * @param {array}	newAllSelected	If the new state has all the rows selected
+	   */
+
 		}, {
 			key: 'updateSelectionData',
 			value: function updateSelectionData(newSelection) {
-				var newData = this.state.data.map(function (row) {
-					var rdata = row.toJSON();
+				var _this7 = this;
 
-					rdata._selected = _underscore2['default'].indexOf(newSelection, rdata._properId) >= 0;
+				var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
-					return _immutable2['default'].fromJS(rdata);
-				});
+				var newIndexed = _underscore2['default'].clone(this.state.indexed);
+				var oldSelection = this.state.selection;
+				var rowid = null,
+				    selected = null,
+				    rdata = null,
+				    curIndex = null,
+				    newData = this.state.data,
+				    rowIndex = null;
 
-				var newIndexed = _underscore2['default'].indexBy(newData.toJSON(), '_properId');
+				if (this.props.selectable != 'multiple') {
+					var oldId = oldSelection.values().next().value || null;
+
+					if (!_underscore2['default'].isNull(oldId)) {
+						newIndexed[oldId]._selected = false; // Update indexed data
+						rowIndex = newIndexed[oldId]._rowIndex; // Get data index
+						rdata = newData.get(rowIndex).set('_selected', false); // Change the row in that index
+						newData = newData.set(rowIndex, rdata); // Set that row in the data object
+					}
+
+					if (!_underscore2['default'].isNull(newSelection)) {
+						newIndexed[newSelection]._selected = true; // Update indexed data
+						rowIndex = newIndexed[newSelection]._rowIndex; // Get data index
+						rdata = newData.get(rowIndex).set('_selected', true); // Change the row in that index
+						newData = newData.set(rowIndex, rdata); // Set that row in the data object
+					}
+				} else if (!newAllSelected && newSelection.size > 0) {
+						// Change one row data at a time
+						var changedId = null,
+						    _selected = null;
+
+						// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
+						oldSelection.forEach(function (id) {
+							if (!newSelection.has(id)) {
+								changedId = id;
+								_selected = false;
+								return false;
+							}
+						});
+
+						// Otherwise a new row has been selected. Look through the new selection for the new element.
+						if (!changedId) {
+							_selected = true;
+							newSelection.forEach(function (id) {
+								if (!oldSelection.has(id)) {
+									changedId = id;
+									return false;
+								}
+							});
+						}
+
+						newIndexed[changedId]._selected = _selected; // Update indexed data
+						rowIndex = newIndexed[changedId]._rowIndex; // Get data index
+						rdata = newData.get(rowIndex).set('_selected', _selected); // Change the row in that index
+						newData = newData.set(rowIndex, rdata); // Set that row in the data object
+					} else {
+							// Change all data
+							newData = newData.map(function (row) {
+								rowid = row.get(_this7.props.idField);
+								selected = newSelection.has(rowid.toString());
+								rdata = row.set('_selected', selected);
+								curIndex = newIndexed[rowid];
+
+								if (curIndex._selected != selected) {
+									// update indexed data
+									curIndex._selected = selected;
+									newIndexed[rowid] = curIndex;
+								}
+
+								return rdata;
+							});
+						}
 
 				this.setState({
 					data: newData,
 					indexed: newIndexed
 				});
 			}
+
+			/**
+	   * In case that the new selection array be different than the selection array in the components state, then update
+	   * the components state with the new data.
+	   *
+	   * @param {array}	newSelection	The selected rows
+	   */
+
 		}, {
 			key: 'triggerSelection',
 			value: function triggerSelection() {
-				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
+				var _this8 = this;
 
-				if (!_underscore2['default'].isEqual(newSelection, this.state.selection)) {
+				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? new Set() : arguments[0];
+
+				if (!this.props.selected) {
 					this.setState({
 						selection: newSelection,
-						allSelected: newSelection.length == this.state.data.size
+						allSelected: newSelection.size >= this.state.data.size
 					}, this.sendSelection);
+				} else {
+					this.setState({
+						allSelected: newSelection.size >= this.state.data.size
+					}, function () {
+						_this8.sendSelection(newSelection);
+					});
 				}
 			}
+
+			/**
+	   * If the method afterSelect in the components props has a function then call it sending the selected rows in rawdata.
+	   */
+
 		}, {
 			key: 'sendSelection',
 			value: function sendSelection() {
-				var _this5 = this;
+				var _this9 = this;
+
+				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
 				if (typeof this.props.afterSelect == 'function') {
 					(function () {
-						var _state = _this5.state;
+						var _state = _this9.state;
 						var selection = _state.selection;
 						var indexed = _state.indexed;
 						var rawdata = _state.rawdata;
 
 						var output = [];
+						var selectionArray = [];
 
-						output = _underscore2['default'].map(selection, function (pId) {
+						if (newSelection) {
+							newSelection.forEach(function (element) {
+								selectionArray.push(element);
+							});
+						} else {
+							if (_this9.props.selected) {
+								selectionArray = _this9.props.selected;
+
+								if (!_underscore2['default'].isArray(selectionArray)) {
+									selectionArray = [selectionArray];
+								}
+							} else {
+								selection.forEach(function (element) {
+									selectionArray.push(element);
+								});
+							}
+						}
+
+						output = _underscore2['default'].map(selectionArray, function (pId) {
+							if (typeof indexed[pId] == 'undefined') {
+								return null;
+							}
+
 							var rowIndex = indexed[pId]._rowIndex;
 
 							return rawdata.get(rowIndex).toJSON();
 						});
 
-						if (_this5.props.selectable === true) {
+						output = _underscore2['default'].compact(output);
+
+						if (_this9.props.selectable === true) {
 							output = output[0];
 						}
 
-						_this5.props.afterSelect(output);
+						_this9.props.afterSelect(output);
 					})();
 				}
 			}
+
+			/**
+	   * If the method afterSort in the components props has a function then call it sending the sorted data in the rawdata.
+	   */
+
+		}, {
+			key: 'sendSortedData',
+			value: function sendSortedData() {
+				var _this10 = this;
+
+				if (typeof this.props.afterSort == 'function') {
+					(function () {
+						var _state2 = _this10.state;
+						var data = _state2.data;
+						var indexed = _state2.indexed;
+						var rawdata = _state2.rawdata;
+
+						var output = [];
+
+						output = data.map(function (row) {
+							var rowIndex = indexed[row.get('_properId')]._rowIndex;
+
+							return rawdata.get(rowIndex).toJSON();
+						});
+
+						_this10.props.afterSort(output);
+					})();
+				}
+			}
+
+			/**
+	   * Add a custom class to each row of the table. If that row is selected then add one more class to apply different css to seleted
+	   * rows.
+	   *
+	   * @param {integer}	index	Index of the row which will get the new classes.
+	   */
+
 		}, {
 			key: 'getRowClassName',
 			value: function getRowClassName(index) {
 				var addClass = 'propertable-row';
 				var selected = this.state.data.get(index).get('_selected');
+				var id = this.state.data.get(index).get(this.props.idField);
+				var selectedSet = null;
+
+				if (!selected) {
+					if (this.props.selected) {
+						if (!_underscore2['default'].isArray(this.props.selected)) {
+							selectedSet = new Set([this.props.selected]);
+						} else {
+							selectedSet = new Set(this.props.selected);
+						}
+					} else {
+						if (this.state.selection) {
+							selectedSet = this.state.selection;
+						}
+					}
+
+					selected = selectedSet && selectedSet.has(id.toString());
+				}
 
 				if (selected) {
 					addClass += ' selected';
@@ -715,6 +1278,8 @@ var ProperTable =
 					content = _react2['default'].createElement(
 						_fixedDataTable.Table,
 						_extends({
+							ref: 'fixeddatatable',
+							key: this.uniqueId + '-table',
 							width: this.props.containerWidth || 100,
 							height: this.props.containerHeight || 100,
 							headerHeight: this.props.rowHeight,
@@ -733,7 +1298,7 @@ var ProperTable =
 
 				return _react2['default'].createElement(
 					'div',
-					{ id: this.props.uniqueId, className: 'propertable ' + this.props.className },
+					{ id: this.uniqueId, className: 'propertable ' + this.props.className },
 					content
 				);
 			}
@@ -12569,21 +13134,52 @@ var ProperTable =
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
+	/**
+	 * Stateless component which render a Cell which contain a icon like a checkbox that can be clicked.
+	 * Each time the selector were clicked then a callback from the main class is called which name is onClick.
+	 *
+	 * Example usage via from a `Column`:
+	 * ```
+	 * const MyColumn = (
+	 *     <Column
+	 *        header={
+	 *            	<Selector
+	 *					onClick={this.handleSelectAll.bind(this)}
+	 *					somethingSelected={true || false}
+	 *					allSelected={true || false}
+	 *					isHeader={true}
+	 *				/>
+	 *          }
+	 * 			cell={
+	 *				<Selector
+	 *					data={data} // Inmutable js object with upper component data.
+	 *				/>
+	 *			}
+	 *        ...
+	 *     />
+	 * );
+	 * ```
+	 */
 	var Selector = function Selector(props) {
 		var allSelected = false,
 		    somethingSelected = false,
 		    content = _react2['default'].createElement('i', { className: 'fa fa-square-o selector-button' });
 		var addClass = 'unchecked';
 		var selected = false;
-		var row = null;
+		var row = null,
+		    id = null;
+		var render = null;
 		var _onClick = props.onClick;
+		var isHeader = props.isHeader;
 
+		// Default callback function
 		if (!_onClick) {
 			_onClick = function onClick() {};
 		}
 
 		if (typeof props.rowIndex != 'undefined') {
 			row = props.data.get(props.rowIndex).toJSON();
+			id = row[props.idField];
 		}
 
 		if (typeof props.allSelected !== 'undefined') {
@@ -12594,37 +13190,59 @@ var ProperTable =
 			somethingSelected = props.somethingSelected;
 		}
 
+		// If something is selected add the class partial to the FontAwesome component <i />
 		if (somethingSelected) {
 			addClass = 'partial';
 		}
 
+		// Then if all elements are selected change the addClass to complete
 		if (allSelected) {
 			addClass = 'complete';
 		}
 
+		// If something is selected but not all then print - into the "check-box"
 		if (somethingSelected && !allSelected) {
 			content = _react2['default'].createElement('i', { className: 'fa fa-minus-square-o' });
 		}
 
+		// If all are selected (header) or the row is selected print a check into the FontAwesome checkbox.
 		if (allSelected || row && row._selected) {
 			content = _react2['default'].createElement('i', { className: 'fa fa-check-square-o' });
 		}
 
-		if (row && row._selected) {
-			selected = true;
+		if (props.selected && id && props.selected.has(id.toString())) {
+			content = _react2['default'].createElement('i', { className: 'fa fa-check-square-o' });
 		}
 
-		return _react2['default'].createElement(
-			_fixedDataTable.Cell,
-			{ className: 'propertable-cell select-cell' },
-			_react2['default'].createElement(
+		if (isHeader) {
+			// It's render inside the sortHeaderCell component
+			render = _react2['default'].createElement(
 				'div',
-				{ className: "propertable-selector " + addClass, onClick: function onClick(e) {
-						_onClick(e, row);
-					} },
-				content
-			)
-		);
+				{ className: 'propertable-cell select-cell' },
+				_react2['default'].createElement(
+					'div',
+					{ className: "propertable-selector " + addClass, onClick: function onClick(e) {
+							_onClick(e, row);
+						} },
+					content
+				)
+			);
+		} else {
+			render = _react2['default'].createElement(
+				_fixedDataTable.Cell,
+				{ className: 'propertable-cell select-cell' },
+				_react2['default'].createElement(
+					'div',
+					{ className: "propertable-selector " + addClass, onClick: function onClick(e) {
+							_onClick(e, row);
+						} },
+					content
+				)
+			);
+		}
+
+		// Render
+		return render;
 	};
 
 	exports['default'] = Selector;
@@ -12648,16 +13266,38 @@ var ProperTable =
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
+	/**
+	 * Stateless component which render a cell value formated.
+	 *
+	 * Example usage via from a `Column`:
+	 * ```
+	 * const MyColumn = (
+	 *     <Column
+	 *        cell={
+	 *            <CellRenderer
+	 *				data={all-table-data}
+	 *				colData={current-column-data} //  {name: -, field: -, formater: -, ...}
+	 *				col={colData.field}
+	 *			/>
+	 *        }
+	 *        ...
+	 *     />
+	 * );
+	 * ```
+	 */
 	var CellRenderer = function CellRenderer(props) {
 		var row = props.data.get(props.rowIndex),
 		    val = null,
 		    formatted = null;
 		var colData = props.colData;
+		var className = colData.className || '';
 		var selected = false;
 
 		if (row) {
+			// Get the value of the current column in the row
 			val = row.get(props.col);
 
+			// If val it's an Inmutable object then get the json value.
 			if (val && typeof val.toJSON == 'function') {
 				val = val.toJSON();
 			}
@@ -12667,13 +13307,14 @@ var ProperTable =
 			selected = row.get('_selected');
 		}
 
+		// If exist apply a formater function to that value.
 		if (typeof colData.formatter == 'function') {
 			formatted = colData.formatter(val, colData, row.toJSON());
 		}
 
 		return _react2['default'].createElement(
 			_fixedDataTable.Cell,
-			{ className: 'propertable-cell' },
+			{ className: "propertable-cell " + className },
 			formatted
 		);
 	};
@@ -12699,48 +13340,40 @@ var ProperTable =
 
 	var _fixedDataTable = __webpack_require__(3);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	var SortTypes = {
-	  ASC: 'ASC',
-	  DESC: 'DESC',
-	  DEF: 'DEF'
-	};
-
-	var SortIcons = {
-	  ASC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-up' }),
-	  DESC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-down' }),
-	  DEF: null // Default
-	};
-
-	var reverseSortDirection = function reverseSortDirection(sortDir) {
-	  if (sortDir) {
-	    // Second sort
-	    if (sortDir === SortTypes.DEF) return reverseSortDirection(null); // From default start again
-	    else return sortDir === SortTypes.ASC ? SortTypes.DESC : SortTypes.DEF; // Third sort from ASC to DESC then from DESC back to default
-	  }
-	  return SortTypes.ASC; // First sort
-	};
-
-	var onSortChange = function onSortChange(e, props, sortable) {
-	  e.preventDefault();
-	  if (sortable) {
-	    if (typeof props.onSortChange === 'function') {
-	      props.onSortChange(props.columnKey, reverseSortDirection(props.sortDir));
-	    }
-	  }
-	};
-
+	/**
+	 * Stateless component which render the header cell of a column.
+	 *
+	 * Example usage via from a `Column`:
+	 * ```
+	 * const MyColumn = (
+	 *     <Column
+	 *        header={
+	 *            <SortHeaderCell
+	 *              sortDir={ASC || DESC || DEF}
+	 *              sortable={true || false}
+	 *            />
+	 *              {children (label || Component)}
+	 *            </SortHeaderCell>
+	 *        }
+	 *        ...
+	 *     />
+	 * );
+	 * ```
+	 */
 	var SortHeaderCell = function SortHeaderCell(props) {
-	  var sortDir = props.sortDir || null;
-	  var sortable = props.sortable;
+	  var sortDir = props.sortDir || null,
+	      sortable = props.sortable;
 	  var children = props.children || null;
 	  var sortIcon = sortDir && sortable ? SortIcons[sortDir] : SortIcons['DEF'];
+	  var userClass = props.userClassName || '';
+	  var className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
 
 	  return _react2['default'].createElement(
 	    _fixedDataTable.Cell,
 	    _extends({
-	      className: 'centrardiv',
+	      className: className,
 	      onClick: function onClick(e) {
 	        onSortChange(e, props, sortable);
 	      }
@@ -12751,11 +13384,3875 @@ var ProperTable =
 	  );
 	};
 
+	/**
+	 *  Possible Sort Types Default || ASC || DESC
+	 */
+	var SortTypes = {
+	  ASC: 'ASC',
+	  DESC: 'DESC',
+	  DEF: 'DEF'
+	};
+
+	/**
+	 *  Asociated Icons when it's sorting
+	 */
+	var SortIcons = {
+	  ASC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-up' }),
+	  DESC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-down' }),
+	  DEF: null // Default
+	};
+
+	/**
+	 * Get the next sort direction to sort the current column.
+	 *
+	 * @param {string}  sortDir  Current sort direction.
+	 */
+	var nextSortDirection = function nextSortDirection(sortDir) {
+	  if (sortDir) {
+	    // Second sort
+	    if (sortDir === SortTypes.DEF) return nextSortDirection(null); // From default start again
+	    else return sortDir === SortTypes.ASC ? SortTypes.DESC : SortTypes.DEF; // Third sort. From ASC to DESC then from DESC back to default
+	  }
+	  return SortTypes.ASC; // First sort
+	};
+
+	/**
+	 * Callback called each time the header been clicked. If the column is sortable it will call the upper method with the
+	 * same name sending the key of the column clicked and the next sort direction. The sort direction change with each click.
+	 *
+	 * @param {object}    e         Event which call the function
+	 * @param {object}    props     Props of the component
+	 * @param {boolean}   sortable  If the current column is sortable or not
+	 */
+	var onSortChange = function onSortChange(e, props, sortable) {
+	  e.preventDefault();
+	  if (sortable) {
+	    if (typeof props.onSortChange === 'function') {
+	      props.onSortChange(props.columnKey, nextSortDirection(props.sortDir));
+	    }
+	  }
+	};
+
 	exports['default'] = SortHeaderCell;
 	module.exports = exports['default'];
 
 /***/ },
 /* 61 */
+/***/ function(module, exports) {
+
+	
+
+	module.exports = function(arr,search,comparitor) {
+	  if(!arr) return -1;
+	  // as long as it has a length i will try and itterate over it.
+	  if(arr.length === undefined) return -1;
+	  
+	  if(!comparitor) comparitor = module.exports._defaultComparitor();
+
+	  return bs(arr,search,comparitor);
+	}
+
+	module.exports.first = function(arr,search,comparitor) {
+	  return module.exports.closest(arr,search,{exists:true},comparitor);
+	}
+
+	module.exports.last = function(arr,search,comparitor) {
+	  return module.exports.closest(arr,search,{exists:true,end:true},comparitor);
+	}
+
+	module.exports.closest = function(arr,search,opts,comparitor) {
+
+	  if(typeof opts === 'function') {
+	    comparitor = opts;
+	    opts = {};
+	  }
+
+	  if(arr.length === 0) return -1;
+	  if(arr.length === 1) return 0;
+
+	  opts = opts||{};
+	  if(!comparitor) comparitor = this._defaultComparitor();
+	  
+	  var closest = bsclosest(arr, search, comparitor, opts.end, opts.exists?false:true);
+
+	  if(closest > arr.length-1) closest = arr.length-1;
+	  else if(closest < 0) closest = 0;
+
+	  return closest;
+	}
+
+	// inserts element into the correct sorted spot into the array
+	module.exports.insert = function(arr,search,opts,comparitor){ 
+
+	  if(typeof opts === 'function') {
+	    comparitor = opts;
+	    opts = {};
+	  }
+
+	  opts = opts||{};
+	  if(!comparitor) comparitor = module.exports._defaultComparitor();
+	  if(!arr.length) {
+	    arr[0] = search;
+	    return 0;
+	  }
+
+	  var closest = module.exports.closest(arr,search,comparitor);
+
+	  var cmp = comparitor(arr[closest],search);
+	  if(cmp < 0) {//less
+	    arr.splice(++closest,0,search);
+	  } else if(cmp > 0){ 
+	    arr.splice(closest,0,search);
+	  } else {
+	    if(opts.unique){
+	      arr[closest] = search;
+	    } else {
+	      // im equal. this value should be appended to the list of existing same sorted values.
+	      while(comparitor(arr[closest],search) === 0){
+	        if(closest >= arr.length-1) break;
+	        closest++;
+	      }
+
+	      arr.splice(closest,0,search);
+	    }
+	  }
+	  return closest;
+	}
+
+	// this method returns the start and end indicies of a range. [start,end]
+	module.exports.range = function(arr,from,to,comparitor) {
+	  if(!comparitor) comparitor = module.exports._defaultComparitor();
+
+	  var fromi = module.exports.closest(arr,from,comparitor);
+
+	  var toi = module.exports.closest(arr,to,{end:true},comparitor);
+
+	  // this is a hack. 
+	  // i should be able to fix the algorithm and generate a correct range.
+
+	  while(fromi <= toi){ 
+	    if(comparitor(arr[fromi],from) > -1) break;
+
+	    fromi++
+	  }
+
+	  while(toi >= fromi){ 
+	    if(comparitor(arr[toi],to) < 1) break;
+	    toi--;
+	  }
+
+	  return [fromi,toi];
+	}
+
+	// this method returns the values of a range;
+	module.exports.rangeValue = function(arr,from,to,comparitor){
+	  var range = module.exports.range(arr,from,to,comparitor);
+	  return arr.slice(range[0],range[1]+1);
+	}
+
+	//
+	module.exports.indexObject = function(o,extractor) {
+	  var index = [];
+	  
+	  Object.keys(o).forEach(function(k){
+	    index.push({k:k,v:extractor(o[k])});
+	  });
+
+	  return index.sort(function(o1,o2){
+	    return o1.v - o2.v;
+	  });
+	}
+
+	module.exports.cmp = function(v1,v2){
+	  return v1 - v2;
+	}
+
+	module.exports._defaultComparitor = function() {
+	  var indexMode,indexModeSearch;
+	  var stringMode;
+	  return function(v,search){
+	    // support the object format of generated indexes
+	    if(indexMode === undefined){
+	      if(typeof v === 'object' && v.hasOwnProperty('v')) indexMode = true;
+	      if(typeof search === 'object' && search.hasOwnProperty('v')) indexModeSearch = true
+	    }
+
+	    if(indexMode) v = v.v;
+	    if(indexModeSearch) search = search.v;
+
+	    if(stringMode === undefined){
+	      stringMode = false
+	      if(typeof search === 'string' || typeof v === "string"){
+	        stringMode = true
+	      }
+	    }
+
+	    if(stringMode) v = v+''
+
+	    return v > search ? 1 : v < search ? -1 : 0
+	  };
+	};
+
+	module.exports._binarySearch = bs;
+	module.exports._binarySearchClosest = bsclosest;
+
+	function bs(arr, search, comparitor) {
+
+	  var max = arr.length-1,min = 0,middle,cmp;
+	  // continue searching while key may exist
+	  while (max >= min) {
+	    middle = mid(min, max);
+
+	    cmp = comparitor(arr[middle],search,middle);
+
+	    if (cmp < 0) {
+	      min = middle + 1;
+	    } else if (cmp > 0) {
+	      max = middle - 1;
+	    } else {
+	      return middle;
+	    }
+	  }
+	  // key not found
+	  return -1;
+	}
+
+	function bsclosest(arr, search, comparitor, invert, closest) {
+	  var mids = {}
+	  , min = 0,max = arr.length-1,middle,cmp
+	  , sanity = arr.length;
+
+	  while (min < max) {
+	    middle = midCareful(min, max,mids); 
+	    cmp = comparitor(arr[middle],search,middle);
+	    if(invert){
+	      if (cmp > 0)max = middle - 1;
+	      else min = middle;   
+	    } else {
+	      if (cmp < 0)min = middle + 1;
+	      else max = middle;
+	    }
+	    if(!--sanity) break;
+	  }
+	   
+	  if (max == min && comparitor(arr[min],search) === 0) return min;
+	  
+	  if(closest) {
+	    var match = comparitor(arr[min],search);
+	    if(min == arr.length-1 && match < 0) return min;
+	    if(min == 0 && match > 0) return 0;
+
+	    return closest?(invert?min+1:min-1):-1;
+	  } 
+	  return -1; 
+	}
+
+	function mid(v1,v2){
+	  return v1+Math.floor((v2-v1)/2);
+	}
+
+	function midCareful(v1,v2,mids){
+	  var mid = v1+Math.floor((v2-v1)/2);
+	  if(mids[mid]) mid = v1+Math.ceil((v2-v1)/2);
+	  mids[mid] = 1;
+	  return mid;
+	}
+
+
+/***/ },
+/* 62 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(Buffer) {var clone = (function() {
+	'use strict';
+
+	/**
+	 * Clones (copies) an Object using deep copying.
+	 *
+	 * This function supports circular references by default, but if you are certain
+	 * there are no circular references in your object, you can save some CPU time
+	 * by calling clone(obj, false).
+	 *
+	 * Caution: if `circular` is false and `parent` contains circular references,
+	 * your program may enter an infinite loop and crash.
+	 *
+	 * @param `parent` - the object to be cloned
+	 * @param `circular` - set to true if the object to be cloned may contain
+	 *    circular references. (optional - true by default)
+	 * @param `depth` - set to a number if the object is only to be cloned to
+	 *    a particular depth. (optional - defaults to Infinity)
+	 * @param `prototype` - sets the prototype to be used when cloning an object.
+	 *    (optional - defaults to parent prototype).
+	*/
+	function clone(parent, circular, depth, prototype) {
+	  var filter;
+	  if (typeof circular === 'object') {
+	    depth = circular.depth;
+	    prototype = circular.prototype;
+	    filter = circular.filter;
+	    circular = circular.circular
+	  }
+	  // maintain two arrays for circular references, where corresponding parents
+	  // and children have the same index
+	  var allParents = [];
+	  var allChildren = [];
+
+	  var useBuffer = typeof Buffer != 'undefined';
+
+	  if (typeof circular == 'undefined')
+	    circular = true;
+
+	  if (typeof depth == 'undefined')
+	    depth = Infinity;
+
+	  // recurse this function so we don't reset allParents and allChildren
+	  function _clone(parent, depth) {
+	    // cloning null always returns null
+	    if (parent === null)
+	      return null;
+
+	    if (depth == 0)
+	      return parent;
+
+	    var child;
+	    var proto;
+	    if (typeof parent != 'object') {
+	      return parent;
+	    }
+
+	    if (clone.__isArray(parent)) {
+	      child = [];
+	    } else if (clone.__isRegExp(parent)) {
+	      child = new RegExp(parent.source, __getRegExpFlags(parent));
+	      if (parent.lastIndex) child.lastIndex = parent.lastIndex;
+	    } else if (clone.__isDate(parent)) {
+	      child = new Date(parent.getTime());
+	    } else if (useBuffer && Buffer.isBuffer(parent)) {
+	      child = new Buffer(parent.length);
+	      parent.copy(child);
+	      return child;
+	    } else {
+	      if (typeof prototype == 'undefined') {
+	        proto = Object.getPrototypeOf(parent);
+	        child = Object.create(proto);
+	      }
+	      else {
+	        child = Object.create(prototype);
+	        proto = prototype;
+	      }
+	    }
+
+	    if (circular) {
+	      var index = allParents.indexOf(parent);
+
+	      if (index != -1) {
+	        return allChildren[index];
+	      }
+	      allParents.push(parent);
+	      allChildren.push(child);
+	    }
+
+	    for (var i in parent) {
+	      var attrs;
+	      if (proto) {
+	        attrs = Object.getOwnPropertyDescriptor(proto, i);
+	      }
+
+	      if (attrs && attrs.set == null) {
+	        continue;
+	      }
+	      child[i] = _clone(parent[i], depth - 1);
+	    }
+
+	    return child;
+	  }
+
+	  return _clone(parent, depth);
+	}
+
+	/**
+	 * Simple flat clone using prototype, accepts only objects, usefull for property
+	 * override on FLAT configuration object (no nested props).
+	 *
+	 * USE WITH CAUTION! This may not behave as you wish if you do not know how this
+	 * works.
+	 */
+	clone.clonePrototype = function clonePrototype(parent) {
+	  if (parent === null)
+	    return null;
+
+	  var c = function () {};
+	  c.prototype = parent;
+	  return new c();
+	};
+
+	// private utility functions
+
+	function __objToStr(o) {
+	  return Object.prototype.toString.call(o);
+	};
+	clone.__objToStr = __objToStr;
+
+	function __isDate(o) {
+	  return typeof o === 'object' && __objToStr(o) === '[object Date]';
+	};
+	clone.__isDate = __isDate;
+
+	function __isArray(o) {
+	  return typeof o === 'object' && __objToStr(o) === '[object Array]';
+	};
+	clone.__isArray = __isArray;
+
+	function __isRegExp(o) {
+	  return typeof o === 'object' && __objToStr(o) === '[object RegExp]';
+	};
+	clone.__isRegExp = __isRegExp;
+
+	function __getRegExpFlags(re) {
+	  var flags = '';
+	  if (re.global) flags += 'g';
+	  if (re.ignoreCase) flags += 'i';
+	  if (re.multiline) flags += 'm';
+	  return flags;
+	};
+	clone.__getRegExpFlags = __getRegExpFlags;
+
+	return clone;
+	})();
+
+	if (typeof module === 'object' && module.exports) {
+	  module.exports = clone;
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).Buffer))
+
+/***/ },
+/* 63 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
+	 * The buffer module from node.js, for the browser.
+	 *
+	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+	 * @license  MIT
+	 */
+	/* eslint-disable no-proto */
+
+	'use strict'
+
+	var base64 = __webpack_require__(64)
+	var ieee754 = __webpack_require__(65)
+	var isArray = __webpack_require__(66)
+
+	exports.Buffer = Buffer
+	exports.SlowBuffer = SlowBuffer
+	exports.INSPECT_MAX_BYTES = 50
+	Buffer.poolSize = 8192 // not used by this implementation
+
+	var rootParent = {}
+
+	/**
+	 * If `Buffer.TYPED_ARRAY_SUPPORT`:
+	 *   === true    Use Uint8Array implementation (fastest)
+	 *   === false   Use Object implementation (most compatible, even IE6)
+	 *
+	 * Browsers that support typed arrays are IE 10+, Firefox 4+, Chrome 7+, Safari 5.1+,
+	 * Opera 11.6+, iOS 4.2+.
+	 *
+	 * Due to various browser bugs, sometimes the Object implementation will be used even
+	 * when the browser supports typed arrays.
+	 *
+	 * Note:
+	 *
+	 *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
+	 *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
+	 *
+	 *   - Safari 5-7 lacks support for changing the `Object.prototype.constructor` property
+	 *     on objects.
+	 *
+	 *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
+	 *
+	 *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
+	 *     incorrect length in some situations.
+
+	 * We detect these buggy browsers and set `Buffer.TYPED_ARRAY_SUPPORT` to `false` so they
+	 * get the Object implementation, which is slower but behaves correctly.
+	 */
+	Buffer.TYPED_ARRAY_SUPPORT = global.TYPED_ARRAY_SUPPORT !== undefined
+	  ? global.TYPED_ARRAY_SUPPORT
+	  : typedArraySupport()
+
+	function typedArraySupport () {
+	  function Bar () {}
+	  try {
+	    var arr = new Uint8Array(1)
+	    arr.foo = function () { return 42 }
+	    arr.constructor = Bar
+	    return arr.foo() === 42 && // typed array instances can be augmented
+	        arr.constructor === Bar && // constructor can be set
+	        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
+	        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
+	  } catch (e) {
+	    return false
+	  }
+	}
+
+	function kMaxLength () {
+	  return Buffer.TYPED_ARRAY_SUPPORT
+	    ? 0x7fffffff
+	    : 0x3fffffff
+	}
+
+	/**
+	 * Class: Buffer
+	 * =============
+	 *
+	 * The Buffer constructor returns instances of `Uint8Array` that are augmented
+	 * with function properties for all the node `Buffer` API functions. We use
+	 * `Uint8Array` so that square bracket notation works as expected -- it returns
+	 * a single octet.
+	 *
+	 * By augmenting the instances, we can avoid modifying the `Uint8Array`
+	 * prototype.
+	 */
+	function Buffer (arg) {
+	  if (!(this instanceof Buffer)) {
+	    // Avoid going through an ArgumentsAdaptorTrampoline in the common case.
+	    if (arguments.length > 1) return new Buffer(arg, arguments[1])
+	    return new Buffer(arg)
+	  }
+
+	  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+	    this.length = 0
+	    this.parent = undefined
+	  }
+
+	  // Common case.
+	  if (typeof arg === 'number') {
+	    return fromNumber(this, arg)
+	  }
+
+	  // Slightly less common case.
+	  if (typeof arg === 'string') {
+	    return fromString(this, arg, arguments.length > 1 ? arguments[1] : 'utf8')
+	  }
+
+	  // Unusual.
+	  return fromObject(this, arg)
+	}
+
+	function fromNumber (that, length) {
+	  that = allocate(that, length < 0 ? 0 : checked(length) | 0)
+	  if (!Buffer.TYPED_ARRAY_SUPPORT) {
+	    for (var i = 0; i < length; i++) {
+	      that[i] = 0
+	    }
+	  }
+	  return that
+	}
+
+	function fromString (that, string, encoding) {
+	  if (typeof encoding !== 'string' || encoding === '') encoding = 'utf8'
+
+	  // Assumption: byteLength() return value is always < kMaxLength.
+	  var length = byteLength(string, encoding) | 0
+	  that = allocate(that, length)
+
+	  that.write(string, encoding)
+	  return that
+	}
+
+	function fromObject (that, object) {
+	  if (Buffer.isBuffer(object)) return fromBuffer(that, object)
+
+	  if (isArray(object)) return fromArray(that, object)
+
+	  if (object == null) {
+	    throw new TypeError('must start with number, buffer, array or string')
+	  }
+
+	  if (typeof ArrayBuffer !== 'undefined') {
+	    if (object.buffer instanceof ArrayBuffer) {
+	      return fromTypedArray(that, object)
+	    }
+	    if (object instanceof ArrayBuffer) {
+	      return fromArrayBuffer(that, object)
+	    }
+	  }
+
+	  if (object.length) return fromArrayLike(that, object)
+
+	  return fromJsonObject(that, object)
+	}
+
+	function fromBuffer (that, buffer) {
+	  var length = checked(buffer.length) | 0
+	  that = allocate(that, length)
+	  buffer.copy(that, 0, 0, length)
+	  return that
+	}
+
+	function fromArray (that, array) {
+	  var length = checked(array.length) | 0
+	  that = allocate(that, length)
+	  for (var i = 0; i < length; i += 1) {
+	    that[i] = array[i] & 255
+	  }
+	  return that
+	}
+
+	// Duplicate of fromArray() to keep fromArray() monomorphic.
+	function fromTypedArray (that, array) {
+	  var length = checked(array.length) | 0
+	  that = allocate(that, length)
+	  // Truncating the elements is probably not what people expect from typed
+	  // arrays with BYTES_PER_ELEMENT > 1 but it's compatible with the behavior
+	  // of the old Buffer constructor.
+	  for (var i = 0; i < length; i += 1) {
+	    that[i] = array[i] & 255
+	  }
+	  return that
+	}
+
+	function fromArrayBuffer (that, array) {
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    // Return an augmented `Uint8Array` instance, for best performance
+	    array.byteLength
+	    that = Buffer._augment(new Uint8Array(array))
+	  } else {
+	    // Fallback: Return an object instance of the Buffer class
+	    that = fromTypedArray(that, new Uint8Array(array))
+	  }
+	  return that
+	}
+
+	function fromArrayLike (that, array) {
+	  var length = checked(array.length) | 0
+	  that = allocate(that, length)
+	  for (var i = 0; i < length; i += 1) {
+	    that[i] = array[i] & 255
+	  }
+	  return that
+	}
+
+	// Deserialize { type: 'Buffer', data: [1,2,3,...] } into a Buffer object.
+	// Returns a zero-length buffer for inputs that don't conform to the spec.
+	function fromJsonObject (that, object) {
+	  var array
+	  var length = 0
+
+	  if (object.type === 'Buffer' && isArray(object.data)) {
+	    array = object.data
+	    length = checked(array.length) | 0
+	  }
+	  that = allocate(that, length)
+
+	  for (var i = 0; i < length; i += 1) {
+	    that[i] = array[i] & 255
+	  }
+	  return that
+	}
+
+	if (Buffer.TYPED_ARRAY_SUPPORT) {
+	  Buffer.prototype.__proto__ = Uint8Array.prototype
+	  Buffer.__proto__ = Uint8Array
+	} else {
+	  // pre-set for values that may exist in the future
+	  Buffer.prototype.length = undefined
+	  Buffer.prototype.parent = undefined
+	}
+
+	function allocate (that, length) {
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    // Return an augmented `Uint8Array` instance, for best performance
+	    that = Buffer._augment(new Uint8Array(length))
+	    that.__proto__ = Buffer.prototype
+	  } else {
+	    // Fallback: Return an object instance of the Buffer class
+	    that.length = length
+	    that._isBuffer = true
+	  }
+
+	  var fromPool = length !== 0 && length <= Buffer.poolSize >>> 1
+	  if (fromPool) that.parent = rootParent
+
+	  return that
+	}
+
+	function checked (length) {
+	  // Note: cannot use `length < kMaxLength` here because that fails when
+	  // length is NaN (which is otherwise coerced to zero.)
+	  if (length >= kMaxLength()) {
+	    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
+	                         'size: 0x' + kMaxLength().toString(16) + ' bytes')
+	  }
+	  return length | 0
+	}
+
+	function SlowBuffer (subject, encoding) {
+	  if (!(this instanceof SlowBuffer)) return new SlowBuffer(subject, encoding)
+
+	  var buf = new Buffer(subject, encoding)
+	  delete buf.parent
+	  return buf
+	}
+
+	Buffer.isBuffer = function isBuffer (b) {
+	  return !!(b != null && b._isBuffer)
+	}
+
+	Buffer.compare = function compare (a, b) {
+	  if (!Buffer.isBuffer(a) || !Buffer.isBuffer(b)) {
+	    throw new TypeError('Arguments must be Buffers')
+	  }
+
+	  if (a === b) return 0
+
+	  var x = a.length
+	  var y = b.length
+
+	  var i = 0
+	  var len = Math.min(x, y)
+	  while (i < len) {
+	    if (a[i] !== b[i]) break
+
+	    ++i
+	  }
+
+	  if (i !== len) {
+	    x = a[i]
+	    y = b[i]
+	  }
+
+	  if (x < y) return -1
+	  if (y < x) return 1
+	  return 0
+	}
+
+	Buffer.isEncoding = function isEncoding (encoding) {
+	  switch (String(encoding).toLowerCase()) {
+	    case 'hex':
+	    case 'utf8':
+	    case 'utf-8':
+	    case 'ascii':
+	    case 'binary':
+	    case 'base64':
+	    case 'raw':
+	    case 'ucs2':
+	    case 'ucs-2':
+	    case 'utf16le':
+	    case 'utf-16le':
+	      return true
+	    default:
+	      return false
+	  }
+	}
+
+	Buffer.concat = function concat (list, length) {
+	  if (!isArray(list)) throw new TypeError('list argument must be an Array of Buffers.')
+
+	  if (list.length === 0) {
+	    return new Buffer(0)
+	  }
+
+	  var i
+	  if (length === undefined) {
+	    length = 0
+	    for (i = 0; i < list.length; i++) {
+	      length += list[i].length
+	    }
+	  }
+
+	  var buf = new Buffer(length)
+	  var pos = 0
+	  for (i = 0; i < list.length; i++) {
+	    var item = list[i]
+	    item.copy(buf, pos)
+	    pos += item.length
+	  }
+	  return buf
+	}
+
+	function byteLength (string, encoding) {
+	  if (typeof string !== 'string') string = '' + string
+
+	  var len = string.length
+	  if (len === 0) return 0
+
+	  // Use a for loop to avoid recursion
+	  var loweredCase = false
+	  for (;;) {
+	    switch (encoding) {
+	      case 'ascii':
+	      case 'binary':
+	      // Deprecated
+	      case 'raw':
+	      case 'raws':
+	        return len
+	      case 'utf8':
+	      case 'utf-8':
+	        return utf8ToBytes(string).length
+	      case 'ucs2':
+	      case 'ucs-2':
+	      case 'utf16le':
+	      case 'utf-16le':
+	        return len * 2
+	      case 'hex':
+	        return len >>> 1
+	      case 'base64':
+	        return base64ToBytes(string).length
+	      default:
+	        if (loweredCase) return utf8ToBytes(string).length // assume utf8
+	        encoding = ('' + encoding).toLowerCase()
+	        loweredCase = true
+	    }
+	  }
+	}
+	Buffer.byteLength = byteLength
+
+	function slowToString (encoding, start, end) {
+	  var loweredCase = false
+
+	  start = start | 0
+	  end = end === undefined || end === Infinity ? this.length : end | 0
+
+	  if (!encoding) encoding = 'utf8'
+	  if (start < 0) start = 0
+	  if (end > this.length) end = this.length
+	  if (end <= start) return ''
+
+	  while (true) {
+	    switch (encoding) {
+	      case 'hex':
+	        return hexSlice(this, start, end)
+
+	      case 'utf8':
+	      case 'utf-8':
+	        return utf8Slice(this, start, end)
+
+	      case 'ascii':
+	        return asciiSlice(this, start, end)
+
+	      case 'binary':
+	        return binarySlice(this, start, end)
+
+	      case 'base64':
+	        return base64Slice(this, start, end)
+
+	      case 'ucs2':
+	      case 'ucs-2':
+	      case 'utf16le':
+	      case 'utf-16le':
+	        return utf16leSlice(this, start, end)
+
+	      default:
+	        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+	        encoding = (encoding + '').toLowerCase()
+	        loweredCase = true
+	    }
+	  }
+	}
+
+	Buffer.prototype.toString = function toString () {
+	  var length = this.length | 0
+	  if (length === 0) return ''
+	  if (arguments.length === 0) return utf8Slice(this, 0, length)
+	  return slowToString.apply(this, arguments)
+	}
+
+	Buffer.prototype.equals = function equals (b) {
+	  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+	  if (this === b) return true
+	  return Buffer.compare(this, b) === 0
+	}
+
+	Buffer.prototype.inspect = function inspect () {
+	  var str = ''
+	  var max = exports.INSPECT_MAX_BYTES
+	  if (this.length > 0) {
+	    str = this.toString('hex', 0, max).match(/.{2}/g).join(' ')
+	    if (this.length > max) str += ' ... '
+	  }
+	  return '<Buffer ' + str + '>'
+	}
+
+	Buffer.prototype.compare = function compare (b) {
+	  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
+	  if (this === b) return 0
+	  return Buffer.compare(this, b)
+	}
+
+	Buffer.prototype.indexOf = function indexOf (val, byteOffset) {
+	  if (byteOffset > 0x7fffffff) byteOffset = 0x7fffffff
+	  else if (byteOffset < -0x80000000) byteOffset = -0x80000000
+	  byteOffset >>= 0
+
+	  if (this.length === 0) return -1
+	  if (byteOffset >= this.length) return -1
+
+	  // Negative offsets start from the end of the buffer
+	  if (byteOffset < 0) byteOffset = Math.max(this.length + byteOffset, 0)
+
+	  if (typeof val === 'string') {
+	    if (val.length === 0) return -1 // special case: looking for empty string always fails
+	    return String.prototype.indexOf.call(this, val, byteOffset)
+	  }
+	  if (Buffer.isBuffer(val)) {
+	    return arrayIndexOf(this, val, byteOffset)
+	  }
+	  if (typeof val === 'number') {
+	    if (Buffer.TYPED_ARRAY_SUPPORT && Uint8Array.prototype.indexOf === 'function') {
+	      return Uint8Array.prototype.indexOf.call(this, val, byteOffset)
+	    }
+	    return arrayIndexOf(this, [ val ], byteOffset)
+	  }
+
+	  function arrayIndexOf (arr, val, byteOffset) {
+	    var foundIndex = -1
+	    for (var i = 0; byteOffset + i < arr.length; i++) {
+	      if (arr[byteOffset + i] === val[foundIndex === -1 ? 0 : i - foundIndex]) {
+	        if (foundIndex === -1) foundIndex = i
+	        if (i - foundIndex + 1 === val.length) return byteOffset + foundIndex
+	      } else {
+	        foundIndex = -1
+	      }
+	    }
+	    return -1
+	  }
+
+	  throw new TypeError('val must be string, number or Buffer')
+	}
+
+	// `get` is deprecated
+	Buffer.prototype.get = function get (offset) {
+	  console.log('.get() is deprecated. Access using array indexes instead.')
+	  return this.readUInt8(offset)
+	}
+
+	// `set` is deprecated
+	Buffer.prototype.set = function set (v, offset) {
+	  console.log('.set() is deprecated. Access using array indexes instead.')
+	  return this.writeUInt8(v, offset)
+	}
+
+	function hexWrite (buf, string, offset, length) {
+	  offset = Number(offset) || 0
+	  var remaining = buf.length - offset
+	  if (!length) {
+	    length = remaining
+	  } else {
+	    length = Number(length)
+	    if (length > remaining) {
+	      length = remaining
+	    }
+	  }
+
+	  // must be an even number of digits
+	  var strLen = string.length
+	  if (strLen % 2 !== 0) throw new Error('Invalid hex string')
+
+	  if (length > strLen / 2) {
+	    length = strLen / 2
+	  }
+	  for (var i = 0; i < length; i++) {
+	    var parsed = parseInt(string.substr(i * 2, 2), 16)
+	    if (isNaN(parsed)) throw new Error('Invalid hex string')
+	    buf[offset + i] = parsed
+	  }
+	  return i
+	}
+
+	function utf8Write (buf, string, offset, length) {
+	  return blitBuffer(utf8ToBytes(string, buf.length - offset), buf, offset, length)
+	}
+
+	function asciiWrite (buf, string, offset, length) {
+	  return blitBuffer(asciiToBytes(string), buf, offset, length)
+	}
+
+	function binaryWrite (buf, string, offset, length) {
+	  return asciiWrite(buf, string, offset, length)
+	}
+
+	function base64Write (buf, string, offset, length) {
+	  return blitBuffer(base64ToBytes(string), buf, offset, length)
+	}
+
+	function ucs2Write (buf, string, offset, length) {
+	  return blitBuffer(utf16leToBytes(string, buf.length - offset), buf, offset, length)
+	}
+
+	Buffer.prototype.write = function write (string, offset, length, encoding) {
+	  // Buffer#write(string)
+	  if (offset === undefined) {
+	    encoding = 'utf8'
+	    length = this.length
+	    offset = 0
+	  // Buffer#write(string, encoding)
+	  } else if (length === undefined && typeof offset === 'string') {
+	    encoding = offset
+	    length = this.length
+	    offset = 0
+	  // Buffer#write(string, offset[, length][, encoding])
+	  } else if (isFinite(offset)) {
+	    offset = offset | 0
+	    if (isFinite(length)) {
+	      length = length | 0
+	      if (encoding === undefined) encoding = 'utf8'
+	    } else {
+	      encoding = length
+	      length = undefined
+	    }
+	  // legacy write(string, encoding, offset, length) - remove in v0.13
+	  } else {
+	    var swap = encoding
+	    encoding = offset
+	    offset = length | 0
+	    length = swap
+	  }
+
+	  var remaining = this.length - offset
+	  if (length === undefined || length > remaining) length = remaining
+
+	  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
+	    throw new RangeError('attempt to write outside buffer bounds')
+	  }
+
+	  if (!encoding) encoding = 'utf8'
+
+	  var loweredCase = false
+	  for (;;) {
+	    switch (encoding) {
+	      case 'hex':
+	        return hexWrite(this, string, offset, length)
+
+	      case 'utf8':
+	      case 'utf-8':
+	        return utf8Write(this, string, offset, length)
+
+	      case 'ascii':
+	        return asciiWrite(this, string, offset, length)
+
+	      case 'binary':
+	        return binaryWrite(this, string, offset, length)
+
+	      case 'base64':
+	        // Warning: maxLength not taken into account in base64Write
+	        return base64Write(this, string, offset, length)
+
+	      case 'ucs2':
+	      case 'ucs-2':
+	      case 'utf16le':
+	      case 'utf-16le':
+	        return ucs2Write(this, string, offset, length)
+
+	      default:
+	        if (loweredCase) throw new TypeError('Unknown encoding: ' + encoding)
+	        encoding = ('' + encoding).toLowerCase()
+	        loweredCase = true
+	    }
+	  }
+	}
+
+	Buffer.prototype.toJSON = function toJSON () {
+	  return {
+	    type: 'Buffer',
+	    data: Array.prototype.slice.call(this._arr || this, 0)
+	  }
+	}
+
+	function base64Slice (buf, start, end) {
+	  if (start === 0 && end === buf.length) {
+	    return base64.fromByteArray(buf)
+	  } else {
+	    return base64.fromByteArray(buf.slice(start, end))
+	  }
+	}
+
+	function utf8Slice (buf, start, end) {
+	  end = Math.min(buf.length, end)
+	  var res = []
+
+	  var i = start
+	  while (i < end) {
+	    var firstByte = buf[i]
+	    var codePoint = null
+	    var bytesPerSequence = (firstByte > 0xEF) ? 4
+	      : (firstByte > 0xDF) ? 3
+	      : (firstByte > 0xBF) ? 2
+	      : 1
+
+	    if (i + bytesPerSequence <= end) {
+	      var secondByte, thirdByte, fourthByte, tempCodePoint
+
+	      switch (bytesPerSequence) {
+	        case 1:
+	          if (firstByte < 0x80) {
+	            codePoint = firstByte
+	          }
+	          break
+	        case 2:
+	          secondByte = buf[i + 1]
+	          if ((secondByte & 0xC0) === 0x80) {
+	            tempCodePoint = (firstByte & 0x1F) << 0x6 | (secondByte & 0x3F)
+	            if (tempCodePoint > 0x7F) {
+	              codePoint = tempCodePoint
+	            }
+	          }
+	          break
+	        case 3:
+	          secondByte = buf[i + 1]
+	          thirdByte = buf[i + 2]
+	          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80) {
+	            tempCodePoint = (firstByte & 0xF) << 0xC | (secondByte & 0x3F) << 0x6 | (thirdByte & 0x3F)
+	            if (tempCodePoint > 0x7FF && (tempCodePoint < 0xD800 || tempCodePoint > 0xDFFF)) {
+	              codePoint = tempCodePoint
+	            }
+	          }
+	          break
+	        case 4:
+	          secondByte = buf[i + 1]
+	          thirdByte = buf[i + 2]
+	          fourthByte = buf[i + 3]
+	          if ((secondByte & 0xC0) === 0x80 && (thirdByte & 0xC0) === 0x80 && (fourthByte & 0xC0) === 0x80) {
+	            tempCodePoint = (firstByte & 0xF) << 0x12 | (secondByte & 0x3F) << 0xC | (thirdByte & 0x3F) << 0x6 | (fourthByte & 0x3F)
+	            if (tempCodePoint > 0xFFFF && tempCodePoint < 0x110000) {
+	              codePoint = tempCodePoint
+	            }
+	          }
+	      }
+	    }
+
+	    if (codePoint === null) {
+	      // we did not generate a valid codePoint so insert a
+	      // replacement char (U+FFFD) and advance only 1 byte
+	      codePoint = 0xFFFD
+	      bytesPerSequence = 1
+	    } else if (codePoint > 0xFFFF) {
+	      // encode to utf16 (surrogate pair dance)
+	      codePoint -= 0x10000
+	      res.push(codePoint >>> 10 & 0x3FF | 0xD800)
+	      codePoint = 0xDC00 | codePoint & 0x3FF
+	    }
+
+	    res.push(codePoint)
+	    i += bytesPerSequence
+	  }
+
+	  return decodeCodePointsArray(res)
+	}
+
+	// Based on http://stackoverflow.com/a/22747272/680742, the browser with
+	// the lowest limit is Chrome, with 0x10000 args.
+	// We go 1 magnitude less, for safety
+	var MAX_ARGUMENTS_LENGTH = 0x1000
+
+	function decodeCodePointsArray (codePoints) {
+	  var len = codePoints.length
+	  if (len <= MAX_ARGUMENTS_LENGTH) {
+	    return String.fromCharCode.apply(String, codePoints) // avoid extra slice()
+	  }
+
+	  // Decode in chunks to avoid "call stack size exceeded".
+	  var res = ''
+	  var i = 0
+	  while (i < len) {
+	    res += String.fromCharCode.apply(
+	      String,
+	      codePoints.slice(i, i += MAX_ARGUMENTS_LENGTH)
+	    )
+	  }
+	  return res
+	}
+
+	function asciiSlice (buf, start, end) {
+	  var ret = ''
+	  end = Math.min(buf.length, end)
+
+	  for (var i = start; i < end; i++) {
+	    ret += String.fromCharCode(buf[i] & 0x7F)
+	  }
+	  return ret
+	}
+
+	function binarySlice (buf, start, end) {
+	  var ret = ''
+	  end = Math.min(buf.length, end)
+
+	  for (var i = start; i < end; i++) {
+	    ret += String.fromCharCode(buf[i])
+	  }
+	  return ret
+	}
+
+	function hexSlice (buf, start, end) {
+	  var len = buf.length
+
+	  if (!start || start < 0) start = 0
+	  if (!end || end < 0 || end > len) end = len
+
+	  var out = ''
+	  for (var i = start; i < end; i++) {
+	    out += toHex(buf[i])
+	  }
+	  return out
+	}
+
+	function utf16leSlice (buf, start, end) {
+	  var bytes = buf.slice(start, end)
+	  var res = ''
+	  for (var i = 0; i < bytes.length; i += 2) {
+	    res += String.fromCharCode(bytes[i] + bytes[i + 1] * 256)
+	  }
+	  return res
+	}
+
+	Buffer.prototype.slice = function slice (start, end) {
+	  var len = this.length
+	  start = ~~start
+	  end = end === undefined ? len : ~~end
+
+	  if (start < 0) {
+	    start += len
+	    if (start < 0) start = 0
+	  } else if (start > len) {
+	    start = len
+	  }
+
+	  if (end < 0) {
+	    end += len
+	    if (end < 0) end = 0
+	  } else if (end > len) {
+	    end = len
+	  }
+
+	  if (end < start) end = start
+
+	  var newBuf
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    newBuf = Buffer._augment(this.subarray(start, end))
+	  } else {
+	    var sliceLen = end - start
+	    newBuf = new Buffer(sliceLen, undefined)
+	    for (var i = 0; i < sliceLen; i++) {
+	      newBuf[i] = this[i + start]
+	    }
+	  }
+
+	  if (newBuf.length) newBuf.parent = this.parent || this
+
+	  return newBuf
+	}
+
+	/*
+	 * Need to make sure that buffer isn't trying to write out of bounds.
+	 */
+	function checkOffset (offset, ext, length) {
+	  if ((offset % 1) !== 0 || offset < 0) throw new RangeError('offset is not uint')
+	  if (offset + ext > length) throw new RangeError('Trying to access beyond buffer length')
+	}
+
+	Buffer.prototype.readUIntLE = function readUIntLE (offset, byteLength, noAssert) {
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+	  var val = this[offset]
+	  var mul = 1
+	  var i = 0
+	  while (++i < byteLength && (mul *= 0x100)) {
+	    val += this[offset + i] * mul
+	  }
+
+	  return val
+	}
+
+	Buffer.prototype.readUIntBE = function readUIntBE (offset, byteLength, noAssert) {
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) {
+	    checkOffset(offset, byteLength, this.length)
+	  }
+
+	  var val = this[offset + --byteLength]
+	  var mul = 1
+	  while (byteLength > 0 && (mul *= 0x100)) {
+	    val += this[offset + --byteLength] * mul
+	  }
+
+	  return val
+	}
+
+	Buffer.prototype.readUInt8 = function readUInt8 (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 1, this.length)
+	  return this[offset]
+	}
+
+	Buffer.prototype.readUInt16LE = function readUInt16LE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 2, this.length)
+	  return this[offset] | (this[offset + 1] << 8)
+	}
+
+	Buffer.prototype.readUInt16BE = function readUInt16BE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 2, this.length)
+	  return (this[offset] << 8) | this[offset + 1]
+	}
+
+	Buffer.prototype.readUInt32LE = function readUInt32LE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+
+	  return ((this[offset]) |
+	      (this[offset + 1] << 8) |
+	      (this[offset + 2] << 16)) +
+	      (this[offset + 3] * 0x1000000)
+	}
+
+	Buffer.prototype.readUInt32BE = function readUInt32BE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+
+	  return (this[offset] * 0x1000000) +
+	    ((this[offset + 1] << 16) |
+	    (this[offset + 2] << 8) |
+	    this[offset + 3])
+	}
+
+	Buffer.prototype.readIntLE = function readIntLE (offset, byteLength, noAssert) {
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+	  var val = this[offset]
+	  var mul = 1
+	  var i = 0
+	  while (++i < byteLength && (mul *= 0x100)) {
+	    val += this[offset + i] * mul
+	  }
+	  mul *= 0x80
+
+	  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+	  return val
+	}
+
+	Buffer.prototype.readIntBE = function readIntBE (offset, byteLength, noAssert) {
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) checkOffset(offset, byteLength, this.length)
+
+	  var i = byteLength
+	  var mul = 1
+	  var val = this[offset + --i]
+	  while (i > 0 && (mul *= 0x100)) {
+	    val += this[offset + --i] * mul
+	  }
+	  mul *= 0x80
+
+	  if (val >= mul) val -= Math.pow(2, 8 * byteLength)
+
+	  return val
+	}
+
+	Buffer.prototype.readInt8 = function readInt8 (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 1, this.length)
+	  if (!(this[offset] & 0x80)) return (this[offset])
+	  return ((0xff - this[offset] + 1) * -1)
+	}
+
+	Buffer.prototype.readInt16LE = function readInt16LE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 2, this.length)
+	  var val = this[offset] | (this[offset + 1] << 8)
+	  return (val & 0x8000) ? val | 0xFFFF0000 : val
+	}
+
+	Buffer.prototype.readInt16BE = function readInt16BE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 2, this.length)
+	  var val = this[offset + 1] | (this[offset] << 8)
+	  return (val & 0x8000) ? val | 0xFFFF0000 : val
+	}
+
+	Buffer.prototype.readInt32LE = function readInt32LE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+
+	  return (this[offset]) |
+	    (this[offset + 1] << 8) |
+	    (this[offset + 2] << 16) |
+	    (this[offset + 3] << 24)
+	}
+
+	Buffer.prototype.readInt32BE = function readInt32BE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+
+	  return (this[offset] << 24) |
+	    (this[offset + 1] << 16) |
+	    (this[offset + 2] << 8) |
+	    (this[offset + 3])
+	}
+
+	Buffer.prototype.readFloatLE = function readFloatLE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+	  return ieee754.read(this, offset, true, 23, 4)
+	}
+
+	Buffer.prototype.readFloatBE = function readFloatBE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 4, this.length)
+	  return ieee754.read(this, offset, false, 23, 4)
+	}
+
+	Buffer.prototype.readDoubleLE = function readDoubleLE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 8, this.length)
+	  return ieee754.read(this, offset, true, 52, 8)
+	}
+
+	Buffer.prototype.readDoubleBE = function readDoubleBE (offset, noAssert) {
+	  if (!noAssert) checkOffset(offset, 8, this.length)
+	  return ieee754.read(this, offset, false, 52, 8)
+	}
+
+	function checkInt (buf, value, offset, ext, max, min) {
+	  if (!Buffer.isBuffer(buf)) throw new TypeError('buffer must be a Buffer instance')
+	  if (value > max || value < min) throw new RangeError('value is out of bounds')
+	  if (offset + ext > buf.length) throw new RangeError('index out of range')
+	}
+
+	Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+
+	  var mul = 1
+	  var i = 0
+	  this[offset] = value & 0xFF
+	  while (++i < byteLength && (mul *= 0x100)) {
+	    this[offset + i] = (value / mul) & 0xFF
+	  }
+
+	  return offset + byteLength
+	}
+
+	Buffer.prototype.writeUIntBE = function writeUIntBE (value, offset, byteLength, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  byteLength = byteLength | 0
+	  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+
+	  var i = byteLength - 1
+	  var mul = 1
+	  this[offset + i] = value & 0xFF
+	  while (--i >= 0 && (mul *= 0x100)) {
+	    this[offset + i] = (value / mul) & 0xFF
+	  }
+
+	  return offset + byteLength
+	}
+
+	Buffer.prototype.writeUInt8 = function writeUInt8 (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 1, 0xff, 0)
+	  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+	  this[offset] = (value & 0xff)
+	  return offset + 1
+	}
+
+	function objectWriteUInt16 (buf, value, offset, littleEndian) {
+	  if (value < 0) value = 0xffff + value + 1
+	  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; i++) {
+	    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
+	      (littleEndian ? i : 1 - i) * 8
+	  }
+	}
+
+	Buffer.prototype.writeUInt16LE = function writeUInt16LE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value & 0xff)
+	    this[offset + 1] = (value >>> 8)
+	  } else {
+	    objectWriteUInt16(this, value, offset, true)
+	  }
+	  return offset + 2
+	}
+
+	Buffer.prototype.writeUInt16BE = function writeUInt16BE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 2, 0xffff, 0)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value >>> 8)
+	    this[offset + 1] = (value & 0xff)
+	  } else {
+	    objectWriteUInt16(this, value, offset, false)
+	  }
+	  return offset + 2
+	}
+
+	function objectWriteUInt32 (buf, value, offset, littleEndian) {
+	  if (value < 0) value = 0xffffffff + value + 1
+	  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; i++) {
+	    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
+	  }
+	}
+
+	Buffer.prototype.writeUInt32LE = function writeUInt32LE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset + 3] = (value >>> 24)
+	    this[offset + 2] = (value >>> 16)
+	    this[offset + 1] = (value >>> 8)
+	    this[offset] = (value & 0xff)
+	  } else {
+	    objectWriteUInt32(this, value, offset, true)
+	  }
+	  return offset + 4
+	}
+
+	Buffer.prototype.writeUInt32BE = function writeUInt32BE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 4, 0xffffffff, 0)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value >>> 24)
+	    this[offset + 1] = (value >>> 16)
+	    this[offset + 2] = (value >>> 8)
+	    this[offset + 3] = (value & 0xff)
+	  } else {
+	    objectWriteUInt32(this, value, offset, false)
+	  }
+	  return offset + 4
+	}
+
+	Buffer.prototype.writeIntLE = function writeIntLE (value, offset, byteLength, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) {
+	    var limit = Math.pow(2, 8 * byteLength - 1)
+
+	    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+	  }
+
+	  var i = 0
+	  var mul = 1
+	  var sub = value < 0 ? 1 : 0
+	  this[offset] = value & 0xFF
+	  while (++i < byteLength && (mul *= 0x100)) {
+	    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+	  }
+
+	  return offset + byteLength
+	}
+
+	Buffer.prototype.writeIntBE = function writeIntBE (value, offset, byteLength, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) {
+	    var limit = Math.pow(2, 8 * byteLength - 1)
+
+	    checkInt(this, value, offset, byteLength, limit - 1, -limit)
+	  }
+
+	  var i = byteLength - 1
+	  var mul = 1
+	  var sub = value < 0 ? 1 : 0
+	  this[offset + i] = value & 0xFF
+	  while (--i >= 0 && (mul *= 0x100)) {
+	    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
+	  }
+
+	  return offset + byteLength
+	}
+
+	Buffer.prototype.writeInt8 = function writeInt8 (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 1, 0x7f, -0x80)
+	  if (!Buffer.TYPED_ARRAY_SUPPORT) value = Math.floor(value)
+	  if (value < 0) value = 0xff + value + 1
+	  this[offset] = (value & 0xff)
+	  return offset + 1
+	}
+
+	Buffer.prototype.writeInt16LE = function writeInt16LE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value & 0xff)
+	    this[offset + 1] = (value >>> 8)
+	  } else {
+	    objectWriteUInt16(this, value, offset, true)
+	  }
+	  return offset + 2
+	}
+
+	Buffer.prototype.writeInt16BE = function writeInt16BE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 2, 0x7fff, -0x8000)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value >>> 8)
+	    this[offset + 1] = (value & 0xff)
+	  } else {
+	    objectWriteUInt16(this, value, offset, false)
+	  }
+	  return offset + 2
+	}
+
+	Buffer.prototype.writeInt32LE = function writeInt32LE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value & 0xff)
+	    this[offset + 1] = (value >>> 8)
+	    this[offset + 2] = (value >>> 16)
+	    this[offset + 3] = (value >>> 24)
+	  } else {
+	    objectWriteUInt32(this, value, offset, true)
+	  }
+	  return offset + 4
+	}
+
+	Buffer.prototype.writeInt32BE = function writeInt32BE (value, offset, noAssert) {
+	  value = +value
+	  offset = offset | 0
+	  if (!noAssert) checkInt(this, value, offset, 4, 0x7fffffff, -0x80000000)
+	  if (value < 0) value = 0xffffffff + value + 1
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    this[offset] = (value >>> 24)
+	    this[offset + 1] = (value >>> 16)
+	    this[offset + 2] = (value >>> 8)
+	    this[offset + 3] = (value & 0xff)
+	  } else {
+	    objectWriteUInt32(this, value, offset, false)
+	  }
+	  return offset + 4
+	}
+
+	function checkIEEE754 (buf, value, offset, ext, max, min) {
+	  if (value > max || value < min) throw new RangeError('value is out of bounds')
+	  if (offset + ext > buf.length) throw new RangeError('index out of range')
+	  if (offset < 0) throw new RangeError('index out of range')
+	}
+
+	function writeFloat (buf, value, offset, littleEndian, noAssert) {
+	  if (!noAssert) {
+	    checkIEEE754(buf, value, offset, 4, 3.4028234663852886e+38, -3.4028234663852886e+38)
+	  }
+	  ieee754.write(buf, value, offset, littleEndian, 23, 4)
+	  return offset + 4
+	}
+
+	Buffer.prototype.writeFloatLE = function writeFloatLE (value, offset, noAssert) {
+	  return writeFloat(this, value, offset, true, noAssert)
+	}
+
+	Buffer.prototype.writeFloatBE = function writeFloatBE (value, offset, noAssert) {
+	  return writeFloat(this, value, offset, false, noAssert)
+	}
+
+	function writeDouble (buf, value, offset, littleEndian, noAssert) {
+	  if (!noAssert) {
+	    checkIEEE754(buf, value, offset, 8, 1.7976931348623157E+308, -1.7976931348623157E+308)
+	  }
+	  ieee754.write(buf, value, offset, littleEndian, 52, 8)
+	  return offset + 8
+	}
+
+	Buffer.prototype.writeDoubleLE = function writeDoubleLE (value, offset, noAssert) {
+	  return writeDouble(this, value, offset, true, noAssert)
+	}
+
+	Buffer.prototype.writeDoubleBE = function writeDoubleBE (value, offset, noAssert) {
+	  return writeDouble(this, value, offset, false, noAssert)
+	}
+
+	// copy(targetBuffer, targetStart=0, sourceStart=0, sourceEnd=buffer.length)
+	Buffer.prototype.copy = function copy (target, targetStart, start, end) {
+	  if (!start) start = 0
+	  if (!end && end !== 0) end = this.length
+	  if (targetStart >= target.length) targetStart = target.length
+	  if (!targetStart) targetStart = 0
+	  if (end > 0 && end < start) end = start
+
+	  // Copy 0 bytes; we're done
+	  if (end === start) return 0
+	  if (target.length === 0 || this.length === 0) return 0
+
+	  // Fatal error conditions
+	  if (targetStart < 0) {
+	    throw new RangeError('targetStart out of bounds')
+	  }
+	  if (start < 0 || start >= this.length) throw new RangeError('sourceStart out of bounds')
+	  if (end < 0) throw new RangeError('sourceEnd out of bounds')
+
+	  // Are we oob?
+	  if (end > this.length) end = this.length
+	  if (target.length - targetStart < end - start) {
+	    end = target.length - targetStart + start
+	  }
+
+	  var len = end - start
+	  var i
+
+	  if (this === target && start < targetStart && targetStart < end) {
+	    // descending copy from end
+	    for (i = len - 1; i >= 0; i--) {
+	      target[i + targetStart] = this[i + start]
+	    }
+	  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
+	    // ascending copy from start
+	    for (i = 0; i < len; i++) {
+	      target[i + targetStart] = this[i + start]
+	    }
+	  } else {
+	    target._set(this.subarray(start, start + len), targetStart)
+	  }
+
+	  return len
+	}
+
+	// fill(value, start=0, end=buffer.length)
+	Buffer.prototype.fill = function fill (value, start, end) {
+	  if (!value) value = 0
+	  if (!start) start = 0
+	  if (!end) end = this.length
+
+	  if (end < start) throw new RangeError('end < start')
+
+	  // Fill 0 bytes; we're done
+	  if (end === start) return
+	  if (this.length === 0) return
+
+	  if (start < 0 || start >= this.length) throw new RangeError('start out of bounds')
+	  if (end < 0 || end > this.length) throw new RangeError('end out of bounds')
+
+	  var i
+	  if (typeof value === 'number') {
+	    for (i = start; i < end; i++) {
+	      this[i] = value
+	    }
+	  } else {
+	    var bytes = utf8ToBytes(value.toString())
+	    var len = bytes.length
+	    for (i = start; i < end; i++) {
+	      this[i] = bytes[i % len]
+	    }
+	  }
+
+	  return this
+	}
+
+	/**
+	 * Creates a new `ArrayBuffer` with the *copied* memory of the buffer instance.
+	 * Added in Node 0.12. Only available in browsers that support ArrayBuffer.
+	 */
+	Buffer.prototype.toArrayBuffer = function toArrayBuffer () {
+	  if (typeof Uint8Array !== 'undefined') {
+	    if (Buffer.TYPED_ARRAY_SUPPORT) {
+	      return (new Buffer(this)).buffer
+	    } else {
+	      var buf = new Uint8Array(this.length)
+	      for (var i = 0, len = buf.length; i < len; i += 1) {
+	        buf[i] = this[i]
+	      }
+	      return buf.buffer
+	    }
+	  } else {
+	    throw new TypeError('Buffer.toArrayBuffer not supported in this browser')
+	  }
+	}
+
+	// HELPER FUNCTIONS
+	// ================
+
+	var BP = Buffer.prototype
+
+	/**
+	 * Augment a Uint8Array *instance* (not the Uint8Array class!) with Buffer methods
+	 */
+	Buffer._augment = function _augment (arr) {
+	  arr.constructor = Buffer
+	  arr._isBuffer = true
+
+	  // save reference to original Uint8Array set method before overwriting
+	  arr._set = arr.set
+
+	  // deprecated
+	  arr.get = BP.get
+	  arr.set = BP.set
+
+	  arr.write = BP.write
+	  arr.toString = BP.toString
+	  arr.toLocaleString = BP.toString
+	  arr.toJSON = BP.toJSON
+	  arr.equals = BP.equals
+	  arr.compare = BP.compare
+	  arr.indexOf = BP.indexOf
+	  arr.copy = BP.copy
+	  arr.slice = BP.slice
+	  arr.readUIntLE = BP.readUIntLE
+	  arr.readUIntBE = BP.readUIntBE
+	  arr.readUInt8 = BP.readUInt8
+	  arr.readUInt16LE = BP.readUInt16LE
+	  arr.readUInt16BE = BP.readUInt16BE
+	  arr.readUInt32LE = BP.readUInt32LE
+	  arr.readUInt32BE = BP.readUInt32BE
+	  arr.readIntLE = BP.readIntLE
+	  arr.readIntBE = BP.readIntBE
+	  arr.readInt8 = BP.readInt8
+	  arr.readInt16LE = BP.readInt16LE
+	  arr.readInt16BE = BP.readInt16BE
+	  arr.readInt32LE = BP.readInt32LE
+	  arr.readInt32BE = BP.readInt32BE
+	  arr.readFloatLE = BP.readFloatLE
+	  arr.readFloatBE = BP.readFloatBE
+	  arr.readDoubleLE = BP.readDoubleLE
+	  arr.readDoubleBE = BP.readDoubleBE
+	  arr.writeUInt8 = BP.writeUInt8
+	  arr.writeUIntLE = BP.writeUIntLE
+	  arr.writeUIntBE = BP.writeUIntBE
+	  arr.writeUInt16LE = BP.writeUInt16LE
+	  arr.writeUInt16BE = BP.writeUInt16BE
+	  arr.writeUInt32LE = BP.writeUInt32LE
+	  arr.writeUInt32BE = BP.writeUInt32BE
+	  arr.writeIntLE = BP.writeIntLE
+	  arr.writeIntBE = BP.writeIntBE
+	  arr.writeInt8 = BP.writeInt8
+	  arr.writeInt16LE = BP.writeInt16LE
+	  arr.writeInt16BE = BP.writeInt16BE
+	  arr.writeInt32LE = BP.writeInt32LE
+	  arr.writeInt32BE = BP.writeInt32BE
+	  arr.writeFloatLE = BP.writeFloatLE
+	  arr.writeFloatBE = BP.writeFloatBE
+	  arr.writeDoubleLE = BP.writeDoubleLE
+	  arr.writeDoubleBE = BP.writeDoubleBE
+	  arr.fill = BP.fill
+	  arr.inspect = BP.inspect
+	  arr.toArrayBuffer = BP.toArrayBuffer
+
+	  return arr
+	}
+
+	var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
+
+	function base64clean (str) {
+	  // Node strips out invalid characters like \n and \t from the string, base64-js does not
+	  str = stringtrim(str).replace(INVALID_BASE64_RE, '')
+	  // Node converts strings with length < 2 to ''
+	  if (str.length < 2) return ''
+	  // Node allows for non-padded base64 strings (missing trailing ===), base64-js does not
+	  while (str.length % 4 !== 0) {
+	    str = str + '='
+	  }
+	  return str
+	}
+
+	function stringtrim (str) {
+	  if (str.trim) return str.trim()
+	  return str.replace(/^\s+|\s+$/g, '')
+	}
+
+	function toHex (n) {
+	  if (n < 16) return '0' + n.toString(16)
+	  return n.toString(16)
+	}
+
+	function utf8ToBytes (string, units) {
+	  units = units || Infinity
+	  var codePoint
+	  var length = string.length
+	  var leadSurrogate = null
+	  var bytes = []
+
+	  for (var i = 0; i < length; i++) {
+	    codePoint = string.charCodeAt(i)
+
+	    // is surrogate component
+	    if (codePoint > 0xD7FF && codePoint < 0xE000) {
+	      // last char was a lead
+	      if (!leadSurrogate) {
+	        // no lead yet
+	        if (codePoint > 0xDBFF) {
+	          // unexpected trail
+	          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+	          continue
+	        } else if (i + 1 === length) {
+	          // unpaired lead
+	          if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+	          continue
+	        }
+
+	        // valid lead
+	        leadSurrogate = codePoint
+
+	        continue
+	      }
+
+	      // 2 leads in a row
+	      if (codePoint < 0xDC00) {
+	        if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+	        leadSurrogate = codePoint
+	        continue
+	      }
+
+	      // valid surrogate pair
+	      codePoint = (leadSurrogate - 0xD800 << 10 | codePoint - 0xDC00) + 0x10000
+	    } else if (leadSurrogate) {
+	      // valid bmp char, but last char was a lead
+	      if ((units -= 3) > -1) bytes.push(0xEF, 0xBF, 0xBD)
+	    }
+
+	    leadSurrogate = null
+
+	    // encode utf8
+	    if (codePoint < 0x80) {
+	      if ((units -= 1) < 0) break
+	      bytes.push(codePoint)
+	    } else if (codePoint < 0x800) {
+	      if ((units -= 2) < 0) break
+	      bytes.push(
+	        codePoint >> 0x6 | 0xC0,
+	        codePoint & 0x3F | 0x80
+	      )
+	    } else if (codePoint < 0x10000) {
+	      if ((units -= 3) < 0) break
+	      bytes.push(
+	        codePoint >> 0xC | 0xE0,
+	        codePoint >> 0x6 & 0x3F | 0x80,
+	        codePoint & 0x3F | 0x80
+	      )
+	    } else if (codePoint < 0x110000) {
+	      if ((units -= 4) < 0) break
+	      bytes.push(
+	        codePoint >> 0x12 | 0xF0,
+	        codePoint >> 0xC & 0x3F | 0x80,
+	        codePoint >> 0x6 & 0x3F | 0x80,
+	        codePoint & 0x3F | 0x80
+	      )
+	    } else {
+	      throw new Error('Invalid code point')
+	    }
+	  }
+
+	  return bytes
+	}
+
+	function asciiToBytes (str) {
+	  var byteArray = []
+	  for (var i = 0; i < str.length; i++) {
+	    // Node's code seems to be doing this and not & 0x7F..
+	    byteArray.push(str.charCodeAt(i) & 0xFF)
+	  }
+	  return byteArray
+	}
+
+	function utf16leToBytes (str, units) {
+	  var c, hi, lo
+	  var byteArray = []
+	  for (var i = 0; i < str.length; i++) {
+	    if ((units -= 2) < 0) break
+
+	    c = str.charCodeAt(i)
+	    hi = c >> 8
+	    lo = c % 256
+	    byteArray.push(lo)
+	    byteArray.push(hi)
+	  }
+
+	  return byteArray
+	}
+
+	function base64ToBytes (str) {
+	  return base64.toByteArray(base64clean(str))
+	}
+
+	function blitBuffer (src, dst, offset, length) {
+	  for (var i = 0; i < length; i++) {
+	    if ((i + offset >= dst.length) || (i >= src.length)) break
+	    dst[i + offset] = src[i]
+	  }
+	  return i
+	}
+
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).Buffer, (function() { return this; }())))
+
+/***/ },
+/* 64 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+
+	;(function (exports) {
+		'use strict';
+
+	  var Arr = (typeof Uint8Array !== 'undefined')
+	    ? Uint8Array
+	    : Array
+
+		var PLUS   = '+'.charCodeAt(0)
+		var SLASH  = '/'.charCodeAt(0)
+		var NUMBER = '0'.charCodeAt(0)
+		var LOWER  = 'a'.charCodeAt(0)
+		var UPPER  = 'A'.charCodeAt(0)
+		var PLUS_URL_SAFE = '-'.charCodeAt(0)
+		var SLASH_URL_SAFE = '_'.charCodeAt(0)
+
+		function decode (elt) {
+			var code = elt.charCodeAt(0)
+			if (code === PLUS ||
+			    code === PLUS_URL_SAFE)
+				return 62 // '+'
+			if (code === SLASH ||
+			    code === SLASH_URL_SAFE)
+				return 63 // '/'
+			if (code < NUMBER)
+				return -1 //no match
+			if (code < NUMBER + 10)
+				return code - NUMBER + 26 + 26
+			if (code < UPPER + 26)
+				return code - UPPER
+			if (code < LOWER + 26)
+				return code - LOWER + 26
+		}
+
+		function b64ToByteArray (b64) {
+			var i, j, l, tmp, placeHolders, arr
+
+			if (b64.length % 4 > 0) {
+				throw new Error('Invalid string. Length must be a multiple of 4')
+			}
+
+			// the number of equal signs (place holders)
+			// if there are two placeholders, than the two characters before it
+			// represent one byte
+			// if there is only one, then the three characters before it represent 2 bytes
+			// this is just a cheap hack to not do indexOf twice
+			var len = b64.length
+			placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
+
+			// base64 is 4/3 + up to two characters of the original data
+			arr = new Arr(b64.length * 3 / 4 - placeHolders)
+
+			// if there are placeholders, only get up to the last complete 4 chars
+			l = placeHolders > 0 ? b64.length - 4 : b64.length
+
+			var L = 0
+
+			function push (v) {
+				arr[L++] = v
+			}
+
+			for (i = 0, j = 0; i < l; i += 4, j += 3) {
+				tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
+				push((tmp & 0xFF0000) >> 16)
+				push((tmp & 0xFF00) >> 8)
+				push(tmp & 0xFF)
+			}
+
+			if (placeHolders === 2) {
+				tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
+				push(tmp & 0xFF)
+			} else if (placeHolders === 1) {
+				tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
+				push((tmp >> 8) & 0xFF)
+				push(tmp & 0xFF)
+			}
+
+			return arr
+		}
+
+		function uint8ToBase64 (uint8) {
+			var i,
+				extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
+				output = "",
+				temp, length
+
+			function encode (num) {
+				return lookup.charAt(num)
+			}
+
+			function tripletToBase64 (num) {
+				return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
+			}
+
+			// go through the array every three bytes, we'll deal with trailing stuff later
+			for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
+				temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+				output += tripletToBase64(temp)
+			}
+
+			// pad the end with zeros, but make sure to not forget the extra bytes
+			switch (extraBytes) {
+				case 1:
+					temp = uint8[uint8.length - 1]
+					output += encode(temp >> 2)
+					output += encode((temp << 4) & 0x3F)
+					output += '=='
+					break
+				case 2:
+					temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
+					output += encode(temp >> 10)
+					output += encode((temp >> 4) & 0x3F)
+					output += encode((temp << 2) & 0x3F)
+					output += '='
+					break
+			}
+
+			return output
+		}
+
+		exports.toByteArray = b64ToByteArray
+		exports.fromByteArray = uint8ToBase64
+	}( false ? (this.base64js = {}) : exports))
+
+
+/***/ },
+/* 65 */
+/***/ function(module, exports) {
+
+	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
+	  var e, m
+	  var eLen = nBytes * 8 - mLen - 1
+	  var eMax = (1 << eLen) - 1
+	  var eBias = eMax >> 1
+	  var nBits = -7
+	  var i = isLE ? (nBytes - 1) : 0
+	  var d = isLE ? -1 : 1
+	  var s = buffer[offset + i]
+
+	  i += d
+
+	  e = s & ((1 << (-nBits)) - 1)
+	  s >>= (-nBits)
+	  nBits += eLen
+	  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+	  m = e & ((1 << (-nBits)) - 1)
+	  e >>= (-nBits)
+	  nBits += mLen
+	  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+
+	  if (e === 0) {
+	    e = 1 - eBias
+	  } else if (e === eMax) {
+	    return m ? NaN : ((s ? -1 : 1) * Infinity)
+	  } else {
+	    m = m + Math.pow(2, mLen)
+	    e = e - eBias
+	  }
+	  return (s ? -1 : 1) * m * Math.pow(2, e - mLen)
+	}
+
+	exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
+	  var e, m, c
+	  var eLen = nBytes * 8 - mLen - 1
+	  var eMax = (1 << eLen) - 1
+	  var eBias = eMax >> 1
+	  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
+	  var i = isLE ? 0 : (nBytes - 1)
+	  var d = isLE ? 1 : -1
+	  var s = value < 0 || (value === 0 && 1 / value < 0) ? 1 : 0
+
+	  value = Math.abs(value)
+
+	  if (isNaN(value) || value === Infinity) {
+	    m = isNaN(value) ? 1 : 0
+	    e = eMax
+	  } else {
+	    e = Math.floor(Math.log(value) / Math.LN2)
+	    if (value * (c = Math.pow(2, -e)) < 1) {
+	      e--
+	      c *= 2
+	    }
+	    if (e + eBias >= 1) {
+	      value += rt / c
+	    } else {
+	      value += rt * Math.pow(2, 1 - eBias)
+	    }
+	    if (value * c >= 2) {
+	      e++
+	      c /= 2
+	    }
+
+	    if (e + eBias >= eMax) {
+	      m = 0
+	      e = eMax
+	    } else if (e + eBias >= 1) {
+	      m = (value * c - 1) * Math.pow(2, mLen)
+	      e = e + eBias
+	    } else {
+	      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
+	      e = 0
+	    }
+	  }
+
+	  for (; mLen >= 8; buffer[offset + i] = m & 0xff, i += d, m /= 256, mLen -= 8) {}
+
+	  e = (e << mLen) | m
+	  eLen += mLen
+	  for (; eLen > 0; buffer[offset + i] = e & 0xff, i += d, e /= 256, eLen -= 8) {}
+
+	  buffer[offset + i - d] |= s * 128
+	}
+
+
+/***/ },
+/* 66 */
+/***/ function(module, exports) {
+
+	var toString = {}.toString;
+
+	module.exports = Array.isArray || function (arr) {
+	  return toString.call(arr) == '[object Array]';
+	};
+
+
+/***/ },
+/* 67 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports.default = undefined;
+
+	var _shouldComponentUpdate = __webpack_require__(68);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	var _shallowEqualImmutable = __webpack_require__(69);
+
+	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
+
+	var _immutableRenderMixin = __webpack_require__(70);
+
+	var _immutableRenderMixin2 = _interopRequireDefault(_immutableRenderMixin);
+
+	var _immutableRenderDecorator = __webpack_require__(71);
+
+	var _immutableRenderDecorator2 = _interopRequireDefault(_immutableRenderDecorator);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = _immutableRenderMixin2.default;
+	exports.immutableRenderDecorator = _immutableRenderDecorator2.default;
+	exports.shouldComponentUpdate = _shouldComponentUpdate2.default;
+	exports.shallowEqualImmutable = _shallowEqualImmutable2.default;
+
+/***/ },
+/* 68 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.default = shouldComponentUpdate;
+
+	var _shallowEqualImmutable = __webpack_require__(69);
+
+	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function shouldComponentUpdate(nextProps, nextState) {
+	  return !(0, _shallowEqualImmutable2.default)(this.props, nextProps) || !(0, _shallowEqualImmutable2.default)(this.state, nextState);
+	}
+
+/***/ },
+/* 69 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+	exports.default = shallowEqualImmutable;
+
+	var _immutable = __webpack_require__(55);
+
+	var _immutable2 = _interopRequireDefault(_immutable);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var is = _immutable2.default.is.bind(_immutable2.default);
+
+	function shallowEqualImmutable(objA, objB) {
+	  if (objA === objB || is(objA, objB)) {
+	    return true;
+	  }
+
+	  if ((typeof objA === 'undefined' ? 'undefined' : _typeof(objA)) !== 'object' || objA === null || (typeof objB === 'undefined' ? 'undefined' : _typeof(objB)) !== 'object' || objB === null) {
+	    return false;
+	  }
+
+	  var keysA = Object.keys(objA);
+	  var keysB = Object.keys(objB);
+
+	  if (keysA.length !== keysB.length) {
+	    return false;
+	  }
+
+	  // Test for A's keys different from B.
+	  var bHasOwnProperty = Object.prototype.hasOwnProperty.bind(objB);
+	  for (var i = 0; i < keysA.length; i++) {
+	    if (!bHasOwnProperty(keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
+	      return false;
+	    }
+	  }
+
+	  return true;
+	}
+
+/***/ },
+/* 70 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _shouldComponentUpdate = __webpack_require__(68);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = {
+	  shouldComponentUpdate: _shouldComponentUpdate2.default
+	};
+
+/***/ },
+/* 71 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	exports.default = immutableRenderDecorator;
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _shouldComponentUpdate = __webpack_require__(68);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	/**
+	 * Makes the given component "pure".
+	 *
+	 * @param object Target Component.
+	 */
+	function immutableRenderDecorator(Target) {
+	  var Wrapper = function (_Component) {
+	    _inherits(Wrapper, _Component);
+
+	    function Wrapper() {
+	      _classCallCheck(this, Wrapper);
+
+	      return _possibleConstructorReturn(this, Object.getPrototypeOf(Wrapper).apply(this, arguments));
+	    }
+
+	    _createClass(Wrapper, [{
+	      key: 'render',
+	      value: function render() {
+	        return _react2.default.createElement(Target, this.props, this.props.children);
+	      }
+	    }]);
+
+	    return Wrapper;
+	  }(_react.Component);
+
+	  Wrapper.prototype.shouldComponentUpdate = _shouldComponentUpdate2.default;
+
+	  return Wrapper;
+	}
+
+/***/ },
+/* 72 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(73)() ? Set : __webpack_require__(74);
+
+
+/***/ },
+/* 73 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var set, iterator, result;
+		if (typeof Set !== 'function') return false;
+		set = new Set(['raz', 'dwa', 'trzy']);
+		if (String(set) !== '[object Set]') return false;
+		if (set.size !== 3) return false;
+		if (typeof set.add !== 'function') return false;
+		if (typeof set.clear !== 'function') return false;
+		if (typeof set.delete !== 'function') return false;
+		if (typeof set.entries !== 'function') return false;
+		if (typeof set.forEach !== 'function') return false;
+		if (typeof set.has !== 'function') return false;
+		if (typeof set.keys !== 'function') return false;
+		if (typeof set.values !== 'function') return false;
+
+		iterator = set.values();
+		result = iterator.next();
+		if (result.done !== false) return false;
+		if (result.value !== 'raz') return false;
+
+		return true;
+	};
+
+
+/***/ },
+/* 74 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var clear          = __webpack_require__(75)
+	  , eIndexOf       = __webpack_require__(77)
+	  , setPrototypeOf = __webpack_require__(83)
+	  , callable       = __webpack_require__(88)
+	  , d              = __webpack_require__(89)
+	  , ee             = __webpack_require__(101)
+	  , Symbol         = __webpack_require__(102)
+	  , iterator       = __webpack_require__(107)
+	  , forOf          = __webpack_require__(111)
+	  , Iterator       = __webpack_require__(121)
+	  , isNative       = __webpack_require__(122)
+
+	  , call = Function.prototype.call
+	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
+	  , SetPoly, getValues, NativeSet;
+
+	if (isNative) NativeSet = Set;
+
+	module.exports = SetPoly = function Set(/*iterable*/) {
+		var iterable = arguments[0], self;
+		if (!(this instanceof SetPoly)) throw new TypeError('Constructor requires \'new\'');
+		if (isNative && setPrototypeOf) self = setPrototypeOf(new NativeSet(), getPrototypeOf(this));
+		else self = this;
+		if (iterable != null) iterator(iterable);
+		defineProperty(self, '__setData__', d('c', []));
+		if (!iterable) return self;
+		forOf(iterable, function (value) {
+			if (eIndexOf.call(this, value) !== -1) return;
+			this.push(value);
+		}, self.__setData__);
+		return self;
+	};
+
+	if (isNative) {
+		if (setPrototypeOf) setPrototypeOf(SetPoly, NativeSet);
+		SetPoly.prototype = Object.create(NativeSet.prototype, { constructor: d(SetPoly) });
+	}
+
+	ee(Object.defineProperties(SetPoly.prototype, {
+		add: d(function (value) {
+			if (this.has(value)) return this;
+			this.emit('_add', this.__setData__.push(value) - 1, value);
+			return this;
+		}),
+		clear: d(function () {
+			if (!this.__setData__.length) return;
+			clear.call(this.__setData__);
+			this.emit('_clear');
+		}),
+		delete: d(function (value) {
+			var index = eIndexOf.call(this.__setData__, value);
+			if (index === -1) return false;
+			this.__setData__.splice(index, 1);
+			this.emit('_delete', index, value);
+			return true;
+		}),
+		entries: d(function () { return new Iterator(this, 'key+value'); }),
+		forEach: d(function (cb/*, thisArg*/) {
+			var thisArg = arguments[1], iterator, result, value;
+			callable(cb);
+			iterator = this.values();
+			result = iterator._next();
+			while (result !== undefined) {
+				value = iterator._resolve(result);
+				call.call(cb, thisArg, value, value, this);
+				result = iterator._next();
+			}
+		}),
+		has: d(function (value) {
+			return (eIndexOf.call(this.__setData__, value) !== -1);
+		}),
+		keys: d(getValues = function () { return this.values(); }),
+		size: d.gs(function () { return this.__setData__.length; }),
+		values: d(function () { return new Iterator(this); }),
+		toString: d(function () { return '[object Set]'; })
+	}));
+	defineProperty(SetPoly.prototype, Symbol.iterator, d(getValues));
+	defineProperty(SetPoly.prototype, Symbol.toStringTag, d('c', 'Set'));
+
+
+/***/ },
+/* 75 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Inspired by Google Closure:
+	// http://closure-library.googlecode.com/svn/docs/
+	// closure_goog_array_array.js.html#goog.array.clear
+
+	'use strict';
+
+	var value = __webpack_require__(76);
+
+	module.exports = function () {
+		value(this).length = 0;
+		return this;
+	};
+
+
+/***/ },
+/* 76 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (value) {
+		if (value == null) throw new TypeError("Cannot use null or undefined");
+		return value;
+	};
+
+
+/***/ },
+/* 77 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toPosInt = __webpack_require__(78)
+	  , value    = __webpack_require__(76)
+
+	  , indexOf = Array.prototype.indexOf
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , abs = Math.abs, floor = Math.floor;
+
+	module.exports = function (searchElement/*, fromIndex*/) {
+		var i, l, fromIndex, val;
+		if (searchElement === searchElement) { //jslint: ignore
+			return indexOf.apply(this, arguments);
+		}
+
+		l = toPosInt(value(this).length);
+		fromIndex = arguments[1];
+		if (isNaN(fromIndex)) fromIndex = 0;
+		else if (fromIndex >= 0) fromIndex = floor(fromIndex);
+		else fromIndex = toPosInt(this.length) - floor(abs(fromIndex));
+
+		for (i = fromIndex; i < l; ++i) {
+			if (hasOwnProperty.call(this, i)) {
+				val = this[i];
+				if (val !== val) return i; //jslint: ignore
+			}
+		}
+		return -1;
+	};
+
+
+/***/ },
+/* 78 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toInteger = __webpack_require__(79)
+
+	  , max = Math.max;
+
+	module.exports = function (value) { return max(0, toInteger(value)); };
+
+
+/***/ },
+/* 79 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var sign = __webpack_require__(80)
+
+	  , abs = Math.abs, floor = Math.floor;
+
+	module.exports = function (value) {
+		if (isNaN(value)) return 0;
+		value = Number(value);
+		if ((value === 0) || !isFinite(value)) return value;
+		return sign(value) * floor(abs(value));
+	};
+
+
+/***/ },
+/* 80 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(81)()
+		? Math.sign
+		: __webpack_require__(82);
+
+
+/***/ },
+/* 81 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var sign = Math.sign;
+		if (typeof sign !== 'function') return false;
+		return ((sign(10) === 1) && (sign(-20) === -1));
+	};
+
+
+/***/ },
+/* 82 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (value) {
+		value = Number(value);
+		if (isNaN(value) || (value === 0)) return value;
+		return (value > 0) ? 1 : -1;
+	};
+
+
+/***/ },
+/* 83 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(84)()
+		? Object.setPrototypeOf
+		: __webpack_require__(85);
+
+
+/***/ },
+/* 84 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var create = Object.create, getPrototypeOf = Object.getPrototypeOf
+	  , x = {};
+
+	module.exports = function (/*customCreate*/) {
+		var setPrototypeOf = Object.setPrototypeOf
+		  , customCreate = arguments[0] || create;
+		if (typeof setPrototypeOf !== 'function') return false;
+		return getPrototypeOf(setPrototypeOf(customCreate(null), x)) === x;
+	};
+
+
+/***/ },
+/* 85 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Big thanks to @WebReflection for sorting this out
+	// https://gist.github.com/WebReflection/5593554
+
+	'use strict';
+
+	var isObject      = __webpack_require__(86)
+	  , value         = __webpack_require__(76)
+
+	  , isPrototypeOf = Object.prototype.isPrototypeOf
+	  , defineProperty = Object.defineProperty
+	  , nullDesc = { configurable: true, enumerable: false, writable: true,
+			value: undefined }
+	  , validate;
+
+	validate = function (obj, prototype) {
+		value(obj);
+		if ((prototype === null) || isObject(prototype)) return obj;
+		throw new TypeError('Prototype must be null or an object');
+	};
+
+	module.exports = (function (status) {
+		var fn, set;
+		if (!status) return null;
+		if (status.level === 2) {
+			if (status.set) {
+				set = status.set;
+				fn = function (obj, prototype) {
+					set.call(validate(obj, prototype), prototype);
+					return obj;
+				};
+			} else {
+				fn = function (obj, prototype) {
+					validate(obj, prototype).__proto__ = prototype;
+					return obj;
+				};
+			}
+		} else {
+			fn = function self(obj, prototype) {
+				var isNullBase;
+				validate(obj, prototype);
+				isNullBase = isPrototypeOf.call(self.nullPolyfill, obj);
+				if (isNullBase) delete self.nullPolyfill.__proto__;
+				if (prototype === null) prototype = self.nullPolyfill;
+				obj.__proto__ = prototype;
+				if (isNullBase) defineProperty(self.nullPolyfill, '__proto__', nullDesc);
+				return obj;
+			};
+		}
+		return Object.defineProperty(fn, 'level', { configurable: false,
+			enumerable: false, writable: false, value: status.level });
+	}((function () {
+		var x = Object.create(null), y = {}, set
+		  , desc = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__');
+
+		if (desc) {
+			try {
+				set = desc.set; // Opera crashes at this point
+				set.call(x, y);
+			} catch (ignore) { }
+			if (Object.getPrototypeOf(x) === y) return { set: set, level: 2 };
+		}
+
+		x.__proto__ = y;
+		if (Object.getPrototypeOf(x) === y) return { level: 2 };
+
+		x = {};
+		x.__proto__ = y;
+		if (Object.getPrototypeOf(x) === y) return { level: 1 };
+
+		return false;
+	}())));
+
+	__webpack_require__(87);
+
+
+/***/ },
+/* 86 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var map = { function: true, object: true };
+
+	module.exports = function (x) {
+		return ((x != null) && map[typeof x]) || false;
+	};
+
+
+/***/ },
+/* 87 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
+
+	'use strict';
+
+	var create = Object.create, shim;
+
+	if (!__webpack_require__(84)()) {
+		shim = __webpack_require__(85);
+	}
+
+	module.exports = (function () {
+		var nullObject, props, desc;
+		if (!shim) return create;
+		if (shim.level !== 1) return create;
+
+		nullObject = {};
+		props = {};
+		desc = { configurable: false, enumerable: false, writable: true,
+			value: undefined };
+		Object.getOwnPropertyNames(Object.prototype).forEach(function (name) {
+			if (name === '__proto__') {
+				props[name] = { configurable: true, enumerable: false, writable: true,
+					value: undefined };
+				return;
+			}
+			props[name] = desc;
+		});
+		Object.defineProperties(nullObject, props);
+
+		Object.defineProperty(shim, 'nullPolyfill', { configurable: false,
+			enumerable: false, writable: false, value: nullObject });
+
+		return function (prototype, props) {
+			return create((prototype === null) ? nullObject : prototype, props);
+		};
+	}());
+
+
+/***/ },
+/* 88 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (fn) {
+		if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+		return fn;
+	};
+
+
+/***/ },
+/* 89 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var assign        = __webpack_require__(90)
+	  , normalizeOpts = __webpack_require__(96)
+	  , isCallable    = __webpack_require__(97)
+	  , contains      = __webpack_require__(98)
+
+	  , d;
+
+	d = module.exports = function (dscr, value/*, options*/) {
+		var c, e, w, options, desc;
+		if ((arguments.length < 2) || (typeof dscr !== 'string')) {
+			options = value;
+			value = dscr;
+			dscr = null;
+		} else {
+			options = arguments[2];
+		}
+		if (dscr == null) {
+			c = w = true;
+			e = false;
+		} else {
+			c = contains.call(dscr, 'c');
+			e = contains.call(dscr, 'e');
+			w = contains.call(dscr, 'w');
+		}
+
+		desc = { value: value, configurable: c, enumerable: e, writable: w };
+		return !options ? desc : assign(normalizeOpts(options), desc);
+	};
+
+	d.gs = function (dscr, get, set/*, options*/) {
+		var c, e, options, desc;
+		if (typeof dscr !== 'string') {
+			options = set;
+			set = get;
+			get = dscr;
+			dscr = null;
+		} else {
+			options = arguments[3];
+		}
+		if (get == null) {
+			get = undefined;
+		} else if (!isCallable(get)) {
+			options = get;
+			get = set = undefined;
+		} else if (set == null) {
+			set = undefined;
+		} else if (!isCallable(set)) {
+			options = set;
+			set = undefined;
+		}
+		if (dscr == null) {
+			c = true;
+			e = false;
+		} else {
+			c = contains.call(dscr, 'c');
+			e = contains.call(dscr, 'e');
+		}
+
+		desc = { get: get, set: set, configurable: c, enumerable: e };
+		return !options ? desc : assign(normalizeOpts(options), desc);
+	};
+
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(91)()
+		? Object.assign
+		: __webpack_require__(92);
+
+
+/***/ },
+/* 91 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var assign = Object.assign, obj;
+		if (typeof assign !== 'function') return false;
+		obj = { foo: 'raz' };
+		assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
+		return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+	};
+
+
+/***/ },
+/* 92 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var keys  = __webpack_require__(93)
+	  , value = __webpack_require__(76)
+
+	  , max = Math.max;
+
+	module.exports = function (dest, src/*, …srcn*/) {
+		var error, i, l = max(arguments.length, 2), assign;
+		dest = Object(value(dest));
+		assign = function (key) {
+			try { dest[key] = src[key]; } catch (e) {
+				if (!error) error = e;
+			}
+		};
+		for (i = 1; i < l; ++i) {
+			src = arguments[i];
+			keys(src).forEach(assign);
+		}
+		if (error !== undefined) throw error;
+		return dest;
+	};
+
+
+/***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(94)()
+		? Object.keys
+		: __webpack_require__(95);
+
+
+/***/ },
+/* 94 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		try {
+			Object.keys('primitive');
+			return true;
+		} catch (e) { return false; }
+	};
+
+
+/***/ },
+/* 95 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var keys = Object.keys;
+
+	module.exports = function (object) {
+		return keys(object == null ? object : Object(object));
+	};
+
+
+/***/ },
+/* 96 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var forEach = Array.prototype.forEach, create = Object.create;
+
+	var process = function (src, obj) {
+		var key;
+		for (key in src) obj[key] = src[key];
+	};
+
+	module.exports = function (options/*, …options*/) {
+		var result = create(null);
+		forEach.call(arguments, function (options) {
+			if (options == null) return;
+			process(Object(options), result);
+		});
+		return result;
+	};
+
+
+/***/ },
+/* 97 */
+/***/ function(module, exports) {
+
+	// Deprecated
+
+	'use strict';
+
+	module.exports = function (obj) { return typeof obj === 'function'; };
+
+
+/***/ },
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(99)()
+		? String.prototype.contains
+		: __webpack_require__(100);
+
+
+/***/ },
+/* 99 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var str = 'razdwatrzy';
+
+	module.exports = function () {
+		if (typeof str.contains !== 'function') return false;
+		return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+	};
+
+
+/***/ },
+/* 100 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var indexOf = String.prototype.indexOf;
+
+	module.exports = function (searchString/*, position*/) {
+		return indexOf.call(this, searchString, arguments[1]) > -1;
+	};
+
+
+/***/ },
+/* 101 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var d        = __webpack_require__(89)
+	  , callable = __webpack_require__(88)
+
+	  , apply = Function.prototype.apply, call = Function.prototype.call
+	  , create = Object.create, defineProperty = Object.defineProperty
+	  , defineProperties = Object.defineProperties
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , descriptor = { configurable: true, enumerable: false, writable: true }
+
+	  , on, once, off, emit, methods, descriptors, base;
+
+	on = function (type, listener) {
+		var data;
+
+		callable(listener);
+
+		if (!hasOwnProperty.call(this, '__ee__')) {
+			data = descriptor.value = create(null);
+			defineProperty(this, '__ee__', descriptor);
+			descriptor.value = null;
+		} else {
+			data = this.__ee__;
+		}
+		if (!data[type]) data[type] = listener;
+		else if (typeof data[type] === 'object') data[type].push(listener);
+		else data[type] = [data[type], listener];
+
+		return this;
+	};
+
+	once = function (type, listener) {
+		var once, self;
+
+		callable(listener);
+		self = this;
+		on.call(this, type, once = function () {
+			off.call(self, type, once);
+			apply.call(listener, this, arguments);
+		});
+
+		once.__eeOnceListener__ = listener;
+		return this;
+	};
+
+	off = function (type, listener) {
+		var data, listeners, candidate, i;
+
+		callable(listener);
+
+		if (!hasOwnProperty.call(this, '__ee__')) return this;
+		data = this.__ee__;
+		if (!data[type]) return this;
+		listeners = data[type];
+
+		if (typeof listeners === 'object') {
+			for (i = 0; (candidate = listeners[i]); ++i) {
+				if ((candidate === listener) ||
+						(candidate.__eeOnceListener__ === listener)) {
+					if (listeners.length === 2) data[type] = listeners[i ? 0 : 1];
+					else listeners.splice(i, 1);
+				}
+			}
+		} else {
+			if ((listeners === listener) ||
+					(listeners.__eeOnceListener__ === listener)) {
+				delete data[type];
+			}
+		}
+
+		return this;
+	};
+
+	emit = function (type) {
+		var i, l, listener, listeners, args;
+
+		if (!hasOwnProperty.call(this, '__ee__')) return;
+		listeners = this.__ee__[type];
+		if (!listeners) return;
+
+		if (typeof listeners === 'object') {
+			l = arguments.length;
+			args = new Array(l - 1);
+			for (i = 1; i < l; ++i) args[i - 1] = arguments[i];
+
+			listeners = listeners.slice();
+			for (i = 0; (listener = listeners[i]); ++i) {
+				apply.call(listener, this, args);
+			}
+		} else {
+			switch (arguments.length) {
+			case 1:
+				call.call(listeners, this);
+				break;
+			case 2:
+				call.call(listeners, this, arguments[1]);
+				break;
+			case 3:
+				call.call(listeners, this, arguments[1], arguments[2]);
+				break;
+			default:
+				l = arguments.length;
+				args = new Array(l - 1);
+				for (i = 1; i < l; ++i) {
+					args[i - 1] = arguments[i];
+				}
+				apply.call(listeners, this, args);
+			}
+		}
+	};
+
+	methods = {
+		on: on,
+		once: once,
+		off: off,
+		emit: emit
+	};
+
+	descriptors = {
+		on: d(on),
+		once: d(once),
+		off: d(off),
+		emit: d(emit)
+	};
+
+	base = defineProperties({}, descriptors);
+
+	module.exports = exports = function (o) {
+		return (o == null) ? create(base) : defineProperties(Object(o), descriptors);
+	};
+	exports.methods = methods;
+
+
+/***/ },
+/* 102 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(103)() ? Symbol : __webpack_require__(104);
+
+
+/***/ },
+/* 103 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var symbol;
+		if (typeof Symbol !== 'function') return false;
+		symbol = Symbol('test symbol');
+		try { String(symbol); } catch (e) { return false; }
+		if (typeof Symbol.iterator === 'symbol') return true;
+
+		// Return 'true' for polyfills
+		if (typeof Symbol.isConcatSpreadable !== 'object') return false;
+		if (typeof Symbol.iterator !== 'object') return false;
+		if (typeof Symbol.toPrimitive !== 'object') return false;
+		if (typeof Symbol.toStringTag !== 'object') return false;
+		if (typeof Symbol.unscopables !== 'object') return false;
+
+		return true;
+	};
+
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
+
+	'use strict';
+
+	var d              = __webpack_require__(89)
+	  , validateSymbol = __webpack_require__(105)
+
+	  , create = Object.create, defineProperties = Object.defineProperties
+	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
+	  , NativeSymbol, SymbolPolyfill, HiddenSymbol, globalSymbols = create(null);
+
+	if (typeof Symbol === 'function') NativeSymbol = Symbol;
+
+	var generateName = (function () {
+		var created = create(null);
+		return function (desc) {
+			var postfix = 0, name, ie11BugWorkaround;
+			while (created[desc + (postfix || '')]) ++postfix;
+			desc += (postfix || '');
+			created[desc] = true;
+			name = '@@' + desc;
+			defineProperty(objPrototype, name, d.gs(null, function (value) {
+				// For IE11 issue see:
+				// https://connect.microsoft.com/IE/feedbackdetail/view/1928508/
+				//    ie11-broken-getters-on-dom-objects
+				// https://github.com/medikoo/es6-symbol/issues/12
+				if (ie11BugWorkaround) return;
+				ie11BugWorkaround = true;
+				defineProperty(this, name, d(value));
+				ie11BugWorkaround = false;
+			}));
+			return name;
+		};
+	}());
+
+	// Internal constructor (not one exposed) for creating Symbol instances.
+	// This one is used to ensure that `someSymbol instanceof Symbol` always return false
+	HiddenSymbol = function Symbol(description) {
+		if (this instanceof HiddenSymbol) throw new TypeError('TypeError: Symbol is not a constructor');
+		return SymbolPolyfill(description);
+	};
+
+	// Exposed `Symbol` constructor
+	// (returns instances of HiddenSymbol)
+	module.exports = SymbolPolyfill = function Symbol(description) {
+		var symbol;
+		if (this instanceof Symbol) throw new TypeError('TypeError: Symbol is not a constructor');
+		symbol = create(HiddenSymbol.prototype);
+		description = (description === undefined ? '' : String(description));
+		return defineProperties(symbol, {
+			__description__: d('', description),
+			__name__: d('', generateName(description))
+		});
+	};
+	defineProperties(SymbolPolyfill, {
+		for: d(function (key) {
+			if (globalSymbols[key]) return globalSymbols[key];
+			return (globalSymbols[key] = SymbolPolyfill(String(key)));
+		}),
+		keyFor: d(function (s) {
+			var key;
+			validateSymbol(s);
+			for (key in globalSymbols) if (globalSymbols[key] === s) return key;
+		}),
+
+		// If there's native implementation of given symbol, let's fallback to it
+		// to ensure proper interoperability with other native functions e.g. Array.from
+		hasInstance: d('', (NativeSymbol && NativeSymbol.hasInstance) || SymbolPolyfill('hasInstance')),
+		isConcatSpreadable: d('', (NativeSymbol && NativeSymbol.isConcatSpreadable) ||
+			SymbolPolyfill('isConcatSpreadable')),
+		iterator: d('', (NativeSymbol && NativeSymbol.iterator) || SymbolPolyfill('iterator')),
+		match: d('', (NativeSymbol && NativeSymbol.match) || SymbolPolyfill('match')),
+		replace: d('', (NativeSymbol && NativeSymbol.replace) || SymbolPolyfill('replace')),
+		search: d('', (NativeSymbol && NativeSymbol.search) || SymbolPolyfill('search')),
+		species: d('', (NativeSymbol && NativeSymbol.species) || SymbolPolyfill('species')),
+		split: d('', (NativeSymbol && NativeSymbol.split) || SymbolPolyfill('split')),
+		toPrimitive: d('', (NativeSymbol && NativeSymbol.toPrimitive) || SymbolPolyfill('toPrimitive')),
+		toStringTag: d('', (NativeSymbol && NativeSymbol.toStringTag) || SymbolPolyfill('toStringTag')),
+		unscopables: d('', (NativeSymbol && NativeSymbol.unscopables) || SymbolPolyfill('unscopables'))
+	});
+
+	// Internal tweaks for real symbol producer
+	defineProperties(HiddenSymbol.prototype, {
+		constructor: d(SymbolPolyfill),
+		toString: d('', function () { return this.__name__; })
+	});
+
+	// Proper implementation of methods exposed on Symbol.prototype
+	// They won't be accessible on produced symbol instances as they derive from HiddenSymbol.prototype
+	defineProperties(SymbolPolyfill.prototype, {
+		toString: d(function () { return 'Symbol (' + validateSymbol(this).__description__ + ')'; }),
+		valueOf: d(function () { return validateSymbol(this); })
+	});
+	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toPrimitive, d('',
+		function () { return validateSymbol(this); }));
+	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toStringTag, d('c', 'Symbol'));
+
+	// Proper implementaton of toPrimitive and toStringTag for returned symbol instances
+	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toStringTag,
+		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toStringTag]));
+
+	// Note: It's important to define `toPrimitive` as last one, as some implementations
+	// implement `toPrimitive` natively without implementing `toStringTag` (or other specified symbols)
+	// And that may invoke error in definition flow:
+	// See: https://github.com/medikoo/es6-symbol/issues/13#issuecomment-164146149
+	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toPrimitive,
+		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toPrimitive]));
+
+
+/***/ },
+/* 105 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isSymbol = __webpack_require__(106);
+
+	module.exports = function (value) {
+		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
+		return value;
+	};
+
+
+/***/ },
+/* 106 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (x) {
+		return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
+	};
+
+
+/***/ },
+/* 107 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isIterable = __webpack_require__(108);
+
+	module.exports = function (value) {
+		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
+		return value;
+	};
+
+
+/***/ },
+/* 108 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments    = __webpack_require__(109)
+	  , isString       = __webpack_require__(110)
+	  , iteratorSymbol = __webpack_require__(102).iterator
+
+	  , isArray = Array.isArray;
+
+	module.exports = function (value) {
+		if (value == null) return false;
+		if (isArray(value)) return true;
+		if (isString(value)) return true;
+		if (isArguments(value)) return true;
+		return (typeof value[iteratorSymbol] === 'function');
+	};
+
+
+/***/ },
+/* 109 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var toString = Object.prototype.toString
+
+	  , id = toString.call((function () { return arguments; }()));
+
+	module.exports = function (x) { return (toString.call(x) === id); };
+
+
+/***/ },
+/* 110 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var toString = Object.prototype.toString
+
+	  , id = toString.call('');
+
+	module.exports = function (x) {
+		return (typeof x === 'string') || (x && (typeof x === 'object') &&
+			((x instanceof String) || (toString.call(x) === id))) || false;
+	};
+
+
+/***/ },
+/* 111 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments = __webpack_require__(109)
+	  , callable    = __webpack_require__(88)
+	  , isString    = __webpack_require__(110)
+	  , get         = __webpack_require__(112)
+
+	  , isArray = Array.isArray, call = Function.prototype.call
+	  , some = Array.prototype.some;
+
+	module.exports = function (iterable, cb/*, thisArg*/) {
+		var mode, thisArg = arguments[2], result, doBreak, broken, i, l, char, code;
+		if (isArray(iterable) || isArguments(iterable)) mode = 'array';
+		else if (isString(iterable)) mode = 'string';
+		else iterable = get(iterable);
+
+		callable(cb);
+		doBreak = function () { broken = true; };
+		if (mode === 'array') {
+			some.call(iterable, function (value) {
+				call.call(cb, thisArg, value, doBreak);
+				if (broken) return true;
+			});
+			return;
+		}
+		if (mode === 'string') {
+			l = iterable.length;
+			for (i = 0; i < l; ++i) {
+				char = iterable[i];
+				if ((i + 1) < l) {
+					code = char.charCodeAt(0);
+					if ((code >= 0xD800) && (code <= 0xDBFF)) char += iterable[++i];
+				}
+				call.call(cb, thisArg, char, doBreak);
+				if (broken) break;
+			}
+			return;
+		}
+		result = iterable.next();
+
+		while (!result.done) {
+			call.call(cb, thisArg, result.value, doBreak);
+			if (broken) return;
+			result = iterable.next();
+		}
+	};
+
+
+/***/ },
+/* 112 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments    = __webpack_require__(109)
+	  , isString       = __webpack_require__(110)
+	  , ArrayIterator  = __webpack_require__(113)
+	  , StringIterator = __webpack_require__(120)
+	  , iterable       = __webpack_require__(107)
+	  , iteratorSymbol = __webpack_require__(102).iterator;
+
+	module.exports = function (obj) {
+		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
+		if (isArguments(obj)) return new ArrayIterator(obj);
+		if (isString(obj)) return new StringIterator(obj);
+		return new ArrayIterator(obj);
+	};
+
+
+/***/ },
+/* 113 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var setPrototypeOf = __webpack_require__(83)
+	  , contains       = __webpack_require__(98)
+	  , d              = __webpack_require__(89)
+	  , Iterator       = __webpack_require__(114)
+
+	  , defineProperty = Object.defineProperty
+	  , ArrayIterator;
+
+	ArrayIterator = module.exports = function (arr, kind) {
+		if (!(this instanceof ArrayIterator)) return new ArrayIterator(arr, kind);
+		Iterator.call(this, arr);
+		if (!kind) kind = 'value';
+		else if (contains.call(kind, 'key+value')) kind = 'key+value';
+		else if (contains.call(kind, 'key')) kind = 'key';
+		else kind = 'value';
+		defineProperty(this, '__kind__', d('', kind));
+	};
+	if (setPrototypeOf) setPrototypeOf(ArrayIterator, Iterator);
+
+	ArrayIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(ArrayIterator),
+		_resolve: d(function (i) {
+			if (this.__kind__ === 'value') return this.__list__[i];
+			if (this.__kind__ === 'key+value') return [i, this.__list__[i]];
+			return i;
+		}),
+		toString: d(function () { return '[object Array Iterator]'; })
+	});
+
+
+/***/ },
+/* 114 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var clear    = __webpack_require__(75)
+	  , assign   = __webpack_require__(90)
+	  , callable = __webpack_require__(88)
+	  , value    = __webpack_require__(76)
+	  , d        = __webpack_require__(89)
+	  , autoBind = __webpack_require__(115)
+	  , Symbol   = __webpack_require__(102)
+
+	  , defineProperty = Object.defineProperty
+	  , defineProperties = Object.defineProperties
+	  , Iterator;
+
+	module.exports = Iterator = function (list, context) {
+		if (!(this instanceof Iterator)) return new Iterator(list, context);
+		defineProperties(this, {
+			__list__: d('w', value(list)),
+			__context__: d('w', context),
+			__nextIndex__: d('w', 0)
+		});
+		if (!context) return;
+		callable(context.on);
+		context.on('_add', this._onAdd);
+		context.on('_delete', this._onDelete);
+		context.on('_clear', this._onClear);
+	};
+
+	defineProperties(Iterator.prototype, assign({
+		constructor: d(Iterator),
+		_next: d(function () {
+			var i;
+			if (!this.__list__) return;
+			if (this.__redo__) {
+				i = this.__redo__.shift();
+				if (i !== undefined) return i;
+			}
+			if (this.__nextIndex__ < this.__list__.length) return this.__nextIndex__++;
+			this._unBind();
+		}),
+		next: d(function () { return this._createResult(this._next()); }),
+		_createResult: d(function (i) {
+			if (i === undefined) return { done: true, value: undefined };
+			return { done: false, value: this._resolve(i) };
+		}),
+		_resolve: d(function (i) { return this.__list__[i]; }),
+		_unBind: d(function () {
+			this.__list__ = null;
+			delete this.__redo__;
+			if (!this.__context__) return;
+			this.__context__.off('_add', this._onAdd);
+			this.__context__.off('_delete', this._onDelete);
+			this.__context__.off('_clear', this._onClear);
+			this.__context__ = null;
+		}),
+		toString: d(function () { return '[object Iterator]'; })
+	}, autoBind({
+		_onAdd: d(function (index) {
+			if (index >= this.__nextIndex__) return;
+			++this.__nextIndex__;
+			if (!this.__redo__) {
+				defineProperty(this, '__redo__', d('c', [index]));
+				return;
+			}
+			this.__redo__.forEach(function (redo, i) {
+				if (redo >= index) this.__redo__[i] = ++redo;
+			}, this);
+			this.__redo__.push(index);
+		}),
+		_onDelete: d(function (index) {
+			var i;
+			if (index >= this.__nextIndex__) return;
+			--this.__nextIndex__;
+			if (!this.__redo__) return;
+			i = this.__redo__.indexOf(index);
+			if (i !== -1) this.__redo__.splice(i, 1);
+			this.__redo__.forEach(function (redo, i) {
+				if (redo > index) this.__redo__[i] = --redo;
+			}, this);
+		}),
+		_onClear: d(function () {
+			if (this.__redo__) clear.call(this.__redo__);
+			this.__nextIndex__ = 0;
+		})
+	})));
+
+	defineProperty(Iterator.prototype, Symbol.iterator, d(function () {
+		return this;
+	}));
+	defineProperty(Iterator.prototype, Symbol.toStringTag, d('', 'Iterator'));
+
+
+/***/ },
+/* 115 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var copy       = __webpack_require__(116)
+	  , map        = __webpack_require__(117)
+	  , callable   = __webpack_require__(88)
+	  , validValue = __webpack_require__(76)
+
+	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , define;
+
+	define = function (name, desc, bindTo) {
+		var value = validValue(desc) && callable(desc.value), dgs;
+		dgs = copy(desc);
+		delete dgs.writable;
+		delete dgs.value;
+		dgs.get = function () {
+			if (hasOwnProperty.call(this, name)) return value;
+			desc.value = bind.call(value, (bindTo == null) ? this : this[bindTo]);
+			defineProperty(this, name, desc);
+			return this[name];
+		};
+		return dgs;
+	};
+
+	module.exports = function (props/*, bindTo*/) {
+		var bindTo = arguments[1];
+		return map(props, function (desc, name) {
+			return define(name, desc, bindTo);
+		});
+	};
+
+
+/***/ },
+/* 116 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var assign = __webpack_require__(90)
+	  , value  = __webpack_require__(76);
+
+	module.exports = function (obj) {
+		var copy = Object(value(obj));
+		if (copy !== obj) return copy;
+		return assign({}, obj);
+	};
+
+
+/***/ },
+/* 117 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var callable = __webpack_require__(88)
+	  , forEach  = __webpack_require__(118)
+
+	  , call = Function.prototype.call;
+
+	module.exports = function (obj, cb/*, thisArg*/) {
+		var o = {}, thisArg = arguments[2];
+		callable(cb);
+		forEach(obj, function (value, key, obj, index) {
+			o[key] = call.call(cb, thisArg, value, key, obj, index);
+		});
+		return o;
+	};
+
+
+/***/ },
+/* 118 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(119)('forEach');
+
+
+/***/ },
+/* 119 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Internal method, used by iteration functions.
+	// Calls a function for each key-value pair found in object
+	// Optionally takes compareFn to iterate object in specific order
+
+	'use strict';
+
+	var callable = __webpack_require__(88)
+	  , value    = __webpack_require__(76)
+
+	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
+	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	module.exports = function (method, defVal) {
+		return function (obj, cb/*, thisArg, compareFn*/) {
+			var list, thisArg = arguments[2], compareFn = arguments[3];
+			obj = Object(value(obj));
+			callable(cb);
+
+			list = keys(obj);
+			if (compareFn) {
+				list.sort((typeof compareFn === 'function') ? bind.call(compareFn, obj) : undefined);
+			}
+			if (typeof method !== 'function') method = list[method];
+			return call.call(method, list, function (key, index) {
+				if (!propertyIsEnumerable.call(obj, key)) return defVal;
+				return call.call(cb, thisArg, obj[key], key, obj, index);
+			});
+		};
+	};
+
+
+/***/ },
+/* 120 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Thanks @mathiasbynens
+	// http://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
+
+	'use strict';
+
+	var setPrototypeOf = __webpack_require__(83)
+	  , d              = __webpack_require__(89)
+	  , Iterator       = __webpack_require__(114)
+
+	  , defineProperty = Object.defineProperty
+	  , StringIterator;
+
+	StringIterator = module.exports = function (str) {
+		if (!(this instanceof StringIterator)) return new StringIterator(str);
+		str = String(str);
+		Iterator.call(this, str);
+		defineProperty(this, '__length__', d('', str.length));
+
+	};
+	if (setPrototypeOf) setPrototypeOf(StringIterator, Iterator);
+
+	StringIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(StringIterator),
+		_next: d(function () {
+			if (!this.__list__) return;
+			if (this.__nextIndex__ < this.__length__) return this.__nextIndex__++;
+			this._unBind();
+		}),
+		_resolve: d(function (i) {
+			var char = this.__list__[i], code;
+			if (this.__nextIndex__ === this.__length__) return char;
+			code = char.charCodeAt(0);
+			if ((code >= 0xD800) && (code <= 0xDBFF)) return char + this.__list__[this.__nextIndex__++];
+			return char;
+		}),
+		toString: d(function () { return '[object String Iterator]'; })
+	});
+
+
+/***/ },
+/* 121 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var setPrototypeOf    = __webpack_require__(83)
+	  , contains          = __webpack_require__(98)
+	  , d                 = __webpack_require__(89)
+	  , Iterator          = __webpack_require__(114)
+	  , toStringTagSymbol = __webpack_require__(102).toStringTag
+
+	  , defineProperty = Object.defineProperty
+	  , SetIterator;
+
+	SetIterator = module.exports = function (set, kind) {
+		if (!(this instanceof SetIterator)) return new SetIterator(set, kind);
+		Iterator.call(this, set.__setData__, set);
+		if (!kind) kind = 'value';
+		else if (contains.call(kind, 'key+value')) kind = 'key+value';
+		else kind = 'value';
+		defineProperty(this, '__kind__', d('', kind));
+	};
+	if (setPrototypeOf) setPrototypeOf(SetIterator, Iterator);
+
+	SetIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(SetIterator),
+		_resolve: d(function (i) {
+			if (this.__kind__ === 'value') return this.__list__[i];
+			return [this.__list__[i], this.__list__[i]];
+		}),
+		toString: d(function () { return '[object Set Iterator]'; })
+	});
+	defineProperty(SetIterator.prototype, toStringTagSymbol, d('c', 'Set Iterator'));
+
+
+/***/ },
+/* 122 */
+/***/ function(module, exports) {
+
+	// Exports true if environment provides native `Set` implementation,
+	// whatever that is.
+
+	'use strict';
+
+	module.exports = (function () {
+		if (typeof Set === 'undefined') return false;
+		return (Object.prototype.toString.call(Set.prototype) === '[object Set]');
+	}());
+
+
+/***/ },
+/* 123 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -12764,11 +17261,11 @@ var ProperTable =
 		value: true
 	});
 
-	var _moment = __webpack_require__(62);
+	var _moment = __webpack_require__(124);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(63);
+	var _numeral = __webpack_require__(125);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -12835,13 +17332,13 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 62 */
+/* 124 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 63 */
+/* 125 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -13526,7 +18023,7 @@ var ProperTable =
 
 
 /***/ },
-/* 64 */
+/* 126 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -13698,7 +18195,7 @@ var ProperTable =
 
 
 /***/ },
-/* 65 */
+/* 127 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
