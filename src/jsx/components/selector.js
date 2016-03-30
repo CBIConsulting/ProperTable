@@ -30,7 +30,7 @@ const Selector = (props) => {
 	let allSelected = false, somethingSelected = false, content = <i className="fa fa-square-o selector-button"/>;
 	let addClass = 'unchecked';
 	let selected = false;
-	let row = null;
+	let row = null, id = null;
 	let render = null;
 	let onClick = props.onClick;
 	let isHeader = props.isHeader;
@@ -42,6 +42,7 @@ const Selector = (props) => {
 
 	if (typeof props.rowIndex != 'undefined') {
 		row = props.data.get(props.rowIndex).toJSON();
+		id = row[props.idField];
 	}
 
 	if (typeof props.allSelected !== 'undefined') {
@@ -69,6 +70,10 @@ const Selector = (props) => {
 
 	// If all are selected (header) or the row is selected print a check into the FontAwesome checkbox.
 	if (allSelected || (row && row._selected)) {
+		content = <i className="fa fa-check-square-o"/>;
+	}
+
+	if (props.selected && id && props.selected.has(id.toString())) {
 		content = <i className="fa fa-check-square-o"/>;
 	}
 

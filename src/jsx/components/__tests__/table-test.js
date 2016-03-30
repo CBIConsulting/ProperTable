@@ -1,10 +1,58 @@
 import ProperTable from "../table";
 import TestUtils from "react-addons-test-utils";
 import React from 'react';
+import ReactDOM from 'react-dom';
+import clone from 'clone';
 
 describe('ProperTable', () => {
+
+	let wrapper = null;
+
+	beforeEach(function() {
+	    wrapper = document.createElement('div');
+	});
+
 	it('is available', () => {
 		expect(typeof ProperTable !== 'undefined').toBe(true);
+	});
+
+	it('correctly updates data', () => {
+		let cols = [
+			{
+				name: 'col1',
+				label: 'col1',
+				field: 'id',
+				formatter: (value) => <span className={"value-cell value-"+value}>{value}</span>
+			}
+		];
+		let firstdata = [{id: 1}, {id: 2}, {id: 3}];
+		let newdata = [{id: 2}];
+		let extraProps = {
+			idField: 'id',
+			height: 500,
+			width: 500
+		};
+		let nodes = null;
+
+		let component = ReactDOM.render(<ProperTable
+			cols={cols}
+			data={firstdata}
+			{...extraProps}
+		/>, wrapper);
+		spyOn(ProperTable.prototype, 'componentDidMount');
+
+		nodes = TestUtils.scryRenderedDOMComponentsWithClass(component, 'value-cell');
+
+		expect(nodes.length).toBe(3);
+
+		component = ReactDOM.render(<ProperTable
+			cols={cols}
+			data={newdata}
+			{...extraProps}
+		/>, wrapper);
+
+		expect(ProperTable.prototype.componentDidMount.calls.any()).toBe(false);
+		expect(component.state.data.size).toBe(1);
 	});
 
 	describe('column definitions', () => {
@@ -53,7 +101,6 @@ describe('ProperTable', () => {
 					cols: cols,
 					data: data
 				};
-
 			});
 
 			it('selects a single row', () => {
@@ -90,9 +137,46 @@ describe('ProperTable', () => {
 				}/>);
 				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
 
+				//TestUtils.Simulate.click(node);
 				expect(result).toEqual(testProps.data[2]);
 				TestUtils.Simulate.click(node);
 				expect(result).toBeFalsy();
+			});
+
+			it('keeps selection after refreshing data', () => {
+				let result = null;
+				let component = ReactDOM.render(<ProperTable {...testProps} afterSelect={
+					selection => {
+						result = selection;
+					}
+				}/>, wrapper);
+				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
+				let other = null;
+
+				TestUtils.Simulate.click(node);
+				expect(result).toEqual(testProps.data[2]);
+
+				testProps = clone(testProps);
+
+				testProps.data = [{id: 5}, {id: 3}];
+				component = ReactDOM.render(<ProperTable {...testProps} afterSelect={
+					selection => {
+						result = selection;
+					}
+				}/>, wrapper);
+
+				other = TestUtils.scryRenderedDOMComponentsWithClass(component, 'id_2');
+				expect(other.length).toBe(0);
+
+				result = null;
+				component.sendSelection();
+				expect(result).toEqual(testProps.data[1]);
+
+				expect(component.state.data.size).toBe(2);
+
+				other = TestUtils.findRenderedDOMComponentWithClass(component, 'id_5');
+				TestUtils.Simulate.click(other);
+				expect(result).toEqual(testProps.data[0]);
 			});
 		});
 
@@ -165,6 +249,7 @@ describe('ProperTable', () => {
 				}/>);
 				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
 
+				//TestUtils.Simulate.click(node);
 				expect(result).toEqual([testProps.data[2]]);
 				TestUtils.Simulate.click(node);
 				expect(result).toEqual([]);
