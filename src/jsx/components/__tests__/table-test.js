@@ -2,6 +2,7 @@ import ProperTable from "../table";
 import TestUtils from "react-addons-test-utils";
 import React from 'react';
 import ReactDOM from 'react-dom';
+import clone from 'clone';
 
 describe('ProperTable', () => {
 
@@ -100,7 +101,6 @@ describe('ProperTable', () => {
 					cols: cols,
 					data: data
 				};
-
 			});
 
 			it('selects a single row', () => {
@@ -137,9 +137,46 @@ describe('ProperTable', () => {
 				}/>);
 				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
 
+				//TestUtils.Simulate.click(node);
 				expect(result).toEqual(testProps.data[2]);
 				TestUtils.Simulate.click(node);
 				expect(result).toBeFalsy();
+			});
+
+			it('keeps selection after refreshing data', () => {
+				let result = null;
+				let component = ReactDOM.render(<ProperTable {...testProps} afterSelect={
+					selection => {
+						result = selection;
+					}
+				}/>, wrapper);
+				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
+				let other = null;
+
+				TestUtils.Simulate.click(node);
+				expect(result).toEqual(testProps.data[2]);
+
+				testProps = clone(testProps);
+
+				testProps.data = [{id: 5}, {id: 3}];
+				component = ReactDOM.render(<ProperTable {...testProps} afterSelect={
+					selection => {
+						result = selection;
+					}
+				}/>, wrapper);
+
+				other = TestUtils.scryRenderedDOMComponentsWithClass(component, 'id_2');
+				expect(other.length).toBe(0);
+
+				result = null;
+				component.sendSelection();
+				expect(result).toEqual(testProps.data[1]);
+
+				expect(component.state.data.size).toBe(2);
+
+				other = TestUtils.findRenderedDOMComponentWithClass(component, 'id_5');
+				TestUtils.Simulate.click(other);
+				expect(result).toEqual(testProps.data[0]);
 			});
 		});
 
@@ -212,6 +249,7 @@ describe('ProperTable', () => {
 				}/>);
 				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
 
+				//TestUtils.Simulate.click(node);
 				expect(result).toEqual([testProps.data[2]]);
 				TestUtils.Simulate.click(node);
 				expect(result).toEqual([]);

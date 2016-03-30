@@ -55,7 +55,7 @@ var ProperTable =
 
 	var _table2 = _interopRequireDefault(_table);
 
-	var _formatters = __webpack_require__(118);
+	var _formatters = __webpack_require__(123);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -63,13 +63,13 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(121);
+	var _reactDimensions = __webpack_require__(126);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-	__webpack_require__(122);
+	__webpack_require__(127);
 
 	"use strict";
 
@@ -132,6 +132,8 @@ var ProperTable =
 
 	var _clone2 = _interopRequireDefault(_clone);
 
+	var _reactImmutableRenderMixin = __webpack_require__(67);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -140,7 +142,7 @@ var ProperTable =
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var Set = __webpack_require__(67);
+	var Set = __webpack_require__(72);
 
 	/**
 	 * Component properties.
@@ -163,7 +165,7 @@ var ProperTable =
 			className: '',
 			cols: [],
 			data: [],
-			uniqueId: _underscore2['default'].uniqueId('propertable-'),
+			uniqueId: null,
 			afterSort: null,
 			afterSelect: null,
 			selectable: true,
@@ -271,6 +273,11 @@ var ProperTable =
 		}
 
 		_createClass(ProperTable, [{
+			key: 'componentWillMount',
+			value: function componentWillMount() {
+				this.uniqueId = this.props.uniqueId || _underscore2['default'].uniqueId('propertable-');
+			}
+		}, {
 			key: 'componentDidMount',
 			value: function componentDidMount() {
 				// Sort the table if the sort direction of one or more columns are diferent than default.
@@ -282,23 +289,32 @@ var ProperTable =
 			value: function shouldComponentUpdate(nextProps, nextState) {
 				var _this2 = this;
 
-				if (nextProps.cols.length != this.props.cols.length || !_underscore2['default'].isEqual(nextProps.cols, this.props.cols)) {
-					this.setState({
-						cols: _immutable2['default'].fromJS(nextProps.cols)
-					});
-					this.sortTable(nextState.colSortDirs);
+				var propschanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props, nextProps);
+				var statechanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.state, nextState);
+				var somethingchanged = propschanged || statechanged;
+
+				if (propschanged) {
+					if (nextProps.cols.length != this.props.cols.length || !_underscore2['default'].isEqual(nextProps.cols, this.props.cols)) {
+						this.setState({
+							cols: _immutable2['default'].fromJS(nextProps.cols)
+						});
+						this.sortTable(nextState.colSortDirs);
+					}
+
+					if (nextProps.data.length != this.props.data.length || !_underscore2['default'].isEqual(nextProps.data, this.props.data)) {
+						var prepared = this.prepareData(nextProps.data);
+
+						this.setState(prepared, function () {
+							_this2.sortTable(nextState.colSortDirs);
+						});
+					}
 				}
 
-				if (nextProps.data.length != this.props.data.length || !_underscore2['default'].isEqual(nextProps.data, this.props.data)) {
-					var prepared = this.prepareData(nextProps.data);
-
-					this.setState(prepared, function () {
-						_this2.setDefaultSelection(nextProps);
-						_this2.sortTable(nextState.colSortDirs);
-					});
+				if (somethingchanged) {
+					this.checkSelectionChange(nextProps, nextState);
 				}
 
-				return true;
+				return somethingchanged;
 			}
 
 			/**
@@ -317,17 +333,41 @@ var ProperTable =
 				// The data will be inmutable inside the component
 				var data = _immutable2['default'].fromJS(newdata),
 				    index = 0;
-				var indexed = [],
-				    parsed = [];
+				var indexed = {},
+				    parsed = [],
+				    selectedarr = [];
 				var keyField = this.props.idField;
+
+				if (this.props.selected) {
+					if (!_underscore2['default'].isArray(this.props.selected)) {
+						selectedarr = [this.props.selected];
+					} else {
+						selectedarr = this.props.selected;
+					}
+				} else {
+					if (this.state && this.state.selection) {
+						this.state.selection.forEach(function (id) {
+							selectedarr.push(id);
+						});
+					}
+				}
+
+				selectedarr = new Set(selectedarr);
 
 				// Parsing data to add new fields (selected or not, properId, rowIndex)
 				parsed = data.map(function (row) {
 					if (!row.get(keyField, false)) {
 						row = row.set(keyField, _underscore2['default'].uniqueId());
 					}
+
+					var id = row.get(keyField);
+
 					if (!row.get('_selected', false)) {
 						row = row.set('_selected', false);
+					}
+
+					if (selectedarr.has(id)) {
+						row = row.set('_selected', true);
 					}
 
 					row = row.set('_rowIndex', index++);
@@ -807,6 +847,17 @@ var ProperTable =
 				if (this.props.selectable == 'multiple') {
 					var somethingSelected = this.state.selection.size > 0;
 					var sortDir = 'DEF';
+					var selectedSet = null;
+
+					if (this.props.selected) {
+						if (!_underscore2['default'].isArray(this.props.selected)) {
+							selectedSet = new Set([this.props.selected]);
+						} else {
+							selectedSet = new Set(this.props.selected);
+						}
+					} else {
+						selectedSet = this.state.selection;
+					}
 
 					this.state.colSortDirs.forEach(function (element) {
 						if (element.column === 'selector-multiple-column') sortDir = element.direction;
@@ -831,7 +882,9 @@ var ProperTable =
 							})
 						),
 						cell: _react2['default'].createElement(_selector2['default'], {
-							data: this.state.data
+							data: this.state.data,
+							selected: selectedSet,
+							idField: this.props.idField
 						}),
 						allowCellsRecycling: true,
 						width: this.props.selectorWidth,
@@ -902,10 +955,22 @@ var ProperTable =
 		}, {
 			key: 'toggleSelected',
 			value: function toggleSelected(id) {
-				var selection = new Set(this.state.selection);
+				var selection = null;
+
+				if (this.props.selected) {
+					if (!_underscore2['default'].isArray(this.props.selected)) {
+						selection = new Set([this.props.selected.toString()]);
+					} else {
+						selection = new Set(_underscore2['default'].map(this.props.selected, function (v) {
+							return v.toString();
+						}));
+					}
+				} else {
+					selection = new Set(this.state.selection);
+				}
 
 				if (selection.has(id)) {
-					selection['delete'](id); // Returns a copy of the array with all instances with that properId deleted.
+					selection['delete'](id); // Returns a copy of the array with the instance with that properId deleted.
 				} else {
 						if (this.props.selectable == 'multiple') {
 							selection.add(id);
@@ -925,10 +990,21 @@ var ProperTable =
 	   */
 
 		}, {
-			key: 'componentWillUpdate',
-			value: function componentWillUpdate(nextProps, nextState) {
-				if (nextState.selection.size !== this.state.selection.size) {
-					this.updateSelectionData(nextState.selection, nextState.allSelected);
+			key: 'checkSelectionChange',
+			value: function checkSelectionChange(nextProps, nextState) {
+				if (!this.props.selected) {
+					if (this.props.selectable == 'multiple') {
+						if (nextState.selection.size !== this.state.selection.size) {
+							this.updateSelectionData(nextState.selection, nextState.allSelected);
+						}
+					} else {
+						var next = nextState.selection.values().next().value || null;
+						var old = this.state.selection.values().next().value || null;
+
+						if (next !== old) {
+							this.updateSelectionData(next);
+						}
+					}
 				}
 			}
 
@@ -941,8 +1017,10 @@ var ProperTable =
 
 		}, {
 			key: 'updateSelectionData',
-			value: function updateSelectionData(newSelection, newAllSelected) {
+			value: function updateSelectionData(newSelection) {
 				var _this7 = this;
+
+				var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
 				var newIndexed = _underscore2['default'].clone(this.state.indexed);
 				var oldSelection = this.state.selection;
@@ -953,52 +1031,68 @@ var ProperTable =
 				    newData = this.state.data,
 				    rowIndex = null;
 
-				if (!newAllSelected && newSelection.size > 0) {
-					// Change one row data at a time
-					var changedId = null,
-					    _selected = null;
+				if (this.props.selectable != 'multiple') {
+					var oldId = oldSelection.values().next().value || null;
 
-					// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
-					oldSelection.forEach(function (id) {
-						if (!newSelection.has(id)) {
-							changedId = id;
-							_selected = false;
-							return false;
-						}
-					});
+					if (!_underscore2['default'].isNull(oldId)) {
+						newIndexed[oldId]._selected = false; // Update indexed data
+						rowIndex = newIndexed[oldId]._rowIndex; // Get data index
+						rdata = newData.get(rowIndex).set('_selected', false); // Change the row in that index
+						newData = newData.set(rowIndex, rdata); // Set that row in the data object
+					}
 
-					// Otherwise a new row has been selected. Look through the new selection for the new element.
-					if (!changedId) {
-						_selected = true;
-						newSelection.forEach(function (id) {
-							if (!oldSelection.has(id)) {
+					if (!_underscore2['default'].isNull(newSelection)) {
+						newIndexed[newSelection]._selected = true; // Update indexed data
+						rowIndex = newIndexed[newSelection]._rowIndex; // Get data index
+						rdata = newData.get(rowIndex).set('_selected', true); // Change the row in that index
+						newData = newData.set(rowIndex, rdata); // Set that row in the data object
+					}
+				} else if (!newAllSelected && newSelection.size > 0) {
+						// Change one row data at a time
+						var changedId = null,
+						    _selected = null;
+
+						// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
+						oldSelection.forEach(function (id) {
+							if (!newSelection.has(id)) {
 								changedId = id;
+								_selected = false;
 								return false;
 							}
 						});
-					}
 
-					newIndexed[changedId]._selected = _selected; // Update indexed data
-					rowIndex = newIndexed[changedId]._rowIndex; // Get data index
-					rdata = newData.get(rowIndex).set('_selected', _selected); // Change the row in that index
-					newData = newData.set(rowIndex, rdata); // Set that row in the data object
-				} else {
-						// Change all data
-						newData = newData.map(function (row) {
-							rowid = row.get(_this7.props.idField);
-							selected = newSelection.has(rowid.toString());
-							rdata = row.set('_selected', selected);
-							curIndex = newIndexed[rowid];
+						// Otherwise a new row has been selected. Look through the new selection for the new element.
+						if (!changedId) {
+							_selected = true;
+							newSelection.forEach(function (id) {
+								if (!oldSelection.has(id)) {
+									changedId = id;
+									return false;
+								}
+							});
+						}
 
-							if (curIndex._selected != selected) {
-								// update indexed data
-								curIndex._selected = selected;
-								newIndexed[rowid] = curIndex;
-							}
+						newIndexed[changedId]._selected = _selected; // Update indexed data
+						rowIndex = newIndexed[changedId]._rowIndex; // Get data index
+						rdata = newData.get(rowIndex).set('_selected', _selected); // Change the row in that index
+						newData = newData.set(rowIndex, rdata); // Set that row in the data object
+					} else {
+							// Change all data
+							newData = newData.map(function (row) {
+								rowid = row.get(_this7.props.idField);
+								selected = newSelection.has(rowid.toString());
+								rdata = row.set('_selected', selected);
+								curIndex = newIndexed[rowid];
 
-							return rdata;
-						});
-					}
+								if (curIndex._selected != selected) {
+									// update indexed data
+									curIndex._selected = selected;
+									newIndexed[rowid] = curIndex;
+								}
+
+								return rdata;
+							});
+						}
 
 				this.setState({
 					data: newData,
@@ -1016,13 +1110,21 @@ var ProperTable =
 		}, {
 			key: 'triggerSelection',
 			value: function triggerSelection() {
+				var _this8 = this;
+
 				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? new Set() : arguments[0];
 
-				if (newSelection.size !== this.state.selection.size) {
+				if (!this.props.selected) {
 					this.setState({
 						selection: newSelection,
-						allSelected: newSelection.size == this.state.data.size
+						allSelected: newSelection.size >= this.state.data.size
 					}, this.sendSelection);
+				} else {
+					this.setState({
+						allSelected: newSelection.size >= this.state.data.size
+					}, function () {
+						_this8.sendSelection(newSelection);
+					});
 				}
 			}
 
@@ -1033,11 +1135,13 @@ var ProperTable =
 		}, {
 			key: 'sendSelection',
 			value: function sendSelection() {
-				var _this8 = this;
+				var _this9 = this;
+
+				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
 				if (typeof this.props.afterSelect == 'function') {
 					(function () {
-						var _state = _this8.state;
+						var _state = _this9.state;
 						var selection = _state.selection;
 						var indexed = _state.indexed;
 						var rawdata = _state.rawdata;
@@ -1045,21 +1149,41 @@ var ProperTable =
 						var output = [];
 						var selectionArray = [];
 
-						selection.forEach(function (element) {
-							selectionArray.push(element);
-						});
+						if (newSelection) {
+							newSelection.forEach(function (element) {
+								selectionArray.push(element);
+							});
+						} else {
+							if (_this9.props.selected) {
+								selectionArray = _this9.props.selected;
+
+								if (!_underscore2['default'].isArray(selectionArray)) {
+									selectionArray = [selectionArray];
+								}
+							} else {
+								selection.forEach(function (element) {
+									selectionArray.push(element);
+								});
+							}
+						}
 
 						output = _underscore2['default'].map(selectionArray, function (pId) {
+							if (typeof indexed[pId] == 'undefined') {
+								return null;
+							}
+
 							var rowIndex = indexed[pId]._rowIndex;
 
 							return rawdata.get(rowIndex).toJSON();
 						});
 
-						if (_this8.props.selectable === true) {
+						output = _underscore2['default'].compact(output);
+
+						if (_this9.props.selectable === true) {
 							output = output[0];
 						}
 
-						_this8.props.afterSelect(output);
+						_this9.props.afterSelect(output);
 					})();
 				}
 			}
@@ -1071,11 +1195,11 @@ var ProperTable =
 		}, {
 			key: 'sendSortedData',
 			value: function sendSortedData() {
-				var _this9 = this;
+				var _this10 = this;
 
 				if (typeof this.props.afterSort == 'function') {
 					(function () {
-						var _state2 = _this9.state;
+						var _state2 = _this10.state;
 						var data = _state2.data;
 						var indexed = _state2.indexed;
 						var rawdata = _state2.rawdata;
@@ -1088,7 +1212,7 @@ var ProperTable =
 							return rawdata.get(rowIndex).toJSON();
 						});
 
-						_this9.props.afterSort(output);
+						_this10.props.afterSort(output);
 					})();
 				}
 			}
@@ -1105,6 +1229,24 @@ var ProperTable =
 			value: function getRowClassName(index) {
 				var addClass = 'propertable-row';
 				var selected = this.state.data.get(index).get('_selected');
+				var id = this.state.data.get(index).get(this.props.idField);
+				var selectedSet = null;
+
+				if (!selected) {
+					if (this.props.selected) {
+						if (!_underscore2['default'].isArray(this.props.selected)) {
+							selectedSet = new Set([this.props.selected]);
+						} else {
+							selectedSet = new Set(this.props.selected);
+						}
+					} else {
+						if (this.state.selection) {
+							selectedSet = this.state.selection;
+						}
+					}
+
+					selected = selectedSet && selectedSet.has(id.toString());
+				}
 
 				if (selected) {
 					addClass += ' selected';
@@ -1136,6 +1278,8 @@ var ProperTable =
 					content = _react2['default'].createElement(
 						_fixedDataTable.Table,
 						_extends({
+							ref: 'fixeddatatable',
+							key: this.uniqueId + '-table',
 							width: this.props.containerWidth || 100,
 							height: this.props.containerHeight || 100,
 							headerHeight: this.props.rowHeight,
@@ -1154,7 +1298,7 @@ var ProperTable =
 
 				return _react2['default'].createElement(
 					'div',
-					{ id: this.props.uniqueId, className: 'propertable ' + this.props.className },
+					{ id: this.uniqueId, className: 'propertable ' + this.props.className },
 					content
 				);
 			}
@@ -13022,7 +13166,8 @@ var ProperTable =
 		    content = _react2['default'].createElement('i', { className: 'fa fa-square-o selector-button' });
 		var addClass = 'unchecked';
 		var selected = false;
-		var row = null;
+		var row = null,
+		    id = null;
 		var render = null;
 		var _onClick = props.onClick;
 		var isHeader = props.isHeader;
@@ -13034,6 +13179,7 @@ var ProperTable =
 
 		if (typeof props.rowIndex != 'undefined') {
 			row = props.data.get(props.rowIndex).toJSON();
+			id = row[props.idField];
 		}
 
 		if (typeof props.allSelected !== 'undefined') {
@@ -13061,6 +13207,10 @@ var ProperTable =
 
 		// If all are selected (header) or the row is selected print a check into the FontAwesome checkbox.
 		if (allSelected || row && row._selected) {
+			content = _react2['default'].createElement('i', { className: 'fa fa-check-square-o' });
+		}
+
+		if (props.selected && id && props.selected.has(id.toString())) {
 			content = _react2['default'].createElement('i', { className: 'fa fa-check-square-o' });
 		}
 
@@ -15468,11 +15618,195 @@ var ProperTable =
 
 	'use strict';
 
-	module.exports = __webpack_require__(68)() ? Set : __webpack_require__(69);
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports.default = undefined;
 
+	var _shouldComponentUpdate = __webpack_require__(68);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	var _shallowEqualImmutable = __webpack_require__(69);
+
+	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
+
+	var _immutableRenderMixin = __webpack_require__(70);
+
+	var _immutableRenderMixin2 = _interopRequireDefault(_immutableRenderMixin);
+
+	var _immutableRenderDecorator = __webpack_require__(71);
+
+	var _immutableRenderDecorator2 = _interopRequireDefault(_immutableRenderDecorator);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = _immutableRenderMixin2.default;
+	exports.immutableRenderDecorator = _immutableRenderDecorator2.default;
+	exports.shouldComponentUpdate = _shouldComponentUpdate2.default;
+	exports.shallowEqualImmutable = _shallowEqualImmutable2.default;
 
 /***/ },
 /* 68 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.default = shouldComponentUpdate;
+
+	var _shallowEqualImmutable = __webpack_require__(69);
+
+	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function shouldComponentUpdate(nextProps, nextState) {
+	  return !(0, _shallowEqualImmutable2.default)(this.props, nextProps) || !(0, _shallowEqualImmutable2.default)(this.state, nextState);
+	}
+
+/***/ },
+/* 69 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+	exports.default = shallowEqualImmutable;
+
+	var _immutable = __webpack_require__(55);
+
+	var _immutable2 = _interopRequireDefault(_immutable);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var is = _immutable2.default.is.bind(_immutable2.default);
+
+	function shallowEqualImmutable(objA, objB) {
+	  if (objA === objB || is(objA, objB)) {
+	    return true;
+	  }
+
+	  if ((typeof objA === 'undefined' ? 'undefined' : _typeof(objA)) !== 'object' || objA === null || (typeof objB === 'undefined' ? 'undefined' : _typeof(objB)) !== 'object' || objB === null) {
+	    return false;
+	  }
+
+	  var keysA = Object.keys(objA);
+	  var keysB = Object.keys(objB);
+
+	  if (keysA.length !== keysB.length) {
+	    return false;
+	  }
+
+	  // Test for A's keys different from B.
+	  var bHasOwnProperty = Object.prototype.hasOwnProperty.bind(objB);
+	  for (var i = 0; i < keysA.length; i++) {
+	    if (!bHasOwnProperty(keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
+	      return false;
+	    }
+	  }
+
+	  return true;
+	}
+
+/***/ },
+/* 70 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _shouldComponentUpdate = __webpack_require__(68);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = {
+	  shouldComponentUpdate: _shouldComponentUpdate2.default
+	};
+
+/***/ },
+/* 71 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	exports.default = immutableRenderDecorator;
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _shouldComponentUpdate = __webpack_require__(68);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	/**
+	 * Makes the given component "pure".
+	 *
+	 * @param object Target Component.
+	 */
+	function immutableRenderDecorator(Target) {
+	  var Wrapper = function (_Component) {
+	    _inherits(Wrapper, _Component);
+
+	    function Wrapper() {
+	      _classCallCheck(this, Wrapper);
+
+	      return _possibleConstructorReturn(this, Object.getPrototypeOf(Wrapper).apply(this, arguments));
+	    }
+
+	    _createClass(Wrapper, [{
+	      key: 'render',
+	      value: function render() {
+	        return _react2.default.createElement(Target, this.props, this.props.children);
+	      }
+	    }]);
+
+	    return Wrapper;
+	  }(_react.Component);
+
+	  Wrapper.prototype.shouldComponentUpdate = _shouldComponentUpdate2.default;
+
+	  return Wrapper;
+	}
+
+/***/ },
+/* 72 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(73)() ? Set : __webpack_require__(74);
+
+
+/***/ },
+/* 73 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15502,22 +15836,22 @@ var ProperTable =
 
 
 /***/ },
-/* 69 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var clear          = __webpack_require__(70)
-	  , eIndexOf       = __webpack_require__(72)
-	  , setPrototypeOf = __webpack_require__(78)
-	  , callable       = __webpack_require__(83)
-	  , d              = __webpack_require__(84)
-	  , ee             = __webpack_require__(96)
-	  , Symbol         = __webpack_require__(97)
-	  , iterator       = __webpack_require__(102)
-	  , forOf          = __webpack_require__(106)
-	  , Iterator       = __webpack_require__(116)
-	  , isNative       = __webpack_require__(117)
+	var clear          = __webpack_require__(75)
+	  , eIndexOf       = __webpack_require__(77)
+	  , setPrototypeOf = __webpack_require__(83)
+	  , callable       = __webpack_require__(88)
+	  , d              = __webpack_require__(89)
+	  , ee             = __webpack_require__(101)
+	  , Symbol         = __webpack_require__(102)
+	  , iterator       = __webpack_require__(107)
+	  , forOf          = __webpack_require__(111)
+	  , Iterator       = __webpack_require__(121)
+	  , isNative       = __webpack_require__(122)
 
 	  , call = Function.prototype.call
 	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
@@ -15588,7 +15922,7 @@ var ProperTable =
 
 
 /***/ },
-/* 70 */
+/* 75 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Inspired by Google Closure:
@@ -15597,7 +15931,7 @@ var ProperTable =
 
 	'use strict';
 
-	var value = __webpack_require__(71);
+	var value = __webpack_require__(76);
 
 	module.exports = function () {
 		value(this).length = 0;
@@ -15606,7 +15940,7 @@ var ProperTable =
 
 
 /***/ },
-/* 71 */
+/* 76 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15618,13 +15952,13 @@ var ProperTable =
 
 
 /***/ },
-/* 72 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toPosInt = __webpack_require__(73)
-	  , value    = __webpack_require__(71)
+	var toPosInt = __webpack_require__(78)
+	  , value    = __webpack_require__(76)
 
 	  , indexOf = Array.prototype.indexOf
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
@@ -15653,12 +15987,12 @@ var ProperTable =
 
 
 /***/ },
-/* 73 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toInteger = __webpack_require__(74)
+	var toInteger = __webpack_require__(79)
 
 	  , max = Math.max;
 
@@ -15666,12 +16000,12 @@ var ProperTable =
 
 
 /***/ },
-/* 74 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var sign = __webpack_require__(75)
+	var sign = __webpack_require__(80)
 
 	  , abs = Math.abs, floor = Math.floor;
 
@@ -15684,18 +16018,18 @@ var ProperTable =
 
 
 /***/ },
-/* 75 */
+/* 80 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(76)()
+	module.exports = __webpack_require__(81)()
 		? Math.sign
-		: __webpack_require__(77);
+		: __webpack_require__(82);
 
 
 /***/ },
-/* 76 */
+/* 81 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15708,7 +16042,7 @@ var ProperTable =
 
 
 /***/ },
-/* 77 */
+/* 82 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15721,18 +16055,18 @@ var ProperTable =
 
 
 /***/ },
-/* 78 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(79)()
+	module.exports = __webpack_require__(84)()
 		? Object.setPrototypeOf
-		: __webpack_require__(80);
+		: __webpack_require__(85);
 
 
 /***/ },
-/* 79 */
+/* 84 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15749,7 +16083,7 @@ var ProperTable =
 
 
 /***/ },
-/* 80 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Big thanks to @WebReflection for sorting this out
@@ -15757,8 +16091,8 @@ var ProperTable =
 
 	'use strict';
 
-	var isObject      = __webpack_require__(81)
-	  , value         = __webpack_require__(71)
+	var isObject      = __webpack_require__(86)
+	  , value         = __webpack_require__(76)
 
 	  , isPrototypeOf = Object.prototype.isPrototypeOf
 	  , defineProperty = Object.defineProperty
@@ -15824,11 +16158,11 @@ var ProperTable =
 		return false;
 	}())));
 
-	__webpack_require__(82);
+	__webpack_require__(87);
 
 
 /***/ },
-/* 81 */
+/* 86 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15841,7 +16175,7 @@ var ProperTable =
 
 
 /***/ },
-/* 82 */
+/* 87 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
@@ -15850,8 +16184,8 @@ var ProperTable =
 
 	var create = Object.create, shim;
 
-	if (!__webpack_require__(79)()) {
-		shim = __webpack_require__(80);
+	if (!__webpack_require__(84)()) {
+		shim = __webpack_require__(85);
 	}
 
 	module.exports = (function () {
@@ -15883,7 +16217,7 @@ var ProperTable =
 
 
 /***/ },
-/* 83 */
+/* 88 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15895,15 +16229,15 @@ var ProperTable =
 
 
 /***/ },
-/* 84 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign        = __webpack_require__(85)
-	  , normalizeOpts = __webpack_require__(91)
-	  , isCallable    = __webpack_require__(92)
-	  , contains      = __webpack_require__(93)
+	var assign        = __webpack_require__(90)
+	  , normalizeOpts = __webpack_require__(96)
+	  , isCallable    = __webpack_require__(97)
+	  , contains      = __webpack_require__(98)
 
 	  , d;
 
@@ -15964,18 +16298,18 @@ var ProperTable =
 
 
 /***/ },
-/* 85 */
+/* 90 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(86)()
+	module.exports = __webpack_require__(91)()
 		? Object.assign
-		: __webpack_require__(87);
+		: __webpack_require__(92);
 
 
 /***/ },
-/* 86 */
+/* 91 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15990,13 +16324,13 @@ var ProperTable =
 
 
 /***/ },
-/* 87 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var keys  = __webpack_require__(88)
-	  , value = __webpack_require__(71)
+	var keys  = __webpack_require__(93)
+	  , value = __webpack_require__(76)
 
 	  , max = Math.max;
 
@@ -16018,18 +16352,18 @@ var ProperTable =
 
 
 /***/ },
-/* 88 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(89)()
+	module.exports = __webpack_require__(94)()
 		? Object.keys
-		: __webpack_require__(90);
+		: __webpack_require__(95);
 
 
 /***/ },
-/* 89 */
+/* 94 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16043,7 +16377,7 @@ var ProperTable =
 
 
 /***/ },
-/* 90 */
+/* 95 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16056,7 +16390,7 @@ var ProperTable =
 
 
 /***/ },
-/* 91 */
+/* 96 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16079,7 +16413,7 @@ var ProperTable =
 
 
 /***/ },
-/* 92 */
+/* 97 */
 /***/ function(module, exports) {
 
 	// Deprecated
@@ -16090,18 +16424,18 @@ var ProperTable =
 
 
 /***/ },
-/* 93 */
+/* 98 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(94)()
+	module.exports = __webpack_require__(99)()
 		? String.prototype.contains
-		: __webpack_require__(95);
+		: __webpack_require__(100);
 
 
 /***/ },
-/* 94 */
+/* 99 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16115,7 +16449,7 @@ var ProperTable =
 
 
 /***/ },
-/* 95 */
+/* 100 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16128,13 +16462,13 @@ var ProperTable =
 
 
 /***/ },
-/* 96 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var d        = __webpack_require__(84)
-	  , callable = __webpack_require__(83)
+	var d        = __webpack_require__(89)
+	  , callable = __webpack_require__(88)
 
 	  , apply = Function.prototype.apply, call = Function.prototype.call
 	  , create = Object.create, defineProperty = Object.defineProperty
@@ -16266,16 +16600,16 @@ var ProperTable =
 
 
 /***/ },
-/* 97 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(98)() ? Symbol : __webpack_require__(99);
+	module.exports = __webpack_require__(103)() ? Symbol : __webpack_require__(104);
 
 
 /***/ },
-/* 98 */
+/* 103 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16299,15 +16633,15 @@ var ProperTable =
 
 
 /***/ },
-/* 99 */
+/* 104 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
 
 	'use strict';
 
-	var d              = __webpack_require__(84)
-	  , validateSymbol = __webpack_require__(100)
+	var d              = __webpack_require__(89)
+	  , validateSymbol = __webpack_require__(105)
 
 	  , create = Object.create, defineProperties = Object.defineProperties
 	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
@@ -16412,12 +16746,12 @@ var ProperTable =
 
 
 /***/ },
-/* 100 */
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isSymbol = __webpack_require__(101);
+	var isSymbol = __webpack_require__(106);
 
 	module.exports = function (value) {
 		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
@@ -16426,7 +16760,7 @@ var ProperTable =
 
 
 /***/ },
-/* 101 */
+/* 106 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16437,12 +16771,12 @@ var ProperTable =
 
 
 /***/ },
-/* 102 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isIterable = __webpack_require__(103);
+	var isIterable = __webpack_require__(108);
 
 	module.exports = function (value) {
 		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
@@ -16451,14 +16785,14 @@ var ProperTable =
 
 
 /***/ },
-/* 103 */
+/* 108 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments    = __webpack_require__(104)
-	  , isString       = __webpack_require__(105)
-	  , iteratorSymbol = __webpack_require__(97).iterator
+	var isArguments    = __webpack_require__(109)
+	  , isString       = __webpack_require__(110)
+	  , iteratorSymbol = __webpack_require__(102).iterator
 
 	  , isArray = Array.isArray;
 
@@ -16472,7 +16806,7 @@ var ProperTable =
 
 
 /***/ },
-/* 104 */
+/* 109 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16485,7 +16819,7 @@ var ProperTable =
 
 
 /***/ },
-/* 105 */
+/* 110 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16501,15 +16835,15 @@ var ProperTable =
 
 
 /***/ },
-/* 106 */
+/* 111 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments = __webpack_require__(104)
-	  , callable    = __webpack_require__(83)
-	  , isString    = __webpack_require__(105)
-	  , get         = __webpack_require__(107)
+	var isArguments = __webpack_require__(109)
+	  , callable    = __webpack_require__(88)
+	  , isString    = __webpack_require__(110)
+	  , get         = __webpack_require__(112)
 
 	  , isArray = Array.isArray, call = Function.prototype.call
 	  , some = Array.prototype.some;
@@ -16553,17 +16887,17 @@ var ProperTable =
 
 
 /***/ },
-/* 107 */
+/* 112 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments    = __webpack_require__(104)
-	  , isString       = __webpack_require__(105)
-	  , ArrayIterator  = __webpack_require__(108)
-	  , StringIterator = __webpack_require__(115)
-	  , iterable       = __webpack_require__(102)
-	  , iteratorSymbol = __webpack_require__(97).iterator;
+	var isArguments    = __webpack_require__(109)
+	  , isString       = __webpack_require__(110)
+	  , ArrayIterator  = __webpack_require__(113)
+	  , StringIterator = __webpack_require__(120)
+	  , iterable       = __webpack_require__(107)
+	  , iteratorSymbol = __webpack_require__(102).iterator;
 
 	module.exports = function (obj) {
 		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
@@ -16574,15 +16908,15 @@ var ProperTable =
 
 
 /***/ },
-/* 108 */
+/* 113 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var setPrototypeOf = __webpack_require__(78)
-	  , contains       = __webpack_require__(93)
-	  , d              = __webpack_require__(84)
-	  , Iterator       = __webpack_require__(109)
+	var setPrototypeOf = __webpack_require__(83)
+	  , contains       = __webpack_require__(98)
+	  , d              = __webpack_require__(89)
+	  , Iterator       = __webpack_require__(114)
 
 	  , defineProperty = Object.defineProperty
 	  , ArrayIterator;
@@ -16610,18 +16944,18 @@ var ProperTable =
 
 
 /***/ },
-/* 109 */
+/* 114 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var clear    = __webpack_require__(70)
-	  , assign   = __webpack_require__(85)
-	  , callable = __webpack_require__(83)
-	  , value    = __webpack_require__(71)
-	  , d        = __webpack_require__(84)
-	  , autoBind = __webpack_require__(110)
-	  , Symbol   = __webpack_require__(97)
+	var clear    = __webpack_require__(75)
+	  , assign   = __webpack_require__(90)
+	  , callable = __webpack_require__(88)
+	  , value    = __webpack_require__(76)
+	  , d        = __webpack_require__(89)
+	  , autoBind = __webpack_require__(115)
+	  , Symbol   = __webpack_require__(102)
 
 	  , defineProperty = Object.defineProperty
 	  , defineProperties = Object.defineProperties
@@ -16706,15 +17040,15 @@ var ProperTable =
 
 
 /***/ },
-/* 110 */
+/* 115 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var copy       = __webpack_require__(111)
-	  , map        = __webpack_require__(112)
-	  , callable   = __webpack_require__(83)
-	  , validValue = __webpack_require__(71)
+	var copy       = __webpack_require__(116)
+	  , map        = __webpack_require__(117)
+	  , callable   = __webpack_require__(88)
+	  , validValue = __webpack_require__(76)
 
 	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
@@ -16743,13 +17077,13 @@ var ProperTable =
 
 
 /***/ },
-/* 111 */
+/* 116 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign = __webpack_require__(85)
-	  , value  = __webpack_require__(71);
+	var assign = __webpack_require__(90)
+	  , value  = __webpack_require__(76);
 
 	module.exports = function (obj) {
 		var copy = Object(value(obj));
@@ -16759,13 +17093,13 @@ var ProperTable =
 
 
 /***/ },
-/* 112 */
+/* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var callable = __webpack_require__(83)
-	  , forEach  = __webpack_require__(113)
+	var callable = __webpack_require__(88)
+	  , forEach  = __webpack_require__(118)
 
 	  , call = Function.prototype.call;
 
@@ -16780,16 +17114,16 @@ var ProperTable =
 
 
 /***/ },
-/* 113 */
+/* 118 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(114)('forEach');
+	module.exports = __webpack_require__(119)('forEach');
 
 
 /***/ },
-/* 114 */
+/* 119 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Internal method, used by iteration functions.
@@ -16798,8 +17132,8 @@ var ProperTable =
 
 	'use strict';
 
-	var callable = __webpack_require__(83)
-	  , value    = __webpack_require__(71)
+	var callable = __webpack_require__(88)
+	  , value    = __webpack_require__(76)
 
 	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
 	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
@@ -16824,7 +17158,7 @@ var ProperTable =
 
 
 /***/ },
-/* 115 */
+/* 120 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Thanks @mathiasbynens
@@ -16832,9 +17166,9 @@ var ProperTable =
 
 	'use strict';
 
-	var setPrototypeOf = __webpack_require__(78)
-	  , d              = __webpack_require__(84)
-	  , Iterator       = __webpack_require__(109)
+	var setPrototypeOf = __webpack_require__(83)
+	  , d              = __webpack_require__(89)
+	  , Iterator       = __webpack_require__(114)
 
 	  , defineProperty = Object.defineProperty
 	  , StringIterator;
@@ -16867,16 +17201,16 @@ var ProperTable =
 
 
 /***/ },
-/* 116 */
+/* 121 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var setPrototypeOf    = __webpack_require__(78)
-	  , contains          = __webpack_require__(93)
-	  , d                 = __webpack_require__(84)
-	  , Iterator          = __webpack_require__(109)
-	  , toStringTagSymbol = __webpack_require__(97).toStringTag
+	var setPrototypeOf    = __webpack_require__(83)
+	  , contains          = __webpack_require__(98)
+	  , d                 = __webpack_require__(89)
+	  , Iterator          = __webpack_require__(114)
+	  , toStringTagSymbol = __webpack_require__(102).toStringTag
 
 	  , defineProperty = Object.defineProperty
 	  , SetIterator;
@@ -16903,7 +17237,7 @@ var ProperTable =
 
 
 /***/ },
-/* 117 */
+/* 122 */
 /***/ function(module, exports) {
 
 	// Exports true if environment provides native `Set` implementation,
@@ -16918,7 +17252,7 @@ var ProperTable =
 
 
 /***/ },
-/* 118 */
+/* 123 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -16927,11 +17261,11 @@ var ProperTable =
 		value: true
 	});
 
-	var _moment = __webpack_require__(119);
+	var _moment = __webpack_require__(124);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(120);
+	var _numeral = __webpack_require__(125);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -16998,13 +17332,13 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 119 */
+/* 124 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 120 */
+/* 125 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -17689,7 +18023,7 @@ var ProperTable =
 
 
 /***/ },
-/* 121 */
+/* 126 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -17861,7 +18195,7 @@ var ProperTable =
 
 
 /***/ },
-/* 122 */
+/* 127 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
