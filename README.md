@@ -4,8 +4,9 @@
 
 A Proper data table for React based on famous fixed-data-table from Facebook. This components add some functionality to the react-data-table of Facebook. The table was designed to handle thousands of rows of data without sacrificing performance even when it's sorted by some different columns at the same time.
 
+The component is heavily opinionated and requires some external dependencies to be used in the browser.
 
-Used technologies:  
+Used technologies:
 
 - React
 - ES6
@@ -16,11 +17,10 @@ Used technologies:
 - Jasmine
 - Karma
 
-
 Features of ProperTable:
 
 * Fixed Column/s on scrolling
-* Rows selection with callback (return selected rows data) 
+* Rows selection with callback (return selected rows data)
 * Sorting (single column, multiple column sorting)
 * Cell Formating
 * Column Resizing (Fill the container, if the content is bigger than the container then show a horizontal scrollbar)
@@ -38,18 +38,21 @@ Features of ProperTable:
   * Controlled scroll API allows touch support
 
 
-  
+
 The compiled and compressed ProperTable distribution file can be found in the dist folder along with the css file. Add the default stylesheet `dist/propertable.min.css`, then import it into any module.
 
-
+##External dependencies
+* React and React DOM
+* Underscore
+* moment
 
 ## Preview
-![screen shot 2016-03-29 at 10 30 00] (examples/screenshots/example_2.png "Example with some tables and different configurations") 
+![screen shot 2016-03-29 at 10 30 00] (examples/screenshots/example_2.png "Example with some tables and different configurations")
 
 
 ## How to start
 
-Run:  
+Run:
 ```
 npm install
 npm start
@@ -66,20 +69,20 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * cols: Describe columns data. (Array)
  	* name: Internal name. (String)
  	* field: Describe field data. {id, number, nestedField...} (String)
- 	* label: Label in the column header. Could be an html tag, a string... 
+ 	* label: Label in the column header. Could be an html tag, a string...
  	* className: CSS class to add on columns header and each cell.(String)
  	* width: Column width in numerical value. Default 100 (Integer)
  	* sortable: If the column is sortable or not (Boolean)
  	* uniqueId: An unique id for the Table. (Integer)
  	* formatter: Parser for the cell data before render. (Function)
- 		* Ex: 
+ 		* Ex:
  		```javascript
 			formatter: function(value) {
 				return ProperTable.formatters.number(value+1);
 			}
 		```
 	* sortVal: Parser for the column cells before sort. (Function)
-		* Ex: 
+		* Ex:
 		```javascript
 			sortVal: function(value) {
 				return value.toString();
@@ -117,11 +120,11 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 	```javascript
 		[
 			{
-				name: column_1, // Column name  
+				name: column_1, // Column name
 				direction: 'ASC'
 			},
 			{
-				name: column_2,  
+				name: column_2,
 				direction: 'DEF'
 			}
 		]
