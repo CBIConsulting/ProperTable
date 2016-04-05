@@ -572,7 +572,7 @@ class ProperTable extends React.Component {
 
 			col = <Column
 				columnKey={colname}
-				key={_.uniqueId(colname)}
+				key={colname+'-column'}
 				header={
 					<SortHeaderCell
 						onSortChange={this.onSortChange.bind(this)}
@@ -582,7 +582,7 @@ class ProperTable extends React.Component {
 						userClassName={className}
 					/>
 				}
-				cell={<CellRenderer data={this.state.data} colData={colData} col={colData.field}/>}
+				cell={<CellRenderer idField={this.props.idField} indexed={this.state.indexed} data={this.state.data} colData={colData} col={colData.field}/>}
 				allowCellsRecycling
 				align='center'
 				{...extraProps}
@@ -590,7 +590,7 @@ class ProperTable extends React.Component {
 
 			// If isn't a children but the table has nested columns set the column into a group.
 			if (!isChildren && hasNested) {
-				col = <ColumnGroup key={_.uniqueId(colname+'-group')} fixed={extraProps.fixed}>{col}</ColumnGroup>
+				col = <ColumnGroup key={colname+'-group'} fixed={extraProps.fixed}>{col}</ColumnGroup>
 			}
 		} else {
 			// Call the method recursively to all the childrens of this column.
@@ -598,7 +598,7 @@ class ProperTable extends React.Component {
 
 			col = <ColumnGroup
 				columnKey={colname}
-				key={_.uniqueId(colname)}
+				key={colname+'-group'}
 				header={<Cell>{colData.label}</Cell>}
 				{...extraProps}
 			>

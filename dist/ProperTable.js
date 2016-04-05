@@ -783,7 +783,7 @@ var ProperTable =
 
 					col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
 						columnKey: colname,
-						key: _underscore2['default'].uniqueId(colname),
+						key: colname + '-column',
 						header: _react2['default'].createElement(_sortHeaderCell2['default'], {
 							onSortChange: this.onSortChange.bind(this),
 							sortDir: sortDir,
@@ -791,7 +791,7 @@ var ProperTable =
 							sortable: sortable,
 							userClassName: className
 						}),
-						cell: _react2['default'].createElement(_cellRenderer2['default'], { data: this.state.data, colData: colData, col: colData.field }),
+						cell: _react2['default'].createElement(_cellRenderer2['default'], { idField: this.props.idField, indexed: this.state.indexed, data: this.state.data, colData: colData, col: colData.field }),
 						allowCellsRecycling: true,
 						align: 'center'
 					}, extraProps));
@@ -800,7 +800,7 @@ var ProperTable =
 					if (!isChildren && hasNested) {
 						col = _react2['default'].createElement(
 							_fixedDataTable.ColumnGroup,
-							{ key: _underscore2['default'].uniqueId(colname + '-group'), fixed: extraProps.fixed },
+							{ key: colname + '-group', fixed: extraProps.fixed },
 							col
 						);
 					}
@@ -814,7 +814,7 @@ var ProperTable =
 						_fixedDataTable.ColumnGroup,
 						_extends({
 							columnKey: colname,
-							key: _underscore2['default'].uniqueId(colname),
+							key: colname + '-group',
 							header: _react2['default'].createElement(
 								_fixedDataTable.Cell,
 								null,
@@ -13255,7 +13255,7 @@ var ProperTable =
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-		value: true
+	  value: true
 	});
 
 	var _react = __webpack_require__(2);
@@ -13286,37 +13286,31 @@ var ProperTable =
 	 * ```
 	 */
 	var CellRenderer = function CellRenderer(props) {
-		var row = props.data.get(props.rowIndex),
-		    val = null,
-		    formatted = null;
-		var colData = props.colData;
-		var className = colData.className || '';
-		var selected = false;
+	  var indexed = props.indexed;
+	  var row = props.data.get(props.rowIndex),
+	      val = null,
+	      formatted = null;
+	  var colData = props.colData;
+	  var className = colData.className || '';
+	  var selected = false;
+	  var rawdata = indexed[row.get(props.idField)];
 
-		if (row) {
-			// Get the value of the current column in the row
-			val = row.get(props.col);
+	  if (row) {
+	    // Get the value of the current column in the row
+	    val = rawdata[props.col] || null;
+	    formatted = val;
+	  }
 
-			// If val it's an Inmutable object then get the json value.
-			if (val && typeof val.toJSON == 'function') {
-				val = val.toJSON();
-			}
+	  // If exist apply a formater function to that value.
+	  if (typeof colData.formatter == 'function') {
+	    formatted = colData.formatter(val, colData, rawdata);
+	  }
 
-			formatted = val;
-
-			selected = row.get('_selected');
-		}
-
-		// If exist apply a formater function to that value.
-		if (typeof colData.formatter == 'function') {
-			formatted = colData.formatter(val, colData, row.toJSON());
-		}
-
-		return _react2['default'].createElement(
-			_fixedDataTable.Cell,
-			{ className: "propertable-cell " + className },
-			formatted
-		);
+	  return _react2['default'].createElement(
+	    _fixedDataTable.Cell,
+	    { className: "propertable-cell " + className },
+	    formatted
+	  );
 	};
 
 	exports['default'] = CellRenderer;
