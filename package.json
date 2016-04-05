@@ -1,6 +1,6 @@
 {
   "name": "propertable",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A proper data table for React",
   "scripts": {
     "test": "webpack && karma start --single-run --no-auto-watch karma.conf.js",
