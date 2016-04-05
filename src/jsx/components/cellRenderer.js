@@ -21,28 +21,22 @@ import {Cell} from 'fixed-data-table';
  * ```
  */
 const CellRenderer = (props) => {
+	let indexed = props.indexed;
 	let row = props.data.get(props.rowIndex), val = null, formatted = null;
 	let colData = props.colData;
 	let className = colData.className || '';
 	let selected = false;
+	let rawdata = indexed[row.get(props.idField)];
 
 	if (row) {
 		// Get the value of the current column in the row
-		val = row.get(props.col);
-
-		// If val it's an Inmutable object then get the json value.
-		if (val && typeof val.toJSON == 'function') {
-			val = val.toJSON();
-		}
-
+		val = rawdata[props.col] || null;
 		formatted = val;
-
-		selected = row.get('_selected');
 	}
 
 	// If exist apply a formater function to that value.
 	if (typeof colData.formatter == 'function') {
-		formatted = colData.formatter(val, colData, row.toJSON());
+		formatted = colData.formatter(val, colData, rawdata);
 	}
 
 	return <Cell className={"propertable-cell " + className}>
