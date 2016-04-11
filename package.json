@@ -1,6 +1,6 @@
 {
   "name": "propertable",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A proper data table for React",
   "main": "lib/propertable.js",
   "scripts": {
