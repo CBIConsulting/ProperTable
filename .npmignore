@@ -4,3 +4,4 @@ webpack.config.js
 webpack.config.min.js
 examples/*
 dist/*.html
+src

@@ -54,6 +54,12 @@ module.exports = {
     new ExtractTextPlugin('propertable.css', {
       allChunks: true
     }),
-    new webpack.optimize.DedupePlugin()
+    new webpack.optimize.DedupePlugin(),
+    new webpack.DefinePlugin({
+        'process.env': {
+            NODE_ENV: JSON.stringify('production'),
+            APP_ENV: JSON.stringify('browser')
+        },
+    })
   ]
 }
