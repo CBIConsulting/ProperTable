@@ -55,23 +55,23 @@ var ProperTable =
 
 	var _table2 = _interopRequireDefault(_table);
 
-	var _formatters = __webpack_require__(123);
+	var _formatters = __webpack_require__(122);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
-	var _messages = __webpack_require__(57);
+	var _messages = __webpack_require__(56);
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(126);
+	var _reactDimensions = __webpack_require__(125);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-	__webpack_require__(127);
-
-	"use strict";
+	if (true) {
+		__webpack_require__(126);
+	}
 
 	exports["default"] = {
 		Table: (0, _reactDimensions2["default"])()(_table2["default"]),
@@ -100,39 +100,39 @@ var ProperTable =
 
 	var _fixedDataTable = __webpack_require__(3);
 
-	var _immutable = __webpack_require__(55);
+	var _immutable = __webpack_require__(54);
 
 	var _immutable2 = _interopRequireDefault(_immutable);
 
-	var _underscore = __webpack_require__(56);
+	var _underscore = __webpack_require__(55);
 
 	var _underscore2 = _interopRequireDefault(_underscore);
 
-	var _messages = __webpack_require__(57);
+	var _messages = __webpack_require__(56);
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _selector = __webpack_require__(58);
+	var _selector = __webpack_require__(57);
 
 	var _selector2 = _interopRequireDefault(_selector);
 
-	var _cellRenderer = __webpack_require__(59);
+	var _cellRenderer = __webpack_require__(58);
 
 	var _cellRenderer2 = _interopRequireDefault(_cellRenderer);
 
-	var _sortHeaderCell = __webpack_require__(60);
+	var _sortHeaderCell = __webpack_require__(59);
 
 	var _sortHeaderCell2 = _interopRequireDefault(_sortHeaderCell);
 
-	var _binarysearch = __webpack_require__(61);
+	var _binarysearch = __webpack_require__(60);
 
 	var _binarysearch2 = _interopRequireDefault(_binarysearch);
 
-	var _clone = __webpack_require__(62);
+	var _clone = __webpack_require__(61);
 
 	var _clone2 = _interopRequireDefault(_clone);
 
-	var _reactImmutableRenderMixin = __webpack_require__(67);
+	var _reactImmutableRenderMixin = __webpack_require__(66);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -142,7 +142,7 @@ var ProperTable =
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var Set = __webpack_require__(72);
+	var Set = __webpack_require__(71);
 
 	/**
 	 * Component properties.
@@ -1343,9 +1343,9 @@ var ProperTable =
 	'use strict';
 
 	var FixedDataTable = __webpack_require__(5);
-	var FixedDataTableCellDefault = __webpack_require__(44);
-	var FixedDataTableColumn = __webpack_require__(42);
-	var FixedDataTableColumnGroup = __webpack_require__(41);
+	var FixedDataTableCellDefault = __webpack_require__(43);
+	var FixedDataTableColumn = __webpack_require__(41);
+	var FixedDataTableColumnGroup = __webpack_require__(40);
 
 	var FixedDataTableRoot = {
 	  Cell: FixedDataTableCellDefault,
@@ -1360,7 +1360,7 @@ var ProperTable =
 /* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
+	/**
 	 * Copyright (c) 2015, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -1383,19 +1383,19 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var React = __webpack_require__(7);
+	var React = __webpack_require__(6);
 
 	var ReactChildren = React.Children;
 
 	var PropTypes = React.PropTypes;
 
 	// New Table API
-	var Table = __webpack_require__(8);
-	var Column = __webpack_require__(52);
-	var ColumnGroup = __webpack_require__(53);
+	var Table = __webpack_require__(7);
+	var Column = __webpack_require__(51);
+	var ColumnGroup = __webpack_require__(52);
 
 	// Transition Cell
-	var TransitionCell = __webpack_require__(54);
+	var TransitionCell = __webpack_require__(53);
 
 	var NEXT_VERSION = '0.7.0';
 	var DOCUMENTATION_URL = 'https://fburl.com/FixedDataTable-v0.6';
@@ -1407,7 +1407,7 @@ var ProperTable =
 	 */
 	var notified = {};
 	function notifyDeprecated(prop, reason) {
-	  if (process.env.NODE_ENV !== 'production') {
+	  if (false) {
 	    if (!notified[prop]) {
 	      console.warn('`' + prop + '` will be DEPRECATED in version ' + NEXT_VERSION + ' of FixedDataTable and beyond. \n' + reason + '\n' + 'Read the docs at: ' + DOCUMENTATION_URL);
 	      notified[prop] = true;
@@ -1877,107 +1877,9 @@ var ProperTable =
 	  } });
 
 	module.exports = TransitionTable;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ },
 /* 6 */
-/***/ function(module, exports) {
-
-	// shim for using process in browser
-
-	var process = module.exports = {};
-	var queue = [];
-	var draining = false;
-	var currentQueue;
-	var queueIndex = -1;
-
-	function cleanUpNextTick() {
-	    draining = false;
-	    if (currentQueue.length) {
-	        queue = currentQueue.concat(queue);
-	    } else {
-	        queueIndex = -1;
-	    }
-	    if (queue.length) {
-	        drainQueue();
-	    }
-	}
-
-	function drainQueue() {
-	    if (draining) {
-	        return;
-	    }
-	    var timeout = setTimeout(cleanUpNextTick);
-	    draining = true;
-
-	    var len = queue.length;
-	    while(len) {
-	        currentQueue = queue;
-	        queue = [];
-	        while (++queueIndex < len) {
-	            if (currentQueue) {
-	                currentQueue[queueIndex].run();
-	            }
-	        }
-	        queueIndex = -1;
-	        len = queue.length;
-	    }
-	    currentQueue = null;
-	    draining = false;
-	    clearTimeout(timeout);
-	}
-
-	process.nextTick = function (fun) {
-	    var args = new Array(arguments.length - 1);
-	    if (arguments.length > 1) {
-	        for (var i = 1; i < arguments.length; i++) {
-	            args[i - 1] = arguments[i];
-	        }
-	    }
-	    queue.push(new Item(fun, args));
-	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
-	    }
-	};
-
-	// v8 likes predictible objects
-	function Item(fun, array) {
-	    this.fun = fun;
-	    this.array = array;
-	}
-	Item.prototype.run = function () {
-	    this.fun.apply(null, this.array);
-	};
-	process.title = 'browser';
-	process.browser = true;
-	process.env = {};
-	process.argv = [];
-	process.version = ''; // empty string to avoid regexp issues
-	process.versions = {};
-
-	function noop() {}
-
-	process.on = noop;
-	process.addListener = noop;
-	process.once = noop;
-	process.off = noop;
-	process.removeListener = noop;
-	process.removeAllListeners = noop;
-	process.emit = noop;
-
-	process.binding = function (name) {
-	    throw new Error('process.binding is not supported');
-	};
-
-	process.cwd = function () { return '/' };
-	process.chdir = function (dir) {
-	    throw new Error('process.chdir is not supported');
-	};
-	process.umask = function() { return 0; };
-
-
-/***/ },
-/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1996,7 +1898,7 @@ var ProperTable =
 	module.exports = __webpack_require__(2);
 
 /***/ },
-/* 8 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -2018,23 +1920,23 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var React = __webpack_require__(7);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(9);
-	var ReactWheelHandler = __webpack_require__(10);
-	var Scrollbar = __webpack_require__(18);
-	var FixedDataTableBufferedRows = __webpack_require__(32);
-	var FixedDataTableColumnResizeHandle = __webpack_require__(46);
-	var FixedDataTableRow = __webpack_require__(37);
-	var FixedDataTableScrollHelper = __webpack_require__(47);
-	var FixedDataTableWidthHelper = __webpack_require__(49);
+	var React = __webpack_require__(6);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(8);
+	var ReactWheelHandler = __webpack_require__(9);
+	var Scrollbar = __webpack_require__(17);
+	var FixedDataTableBufferedRows = __webpack_require__(31);
+	var FixedDataTableColumnResizeHandle = __webpack_require__(45);
+	var FixedDataTableRow = __webpack_require__(36);
+	var FixedDataTableScrollHelper = __webpack_require__(46);
+	var FixedDataTableWidthHelper = __webpack_require__(48);
 
-	var cx = __webpack_require__(26);
-	var debounceCore = __webpack_require__(50);
-	var emptyFunction = __webpack_require__(11);
-	var invariant = __webpack_require__(31);
-	var joinClasses = __webpack_require__(45);
-	var shallowEqual = __webpack_require__(51);
-	var translateDOMPositionXY = __webpack_require__(27);
+	var cx = __webpack_require__(25);
+	var debounceCore = __webpack_require__(49);
+	var emptyFunction = __webpack_require__(10);
+	var invariant = __webpack_require__(30);
+	var joinClasses = __webpack_require__(44);
+	var shallowEqual = __webpack_require__(50);
+	var translateDOMPositionXY = __webpack_require__(26);
 
 	var PropTypes = React.PropTypes;
 
@@ -2956,7 +2858,7 @@ var ProperTable =
 	// avaialble
 
 /***/ },
-/* 9 */
+/* 8 */
 /***/ function(module, exports) {
 
 	/**
@@ -3032,7 +2934,7 @@ var ProperTable =
 	module.exports = ReactComponentWithPureRenderMixin;
 
 /***/ },
-/* 10 */
+/* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3056,9 +2958,9 @@ var ProperTable =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var emptyFunction = __webpack_require__(11);
-	var normalizeWheel = __webpack_require__(12);
-	var requestAnimationFramePolyfill = __webpack_require__(16);
+	var emptyFunction = __webpack_require__(10);
+	var normalizeWheel = __webpack_require__(11);
+	var requestAnimationFramePolyfill = __webpack_require__(15);
 
 	var ReactWheelHandler = (function () {
 	  /**
@@ -3142,7 +3044,7 @@ var ProperTable =
 	module.exports = ReactWheelHandler;
 
 /***/ },
-/* 11 */
+/* 10 */
 /***/ function(module, exports) {
 
 	/**
@@ -3185,7 +3087,7 @@ var ProperTable =
 	module.exports = emptyFunction;
 
 /***/ },
-/* 12 */
+/* 11 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3202,9 +3104,9 @@ var ProperTable =
 
 	'use strict';
 
-	var UserAgent_DEPRECATED = __webpack_require__(13);
+	var UserAgent_DEPRECATED = __webpack_require__(12);
 
-	var isEventSupported = __webpack_require__(14);
+	var isEventSupported = __webpack_require__(13);
 
 	// Reasonable defaults
 	var PIXEL_STEP = 10;
@@ -3386,7 +3288,7 @@ var ProperTable =
 	module.exports = normalizeWheel;
 
 /***/ },
-/* 13 */
+/* 12 */
 /***/ function(module, exports) {
 
 	/**
@@ -3669,7 +3571,7 @@ var ProperTable =
 	module.exports = UserAgent_DEPRECATED;
 
 /***/ },
-/* 14 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3685,7 +3587,7 @@ var ProperTable =
 
 	'use strict';
 
-	var ExecutionEnvironment = __webpack_require__(15);
+	var ExecutionEnvironment = __webpack_require__(14);
 
 	var useHasFeature;
 	if (ExecutionEnvironment.canUseDOM) {
@@ -3734,7 +3636,7 @@ var ProperTable =
 	module.exports = isEventSupported;
 
 /***/ },
-/* 15 */
+/* 14 */
 /***/ function(module, exports) {
 
 	/**
@@ -3777,7 +3679,7 @@ var ProperTable =
 	module.exports = ExecutionEnvironment;
 
 /***/ },
-/* 16 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -3793,8 +3695,8 @@ var ProperTable =
 
 	'use strict';
 
-	var emptyFunction = __webpack_require__(11);
-	var nativeRequestAnimationFrame = __webpack_require__(17);
+	var emptyFunction = __webpack_require__(10);
+	var nativeRequestAnimationFrame = __webpack_require__(16);
 
 	var lastTime = 0;
 
@@ -3818,7 +3720,7 @@ var ProperTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 17 */
+/* 16 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -3840,7 +3742,7 @@ var ProperTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 18 */
+/* 17 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3857,17 +3759,17 @@ var ProperTable =
 
 	'use strict';
 
-	var DOMMouseMoveTracker = __webpack_require__(19);
-	var Keys = __webpack_require__(22);
-	var React = __webpack_require__(7);
-	var ReactDOM = __webpack_require__(23);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(9);
-	var ReactWheelHandler = __webpack_require__(10);
+	var DOMMouseMoveTracker = __webpack_require__(18);
+	var Keys = __webpack_require__(21);
+	var React = __webpack_require__(6);
+	var ReactDOM = __webpack_require__(22);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(8);
+	var ReactWheelHandler = __webpack_require__(9);
 
-	var cssVar = __webpack_require__(25);
-	var cx = __webpack_require__(26);
-	var emptyFunction = __webpack_require__(11);
-	var translateDOMPositionXY = __webpack_require__(27);
+	var cssVar = __webpack_require__(24);
+	var cx = __webpack_require__(25);
+	var emptyFunction = __webpack_require__(10);
+	var translateDOMPositionXY = __webpack_require__(26);
 
 	var PropTypes = React.PropTypes;
 
@@ -4281,7 +4183,7 @@ var ProperTable =
 	// pass
 
 /***/ },
-/* 19 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4309,10 +4211,10 @@ var ProperTable =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var EventListener = __webpack_require__(20);
+	var EventListener = __webpack_require__(19);
 
-	var cancelAnimationFramePolyfill = __webpack_require__(21);
-	var requestAnimationFramePolyfill = __webpack_require__(16);
+	var cancelAnimationFramePolyfill = __webpack_require__(20);
+	var requestAnimationFramePolyfill = __webpack_require__(15);
 
 	var DOMMouseMoveTracker = (function () {
 	  /**
@@ -4445,10 +4347,10 @@ var ProperTable =
 	module.exports = DOMMouseMoveTracker;
 
 /***/ },
-/* 20 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
+	/**
 	 * Copyright (c) 2015, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -4462,7 +4364,7 @@ var ProperTable =
 
 	'use strict';
 
-	var emptyFunction = __webpack_require__(11);
+	var emptyFunction = __webpack_require__(10);
 
 	/**
 	 * Upstream version of event listener. Does not take into account specific
@@ -4512,7 +4414,7 @@ var ProperTable =
 	        }
 	      };
 	    } else {
-	      if (process.env.NODE_ENV !== 'production') {
+	      if (false) {
 	        console.error('Attempted to listen to events during the capture phase on a ' + 'browser that does not support the capture phase. Your application ' + 'will not receive some events.');
 	      }
 	      return {
@@ -4525,10 +4427,9 @@ var ProperTable =
 	};
 
 	module.exports = EventListener;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ },
-/* 21 */
+/* 20 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -4554,7 +4455,7 @@ var ProperTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 22 */
+/* 21 */
 /***/ function(module, exports) {
 
 	/**
@@ -4596,7 +4497,7 @@ var ProperTable =
 	};
 
 /***/ },
-/* 23 */
+/* 22 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4612,16 +4513,16 @@ var ProperTable =
 
 	'use strict';
 
-	module.exports = __webpack_require__(24);
+	module.exports = __webpack_require__(23);
 
 /***/ },
-/* 24 */
+/* 23 */
 /***/ function(module, exports) {
 
 	module.exports = ReactDOM;
 
 /***/ },
-/* 25 */
+/* 24 */
 /***/ function(module, exports) {
 
 	/**
@@ -4665,7 +4566,7 @@ var ProperTable =
 	module.exports = cssVar;
 
 /***/ },
-/* 26 */
+/* 25 */
 /***/ function(module, exports) {
 
 	/**
@@ -4724,7 +4625,7 @@ var ProperTable =
 	module.exports = cx;
 
 /***/ },
-/* 27 */
+/* 26 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -4741,9 +4642,9 @@ var ProperTable =
 
 	'use strict';
 
-	var BrowserSupportCore = __webpack_require__(28);
+	var BrowserSupportCore = __webpack_require__(27);
 
-	var getVendorPrefixedName = __webpack_require__(29);
+	var getVendorPrefixedName = __webpack_require__(28);
 
 	var TRANSFORM = getVendorPrefixedName('transform');
 	var BACKFACE_VISIBILITY = getVendorPrefixedName('backfaceVisibility');
@@ -4778,7 +4679,7 @@ var ProperTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 28 */
+/* 27 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4794,7 +4695,7 @@ var ProperTable =
 
 	'use strict';
 
-	var getVendorPrefixedName = __webpack_require__(29);
+	var getVendorPrefixedName = __webpack_require__(28);
 
 	var BrowserSupportCore = {
 	  /**
@@ -4828,7 +4729,7 @@ var ProperTable =
 	module.exports = BrowserSupportCore;
 
 /***/ },
-/* 29 */
+/* 28 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4845,10 +4746,10 @@ var ProperTable =
 
 	'use strict';
 
-	var ExecutionEnvironment = __webpack_require__(15);
+	var ExecutionEnvironment = __webpack_require__(14);
 
-	var camelize = __webpack_require__(30);
-	var invariant = __webpack_require__(31);
+	var camelize = __webpack_require__(29);
+	var invariant = __webpack_require__(30);
 
 	var memoized = {};
 	var prefixes = ['Webkit', 'ms', 'Moz', 'O'];
@@ -4885,7 +4786,7 @@ var ProperTable =
 	module.exports = getVendorPrefixedName;
 
 /***/ },
-/* 30 */
+/* 29 */
 /***/ function(module, exports) {
 
 	/**
@@ -4922,10 +4823,10 @@ var ProperTable =
 	module.exports = camelize;
 
 /***/ },
-/* 31 */
+/* 30 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
+	/**
 	 * Copyright (c) 2015, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -4950,7 +4851,7 @@ var ProperTable =
 	 */
 
 	var invariant = function invariant(condition, format, a, b, c, d, e, f) {
-	  if (process.env.NODE_ENV !== 'production') {
+	  if (false) {
 	    if (format === undefined) {
 	      throw new Error('invariant requires an error message argument');
 	    }
@@ -4974,10 +4875,9 @@ var ProperTable =
 	};
 
 	module.exports = invariant;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ },
-/* 32 */
+/* 31 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4994,14 +4894,14 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(7);
-	var FixedDataTableRowBuffer = __webpack_require__(33);
-	var FixedDataTableRow = __webpack_require__(37);
+	var React = __webpack_require__(6);
+	var FixedDataTableRowBuffer = __webpack_require__(32);
+	var FixedDataTableRow = __webpack_require__(36);
 
-	var cx = __webpack_require__(26);
-	var emptyFunction = __webpack_require__(11);
-	var joinClasses = __webpack_require__(45);
-	var translateDOMPositionXY = __webpack_require__(27);
+	var cx = __webpack_require__(25);
+	var emptyFunction = __webpack_require__(10);
+	var joinClasses = __webpack_require__(44);
+	var translateDOMPositionXY = __webpack_require__(26);
 
 	var PropTypes = React.PropTypes;
 
@@ -5130,7 +5030,7 @@ var ProperTable =
 	module.exports = FixedDataTableBufferedRows;
 
 /***/ },
-/* 33 */
+/* 32 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5151,10 +5051,10 @@ var ProperTable =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var IntegerBufferSet = __webpack_require__(34);
+	var IntegerBufferSet = __webpack_require__(33);
 
-	var clamp = __webpack_require__(36);
-	var invariant = __webpack_require__(31);
+	var clamp = __webpack_require__(35);
+	var invariant = __webpack_require__(30);
 	var MIN_BUFFER_ROWS = 3;
 	var MAX_BUFFER_ROWS = 6;
 
@@ -5258,7 +5158,7 @@ var ProperTable =
 	module.exports = FixedDataTableRowBuffer;
 
 /***/ },
-/* 34 */
+/* 33 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5279,9 +5179,9 @@ var ProperTable =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var Heap = __webpack_require__(35);
+	var Heap = __webpack_require__(34);
 
-	var invariant = __webpack_require__(31);
+	var invariant = __webpack_require__(30);
 
 	// Data structure that allows to store values and assign positions to them
 	// in a way to minimize changing positions of stored values when new ones are
@@ -5442,7 +5342,7 @@ var ProperTable =
 	module.exports = IntegerBufferSet;
 
 /***/ },
-/* 35 */
+/* 34 */
 /***/ function(module, exports) {
 
 	/**
@@ -5625,7 +5525,7 @@ var ProperTable =
 	module.exports = Heap;
 
 /***/ },
-/* 36 */
+/* 35 */
 /***/ function(module, exports) {
 
 	/**
@@ -5662,7 +5562,7 @@ var ProperTable =
 	module.exports = clamp;
 
 /***/ },
-/* 37 */
+/* 36 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5681,12 +5581,12 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var React = __webpack_require__(7);
-	var FixedDataTableCellGroup = __webpack_require__(38);
+	var React = __webpack_require__(6);
+	var FixedDataTableCellGroup = __webpack_require__(37);
 
-	var cx = __webpack_require__(26);
-	var joinClasses = __webpack_require__(45);
-	var translateDOMPositionXY = __webpack_require__(27);
+	var cx = __webpack_require__(25);
+	var joinClasses = __webpack_require__(44);
+	var translateDOMPositionXY = __webpack_require__(26);
 
 	var PropTypes = React.PropTypes;
 
@@ -5908,7 +5808,7 @@ var ProperTable =
 	module.exports = FixedDataTableRow;
 
 /***/ },
-/* 38 */
+/* 37 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -5929,12 +5829,12 @@ var ProperTable =
 
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
-	var FixedDataTableHelper = __webpack_require__(39);
-	var React = __webpack_require__(7);
-	var FixedDataTableCell = __webpack_require__(43);
+	var FixedDataTableHelper = __webpack_require__(38);
+	var React = __webpack_require__(6);
+	var FixedDataTableCell = __webpack_require__(42);
 
-	var cx = __webpack_require__(26);
-	var translateDOMPositionXY = __webpack_require__(27);
+	var cx = __webpack_require__(25);
+	var translateDOMPositionXY = __webpack_require__(26);
 
 	var PropTypes = React.PropTypes;
 
@@ -6113,7 +6013,7 @@ var ProperTable =
 	module.exports = FixedDataTableCellGroup;
 
 /***/ },
-/* 39 */
+/* 38 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6130,10 +6030,10 @@ var ProperTable =
 
 	'use strict';
 
-	var Locale = __webpack_require__(40);
-	var React = __webpack_require__(7);
-	var FixedDataTableColumnGroup = __webpack_require__(41);
-	var FixedDataTableColumn = __webpack_require__(42);
+	var Locale = __webpack_require__(39);
+	var React = __webpack_require__(6);
+	var FixedDataTableColumnGroup = __webpack_require__(40);
+	var FixedDataTableColumn = __webpack_require__(41);
 
 	var DIR_SIGN = Locale.isRTL() ? -1 : +1;
 	// A cell up to 5px outside of the visible area will still be considered visible
@@ -6220,7 +6120,7 @@ var ProperTable =
 	module.exports = FixedDataTableHelper;
 
 /***/ },
-/* 40 */
+/* 39 */
 /***/ function(module, exports) {
 
 	/**
@@ -6249,10 +6149,10 @@ var ProperTable =
 	module.exports = Locale;
 
 /***/ },
-/* 41 */
+/* 40 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
+	/**
 	 * Copyright (c) 2015, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -6273,7 +6173,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(7);
+	var React = __webpack_require__(6);
 
 	var TransitionColumnGroup = React.createClass({
 	  displayName: 'TransitionColumnGroup',
@@ -6282,7 +6182,7 @@ var ProperTable =
 	    __TableColumnGroup__: true },
 
 	  render: function render() {
-	    if (process.env.NODE_ENV !== 'production') {
+	    if (false) {
 	      throw new Error('Component <TransitionColumnGroup /> should never render');
 	    }
 	    return null;
@@ -6290,13 +6190,12 @@ var ProperTable =
 	});
 
 	module.exports = TransitionColumnGroup;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ },
-/* 42 */
+/* 41 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
+	/**
 	 * Copyright (c) 2015, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -6317,7 +6216,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(7);
+	var React = __webpack_require__(6);
 
 	var TransitionColumn = React.createClass({
 	  displayName: 'TransitionColumn',
@@ -6327,7 +6226,7 @@ var ProperTable =
 	  },
 
 	  render: function render() {
-	    if (process.env.NODE_ENV !== 'production') {
+	    if (false) {
 	      throw new Error('Component <TransitionColumn /> should never render');
 	    }
 	    return null;
@@ -6335,10 +6234,9 @@ var ProperTable =
 	});
 
 	module.exports = TransitionColumn;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ },
-/* 43 */
+/* 42 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6357,11 +6255,11 @@ var ProperTable =
 
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
-	var FixedDataTableCellDefault = __webpack_require__(44);
-	var FixedDataTableHelper = __webpack_require__(39);
-	var React = __webpack_require__(7);
-	var cx = __webpack_require__(26);
-	var joinClasses = __webpack_require__(45);
+	var FixedDataTableCellDefault = __webpack_require__(43);
+	var FixedDataTableHelper = __webpack_require__(38);
+	var React = __webpack_require__(6);
+	var cx = __webpack_require__(25);
+	var joinClasses = __webpack_require__(44);
 
 	var DIR_SIGN = FixedDataTableHelper.DIR_SIGN;
 
@@ -6508,7 +6406,7 @@ var ProperTable =
 	module.exports = FixedDataTableCell;
 
 /***/ },
-/* 44 */
+/* 43 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6529,10 +6427,10 @@ var ProperTable =
 
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
-	var React = __webpack_require__(7);
+	var React = __webpack_require__(6);
 
-	var cx = __webpack_require__(26);
-	var joinClasses = __webpack_require__(45);
+	var cx = __webpack_require__(25);
+	var joinClasses = __webpack_require__(44);
 
 	var PropTypes = React.PropTypes;
 
@@ -6620,7 +6518,7 @@ var ProperTable =
 	module.exports = FixedDataTableCellDefault;
 
 /***/ },
-/* 45 */
+/* 44 */
 /***/ function(module, exports) {
 
 	/**
@@ -6664,7 +6562,7 @@ var ProperTable =
 	module.exports = joinClasses;
 
 /***/ },
-/* 46 */
+/* 45 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6685,13 +6583,13 @@ var ProperTable =
 
 	'use strict';
 
-	var DOMMouseMoveTracker = __webpack_require__(19);
-	var Locale = __webpack_require__(40);
-	var React = __webpack_require__(7);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(9);
+	var DOMMouseMoveTracker = __webpack_require__(18);
+	var Locale = __webpack_require__(39);
+	var React = __webpack_require__(6);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(8);
 
-	var clamp = __webpack_require__(36);
-	var cx = __webpack_require__(26);
+	var clamp = __webpack_require__(35);
+	var cx = __webpack_require__(25);
 
 	var PropTypes = React.PropTypes;
 
@@ -6825,7 +6723,7 @@ var ProperTable =
 	module.exports = FixedDataTableColumnResizeHandle;
 
 /***/ },
-/* 47 */
+/* 46 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -6846,8 +6744,8 @@ var ProperTable =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var PrefixIntervalTree = __webpack_require__(48);
-	var clamp = __webpack_require__(36);
+	var PrefixIntervalTree = __webpack_require__(47);
+	var clamp = __webpack_require__(35);
 
 	var BUFFER_ROWS = 5;
 	var NO_ROWS_SCROLL_RESULT = {
@@ -7126,7 +7024,7 @@ var ProperTable =
 	module.exports = FixedDataTableScrollHelper;
 
 /***/ },
-/* 48 */
+/* 47 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -7148,7 +7046,7 @@ var ProperTable =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var invariant = __webpack_require__(31);
+	var invariant = __webpack_require__(30);
 
 	var parent = function parent(node) {
 	  return Math.floor(node / 2);
@@ -7390,7 +7288,7 @@ var ProperTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 49 */
+/* 48 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7407,7 +7305,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(7);
+	var React = __webpack_require__(6);
 
 	function getTotalWidth( /*array*/columns) /*number*/{
 	  var totalWidth = 0;
@@ -7524,7 +7422,7 @@ var ProperTable =
 	module.exports = FixedDataTableWidthHelper;
 
 /***/ },
-/* 50 */
+/* 49 */
 /***/ function(module, exports) {
 
 	/**
@@ -7596,7 +7494,7 @@ var ProperTable =
 	module.exports = debounce;
 
 /***/ },
-/* 51 */
+/* 50 */
 /***/ function(module, exports) {
 
 	/**
@@ -7651,10 +7549,10 @@ var ProperTable =
 	module.exports = shallowEqual;
 
 /***/ },
-/* 52 */
+/* 51 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
+	/**
 	 * Copyright (c) 2015, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -7668,7 +7566,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(7);
+	var React = __webpack_require__(6);
 
 	var PropTypes = React.PropTypes;
 
@@ -7823,20 +7721,19 @@ var ProperTable =
 	  },
 
 	  render: function render() {
-	    if (process.env.NODE_ENV !== 'production') {
+	    if (false) {
 	      throw new Error('Component <FixedDataTableColumn /> should never render');
 	    }
 	    return null;
 	  } });
 
 	module.exports = FixedDataTableColumn;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ },
-/* 53 */
+/* 52 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(process) {/**
+	/**
 	 * Copyright (c) 2015, Facebook, Inc.
 	 * All rights reserved.
 	 *
@@ -7850,7 +7747,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(7);
+	var React = __webpack_require__(6);
 
 	var PropTypes = React.PropTypes;
 
@@ -7901,17 +7798,16 @@ var ProperTable =
 	  },
 
 	  render: function render() {
-	    if (process.env.NODE_ENV !== 'production') {
+	    if (false) {
 	      throw new Error('Component <FixedDataTableColumnGroup /> should never render');
 	    }
 	    return null;
 	  } });
 
 	module.exports = FixedDataTableColumnGroup;
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)))
 
 /***/ },
-/* 54 */
+/* 53 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -7937,14 +7833,14 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var React = __webpack_require__(7);
+	var React = __webpack_require__(6);
 	var PropTypes = React.PropTypes;
 
-	var cx = __webpack_require__(26);
-	var joinClasses = __webpack_require__(45);
-	var shallowEqual = __webpack_require__(51);
+	var cx = __webpack_require__(25);
+	var joinClasses = __webpack_require__(44);
+	var shallowEqual = __webpack_require__(50);
 
-	var CellDefault = __webpack_require__(44);
+	var CellDefault = __webpack_require__(43);
 
 	var TransitionCell = React.createClass({
 	  displayName: 'TransitionCell',
@@ -8109,7 +8005,7 @@ var ProperTable =
 	// footer
 
 /***/ },
-/* 55 */
+/* 54 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -13096,13 +12992,13 @@ var ProperTable =
 	}));
 
 /***/ },
-/* 56 */
+/* 55 */
 /***/ function(module, exports) {
 
 	module.exports = _;
 
 /***/ },
-/* 57 */
+/* 56 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -13117,7 +13013,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 58 */
+/* 57 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -13249,7 +13145,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 59 */
+/* 58 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -13317,7 +13213,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 60 */
+/* 59 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -13431,7 +13327,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 61 */
+/* 60 */
 /***/ function(module, exports) {
 
 	
@@ -13654,7 +13550,7 @@ var ProperTable =
 
 
 /***/ },
-/* 62 */
+/* 61 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {var clone = (function() {
@@ -13818,10 +13714,10 @@ var ProperTable =
 	  module.exports = clone;
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(62).Buffer))
 
 /***/ },
-/* 63 */
+/* 62 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -13834,9 +13730,9 @@ var ProperTable =
 
 	'use strict'
 
-	var base64 = __webpack_require__(64)
-	var ieee754 = __webpack_require__(65)
-	var isArray = __webpack_require__(66)
+	var base64 = __webpack_require__(63)
+	var ieee754 = __webpack_require__(64)
+	var isArray = __webpack_require__(65)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -15373,10 +15269,10 @@ var ProperTable =
 	  return i
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(63).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(62).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 64 */
+/* 63 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -15506,7 +15402,7 @@ var ProperTable =
 
 
 /***/ },
-/* 65 */
+/* 64 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -15596,7 +15492,7 @@ var ProperTable =
 
 
 /***/ },
-/* 66 */
+/* 65 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -15607,7 +15503,7 @@ var ProperTable =
 
 
 /***/ },
-/* 67 */
+/* 66 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -15617,19 +15513,19 @@ var ProperTable =
 	});
 	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports.default = undefined;
 
-	var _shouldComponentUpdate = __webpack_require__(68);
+	var _shouldComponentUpdate = __webpack_require__(67);
 
 	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
 
-	var _shallowEqualImmutable = __webpack_require__(69);
+	var _shallowEqualImmutable = __webpack_require__(68);
 
 	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
 
-	var _immutableRenderMixin = __webpack_require__(70);
+	var _immutableRenderMixin = __webpack_require__(69);
 
 	var _immutableRenderMixin2 = _interopRequireDefault(_immutableRenderMixin);
 
-	var _immutableRenderDecorator = __webpack_require__(71);
+	var _immutableRenderDecorator = __webpack_require__(70);
 
 	var _immutableRenderDecorator2 = _interopRequireDefault(_immutableRenderDecorator);
 
@@ -15641,7 +15537,7 @@ var ProperTable =
 	exports.shallowEqualImmutable = _shallowEqualImmutable2.default;
 
 /***/ },
-/* 68 */
+/* 67 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -15651,7 +15547,7 @@ var ProperTable =
 	});
 	exports.default = shouldComponentUpdate;
 
-	var _shallowEqualImmutable = __webpack_require__(69);
+	var _shallowEqualImmutable = __webpack_require__(68);
 
 	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
 
@@ -15662,7 +15558,7 @@ var ProperTable =
 	}
 
 /***/ },
-/* 69 */
+/* 68 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -15675,7 +15571,7 @@ var ProperTable =
 
 	exports.default = shallowEqualImmutable;
 
-	var _immutable = __webpack_require__(55);
+	var _immutable = __webpack_require__(54);
 
 	var _immutable2 = _interopRequireDefault(_immutable);
 
@@ -15711,7 +15607,7 @@ var ProperTable =
 	}
 
 /***/ },
-/* 70 */
+/* 69 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -15720,7 +15616,7 @@ var ProperTable =
 	  value: true
 	});
 
-	var _shouldComponentUpdate = __webpack_require__(68);
+	var _shouldComponentUpdate = __webpack_require__(67);
 
 	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
 
@@ -15731,7 +15627,7 @@ var ProperTable =
 	};
 
 /***/ },
-/* 71 */
+/* 70 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -15748,7 +15644,7 @@ var ProperTable =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _shouldComponentUpdate = __webpack_require__(68);
+	var _shouldComponentUpdate = __webpack_require__(67);
 
 	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
 
@@ -15791,16 +15687,16 @@ var ProperTable =
 	}
 
 /***/ },
-/* 72 */
+/* 71 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(73)() ? Set : __webpack_require__(74);
+	module.exports = __webpack_require__(72)() ? Set : __webpack_require__(73);
 
 
 /***/ },
-/* 73 */
+/* 72 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15830,22 +15726,22 @@ var ProperTable =
 
 
 /***/ },
-/* 74 */
+/* 73 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var clear          = __webpack_require__(75)
-	  , eIndexOf       = __webpack_require__(77)
-	  , setPrototypeOf = __webpack_require__(83)
-	  , callable       = __webpack_require__(88)
-	  , d              = __webpack_require__(89)
-	  , ee             = __webpack_require__(101)
-	  , Symbol         = __webpack_require__(102)
-	  , iterator       = __webpack_require__(107)
-	  , forOf          = __webpack_require__(111)
-	  , Iterator       = __webpack_require__(121)
-	  , isNative       = __webpack_require__(122)
+	var clear          = __webpack_require__(74)
+	  , eIndexOf       = __webpack_require__(76)
+	  , setPrototypeOf = __webpack_require__(82)
+	  , callable       = __webpack_require__(87)
+	  , d              = __webpack_require__(88)
+	  , ee             = __webpack_require__(100)
+	  , Symbol         = __webpack_require__(101)
+	  , iterator       = __webpack_require__(106)
+	  , forOf          = __webpack_require__(110)
+	  , Iterator       = __webpack_require__(120)
+	  , isNative       = __webpack_require__(121)
 
 	  , call = Function.prototype.call
 	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
@@ -15916,7 +15812,7 @@ var ProperTable =
 
 
 /***/ },
-/* 75 */
+/* 74 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Inspired by Google Closure:
@@ -15925,7 +15821,7 @@ var ProperTable =
 
 	'use strict';
 
-	var value = __webpack_require__(76);
+	var value = __webpack_require__(75);
 
 	module.exports = function () {
 		value(this).length = 0;
@@ -15934,7 +15830,7 @@ var ProperTable =
 
 
 /***/ },
-/* 76 */
+/* 75 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -15946,13 +15842,13 @@ var ProperTable =
 
 
 /***/ },
-/* 77 */
+/* 76 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toPosInt = __webpack_require__(78)
-	  , value    = __webpack_require__(76)
+	var toPosInt = __webpack_require__(77)
+	  , value    = __webpack_require__(75)
 
 	  , indexOf = Array.prototype.indexOf
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
@@ -15981,12 +15877,12 @@ var ProperTable =
 
 
 /***/ },
-/* 78 */
+/* 77 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toInteger = __webpack_require__(79)
+	var toInteger = __webpack_require__(78)
 
 	  , max = Math.max;
 
@@ -15994,12 +15890,12 @@ var ProperTable =
 
 
 /***/ },
-/* 79 */
+/* 78 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var sign = __webpack_require__(80)
+	var sign = __webpack_require__(79)
 
 	  , abs = Math.abs, floor = Math.floor;
 
@@ -16012,18 +15908,18 @@ var ProperTable =
 
 
 /***/ },
-/* 80 */
+/* 79 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(81)()
+	module.exports = __webpack_require__(80)()
 		? Math.sign
-		: __webpack_require__(82);
+		: __webpack_require__(81);
 
 
 /***/ },
-/* 81 */
+/* 80 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16036,7 +15932,7 @@ var ProperTable =
 
 
 /***/ },
-/* 82 */
+/* 81 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16049,18 +15945,18 @@ var ProperTable =
 
 
 /***/ },
-/* 83 */
+/* 82 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(84)()
+	module.exports = __webpack_require__(83)()
 		? Object.setPrototypeOf
-		: __webpack_require__(85);
+		: __webpack_require__(84);
 
 
 /***/ },
-/* 84 */
+/* 83 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16077,7 +15973,7 @@ var ProperTable =
 
 
 /***/ },
-/* 85 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Big thanks to @WebReflection for sorting this out
@@ -16085,8 +15981,8 @@ var ProperTable =
 
 	'use strict';
 
-	var isObject      = __webpack_require__(86)
-	  , value         = __webpack_require__(76)
+	var isObject      = __webpack_require__(85)
+	  , value         = __webpack_require__(75)
 
 	  , isPrototypeOf = Object.prototype.isPrototypeOf
 	  , defineProperty = Object.defineProperty
@@ -16152,11 +16048,11 @@ var ProperTable =
 		return false;
 	}())));
 
-	__webpack_require__(87);
+	__webpack_require__(86);
 
 
 /***/ },
-/* 86 */
+/* 85 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16169,7 +16065,7 @@ var ProperTable =
 
 
 /***/ },
-/* 87 */
+/* 86 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
@@ -16178,8 +16074,8 @@ var ProperTable =
 
 	var create = Object.create, shim;
 
-	if (!__webpack_require__(84)()) {
-		shim = __webpack_require__(85);
+	if (!__webpack_require__(83)()) {
+		shim = __webpack_require__(84);
 	}
 
 	module.exports = (function () {
@@ -16211,7 +16107,7 @@ var ProperTable =
 
 
 /***/ },
-/* 88 */
+/* 87 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16223,15 +16119,15 @@ var ProperTable =
 
 
 /***/ },
-/* 89 */
+/* 88 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign        = __webpack_require__(90)
-	  , normalizeOpts = __webpack_require__(96)
-	  , isCallable    = __webpack_require__(97)
-	  , contains      = __webpack_require__(98)
+	var assign        = __webpack_require__(89)
+	  , normalizeOpts = __webpack_require__(95)
+	  , isCallable    = __webpack_require__(96)
+	  , contains      = __webpack_require__(97)
 
 	  , d;
 
@@ -16292,18 +16188,18 @@ var ProperTable =
 
 
 /***/ },
-/* 90 */
+/* 89 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(91)()
+	module.exports = __webpack_require__(90)()
 		? Object.assign
-		: __webpack_require__(92);
+		: __webpack_require__(91);
 
 
 /***/ },
-/* 91 */
+/* 90 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16318,13 +16214,13 @@ var ProperTable =
 
 
 /***/ },
-/* 92 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var keys  = __webpack_require__(93)
-	  , value = __webpack_require__(76)
+	var keys  = __webpack_require__(92)
+	  , value = __webpack_require__(75)
 
 	  , max = Math.max;
 
@@ -16346,18 +16242,18 @@ var ProperTable =
 
 
 /***/ },
-/* 93 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(94)()
+	module.exports = __webpack_require__(93)()
 		? Object.keys
-		: __webpack_require__(95);
+		: __webpack_require__(94);
 
 
 /***/ },
-/* 94 */
+/* 93 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16371,7 +16267,7 @@ var ProperTable =
 
 
 /***/ },
-/* 95 */
+/* 94 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16384,7 +16280,7 @@ var ProperTable =
 
 
 /***/ },
-/* 96 */
+/* 95 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16407,7 +16303,7 @@ var ProperTable =
 
 
 /***/ },
-/* 97 */
+/* 96 */
 /***/ function(module, exports) {
 
 	// Deprecated
@@ -16418,18 +16314,18 @@ var ProperTable =
 
 
 /***/ },
-/* 98 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(99)()
+	module.exports = __webpack_require__(98)()
 		? String.prototype.contains
-		: __webpack_require__(100);
+		: __webpack_require__(99);
 
 
 /***/ },
-/* 99 */
+/* 98 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16443,7 +16339,7 @@ var ProperTable =
 
 
 /***/ },
-/* 100 */
+/* 99 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16456,13 +16352,13 @@ var ProperTable =
 
 
 /***/ },
-/* 101 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var d        = __webpack_require__(89)
-	  , callable = __webpack_require__(88)
+	var d        = __webpack_require__(88)
+	  , callable = __webpack_require__(87)
 
 	  , apply = Function.prototype.apply, call = Function.prototype.call
 	  , create = Object.create, defineProperty = Object.defineProperty
@@ -16594,16 +16490,16 @@ var ProperTable =
 
 
 /***/ },
-/* 102 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(103)() ? Symbol : __webpack_require__(104);
+	module.exports = __webpack_require__(102)() ? Symbol : __webpack_require__(103);
 
 
 /***/ },
-/* 103 */
+/* 102 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16627,15 +16523,15 @@ var ProperTable =
 
 
 /***/ },
-/* 104 */
+/* 103 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
 
 	'use strict';
 
-	var d              = __webpack_require__(89)
-	  , validateSymbol = __webpack_require__(105)
+	var d              = __webpack_require__(88)
+	  , validateSymbol = __webpack_require__(104)
 
 	  , create = Object.create, defineProperties = Object.defineProperties
 	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
@@ -16740,12 +16636,12 @@ var ProperTable =
 
 
 /***/ },
-/* 105 */
+/* 104 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isSymbol = __webpack_require__(106);
+	var isSymbol = __webpack_require__(105);
 
 	module.exports = function (value) {
 		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
@@ -16754,7 +16650,7 @@ var ProperTable =
 
 
 /***/ },
-/* 106 */
+/* 105 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16765,12 +16661,12 @@ var ProperTable =
 
 
 /***/ },
-/* 107 */
+/* 106 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isIterable = __webpack_require__(108);
+	var isIterable = __webpack_require__(107);
 
 	module.exports = function (value) {
 		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
@@ -16779,14 +16675,14 @@ var ProperTable =
 
 
 /***/ },
-/* 108 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments    = __webpack_require__(109)
-	  , isString       = __webpack_require__(110)
-	  , iteratorSymbol = __webpack_require__(102).iterator
+	var isArguments    = __webpack_require__(108)
+	  , isString       = __webpack_require__(109)
+	  , iteratorSymbol = __webpack_require__(101).iterator
 
 	  , isArray = Array.isArray;
 
@@ -16800,7 +16696,7 @@ var ProperTable =
 
 
 /***/ },
-/* 109 */
+/* 108 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16813,7 +16709,7 @@ var ProperTable =
 
 
 /***/ },
-/* 110 */
+/* 109 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -16829,15 +16725,15 @@ var ProperTable =
 
 
 /***/ },
-/* 111 */
+/* 110 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments = __webpack_require__(109)
-	  , callable    = __webpack_require__(88)
-	  , isString    = __webpack_require__(110)
-	  , get         = __webpack_require__(112)
+	var isArguments = __webpack_require__(108)
+	  , callable    = __webpack_require__(87)
+	  , isString    = __webpack_require__(109)
+	  , get         = __webpack_require__(111)
 
 	  , isArray = Array.isArray, call = Function.prototype.call
 	  , some = Array.prototype.some;
@@ -16881,17 +16777,17 @@ var ProperTable =
 
 
 /***/ },
-/* 112 */
+/* 111 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments    = __webpack_require__(109)
-	  , isString       = __webpack_require__(110)
-	  , ArrayIterator  = __webpack_require__(113)
-	  , StringIterator = __webpack_require__(120)
-	  , iterable       = __webpack_require__(107)
-	  , iteratorSymbol = __webpack_require__(102).iterator;
+	var isArguments    = __webpack_require__(108)
+	  , isString       = __webpack_require__(109)
+	  , ArrayIterator  = __webpack_require__(112)
+	  , StringIterator = __webpack_require__(119)
+	  , iterable       = __webpack_require__(106)
+	  , iteratorSymbol = __webpack_require__(101).iterator;
 
 	module.exports = function (obj) {
 		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
@@ -16902,15 +16798,15 @@ var ProperTable =
 
 
 /***/ },
-/* 113 */
+/* 112 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var setPrototypeOf = __webpack_require__(83)
-	  , contains       = __webpack_require__(98)
-	  , d              = __webpack_require__(89)
-	  , Iterator       = __webpack_require__(114)
+	var setPrototypeOf = __webpack_require__(82)
+	  , contains       = __webpack_require__(97)
+	  , d              = __webpack_require__(88)
+	  , Iterator       = __webpack_require__(113)
 
 	  , defineProperty = Object.defineProperty
 	  , ArrayIterator;
@@ -16938,18 +16834,18 @@ var ProperTable =
 
 
 /***/ },
-/* 114 */
+/* 113 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var clear    = __webpack_require__(75)
-	  , assign   = __webpack_require__(90)
-	  , callable = __webpack_require__(88)
-	  , value    = __webpack_require__(76)
-	  , d        = __webpack_require__(89)
-	  , autoBind = __webpack_require__(115)
-	  , Symbol   = __webpack_require__(102)
+	var clear    = __webpack_require__(74)
+	  , assign   = __webpack_require__(89)
+	  , callable = __webpack_require__(87)
+	  , value    = __webpack_require__(75)
+	  , d        = __webpack_require__(88)
+	  , autoBind = __webpack_require__(114)
+	  , Symbol   = __webpack_require__(101)
 
 	  , defineProperty = Object.defineProperty
 	  , defineProperties = Object.defineProperties
@@ -17034,15 +16930,15 @@ var ProperTable =
 
 
 /***/ },
-/* 115 */
+/* 114 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var copy       = __webpack_require__(116)
-	  , map        = __webpack_require__(117)
-	  , callable   = __webpack_require__(88)
-	  , validValue = __webpack_require__(76)
+	var copy       = __webpack_require__(115)
+	  , map        = __webpack_require__(116)
+	  , callable   = __webpack_require__(87)
+	  , validValue = __webpack_require__(75)
 
 	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
@@ -17071,13 +16967,13 @@ var ProperTable =
 
 
 /***/ },
-/* 116 */
+/* 115 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign = __webpack_require__(90)
-	  , value  = __webpack_require__(76);
+	var assign = __webpack_require__(89)
+	  , value  = __webpack_require__(75);
 
 	module.exports = function (obj) {
 		var copy = Object(value(obj));
@@ -17087,13 +16983,13 @@ var ProperTable =
 
 
 /***/ },
-/* 117 */
+/* 116 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var callable = __webpack_require__(88)
-	  , forEach  = __webpack_require__(118)
+	var callable = __webpack_require__(87)
+	  , forEach  = __webpack_require__(117)
 
 	  , call = Function.prototype.call;
 
@@ -17108,16 +17004,16 @@ var ProperTable =
 
 
 /***/ },
-/* 118 */
+/* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(119)('forEach');
+	module.exports = __webpack_require__(118)('forEach');
 
 
 /***/ },
-/* 119 */
+/* 118 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Internal method, used by iteration functions.
@@ -17126,8 +17022,8 @@ var ProperTable =
 
 	'use strict';
 
-	var callable = __webpack_require__(88)
-	  , value    = __webpack_require__(76)
+	var callable = __webpack_require__(87)
+	  , value    = __webpack_require__(75)
 
 	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
 	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
@@ -17152,7 +17048,7 @@ var ProperTable =
 
 
 /***/ },
-/* 120 */
+/* 119 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Thanks @mathiasbynens
@@ -17160,9 +17056,9 @@ var ProperTable =
 
 	'use strict';
 
-	var setPrototypeOf = __webpack_require__(83)
-	  , d              = __webpack_require__(89)
-	  , Iterator       = __webpack_require__(114)
+	var setPrototypeOf = __webpack_require__(82)
+	  , d              = __webpack_require__(88)
+	  , Iterator       = __webpack_require__(113)
 
 	  , defineProperty = Object.defineProperty
 	  , StringIterator;
@@ -17195,16 +17091,16 @@ var ProperTable =
 
 
 /***/ },
-/* 121 */
+/* 120 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var setPrototypeOf    = __webpack_require__(83)
-	  , contains          = __webpack_require__(98)
-	  , d                 = __webpack_require__(89)
-	  , Iterator          = __webpack_require__(114)
-	  , toStringTagSymbol = __webpack_require__(102).toStringTag
+	var setPrototypeOf    = __webpack_require__(82)
+	  , contains          = __webpack_require__(97)
+	  , d                 = __webpack_require__(88)
+	  , Iterator          = __webpack_require__(113)
+	  , toStringTagSymbol = __webpack_require__(101).toStringTag
 
 	  , defineProperty = Object.defineProperty
 	  , SetIterator;
@@ -17231,7 +17127,7 @@ var ProperTable =
 
 
 /***/ },
-/* 122 */
+/* 121 */
 /***/ function(module, exports) {
 
 	// Exports true if environment provides native `Set` implementation,
@@ -17246,7 +17142,7 @@ var ProperTable =
 
 
 /***/ },
-/* 123 */
+/* 122 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -17255,11 +17151,11 @@ var ProperTable =
 		value: true
 	});
 
-	var _moment = __webpack_require__(124);
+	var _moment = __webpack_require__(123);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(125);
+	var _numeral = __webpack_require__(124);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -17326,13 +17222,13 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 124 */
+/* 123 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 125 */
+/* 124 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -18017,7 +17913,7 @@ var ProperTable =
 
 
 /***/ },
-/* 126 */
+/* 125 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -18189,7 +18085,7 @@ var ProperTable =
 
 
 /***/ },
-/* 127 */
+/* 126 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
