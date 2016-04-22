@@ -134,7 +134,7 @@ var ProperTable =
 
 	var _reactImmutableRenderMixin = __webpack_require__(66);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -631,7 +631,6 @@ var ProperTable =
 					// After change the sort position priority of the other elements if the new position is lower than the current position set new position.
 					if (initialPos < colSortDirs[index].position) colSortDirs[index].position = initialPos;
 				}
-
 				return colSortDirs;
 			}
 
@@ -650,7 +649,8 @@ var ProperTable =
 
 				colSortDirs = _underscore2['default'].sortBy(colSortDirs, function (element) {
 					return element.position;
-				});
+				}).reverse();
+
 				data = this.sortColumns(data, colSortDirs);
 
 				return {
@@ -677,13 +677,11 @@ var ProperTable =
 				    element = null,
 				    position = null;
 
-				for (var i = 0; i <= colSortDirs.length - 1; i++) {
-					position = colSortDirs[i].position - 1; // Pos starts on 1,2,3,4... but array pos should start on 0 to length -1.
-					element = colSortDirs[position];
-
+				colSortDirs.forEach(function (element) {
 					// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
 					if (element.direction != 'DEF' && element.multisort && element.sortable) {
 						sortVal = sortVals[element.column];
+
 						sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
 							return sortVal(row.get(element.field));
 						}, function (val1, val2) {
@@ -697,7 +695,7 @@ var ProperTable =
 						});
 						defaultSort = false;
 					}
-				}
+				});
 
 				// If all the cols are default then sort the data by the rowIndex (virtual field added on componnent's create.)
 				if (defaultSort) {
@@ -13230,7 +13228,7 @@ var ProperTable =
 
 	var _fixedDataTable = __webpack_require__(3);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	/**
 	 * Stateless component which render the header cell of a column.

@@ -441,7 +441,6 @@ class ProperTable extends React.Component {
 			// After change the sort position priority of the other elements if the new position is lower than the current position set new position.
 			if (initialPos < colSortDirs[index].position) colSortDirs[index].position = initialPos;
 		}
-
 		return colSortDirs;
 	}
 
@@ -457,7 +456,8 @@ class ProperTable extends React.Component {
 
 		colSortDirs = _.sortBy(colSortDirs, (element) => {
 			return element.position;
-		});
+		}).reverse();
+
 		data = this.sortColumns(data, colSortDirs);
 
 		return {
@@ -478,13 +478,11 @@ class ProperTable extends React.Component {
 		let sortVals = this.state.colSortVals, sortVal = null;
 		let defaultSort = true, element = null, position = null;
 
-		for (let i = 0; i <= colSortDirs.length - 1; i++) {
-			position = colSortDirs[i].position - 1; // Pos starts on 1,2,3,4... but array pos should start on 0 to length -1.
-			element = colSortDirs[position];
-
+		colSortDirs.forEach((element) => {
 			// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
 			if (element.direction != 'DEF' && element.multisort && element.sortable) {
 				sortVal = sortVals[element.column];
+
 				sortedData = sortedData.sortBy((row, rowIndex, allData) => {
 	  				return sortVal(row.get(element.field));
 				}, (val1, val2) => {
@@ -498,7 +496,7 @@ class ProperTable extends React.Component {
 				});
 				defaultSort = false;
 			}
-		}
+		});
 
 		// If all the cols are default then sort the data by the rowIndex (virtual field added on componnent's create.)
 		if (defaultSort) {
