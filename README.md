@@ -41,6 +41,10 @@ Features of ProperTable:
 
 The compiled and compressed ProperTable distribution file can be found in the dist folder along with the css file. Add the default stylesheet `dist/propertable.min.css`, then import it into any module.
 
+## Live Demo
+##### [Code](https://github.com/CBIConsulting/ProperTable/tree/gh-pages/examples/jsx/example.js)
+##### [Demo](http://cbiconsulting.github.io/ProperTable/)
+
 ##External dependencies
 * React and React DOM
 * Underscore
