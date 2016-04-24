@@ -40,7 +40,7 @@ $(function() {
 		},
 		{
 			name: 'nested',
-			label: 'columnas anidadas',
+			label: 'Def selection',
 			uniqueId: 'miprueba_de_id',
 			children: [
 				{
@@ -159,7 +159,9 @@ $(function() {
 			console.log('selected1', data);
 		}}
 	/>, body1);
-	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} key={'testtable2'} cols={cols} data={data} afterSelect={function(data) {
+
+	cols[4].label = "Multiple Sort & Selection";
+	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} multisort={true} cols={cols} data={data} afterSelect={function(data) {
 		console.log('selected2', data);
 	}} selectable="multiple" />, body2);
 

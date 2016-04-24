@@ -9,7 +9,8 @@
     "watch": "karma start --auto-watch --no-single-run karma.conf.js",
     "start": "webpack-dev-server --hot --inline --config webpack.config.example.js",
     "build": "npm run clean && babel src/jsx --out-dir lib && webpack && cp -rvf src/css/* css/",
-    "release": "npm run build && webpack --config webpack.config.min.js"
+    "release": "npm run build && webpack --config webpack.config.min.js",
+    "build-example": "webpack --config webpack.config.example.dist.js"
   },
   "repository": {
     "type": "git",
