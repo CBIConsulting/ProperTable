@@ -30,7 +30,7 @@ const SortHeaderCell = props => {
 
   return (
       <Cell
-        className={className}
+        className={className + '_header'}
         onClick={(e) => {
           onSortChange(e, props, sortable);
         }}

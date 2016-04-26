@@ -1,8 +1,44 @@
 import ProperTable from "../../src/jsx/ProperTable";
+import React from 'react';
 
 let body1 = document.getElementById('canvas1');
 let body2 = document.getElementById('canvas2');
 let body3 = document.getElementById('canvas3');
+
+// Check updating selected when setting selection from a father component
+class App extends React.Component {
+
+	constructor(props) {
+		super(props);
+
+		this.state = {
+			selected: this.props.selected
+		}
+	}
+
+	updateSelected(data, selection) {
+		console.log('Check update selected on father', data)
+
+		this.setState({
+			selected: selection
+		});
+	}
+
+	render() {
+		return (
+			<ProperTable.Table
+				key='pt1'
+				idField={this.props.idField}
+				selected={this.state.selected}
+				uniqueId={1}
+				rowHeight={40}
+				cols={this.props.cols}
+				data={this.props.data}
+				afterSelect={this.updateSelected.bind(this)}
+			/>
+		)
+	}
+}
 
 $(function() {
 	var cols = [
@@ -40,7 +76,7 @@ $(function() {
 		},
 		{
 			name: 'nested',
-			label: 'columnas anidadas',
+			label: 'Def selection',
 			uniqueId: 'miprueba_de_id',
 			children: [
 				{
@@ -146,20 +182,16 @@ $(function() {
 		ex3data.push(row);
 	}
 
-	ReactDOM.render(<ProperTable.Table
-		key='pt1'
-		idField="id"
-		selected={3}
-		uniqueId={1}
-		rowHeight={40}
+	ReactDOM.render(<App
 		key={'testtable'}
+		idField="id"
+		selected={[3,4]}
 		cols={cols}
 		data={data}
-		afterSelect={function(data) {
-			console.log('selected1', data);
-		}}
 	/>, body1);
-	ReactDOM.render(<ProperTable.Table key='pt2' uniqueId={2} rowHeight={40} key={'testtable2'} cols={cols} data={data} afterSelect={function(data) {
+
+	cols[4].label = "Multiple Sort & Selection";
+	ReactDOM.render(<ProperTable.Table key='pt2' idField='id' uniqueId={2} rowHeight={40} multisort={true} cols={cols} data={data} afterSelect={function(data) {
 		console.log('selected2', data);
 	}} selectable="multiple" />, body2);
 
