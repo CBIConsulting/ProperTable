@@ -151,7 +151,7 @@ var ProperTable =
 	 * data: Data of the table
 	 * afterSort: Function called after the data has been sorted. Return the rawdata sorted.
 	 * afterSelect: Function called after select a row. Return the seleted rows.
-	 * selectable: If the rows can be selected or not, and if that selection is multiple. Values: True || 'Multiple' || False
+	 * selectable: If the rows can be selected or not, and if that selection is multiple. Values: true || 'Multiple' || false
 	 * rowHeight: Height of each row in numerical value.
 	 * msgs: Get the translated messages of the current lang.
 	 * selectorWidth: Width of the selector column, checkboxes.
@@ -256,14 +256,13 @@ var ProperTable =
 			// Get initial columns sort
 			var initialColSort = _this.prepareColSort();
 
-			_this.hasFixedColumns = false;
-
 			_this.state = {
 				cols: _immutable2['default'].fromJS(_this.props.cols),
 				colSortDirs: initialColSort.colSortDirs,
 				colSortVals: initialColSort.sortValues,
 				data: initialData.data,
 				indexed: initialData.indexed,
+				initialIndexed: initialData.initialIndexed,
 				rawdata: initialData.rawdata,
 				sizes: _immutable2['default'].fromJS({}),
 				allSelected: false,
@@ -275,51 +274,96 @@ var ProperTable =
 		_createClass(ProperTable, [{
 			key: 'componentWillMount',
 			value: function componentWillMount() {
-				this.uniqueId = this.props.uniqueId || _underscore2['default'].uniqueId('propertable-');
-			}
-		}, {
-			key: 'componentDidMount',
-			value: function componentDidMount() {
-				// Sort the table if the sort direction of one or more columns are diferent than default.
-				this.sortTable(this.state.colSortDirs);
-				this.setDefaultSelection();
+				// Sort the table if the sort direction of one or more columns are diferent than default and set the selection
+				this.applyDefault();
 			}
 		}, {
 			key: 'shouldComponentUpdate',
 			value: function shouldComponentUpdate(nextProps, nextState) {
-				var _this2 = this;
-
 				var propschanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props, nextProps);
 				var statechanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.state, nextState);
 				var somethingchanged = propschanged || statechanged;
 
 				if (propschanged) {
-					if (nextProps.cols.length != this.props.cols.length || !_underscore2['default'].isEqual(nextProps.cols, this.props.cols)) {
-						this.setState({
-							cols: _immutable2['default'].fromJS(nextProps.cols)
-						});
-						this.sortTable(nextState.colSortDirs);
+					var colsChanged = nextProps.cols.length != this.props.cols.length || !_underscore2['default'].isEqual(nextProps.cols, this.props.cols);
+					var dataChanged = nextProps.data.length != this.props.data.length || !_underscore2['default'].isEqual(nextProps.data, this.props.data);
+					var colSortData = null,
+					    preparedData = null;
+
+					// If data and columns change the colSortDirs and all data states must be updated. Then apply default (sort table
+					// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
+					if (colsChanged || dataChanged) {
+						if (dataChanged) {
+							// The most probably case
+							preparedData = this.prepareData(nextProps, nextState);
+
+							this.setState({
+								data: preparedData.data,
+								indexed: preparedData.indexed,
+								initialIndexed: preparedData.initialIndexed,
+								rawdata: preparedData.rawdata
+							}, this.sortTable(nextState.colSortDirs, false));
+						} else if (colsChanged && dataChanged) {
+							preparedData = this.prepareData(nextProps, nextState);
+							colSortData = this.prepareColSort(nextProps);
+
+							this.setState({
+								colSortDirs: colSortData.colSortDirs,
+								colSortVals: colSortData.colSortVals,
+								cols: _immutable2['default'].fromJS(nextProps.cols),
+								data: preparedData.data,
+								indexed: preparedData.indexed,
+								initialIndexed: preparedData.initialIndexed,
+								rawdata: preparedData.rawdata
+							}, this.sortTable(colSortData.colSortDirs, false));
+						} else if (colsChanged) {
+							colSortData = this.prepareColSort(nextProps);
+
+							this.setState({
+								colSortDirs: colSortData.colSortDirs,
+								colSortVals: colSortData.colSortVals,
+								cols: _immutable2['default'].fromJS(nextProps.cols)
+							}, this.applyDefault(nextState.colSortDirs, nextProps)); // apply selection and sort
+						}
+
+						return false;
+					} else if (nextProps.selected) {
+						this.setDefaultSelection(nextProps);
+
+						return false;
 					}
-
-					if (nextProps.data.length != this.props.data.length || !_underscore2['default'].isEqual(nextProps.data, this.props.data)) {
-						var prepared = this.prepareData(nextProps.data);
-
-						this.setState(prepared, function () {
-							_this2.sortTable(nextState.colSortDirs);
-						});
-					}
-				}
-
-				if (somethingchanged) {
-					this.checkSelectionChange(nextProps, nextState);
 				}
 
 				return somethingchanged;
 			}
+		}, {
+			key: 'componentWillUpdate',
+			value: function componentWillUpdate(nextProps, nextState) {
+				this.checkSelectionChange(nextProps, nextState);
+			}
+
+			/**
+	   * Apply default selection and sort table.
+	   *
+	   * @param (array)	colSortDirs Sort settings of each column. From current or next state (case the props data/cols change)
+	   * @param (array)	props 		Component props (or nextProps)
+	   */
+
+		}, {
+			key: 'applyDefault',
+			value: function applyDefault() {
+				var colSortDirs = arguments.length <= 0 || arguments[0] === undefined ? this.state.colSortDirs : arguments[0];
+				var props = arguments.length <= 1 || arguments[1] === undefined ? this.props : arguments[1];
+
+				this.uniqueId = props.uniqueId || _underscore2['default'].uniqueId('propertable-');
+				this.sortTable(colSortDirs, false);
+				this.setDefaultSelection(props);
+			}
 
 			/**
 	   * Prepare the data received by the component for the internal working.
-	   *
+	   * @param  (array)	props 	Component props (or nextProps)
+	   * @param  (array)	state 	Component state (or nextState)
 	   * @return (array)	-rawdata: The same data as the props.
 	   *					-indexed: Same as rawdata but indexed by the properId
 	   *					-data: Parsed data to add some fields necesary to internal working.
@@ -328,25 +372,26 @@ var ProperTable =
 		}, {
 			key: 'prepareData',
 			value: function prepareData() {
-				var newdata = arguments.length <= 0 || arguments[0] === undefined ? this.props.data : arguments[0];
+				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+				var state = arguments.length <= 1 || arguments[1] === undefined ? this.state : arguments[1];
 
 				// The data will be inmutable inside the component
-				var data = _immutable2['default'].fromJS(newdata),
+				var data = _immutable2['default'].fromJS(props.data),
 				    index = 0;
 				var indexed = {},
 				    parsed = [],
 				    selectedarr = [];
 				var keyField = this.props.idField;
 
-				if (this.props.selected) {
-					if (!_underscore2['default'].isArray(this.props.selected)) {
-						selectedarr = [this.props.selected];
+				if (props.selected) {
+					if (!_underscore2['default'].isArray(props.selected)) {
+						selectedarr = [props.selected];
 					} else {
-						selectedarr = this.props.selected;
+						if (props.selectable == 'multiple') selectedarr = props.selected;else selectedarr = [props.selected[0]];
 					}
 				} else {
-					if (this.state && this.state.selection) {
-						this.state.selection.forEach(function (id) {
+					if (state && state.selection) {
+						state.selection.forEach(function (id) {
 							selectedarr.push(id);
 						});
 					}
@@ -381,45 +426,37 @@ var ProperTable =
 				return {
 					rawdata: data,
 					data: parsed,
-					indexed: indexed
+					indexed: indexed,
+					initialIndexed: (0, _clone2['default'])(indexed)
 				};
 			}
 
 			/**
-	   * Prepare data or restart the data to default.
+	   *	Set the default selection if that exist in props
+	   *
+	   * @param (array)	props 	Component props (or nextProps)
 	   */
 
 		}, {
-			key: 'initData',
-			value: function initData() {
-				var data = arguments.length <= 0 || arguments[0] === undefined ? this.props.data : arguments[0];
-
-				var newdata = this.prepareData(data);
-
-				this.setState(newdata);
-			}
-		}, {
 			key: 'setDefaultSelection',
 			value: function setDefaultSelection() {
-				var _this3 = this;
-
 				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
 
 				if (props.selected) {
-					(function () {
-						var selected = props.selected;
-						var selection = new Set();
+					var selected = props.selected,
+					    selection = void 0;
 
+					if (selected.length == 0) {
+						selection = new Set();
+					} else {
 						if (!_underscore2['default'].isArray(selected)) {
-							selection.add(selected.toString());
+							selection = new Set([selected.toString()]);
 						} else {
-							selected.forEach(function (element) {
-								selection.add(element.toString());
-							});
+							if (props.selectable == 'multiple') selection = new Set(selected.toString().split(','));else selection = new Set([selected[0].toString()]);
 						}
+					}
 
-						_this3.triggerSelection(selection);
-					})();
+					this.triggerSelection(selection, false); // false -> don't send the selection
 				}
 			}
 
@@ -433,10 +470,12 @@ var ProperTable =
 		}, {
 			key: 'prepareColSort',
 			value: function prepareColSort() {
-				var colSortDirs = this.props.colSortDirs,
-				    cols = this.props.cols;
+				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+
+				var colSortDirs = props.colSortDirs,
+				    cols = props.cols;
 				var sort = [],
-				    multisort = this.props.multisort;
+				    multisort = props.multisort;
 				var direction = null,
 				    sortable = null,
 				    colData = null;
@@ -472,7 +511,7 @@ var ProperTable =
 				}
 
 				// Ordering by selected rows. Virtual column
-				if (this.props.selectable == 'multiple') {
+				if (props.selectable == 'multiple') {
 					sort.push({
 						column: 'selector-multiple-column', // Column name
 						field: '_selected',
@@ -504,7 +543,7 @@ var ProperTable =
 		}, {
 			key: 'buildColSortDirs',
 			value: function buildColSortDirs(cols) {
-				var _this4 = this;
+				var _this2 = this;
 
 				var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
 				var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
@@ -524,7 +563,7 @@ var ProperTable =
 							sortable: sortable
 						});
 					} else {
-						_this4.buildColSortDirs(element.children, colSortDirs, sortVals);
+						_this2.buildColSortDirs(element.children, colSortDirs, sortVals);
 					}
 				});
 
@@ -553,12 +592,8 @@ var ProperTable =
 			value: function onSortChange(columnKey, sortDir) {
 				var newData = null;
 				var colSortDirs = this.updateSortDir(columnKey, sortDir);
-				newData = this.sortTable(colSortDirs);
 
-				this.setState({
-					data: newData.data,
-					colSortDirs: newData.colSortDirs
-				}, this.sendSortedData());
+				this.sortTable(colSortDirs);
 			}
 
 			/**
@@ -638,6 +673,7 @@ var ProperTable =
 	   * Receive the current colSortDirs state, sort it by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
 	   *
 	   * @param 	{array}		colSortDirs Sort settings of each column
+	   * @param 	{boolean}	sendSorted 	If the sorted data must be sent or not
 	   * @return 	{array}		-colSortDirs: Sorted colSortDirs
 	   *						-data: Sorted data to be updated in the component state.
 	   */
@@ -645,6 +681,8 @@ var ProperTable =
 		}, {
 			key: 'sortTable',
 			value: function sortTable(colSortDirs) {
+				var sendSorted = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
 				var data = this.state.data;
 
 				colSortDirs = _underscore2['default'].sortBy(colSortDirs, function (element) {
@@ -653,10 +691,19 @@ var ProperTable =
 
 				data = this.sortColumns(data, colSortDirs);
 
-				return {
-					data: data,
-					colSortDirs: colSortDirs
-				};
+				if (sendSorted) {
+					this.setState({
+						data: data.data,
+						indexed: data.indexed,
+						colSortDirs: colSortDirs
+					}, this.sendSortedData(data.data));
+				} else {
+					this.setState({
+						data: data.data,
+						indexed: data.indexed,
+						colSortDirs: colSortDirs
+					});
+				}
 			}
 
 			/**
@@ -670,7 +717,10 @@ var ProperTable =
 		}, {
 			key: 'sortColumns',
 			value: function sortColumns(data, colSortDirs) {
-				var sortedData = data;
+				var _this3 = this;
+
+				var sortedData = data,
+				    indexed = _underscore2['default'].clone(this.state.indexed);
 				var sortVals = this.state.colSortVals,
 				    sortVal = null;
 				var defaultSort = true,
@@ -688,9 +738,9 @@ var ProperTable =
 							if (val1 == val2) {
 								return 0;
 							} else if (element.direction == 'ASC') {
-								return val1 > val2 ? -1 : 1;
-							} else if (element.direction == 'DESC') {
 								return val1 > val2 ? 1 : -1;
+							} else if (element.direction == 'DESC') {
+								return val1 > val2 ? -1 : 1;
 							}
 						});
 						defaultSort = false;
@@ -707,7 +757,15 @@ var ProperTable =
 					});
 				}
 
-				return sortedData;
+				// Update index into indexed data.
+				sortedData.map(function (element, index) {
+					indexed[element.get(_this3.props.idField)]._rowIndex = index;
+				});
+
+				return {
+					data: sortedData,
+					indexed: indexed
+				};
 			}
 
 			/**
@@ -723,7 +781,7 @@ var ProperTable =
 		}, {
 			key: 'parseColumn',
 			value: function parseColumn(colData) {
-				var _this5 = this;
+				var _this4 = this;
 
 				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
@@ -805,7 +863,7 @@ var ProperTable =
 				} else {
 					// Call the method recursively to all the childrens of this column.
 					var inner = colData.children.map(function (c) {
-						return _this5.parseColumn(c, true);
+						return _this4.parseColumn(c, true);
 					});
 
 					col = _react2['default'].createElement(
@@ -836,7 +894,7 @@ var ProperTable =
 		}, {
 			key: 'buildTable',
 			value: function buildTable() {
-				var _this6 = this;
+				var _this5 = this;
 
 				var columns = [],
 				    isNested = hasNested(this.state.cols),
@@ -901,7 +959,7 @@ var ProperTable =
 				}
 
 				this.state.cols.forEach(function (col) {
-					columns.push(_this6.parseColumn(col.toJSON(), false, isNested));
+					columns.push(_this5.parseColumn(col.toJSON(), false, isNested));
 				});
 
 				return columns;
@@ -917,17 +975,21 @@ var ProperTable =
 		}, {
 			key: 'handleSelectAll',
 			value: function handleSelectAll(e) {
-				var allSelected = this.state.allSelected;
-				var newSelection = [];
-				var selection = null;
+				e.preventDefault();
 
-				if (!allSelected) {
-					newSelection = _underscore2['default'].keys(this.state.indexed);
+				if (this.props.selectable) {
+					var allSelected = this.state.allSelected;
+					var newSelection = [];
+					var selection = null;
+
+					if (!allSelected) {
+						newSelection = _underscore2['default'].keys(this.state.indexed);
+					}
+
+					selection = new Set(newSelection);
+
+					this.triggerSelection(selection);
 				}
-
-				selection = new Set(newSelection);
-
-				this.triggerSelection(selection);
 			}
 
 			/**
@@ -940,8 +1002,13 @@ var ProperTable =
 		}, {
 			key: 'handleRowClick',
 			value: function handleRowClick(e, rowIndex) {
+				e.preventDefault();
+
 				var clickedId = this.state.data.get(rowIndex).get(this.props.idField);
-				this.toggleSelected(clickedId.toString());
+
+				if (this.props.selectable) {
+					this.toggleSelected(clickedId.toString());
+				}
 			}
 
 			/**
@@ -953,19 +1020,7 @@ var ProperTable =
 		}, {
 			key: 'toggleSelected',
 			value: function toggleSelected(id) {
-				var selection = null;
-
-				if (this.props.selected) {
-					if (!_underscore2['default'].isArray(this.props.selected)) {
-						selection = new Set([this.props.selected.toString()]);
-					} else {
-						selection = new Set(_underscore2['default'].map(this.props.selected, function (v) {
-							return v.toString();
-						}));
-					}
-				} else {
-					selection = new Set(this.state.selection);
-				}
+				var selection = new Set(this.state.selection);
 
 				if (selection.has(id)) {
 					selection['delete'](id); // Returns a copy of the array with the instance with that properId deleted.
@@ -990,18 +1045,16 @@ var ProperTable =
 		}, {
 			key: 'checkSelectionChange',
 			value: function checkSelectionChange(nextProps, nextState) {
-				if (!this.props.selected) {
-					if (this.props.selectable == 'multiple') {
-						if (nextState.selection.size !== this.state.selection.size) {
-							this.updateSelectionData(nextState.selection, nextState.allSelected);
-						}
-					} else {
-						var next = nextState.selection.values().next().value || null;
-						var old = this.state.selection.values().next().value || null;
+				if (nextProps.selectable == 'multiple') {
+					if (nextState.selection.size !== this.state.selection.size) {
+						this.updateSelectionData(nextState.selection, nextState.allSelected);
+					}
+				} else if (nextProps.selectable == true) {
+					var next = nextState.selection.values().next().value || null;
+					var old = this.state.selection.values().next().value || null;
 
-						if (next !== old) {
-							this.updateSelectionData(next);
-						}
+					if (next !== old) {
+						this.updateSelectionData(next);
 					}
 				}
 			}
@@ -1016,7 +1069,7 @@ var ProperTable =
 		}, {
 			key: 'updateSelectionData',
 			value: function updateSelectionData(newSelection) {
-				var _this7 = this;
+				var _this6 = this;
 
 				var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
@@ -1053,6 +1106,7 @@ var ProperTable =
 						// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
 						oldSelection.forEach(function (id) {
 							if (!newSelection.has(id)) {
+								// has not id
 								changedId = id;
 								_selected = false;
 								return false;
@@ -1061,10 +1115,10 @@ var ProperTable =
 
 						// Otherwise a new row has been selected. Look through the new selection for the new element.
 						if (!changedId) {
-							_selected = true;
 							newSelection.forEach(function (id) {
 								if (!oldSelection.has(id)) {
 									changedId = id;
+									_selected = true;
 									return false;
 								}
 							});
@@ -1077,7 +1131,7 @@ var ProperTable =
 					} else {
 							// Change all data
 							newData = newData.map(function (row) {
-								rowid = row.get(_this7.props.idField);
+								rowid = row.get(_this6.props.idField);
 								selected = newSelection.has(rowid.toString());
 								rdata = row.set('_selected', selected);
 								curIndex = newIndexed[rowid];
@@ -1103,25 +1157,24 @@ var ProperTable =
 	   * the components state with the new data.
 	   *
 	   * @param {array}	newSelection	The selected rows
+	   * @param {boolean}	sendSelection 	If the selection must be sent or not
 	   */
 
 		}, {
 			key: 'triggerSelection',
 			value: function triggerSelection() {
-				var _this8 = this;
-
 				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? new Set() : arguments[0];
+				var sendSelection = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
 
-				if (!this.props.selected) {
+				if (sendSelection) {
 					this.setState({
 						selection: newSelection,
 						allSelected: newSelection.size >= this.state.data.size
 					}, this.sendSelection);
 				} else {
 					this.setState({
+						selection: newSelection,
 						allSelected: newSelection.size >= this.state.data.size
-					}, function () {
-						_this8.sendSelection(newSelection);
 					});
 				}
 			}
@@ -1133,15 +1186,15 @@ var ProperTable =
 		}, {
 			key: 'sendSelection',
 			value: function sendSelection() {
-				var _this9 = this;
+				var _this7 = this;
 
 				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
 				if (typeof this.props.afterSelect == 'function') {
 					(function () {
-						var _state = _this9.state;
+						var _state = _this7.state;
 						var selection = _state.selection;
-						var indexed = _state.indexed;
+						var initialIndexed = _state.initialIndexed;
 						var rawdata = _state.rawdata;
 
 						var output = [];
@@ -1152,36 +1205,28 @@ var ProperTable =
 								selectionArray.push(element);
 							});
 						} else {
-							if (_this9.props.selected) {
-								selectionArray = _this9.props.selected;
-
-								if (!_underscore2['default'].isArray(selectionArray)) {
-									selectionArray = [selectionArray];
-								}
-							} else {
-								selection.forEach(function (element) {
-									selectionArray.push(element);
-								});
-							}
+							selection.forEach(function (element) {
+								selectionArray.push(element);
+							});
 						}
 
 						output = _underscore2['default'].map(selectionArray, function (pId) {
-							if (typeof indexed[pId] == 'undefined') {
+							if (typeof initialIndexed[pId] == 'undefined') {
 								return null;
 							}
 
-							var rowIndex = indexed[pId]._rowIndex;
+							var rowIndex = initialIndexed[pId]._rowIndex;
 
 							return rawdata.get(rowIndex).toJSON();
 						});
 
 						output = _underscore2['default'].compact(output);
 
-						if (_this9.props.selectable === true) {
+						if (_this7.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
 							output = output[0];
 						}
 
-						_this9.props.afterSelect(output);
+						_this7.props.afterSelect(output, selectionArray);
 					})();
 				}
 			}
@@ -1192,25 +1237,24 @@ var ProperTable =
 
 		}, {
 			key: 'sendSortedData',
-			value: function sendSortedData() {
-				var _this10 = this;
+			value: function sendSortedData(data) {
+				var _this8 = this;
 
 				if (typeof this.props.afterSort == 'function') {
 					(function () {
-						var _state2 = _this10.state;
-						var data = _state2.data;
-						var indexed = _state2.indexed;
+						var _state2 = _this8.state;
+						var initialIndexed = _state2.initialIndexed;
 						var rawdata = _state2.rawdata;
 
 						var output = [];
 
 						output = data.map(function (row) {
-							var rowIndex = indexed[row.get('_properId')]._rowIndex;
+							var rowIndex = initialIndexed[row.get(_this8.props.idField)]._rowIndex;
 
-							return rawdata.get(rowIndex).toJSON();
+							return rawdata.get(rowIndex);
 						});
 
-						_this10.props.afterSort(output);
+						_this8.props.afterSort(output.toJSON());
 					})();
 				}
 			}
@@ -13261,7 +13305,7 @@ var ProperTable =
 	  return _react2['default'].createElement(
 	    _fixedDataTable.Cell,
 	    _extends({
-	      className: className,
+	      className: className + '_header',
 	      onClick: function onClick(e) {
 	        onSortChange(e, props, sortable);
 	      }
