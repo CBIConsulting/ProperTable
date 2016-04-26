@@ -19,7 +19,7 @@ const Set = require('es6-set');
  * data: Data of the table
  * afterSort: Function called after the data has been sorted. Return the rawdata sorted.
  * afterSelect: Function called after select a row. Return the seleted rows.
- * selectable: If the rows can be selected or not, and if that selection is multiple. Values: True || 'Multiple' || False
+ * selectable: If the rows can be selected or not, and if that selection is multiple. Values: true || 'Multiple' || false
  * rowHeight: Height of each row in numerical value.
  * msgs: Get the translated messages of the current lang.
  * selectorWidth: Width of the selector column, checkboxes.
@@ -120,14 +120,13 @@ class ProperTable extends React.Component {
 		// Get initial columns sort
 		let initialColSort = this.prepareColSort();
 
-		this.hasFixedColumns = false;
-
 		this.state = {
 			cols: Immutable.fromJS(this.props.cols),
 			colSortDirs: initialColSort.colSortDirs,
 			colSortVals: initialColSort.sortValues,
 			data: initialData.data,
 			indexed: initialData.indexed,
+			initialIndexed: initialData.initialIndexed,
 			rawdata: initialData.rawdata,
 			sizes: Immutable.fromJS({}),
 			allSelected: false,
@@ -136,13 +135,8 @@ class ProperTable extends React.Component {
 	}
 
 	componentWillMount() {
-		this.uniqueId = this.props.uniqueId || _.uniqueId('propertable-');
-	}
-
-	componentDidMount() {
-		// Sort the table if the sort direction of one or more columns are diferent than default.
-		this.sortTable(this.state.colSortDirs);
-		this.setDefaultSelection();
+		// Sort the table if the sort direction of one or more columns are diferent than default and set the selection
+		this.applyDefault();
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
@@ -151,51 +145,99 @@ class ProperTable extends React.Component {
 		let somethingchanged = propschanged || statechanged;
 
 		if (propschanged) {
-			if (nextProps.cols.length != this.props.cols.length || !_.isEqual(nextProps.cols, this.props.cols)) {
-				this.setState({
-					cols: Immutable.fromJS(nextProps.cols)
-				});
-				this.sortTable(nextState.colSortDirs);
+			let colsChanged = nextProps.cols.length != this.props.cols.length || !_.isEqual(nextProps.cols, this.props.cols);
+			let dataChanged = nextProps.data.length != this.props.data.length || !_.isEqual(nextProps.data, this.props.data);
+			let colSortData = null, preparedData = null;
+
+			// If data and columns change the colSortDirs and all data states must be updated. Then apply default (sort table
+			// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
+			if (colsChanged || dataChanged) {
+				if (dataChanged) { // The most probably case
+					preparedData = this.prepareData(nextProps, nextState);
+
+					this.setState({
+						data: preparedData.data,
+						indexed: preparedData.indexed,
+						initialIndexed: preparedData.initialIndexed,
+						rawdata: preparedData.rawdata
+					}, this.sortTable(nextState.colSortDirs, false));
+
+				} else if (colsChanged && dataChanged) {
+					preparedData = this.prepareData(nextProps, nextState);
+					colSortData =  this.prepareColSort(nextProps);
+
+					this.setState({
+						colSortDirs: colSortData.colSortDirs,
+						colSortVals: colSortData.colSortVals,
+						cols: Immutable.fromJS(nextProps.cols),
+						data: preparedData.data,
+						indexed: preparedData.indexed,
+						initialIndexed: preparedData.initialIndexed,
+						rawdata: preparedData.rawdata
+					}, this.sortTable(colSortData.colSortDirs, false));
+
+				} else if (colsChanged) {
+					colSortData =  this.prepareColSort(nextProps);
+
+					this.setState({
+						colSortDirs: colSortData.colSortDirs,
+						colSortVals: colSortData.colSortVals,
+						cols: Immutable.fromJS(nextProps.cols)
+					}, this.applyDefault(nextState.colSortDirs, nextProps)); // apply selection and sort
+				}
+
+				return false;
+
+			} else if (nextProps.selected) {
+				this.setDefaultSelection(nextProps);
+
+				return false;
 			}
-
-			if (nextProps.data.length != this.props.data.length || !_.isEqual(nextProps.data, this.props.data)) {
-				let prepared = this.prepareData(nextProps.data);
-
-				this.setState(prepared, () => {
-					this.sortTable(nextState.colSortDirs);
-				});
-			}
-		}
-
-		if (somethingchanged) {
-			this.checkSelectionChange(nextProps, nextState);
 		}
 
 		return somethingchanged;
 	}
 
+	componentWillUpdate(nextProps, nextState) {
+		this.checkSelectionChange(nextProps, nextState);
+	}
+
+/**
+ * Apply default selection and sort table.
+ *
+ * @param (array)	colSortDirs Sort settings of each column. From current or next state (case the props data/cols change)
+ * @param (array)	props 		Component props (or nextProps)
+ */
+	applyDefault(colSortDirs = this.state.colSortDirs, props = this.props) {
+		this.uniqueId = props.uniqueId || _.uniqueId('propertable-');
+		this.sortTable(colSortDirs, false);
+		this.setDefaultSelection(props);
+	}
+
 /**
  * Prepare the data received by the component for the internal working.
- *
+ * @param  (array)	props 	Component props (or nextProps)
+ * @param  (array)	state 	Component state (or nextState)
  * @return (array)	-rawdata: The same data as the props.
  *					-indexed: Same as rawdata but indexed by the properId
  *					-data: Parsed data to add some fields necesary to internal working.
  */
-	prepareData(newdata = this.props.data) {
+	prepareData(props = this.props, state = this.state) {
 		// The data will be inmutable inside the component
-		let data = Immutable.fromJS(newdata), index = 0;
+		let data = Immutable.fromJS(props.data), index = 0;
 		let indexed = {}, parsed = [], selectedarr = [];
 		let keyField = this.props.idField;
 
-		if (this.props.selected) {
-			if (!_.isArray(this.props.selected)) {
-				selectedarr = [this.props.selected];
+		if (props.selected) {
+			if (!_.isArray(props.selected)) {
+				selectedarr = [props.selected];
 			} else {
-				selectedarr = this.props.selected;
+				if (props.selectable == 'multiple') selectedarr = props.selected;
+				else selectedarr = [props.selected[0]];
 			}
 		} else {
-			if (this.state && this.state.selection) {
-				this.state.selection.forEach(id => {
+			if (state && state.selection) {
+				state.selection.forEach(id => {
 					selectedarr.push(id);
 				});
 			}
@@ -230,33 +272,32 @@ class ProperTable extends React.Component {
 		return {
 			rawdata: data,
 			data: parsed,
-			indexed: indexed
+			indexed: indexed,
+			initialIndexed: clone(indexed)
 		};
 	}
 
 /**
- * Prepare data or restart the data to default.
+ *	Set the default selection if that exist in props
+ *
+ * @param (array)	props 	Component props (or nextProps)
  */
-	initData(data = this.props.data) {
-		let newdata = this.prepareData(data);
-
-		this.setState(newdata);
-	}
-
 	setDefaultSelection(props = this.props) {
 		if (props.selected) {
-			let selected = props.selected;
-			let selection = new Set();
+			let selected = props.selected, selection;
 
-			if (!_.isArray(selected)) {
-				selection.add(selected.toString());
+			if (selected.length == 0) {
+				selection = new Set();
 			} else {
-				selected.forEach( element => {
-					selection.add(element.toString());
-				});
+				if (!_.isArray(selected)) {
+					selection = new Set([selected.toString()]);
+				} else {
+					if (props.selectable == 'multiple') selection = new Set(selected.toString().split(','));
+					else selection = new Set([selected[0].toString()]);
+				}
 			}
 
-			this.triggerSelection(selection);
+			this.triggerSelection(selection, false); // false -> don't send the selection
 		}
 	}
 
@@ -266,9 +307,9 @@ class ProperTable extends React.Component {
  * @return (array)	-colSortDirs: Sort settings of each column.
  *					-sortValues: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
  */
-	prepareColSort() {
-        let colSortDirs = this.props.colSortDirs, cols = this.props.cols;
-        let sort = [], multisort = this.props.multisort;
+	prepareColSort(props = this.props) {
+        let colSortDirs = props.colSortDirs, cols = props.cols;
+        let sort = [], multisort = props.multisort;
 		let direction = null, sortable = null, colData = null;
 		let sortData = this.buildColSortDirs(cols); // Build the initial colsortdirs using the cols array.
 
@@ -302,7 +343,7 @@ class ProperTable extends React.Component {
         }
 
         // Ordering by selected rows. Virtual column
-        if (this.props.selectable == 'multiple') {
+        if (props.selectable == 'multiple') {
         	sort.push({
          		column: 'selector-multiple-column', // Column name
          		field: '_selected',
@@ -368,12 +409,8 @@ class ProperTable extends React.Component {
 	onSortChange(columnKey, sortDir) {
   		let newData = null;
   		let colSortDirs = this.updateSortDir(columnKey, sortDir);
-  		newData = this.sortTable(colSortDirs);
 
-  		this.setState({
-  			data: newData.data,
-	      	colSortDirs: newData.colSortDirs
-	    }, this.sendSortedData());
+  		this.sortTable(colSortDirs);
 	}
 
 /**
@@ -448,10 +485,11 @@ class ProperTable extends React.Component {
  * Receive the current colSortDirs state, sort it by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
  *
  * @param 	{array}		colSortDirs Sort settings of each column
+ * @param 	{boolean}	sendSorted 	If the sorted data must be sent or not
  * @return 	{array}		-colSortDirs: Sorted colSortDirs
  *						-data: Sorted data to be updated in the component state.
  */
-	sortTable(colSortDirs) {
+	sortTable(colSortDirs, sendSorted = true) {
 		let data = this.state.data;
 
 		colSortDirs = _.sortBy(colSortDirs, (element) => {
@@ -460,10 +498,19 @@ class ProperTable extends React.Component {
 
 		data = this.sortColumns(data, colSortDirs);
 
-		return {
-			data: data,
-			colSortDirs: colSortDirs
-		};
+		if (sendSorted) {
+			this.setState({
+	  			data: data.data,
+	  			indexed: data.indexed,
+		      	colSortDirs: colSortDirs
+		    }, this.sendSortedData(data.data));
+		} else {
+			this.setState({
+	  			data: data.data,
+	  			indexed: data.indexed,
+		      	colSortDirs: colSortDirs
+		    });
+		}
 	}
 
 /**
@@ -474,7 +521,7 @@ class ProperTable extends React.Component {
  * @return 	{array}		sortedData 	Sorted data to be updated in the component state.
  */
 	sortColumns(data, colSortDirs) {
-		let sortedData = data;
+		let sortedData = data, indexed = _.clone(this.state.indexed);
 		let sortVals = this.state.colSortVals, sortVal = null;
 		let defaultSort = true, element = null, position = null;
 
@@ -489,9 +536,9 @@ class ProperTable extends React.Component {
 					if (val1 == val2) {
 						return 0;
 					} else if (element.direction == 'ASC') {
-						return val1 > val2? -1 : 1;
+						return val1 > val2? 1 : -1;
 					} else if (element.direction == 'DESC') {
-					 	return val1 > val2? 1 : -1;
+					 	return val1 > val2? -1 : 1;
 					}
 				});
 				defaultSort = false;
@@ -508,7 +555,15 @@ class ProperTable extends React.Component {
 			});
 		}
 
-		return sortedData;
+		// Update index into indexed data.
+		sortedData.map((element, index) => {
+			indexed[element.get(this.props.idField)]._rowIndex = index;
+		});
+
+		return {
+			data: sortedData,
+			indexed: indexed
+		}
 	}
 
 
@@ -684,17 +739,21 @@ class ProperTable extends React.Component {
  * @param {object}	e  	Event which call the function.
  */
 	handleSelectAll(e) {
-		let allSelected = this.state.allSelected;
-		let newSelection = [];
-		let selection = null;
+		e.preventDefault();
 
-		if (!allSelected) {
-			newSelection = _.keys(this.state.indexed);
+		if (this.props.selectable) {
+			let allSelected = this.state.allSelected;
+			let newSelection = [];
+			let selection = null;
+
+			if (!allSelected) {
+				newSelection = _.keys(this.state.indexed);
+			}
+
+			selection = new Set(newSelection);
+
+			this.triggerSelection(selection);
 		}
-
-		selection = new Set(newSelection);
-
-		this.triggerSelection(selection);
 	}
 
 /**
@@ -704,8 +763,13 @@ class ProperTable extends React.Component {
  * @param {integer}	rowIndex  	Index of the clicked row.
  */
 	handleRowClick(e, rowIndex) {
+		e.preventDefault();
+
 		let clickedId = this.state.data.get(rowIndex).get(this.props.idField);
-		this.toggleSelected(clickedId.toString());
+
+		if (this.props.selectable) {
+			this.toggleSelected(clickedId.toString());
+		}
 	}
 
 /**
@@ -714,17 +778,7 @@ class ProperTable extends React.Component {
  * @param {integet}	id  	Virtual field added to each row data on componnent's create
  */
 	toggleSelected(id) {
-		let selection = null;
-
-		if (this.props.selected) {
-			if (!_.isArray(this.props.selected)) {
-				selection = new Set([this.props.selected.toString()]);
-			} else {
-				selection = new Set(_.map(this.props.selected, v => v.toString()));
-			}
-		} else {
-			selection = new Set(this.state.selection);
-		}
+		let selection = new Set(this.state.selection);
 
 		if (selection.has(id)) {
 			selection.delete(id);  // Returns a copy of the array with the instance with that properId deleted.
@@ -746,18 +800,16 @@ class ProperTable extends React.Component {
  * @param {object}	nextState	The state that will be set for the updated component
  */
 	checkSelectionChange(nextProps, nextState) {
-		if (!this.props.selected) {
-			if (this.props.selectable == 'multiple') {
-				if (nextState.selection.size !== this.state.selection.size) {
-					this.updateSelectionData(nextState.selection, nextState.allSelected);
-				}
-			} else {
-				let next = nextState.selection.values().next().value || null;
-				let old = this.state.selection.values().next().value || null;
+		if (nextProps.selectable == 'multiple') {
+			if (nextState.selection.size !== this.state.selection.size) {
+				this.updateSelectionData(nextState.selection, nextState.allSelected);
+			}
+		} else if (nextProps.selectable == true) {
+			let next = nextState.selection.values().next().value || null;
+			let old = this.state.selection.values().next().value || null;
 
-				if (next !== old){
-					this.updateSelectionData(next);
-				}
+			if (next !== old){
+				this.updateSelectionData(next);
 			}
 		}
 	}
@@ -795,7 +847,7 @@ class ProperTable extends React.Component {
 
 			// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
 			oldSelection.forEach(id => {
-				if (!newSelection.has(id)) {
+				if (!newSelection.has(id)) { // has not id
 					changedId = id;
 					selected = false;
 					return false;
@@ -804,10 +856,10 @@ class ProperTable extends React.Component {
 
 			// Otherwise a new row has been selected. Look through the new selection for the new element.
 			if (!changedId) {
-				selected = true;
 				newSelection.forEach(id => {
 					if (!oldSelection.has(id)) {
 						changedId = id;
+						selected = true;
 						return false;
 					}
 				});
@@ -845,18 +897,18 @@ class ProperTable extends React.Component {
  * the components state with the new data.
  *
  * @param {array}	newSelection	The selected rows
+ * @param {boolean}	sendSelection 	If the selection must be sent or not
  */
-	triggerSelection(newSelection = new Set()) {
-		if (!this.props.selected) {
+	triggerSelection(newSelection = new Set(), sendSelection = true) {
+		if (sendSelection) {
 			this.setState({
 				selection: newSelection,
 				allSelected: newSelection.size >= this.state.data.size
 			}, this.sendSelection);
 		} else {
 			this.setState({
+				selection: newSelection,
 				allSelected: newSelection.size >= this.state.data.size
-			}, () => {
-				this.sendSelection(newSelection);
 			});
 		}
 	}
@@ -866,7 +918,7 @@ class ProperTable extends React.Component {
  */
 	sendSelection(newSelection = null) {
 		if (typeof this.props.afterSelect == 'function') {
-			let {selection, indexed, rawdata} = this.state;
+			let {selection, initialIndexed, rawdata} = this.state;
 			let output = [];
 			let selectionArray = [];
 
@@ -875,54 +927,46 @@ class ProperTable extends React.Component {
 					selectionArray.push(element);
 				});
 			} else {
-				if (this.props.selected) {
-					selectionArray = this.props.selected;
-
-					if (!_.isArray(selectionArray)) {
-						selectionArray = [selectionArray];
-					}
-				} else {
-					selection.forEach( element => {
-						selectionArray.push(element);
-					});
-				}
+				selection.forEach( element => {
+					selectionArray.push(element);
+				});
 			}
 
 			output = _.map(selectionArray, (pId) => {
-				if (typeof indexed[pId] == 'undefined') {
+				if (typeof initialIndexed[pId] == 'undefined') {
 					return null;
 				}
 
-				let rowIndex = indexed[pId]._rowIndex;
+				let rowIndex = initialIndexed[pId]._rowIndex;
 
 				return rawdata.get(rowIndex).toJSON();
 			});
 
 			output = _.compact(output);
 
-			if (this.props.selectable === true) {
+			if (this.props.selectable === true && !_.isUndefined(output[0])) {
 				output = output[0];
 			}
 
-			this.props.afterSelect(output);
+			this.props.afterSelect(output, selectionArray);
 		}
 	}
 
 /**
  * If the method afterSort in the components props has a function then call it sending the sorted data in the rawdata.
  */
-	sendSortedData() {
+	sendSortedData(data) {
 		if (typeof this.props.afterSort == 'function') {
-			let {data, indexed, rawdata} = this.state;
+			let {initialIndexed, rawdata} = this.state;
 			let output = [];
 
 			output = data.map( row => {
-				let rowIndex = indexed[row.get('_properId')]._rowIndex;
+				let rowIndex = initialIndexed[row.get(this.props.idField)]._rowIndex;
 
-				return rawdata.get(rowIndex).toJSON();
+				return rawdata.get(rowIndex);
 			});
 
-			this.props.afterSort(output);
+			this.props.afterSort(output.toJSON());
 		}
 	}
 
