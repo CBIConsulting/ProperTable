@@ -3,6 +3,7 @@ import TestUtils from "react-addons-test-utils";
 import React from 'react';
 import ReactDOM from 'react-dom';
 import clone from 'clone';
+import {Deferred} from 'jquery';
 
 describe('ProperTable', () => {
 
@@ -39,7 +40,7 @@ describe('ProperTable', () => {
 			data={firstdata}
 			{...extraProps}
 		/>, wrapper);
-		spyOn(ProperTable.prototype, 'componentDidMount');
+		spyOn(ProperTable.prototype, 'componentWillMount');
 
 		nodes = TestUtils.scryRenderedDOMComponentsWithClass(component, 'value-cell');
 
@@ -51,7 +52,7 @@ describe('ProperTable', () => {
 			{...extraProps}
 		/>, wrapper);
 
-		expect(ProperTable.prototype.componentDidMount.calls.any()).toBe(false);
+		expect(ProperTable.prototype.componentWillMount.calls.any()).toBe(false);
 		expect(component.state.data.size).toBe(1);
 	});
 
@@ -117,15 +118,20 @@ describe('ProperTable', () => {
 				expect(result).toEqual(testProps.data[2]);
 			});
 
-			it('allows default selected row', () => {
-				let result = null;
-				let component = TestUtils.renderIntoDocument(<ProperTable {...testProps} selected={3} afterSelect={
-					selection => {
-						result = selection;
+			it('allows default selected row', (done) => {
+				let result = null, def = Deferred();
+				let component = TestUtils.renderIntoDocument(<ProperTable {...testProps} selected={3} afterSort={
+					data => {
+						def.resolve(data);
 					}
 				}/>);
 
-				expect(result).toEqual(testProps.data[2]);
+				component.onSortChange('col1', 'DESC');
+
+				def.done((data) => {
+					expect(component.state.selection.has('3')).toBe(true);
+					expect(component.state.selection.size).toBe(1);
+				}).always(done);
 			});
 
 			it('allows deselecting', () => {
@@ -138,9 +144,8 @@ describe('ProperTable', () => {
 				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
 
 				//TestUtils.Simulate.click(node);
-				expect(result).toEqual(testProps.data[2]);
 				TestUtils.Simulate.click(node);
-				expect(result).toBeFalsy();
+				expect(result).toEqual([]);
 			});
 
 			it('keeps selection after refreshing data', () => {
@@ -230,14 +235,19 @@ describe('ProperTable', () => {
 			});
 
 			it('allows default selected rows', () => {
-				let result = null;
-				let component = TestUtils.renderIntoDocument(<ProperTable {...testProps} selected={[3,2]} afterSelect={
-					selection => {
-						result = selection;
+				let def = Deferred();
+				let component = TestUtils.renderIntoDocument(<ProperTable {...testProps} selected={[3,2]} selectable='multiple' afterSelect={
+					(data, selection) => {
+						def.resolve(data, selection);
 					}
 				}/>);
 
-				expect(result).toEqual([testProps.data[2], testProps.data[1]]);
+				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_4');
+				TestUtils.Simulate.click(node);
+
+				def.done((data, selection) => {
+					expect(data).toEqual([testProps.data[2],testProps.data[1], testProps.data[3]]);
+				});
 			});
 
 			it('allows deselecting', () => {
@@ -249,12 +259,56 @@ describe('ProperTable', () => {
 				}/>);
 				let node = TestUtils.findRenderedDOMComponentWithClass(component, 'id_3');
 
-				//TestUtils.Simulate.click(node);
-				expect(result).toEqual([testProps.data[2]]);
 				TestUtils.Simulate.click(node);
 				expect(result).toEqual([]);
 			});
-		});
 
+			it('selecting after sort', (done) => {
+				let component = null;
+				let promise = { done: () => {return;} };
+				let props = testProps;
+
+				spyOn(promise, 'done');
+
+				props.afterSort = function(data) {
+					if (promise.done.calls.count() == 2) {
+						expect(data[0].id.toString()).toBe('10');
+
+						// Apply new selection
+						let node = TestUtils.scryRenderedDOMComponentsWithClass(component, 'public_fixedDataTable_bodyRow');
+						promise.done();
+						TestUtils.Simulate.click(node[1]); // id 2
+					}
+				}
+				props.afterSelect= function(selection) {
+					if (promise.done.calls.count() == 1) {
+						expect(selection.length).toBe(1);
+						expect(selection[0].id.toString()).toBe('3')
+
+						// Apply sort
+						promise.done(); // 2
+						component.onSortChange('col1', 'DESC');
+
+					} else if (promise.done.calls.count() == 3) {
+						expect(selection.length).toBe(2);
+
+						// Apply new selection
+						let node = TestUtils.scryRenderedDOMComponentsWithClass(component, 'public_fixedDataTable_bodyRow');
+						promise.done();
+						TestUtils.Simulate.click(node[3]); // id 4
+
+					} else if (promise.done.calls.count() == 4) {
+						expect(selection.length).toBe(3);
+						done();
+					}
+				}
+				props.multisort = true;
+				component = TestUtils.renderIntoDocument(<ProperTable {...props} />);
+
+				let node = TestUtils.scryRenderedDOMComponentsWithClass(component, 'public_fixedDataTable_bodyRow');
+				promise.done(); // 1
+				TestUtils.Simulate.click(node[2]); // id 3
+			});
+		});
 	});
 });
