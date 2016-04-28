@@ -160,7 +160,8 @@ class ProperTable extends React.Component {
 						data: preparedData.data,
 						indexed: preparedData.indexed,
 						initialIndexed: preparedData.initialIndexed,
-						rawdata: preparedData.rawdata
+						rawdata: preparedData.rawdata,
+						sortCache: preparedData.defSortCache
 					}, this.sortTable(nextState.colSortDirs, false));
 
 				} else if (colsChanged && dataChanged) {
@@ -174,16 +175,24 @@ class ProperTable extends React.Component {
 						data: preparedData.data,
 						indexed: preparedData.indexed,
 						initialIndexed: preparedData.initialIndexed,
-						rawdata: preparedData.rawdata
+						rawdata: preparedData.rawdata,
+						sortCache: preparedData.defSortCache
 					}, this.sortTable(colSortData.colSortDirs, false));
 
 				} else if (colsChanged) {
+					let sortCache = [];
 					colSortData =  this.prepareColSort(nextProps);
+
+					// Restart cache
+					nextState.data.forEach(row => {
+						sortCache[row.get(this.props.idField)] = {};
+					});
 
 					this.setState({
 						colSortDirs: colSortData.colSortDirs,
 						colSortVals: colSortData.colSortVals,
-						cols: Immutable.fromJS(nextProps.cols)
+						cols: Immutable.fromJS(nextProps.cols),
+						sortCache: sortCache
 					}, this.applyDefault(nextState.colSortDirs, nextProps)); // apply selection and sort
 				}
 
