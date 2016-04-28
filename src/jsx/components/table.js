@@ -9,6 +9,7 @@ import SortHeaderCell from './sortHeaderCell';
 import bs from 'binarysearch';
 import clone from 'clone';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
+import cache from '../lib/rowcache';
 
 const Set = require('es6-set');
 
@@ -153,6 +154,8 @@ class ProperTable extends React.Component {
 			// If data and columns change the colSortDirs and all data states must be updated. Then apply default (sort table
 			// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
 			if (colsChanged || dataChanged) {
+				cache.flush('formatted');
+
 				if (dataChanged) { // The most probably case
 					preparedData = this.prepareData(nextProps, nextState);
 
@@ -657,7 +660,7 @@ class ProperTable extends React.Component {
 						userClassName={className}
 					/>
 				}
-				cell={<CellRenderer idField={this.props.idField} indexed={this.state.indexed} data={this.state.data} colData={colData} col={colData.field}/>}
+				cell={<CellRenderer tableId={this.uniqueId} idField={this.props.idField} indexed={this.state.indexed} data={this.state.data} colData={colData} col={colData.field}/>}
 				allowCellsRecycling
 				align='center'
 				{...extraProps}
