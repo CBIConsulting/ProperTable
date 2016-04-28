@@ -83,7 +83,7 @@ $(function() {
 					name: 'nested1',
 					label: 'nested1',
 					field: 'nested1',
-					sortable: false,
+					sortable: true,
 					sortVal: function(value) {
 						return moment(value).unix();
 					},
@@ -125,9 +125,14 @@ $(function() {
 			field: 'col1',
 			fixed: true
 		},{
-			name: 'col2',
-			label: 'col2',
-			field: 'col2'
+			name: 'nested1',
+			label: 'nested1',
+			field: 'nested1',
+			sortable: true,
+			sortVal: function(value) {
+				return moment(value).unix();
+			},
+			formatter: ProperTable.formatters.date
 		},{
 			name: 'col3',
 			label: 'col3',
@@ -175,7 +180,9 @@ $(function() {
 			col1: _.uniqueId('row-')
 		};
 
-		for (k = 2; k <= 12; k++) {
+		row['nested1'] =  moment().add((Math.round(Math.random() * 10000) % 2000), 'days').format('YYYY-MM-DD HH:mm:ss');
+
+		for (k = 3; k <= 12; k++) {
 			row['col'+k] = i * k;
 		}
 
