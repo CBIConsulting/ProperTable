@@ -131,7 +131,8 @@ class ProperTable extends React.Component {
 			rawdata: initialData.rawdata,
 			sizes: Immutable.fromJS({}),
 			allSelected: false,
-			selection: new Set()
+			selection: new Set(),
+			sortCache: initialData.defSortCache
 		};
 	}
 
@@ -162,7 +163,8 @@ class ProperTable extends React.Component {
 						data: preparedData.data,
 						indexed: preparedData.indexed,
 						initialIndexed: preparedData.initialIndexed,
-						rawdata: preparedData.rawdata
+						rawdata: preparedData.rawdata,
+						sortCache: preparedData.defSortCache
 					}, this.sortTable(nextState.colSortDirs, false));
 
 				} else if (colsChanged && dataChanged) {
@@ -176,16 +178,24 @@ class ProperTable extends React.Component {
 						data: preparedData.data,
 						indexed: preparedData.indexed,
 						initialIndexed: preparedData.initialIndexed,
-						rawdata: preparedData.rawdata
+						rawdata: preparedData.rawdata,
+						sortCache: preparedData.defSortCache
 					}, this.sortTable(colSortData.colSortDirs, false));
 
 				} else if (colsChanged) {
+					let sortCache = [];
 					colSortData =  this.prepareColSort(nextProps);
+
+					// Restart cache
+					nextState.data.forEach(row => {
+						sortCache[row.get(this.props.idField)] = {};
+					});
 
 					this.setState({
 						colSortDirs: colSortData.colSortDirs,
 						colSortVals: colSortData.colSortVals,
-						cols: Immutable.fromJS(nextProps.cols)
+						cols: Immutable.fromJS(nextProps.cols),
+						sortCache: sortCache
 					}, this.applyDefault(nextState.colSortDirs, nextProps)); // apply selection and sort
 				}
 
@@ -227,7 +237,7 @@ class ProperTable extends React.Component {
  */
 	prepareData(props = this.props, state = this.state) {
 		// The data will be inmutable inside the component
-		let data = Immutable.fromJS(props.data), index = 0;
+		let data = Immutable.fromJS(props.data), index = 0, id, sortCache = [];
 		let indexed = {}, parsed = [], selectedarr = [];
 		let keyField = this.props.idField;
 
@@ -250,21 +260,22 @@ class ProperTable extends React.Component {
 
 		// Parsing data to add new fields (selected or not, properId, rowIndex)
 		parsed = data.map(row => {
-			if (!row.get(keyField, false)) {
-				row = row.set(keyField, _.uniqueId());
-			}
+			id = row.get(keyField, false);
 
-			let id = row.get(keyField);
-
-			if (!row.get('_selected', false)) {
-				row = row.set('_selected', false);
+			if (!id) {
+				id = _.uniqueId();
+				row = row.set(keyField, id);
 			}
 
 			if (selectedarr.has(id)) {
 				row = row.set('_selected', true);
+			} else {
+				row = row.set('_selected', false);
 			}
 
 			row = row.set('_rowIndex', index++);
+
+			sortCache[id] = {};
 
 			return row;
 		});
@@ -276,7 +287,8 @@ class ProperTable extends React.Component {
 			rawdata: data,
 			data: parsed,
 			indexed: indexed,
-			initialIndexed: clone(indexed)
+			initialIndexed: clone(indexed),
+			defSortCache: sortCache
 		};
 	}
 
@@ -505,13 +517,15 @@ class ProperTable extends React.Component {
 			this.setState({
 	  			data: data.data,
 	  			indexed: data.indexed,
-		      	colSortDirs: colSortDirs
+		      	colSortDirs: colSortDirs,
+		      	sortCache: data.sortCache
 		    }, this.sendSortedData(data.data));
 		} else {
 			this.setState({
 	  			data: data.data,
 	  			indexed: data.indexed,
-		      	colSortDirs: colSortDirs
+		      	colSortDirs: colSortDirs,
+		      	sortCache: data.sortCache
 		    });
 		}
 	}
@@ -525,8 +539,8 @@ class ProperTable extends React.Component {
  */
 	sortColumns(data, colSortDirs) {
 		let sortedData = data, indexed = _.clone(this.state.indexed);
-		let sortVals = this.state.colSortVals, sortVal = null;
-		let defaultSort = true, element = null, position = null;
+		let sortVals = this.state.colSortVals, sortVal = null, sortCache = this.state.sortCache;
+		let defaultSort = true, element = null, position = null, rowId;
 
 		colSortDirs.forEach((element) => {
 			// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
@@ -534,7 +548,14 @@ class ProperTable extends React.Component {
 				sortVal = sortVals[element.column];
 
 				sortedData = sortedData.sortBy((row, rowIndex, allData) => {
-	  				return sortVal(row.get(element.field));
+					rowId = row.get(this.props.idField);
+
+					// sortCache [row-id] [column-id] = procesed value.
+					if (_.isUndefined(sortCache[rowId][element.field])) {
+						sortCache[rowId][element.field] = sortVal(row.get(element.field));
+					}
+
+	  				return sortCache[rowId][element.field];
 				}, (val1, val2) => {
 					if (val1 == val2) {
 						return 0;
@@ -565,7 +586,8 @@ class ProperTable extends React.Component {
 
 		return {
 			data: sortedData,
-			indexed: indexed
+			indexed: indexed,
+			sortCache: sortCache
 		}
 	}
 
