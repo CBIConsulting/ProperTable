@@ -72,6 +72,8 @@
   "dependencies": {
     "binarysearch": "^1.0.0",
     "clone": "^1.0.2",
+    "deepmerge": "^0.2.10",
+    "dot-object": "^1.4.1",
     "es6-set": "^0.1.4",
     "fixed-data-table": "^0.6.0",
     "immutable": "^3.7.6",

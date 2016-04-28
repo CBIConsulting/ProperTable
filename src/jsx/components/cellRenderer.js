@@ -1,5 +1,6 @@
 import React from 'react';
 import {Cell} from 'fixed-data-table';
+import cache from '../lib/rowcache';
 
 /**
  * Stateless component which render a cell value formated.
@@ -27,6 +28,7 @@ const CellRenderer = (props) => {
 	let className = colData.className || '';
 	let selected = false;
 	let rawdata = indexed[row.get(props.idField)];
+	let ckey = null;
 
 	if (row) {
 		// Get the value of the current column in the row
@@ -36,7 +38,13 @@ const CellRenderer = (props) => {
 
 	// If exist apply a formater function to that value.
 	if (typeof colData.formatter == 'function') {
-		formatted = colData.formatter(val, colData, rawdata);
+		ckey = ['formatted', 'tb_'+props.tableId, 'r__'+row.get(props.idField), props.col];
+		formatted = cache.read(ckey);
+
+		if (formatted === undefined) {
+			formatted = colData.formatter(val, colData, rawdata);
+			cache.write(ckey, formatted);
+		}
 	}
 
 	return <Cell className={"propertable-cell " + className}>
