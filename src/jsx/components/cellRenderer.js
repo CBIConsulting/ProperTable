@@ -38,7 +38,7 @@ const CellRenderer = (props) => {
 
 	// If exist apply a formater function to that value.
 	if (typeof colData.formatter == 'function') {
-		ckey = ['formatted', 'tb_'+props.tableId, 'r__'+row.get(props.idField), props.col];
+		ckey = ['formatted', 'tb_'+props.tableId, 'r__'+row.get(props.idField), colData.name];
 		formatted = cache.read(ckey);
 
 		if (formatted === undefined) {
