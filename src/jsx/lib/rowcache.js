@@ -33,7 +33,11 @@ class RowCache {
 		writable[k] = value;
 		writable = dot.object(writable);
 
-		cache = merge(cache, writable);
+		if (cache) {
+			cache = merge(cache, writable);
+		} else {
+			cache = writable;
+		}
 
 		return this;
 	}
