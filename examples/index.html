@@ -8,21 +8,99 @@
     <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.5/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="../dist/propertable.css">
   </head>
-  <body>
-    <div style="position: absolute; width: 100%; top: 0; bottom: 50%;">
-      <div style="position: absolute; top: 0; bottom: 0; width: 48%;">
-        <div id="canvas1" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+  <body style="padding-top: 70px; padding-bottom: 70px">
+    <nav class="navbar navbar-default navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <a href="https://github.com/CBIConsulting/ProperTable" class="navbar-brand">ProperTable</a>
+        </div>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="#simple">Simple example</a></li>
+          <li><a href="#multiple">Multiple selection and sorting</a></li>
+          <li><a href="#10k">10K rows</a></li>
+          <li><a href="#10ktree">10K rows with grouping</a></li>
+        </ul>
       </div>
-      <div style="position: absolute; top: 0; bottom: 0; left: 50%; width: 50%;">
-        <div id="canvas2" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+    </nav>
+    <div class="container">
+      <div class="section" id="simple">
+        <h1>Simple example</h1>
+        <div class="row">
+          <div class="col-md-4" style="height: 300px">
+            <p>This example shows the following features:</p>
+            <ul>
+              <li>feature</li>
+              <li>feature</li>
+              <li>feature</li>
+              <li>feature</li>
+            </ul>
+          </div>
+          <div class="col-md-8"  style="height: 300px; position: relative;">
+            <div id="canvas1" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+          </div>
+        </div>
+      </div>
+      <div class="section" id="multiple">
+        <h1>Multiple selection and sorting</h1>
+        <div class="row">
+          <div class="col-md-4" style="height: 300px">
+            <p>This example shows the following features:</p>
+            <ul>
+              <li>feature</li>
+              <li>feature</li>
+              <li>feature</li>
+              <li>feature</li>
+            </ul>
+          </div>
+          <div class="col-md-8" style="height: 300px; position: relative;">
+            <div id="canvas2" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+          </div>
+        </div>
+      </div>
+      <div class="section" id="10k">
+        <h1>10k rows</h1>
+        <div class="row">
+          <div class="col-md-4" style="height: 300px">
+            <p>This example shows the following features:</p>
+            <ul>
+              <li>feature</li>
+              <li>feature</li>
+              <li>feature</li>
+              <li>feature</li>
+            </ul>
+          </div>
+          <div class="col-md-8" style="height: 300px; position: relative;">
+            <div id="canvas3" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+          </div>
+        </div>
+      </div>
+      <div class="section" id="10ktree">
+        <h1>10k rows with grouping</h1>
+        <div class="row">
+          <div class="col-md-4" style="height: 300px">
+            <p>This example shows the following features:</p>
+            <ul>
+              <li>feature</li>
+              <li>feature</li>
+              <li>feature</li>
+              <li>feature</li>
+            </ul>
+          </div>
+          <div class="col-md-8" style="height: 300px; position: relative;">
+            <div id="canvas4" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
+          </div>
+        </div>
       </div>
     </div>
-    <div style="position: absolute; width: 30%; bottom: 25%; left: 15%">
-      <h1><a href="https://github.com/CBIConsulting/ProperTable/blob/dev/examples/jsx/example.js"> Code </a></h1>
-    </div>
-    <div style="position: absolute; top: 50%; bottom: 0; left: 33%;  width: 33%;">
-      <div id="canvas3" style="position: absolute; top: 0; bottom: 0; width: 100%;">loading...</div>
-    </div>
+
+    <nav class="navbar navbar-default navbar-fixed-bottom footer">
+      <div class="container">
+        <ul class="nav navbar-nav">
+          <li><a href="https://github.com/CBIConsulting/ProperTable/blob/dev/examples/jsx/example.js">Examples code</a></li>
+        </ul>
+      </div>
+    </nav>
+
   </body>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.7/react-with-addons.js"></script>

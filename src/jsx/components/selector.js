@@ -1,5 +1,7 @@
 import React from 'react';
 import {Cell} from 'fixed-data-table';
+import {isEmpty} from 'underscore';
+
 /**
  * Stateless component which render a Cell which contain a icon like a checkbox that can be clicked.
  * Each time the selector were clicked then a callback from the main class is called which name is onClick.
@@ -41,8 +43,11 @@ const Selector = (props) => {
 	}
 
 	if (typeof props.rowIndex != 'undefined') {
-		row = props.data.get(props.rowIndex).toJSON();
-		id = row[props.idField];
+		row = props.data.get(props.rowIndex);
+
+		if (!row.get('_isGroup')) {
+			id = row.get(props.idField);
+		}
 	}
 
 	if (typeof props.allSelected !== 'undefined') {
@@ -86,11 +91,17 @@ const Selector = (props) => {
 			</div>
 		);
 	} else {
+		let inner = null;
+
+		if (id !== null && id !== undefined) {
+			inner = <div className={"propertable-selector "+addClass} onClick={(e) => {
+				onClick(e, row);
+			}}>{content}</div>;
+		}
+
 		render = (
 			<Cell className="propertable-cell select-cell">
-				<div className={"propertable-selector "+addClass} onClick={(e) => {
-					onClick(e, row);
-				}}>{content}</div>
+				{inner}
 			</Cell>
 		);
 	}

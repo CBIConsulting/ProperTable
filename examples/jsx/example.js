@@ -4,6 +4,7 @@ import React from 'react';
 let body1 = document.getElementById('canvas1');
 let body2 = document.getElementById('canvas2');
 let body3 = document.getElementById('canvas3');
+let body4 = document.getElementById('canvas4');
 
 // Check updating selected when setting selection from a father component
 class App extends React.Component {
@@ -123,6 +124,7 @@ $(function() {
 			name: 'col1',
 			label: 'col1',
 			field: 'col1',
+			width: 250,
 			fixed: true
 		},{
 			name: 'nested1',
@@ -135,38 +137,47 @@ $(function() {
 			formatter: ProperTable.formatters.date
 		},{
 			name: 'col3',
+			formatter: ProperTable.formatters.number,
 			label: 'col3',
 			field: 'col3'
 		},{
 			name: 'col4',
+			formatter: ProperTable.formatters.number,
 			label: 'col4',
 			field: 'col4'
 		},{
 			name: 'col5',
+			formatter: ProperTable.formatters.number,
 			label: 'col5',
 			field: 'col5'
 		},{
 			name: 'col7',
+			formatter: ProperTable.formatters.number,
 			label: 'col7',
 			field: 'col7'
 		},{
 			name: 'col8',
+			formatter: ProperTable.formatters.number,
 			label: 'col8',
 			field: 'col8'
 		},{
 			name: 'col9',
+			formatter: ProperTable.formatters.number,
 			label: 'col9',
 			field: 'col9'
 		},{
 			name: 'col10',
+			formatter: ProperTable.formatters.number,
 			label: 'col10',
 			field: 'col10'
 		},{
 			name: 'col11',
+			formatter: ProperTable.formatters.number,
 			label: 'col11',
 			field: 'col11'
 		},{
 			name: 'col12',
+			formatter: ProperTable.formatters.number,
 			label: 'col12',
 			field: 'col12'
 		}
@@ -211,4 +222,17 @@ $(function() {
 		data={ex3data}
 		selectable="multiple"
 	/>, body3);
+
+	ReactDOM.render(<ProperTable.TreeTable
+		key='pt4'
+		collapsable={true}
+		uniqueId={4}
+		rowHeight={40}
+		key={'testtable3'}
+		groupBy='nested1'
+		groupCol='col1'
+		cols={ex3cols}
+		data={ex3data}
+		selectable="multiple"
+	/>, body4);
 });

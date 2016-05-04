@@ -729,11 +729,13 @@ class ProperTable extends React.Component {
 							onClick={this.handleSelectAll.bind(this)}
 							somethingSelected={somethingSelected}
 							allSelected={this.state.allSelected}
+							indexed={this.state.indexed}
 							isHeader={true}
 						/>
 					</SortHeaderCell>
 				}
 				cell={<Selector
+					indexed={this.state.indexed}
 					data={this.state.data}
 					selected={selectedSet}
 					idField={this.props.idField}

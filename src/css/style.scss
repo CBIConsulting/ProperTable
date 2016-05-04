@@ -1,7 +1,8 @@
 @import "compass";
-@import "fixed-data-table";
 
 .propertable {
+	@import "fixed-data-table";
+
 	.fa-square-o{
 		&:hover {
 			cursor: pointer;
@@ -21,19 +22,35 @@
 			}
 		}
 	}
-}
 
-.propertable-header-cell {
+	.propertable-nested-cell {
 
-	&.sortable {
-		cursor: pointer;
-		span:hover,
-		i.fa:hover {
-			color: #5B5F5F;
+		&:hover {
+			cursor: pointer;
+		}
+
+		.propertable-indent {
+			@include inline-block();
+			width: 18px;
+
+			&.short {
+				width: 8px;
+			}
 		}
 	}
 
-	&.not-sortable{
-		cursor: not-allowed;
+	.propertable-header-cell {
+
+		&.sortable {
+			cursor: pointer;
+			span:hover,
+			i.fa:hover {
+				color: #5B5F5F;
+			}
+		}
+
+		&.not-sortable{
+			cursor: not-allowed;
+		}
 	}
 }
