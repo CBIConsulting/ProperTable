@@ -1,8 +1,9 @@
+import messages from "../lang/messages";
 import React from 'react';
 import Table from './table';
 import NestedCell from './nestedcell';
 import Immutable from 'immutable';
-import {keys, clone, extend} from 'underscore';
+import {keys, clone, extend, isArray} from 'underscore';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
 
 const Set = require('es6-set');
@@ -14,7 +15,22 @@ function defaultProps() {
 		nestedBy: null,
 		nestedParentField: 'parent_id',
 		collapsable: true,
-		expanded: []
+		expanded: [],
+		className: '',
+		cols: [],
+		data: [],
+		uniqueId: null,
+		afterSort: null,
+		afterSelect: null,
+		selectable: true,
+		selected: null,
+		rowHeight: 50,
+		idField: '_properId',
+		msgs: messages,
+		onGroupClick: null,
+		selectorWidth: 27,
+		colSortDirs: null,
+		multisort: false
 	};
 }
 
@@ -23,7 +39,8 @@ class TreeTable extends React.Component {
 		super(props);
 
 		this.state = {
-			expanded: new Set(this.props.expanded)
+			expanded: new Set(this.props.expanded),
+			selection: new Set()
 		}
 	}
 
@@ -36,10 +53,48 @@ class TreeTable extends React.Component {
 
 	componentWillMount() {
 		this.prepareNestedData();
+		this.setDefaultSelection();
+	}
+
+	componentWillReceiveProps(nextProps) {
+		this.setDefaultSelection(nextProps);
 	}
 
 	componentWillUpdate(nextProps, nextState) {
 		this.prepareNestedData(nextProps, nextState);
+	}
+
+	setDefaultSelection(props = this.props) {
+		if (props.selected) {
+			let selected = props.selected, selection;
+
+			if (selected.length == 0) {
+				selection = new Set();
+			} else {
+				if (!isArray(selected)) {
+					selection = new Set([selected.toString()]);
+				} else {
+					if (props.selectable == 'multiple') selection = new Set(selected.toString().split(','));
+					else selection = new Set([selected[0].toString()]);
+				}
+			}
+
+			console.log('default', selection);
+
+			this.triggerSelection(selection, false); // false -> don't send the selection
+		}
+	}
+
+	triggerSelection(newSelection = new Set(), sendSelection = true) {
+		if (sendSelection) {
+			this.setState({
+				selection: newSelection
+			}, this.sendSelection);
+		} else {
+			this.setState({
+				selection: newSelection
+			});
+		}
 	}
 
 	prepareNestedData(props = this.props, state = this.state) {
@@ -48,6 +103,7 @@ class TreeTable extends React.Component {
 		this.grouped = {};
 		this.colsByName = {};
 		this.groupCol = {};
+		this.dataIndex = _.indexBy(props.data, props.idField)
 		let sortedGroups = [];
 
 		if (props.groupBy) {
@@ -75,6 +131,7 @@ class TreeTable extends React.Component {
 					let row = {};
 
 					row[props.groupCol] = item;
+					row[props.idField] = '__group__'+item;
 					row._level = 1;
 					row._isGroup = true;
 					row._hasChildren = true;
@@ -112,12 +169,52 @@ class TreeTable extends React.Component {
 		this.setState({expanded: expanded});
 	}
 
+	onSelect(extcb, selection, selectionArray) {
+		let newSelection = new Set(this.state.selection);
+		let newSelArray = [];
+
+		if (!selection.length && extcb) {
+			this.props.afterSelect([], []);
+			newSelection = new Set();
+		} else {
+			selectionArray.forEach((k) => {
+				let isGroup = k.indexOf('__group__') === 0;
+
+				if (!isGroup) {
+					newSelArray.push(k.toString());
+				} else {
+					let gkey = k.replace('__group__', '');
+					let items = _.pluck(this.grouped[gkey], this.props.idField);
+
+					items.forEach((ik) => {
+						newSelArray.push(ik.toString());
+					});
+				}
+			});
+
+			newSelection = new Set(newSelArray);
+		}
+
+		this.setState({selection: newSelection});
+	}
+
 	render() {
-		let {cols, data, afterSelect, afterSort, ...props} = this.props;
+		let {cols, data, afterSelect, afterSort, selection, ...props} = this.props;
 		cols = this.cols;
 		data = this.data;
+		selection = [...this.state.selection];
 
-		return <Table cols={cols} data={data} {...props} />;
+		console.log('state selection', selection);
+
+		return <Table
+			afterSelect={(selection, selectionArray) => {
+				this.onSelect(afterSelect, selection, selectionArray);
+			}}
+			selection={selection}
+			cols={cols}
+			data={data}
+			{...props}
+		/>;
 	}
 }
 

@@ -42,6 +42,7 @@ function defaultProps() {
 		rowHeight: 50,
 		idField: '_properId',
 		msgs: messages,
+		onGroupClick: null,
 		selectorWidth: 27,
 		colSortDirs: null,
 		multisort: false
@@ -791,11 +792,18 @@ class ProperTable extends React.Component {
  */
 	handleRowClick(e, rowIndex) {
 		e.preventDefault();
-
-		let clickedId = this.state.data.get(rowIndex).get(this.props.idField);
+		let clickedRow = this.state.data.get(rowIndex);
+		let clickedId = clickedRow.get(this.props.idField);
 
 		if (this.props.selectable) {
-			this.toggleSelected(clickedId.toString());
+			console.log(clickedRow.get('_isGroup'));
+			if (!clickedRow.get('_isGroup')) {
+				this.toggleSelected(clickedId.toString());
+			} else {
+				if (typeof this.props.onGroupClick == 'function') {
+					this.props.onGroupClick(clickedRow);
+				}
+			}
 		}
 	}
 

@@ -78,7 +78,7 @@ const Selector = (props) => {
 		content = <i className="fa fa-check-square-o"/>;
 	}
 
-	if (props.selected && id && props.selected.has(id.toString())) {
+	if (props.selected && id && props.selected.has(id)) {
 		content = <i className="fa fa-check-square-o"/>;
 	}
 

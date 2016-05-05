@@ -182,6 +182,7 @@ var ProperTable =
 			rowHeight: 50,
 			idField: '_properId',
 			msgs: _messages2['default'],
+			onGroupClick: null,
 			selectorWidth: 27,
 			colSortDirs: null,
 			multisort: false
@@ -1046,11 +1047,17 @@ var ProperTable =
 			key: 'handleRowClick',
 			value: function handleRowClick(e, rowIndex) {
 				e.preventDefault();
-
-				var clickedId = this.state.data.get(rowIndex).get(this.props.idField);
+				var clickedRow = this.state.data.get(rowIndex);
+				var clickedId = clickedRow.get(this.props.idField);
 
 				if (this.props.selectable) {
-					this.toggleSelected(clickedId.toString());
+					if (!clickedRow.get('_isGroup')) {
+						this.toggleSelected(clickedId.toString());
+					} else {
+						if (typeof this.props.onGroupClick == 'function') {
+							this.props.onGroupClick(clickedRow);
+						}
+					}
 				}
 			}
 
@@ -17930,6 +17937,8 @@ var ProperTable =
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
+	function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -17960,7 +17969,8 @@ var ProperTable =
 			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(TreeTable).call(this, props));
 
 			_this.state = {
-				expanded: new Set(_this.props.expanded)
+				expanded: new Set(_this.props.expanded),
+				selection: new Set()
 			};
 			return _this;
 		}
@@ -17982,6 +17992,44 @@ var ProperTable =
 			key: 'componentWillUpdate',
 			value: function componentWillUpdate(nextProps, nextState) {
 				this.prepareNestedData(nextProps, nextState);
+			}
+		}, {
+			key: 'setDefaultSelection',
+			value: function setDefaultSelection() {
+				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+
+				if (props.selected) {
+					var selected = props.selected,
+					    selection = void 0;
+
+					if (selected.length == 0) {
+						selection = new Set();
+					} else {
+						if (!(0, _underscore.isArray)(selected)) {
+							selection = new Set([selected.toString()]);
+						} else {
+							if (props.selectable == 'multiple') selection = new Set(selected.toString().split(','));else selection = new Set([selected[0].toString()]);
+						}
+					}
+
+					this.triggerSelection(selection, false); // false -> don't send the selection
+				}
+			}
+		}, {
+			key: 'triggerSelection',
+			value: function triggerSelection() {
+				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? new Set() : arguments[0];
+				var sendSelection = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+				if (sendSelection) {
+					this.setState({
+						selection: newSelection
+					}, this.sendSelection);
+				} else {
+					this.setState({
+						selection: newSelection
+					});
+				}
 			}
 		}, {
 			key: 'prepareNestedData',
@@ -18065,20 +18113,42 @@ var ProperTable =
 				this.setState({ expanded: expanded });
 			}
 		}, {
+			key: 'onSelect',
+			value: function onSelect(extcb, selection, selectionArray) {
+				if (!selection.length && extcb) {
+					this.props.afterSelect([], []);
+				}
+
+				console.log('onselect', selection, selectionArray);
+			}
+		}, {
 			key: 'render',
 			value: function render() {
+				var _this3 = this;
+
 				var _props = this.props;
 				var cols = _props.cols;
 				var data = _props.data;
-				var afterSelect = _props.afterSelect;
+				var _afterSelect = _props.afterSelect;
 				var afterSort = _props.afterSort;
+				var selection = _props.selection;
 
-				var props = _objectWithoutProperties(_props, ['cols', 'data', 'afterSelect', 'afterSort']);
+				var props = _objectWithoutProperties(_props, ['cols', 'data', 'afterSelect', 'afterSort', 'selection']);
 
 				cols = this.cols;
 				data = this.data;
+				selection = [].concat(_toConsumableArray(this.state.selection));
 
-				return _react2['default'].createElement(_table2['default'], _extends({ cols: cols, data: data }, props));
+				console.log('state selection', selection);
+
+				return _react2['default'].createElement(_table2['default'], _extends({
+					afterSelect: function afterSelect(selection, selectionArray) {
+						_this3.onSelect(_afterSelect, selection, selectionArray);
+					},
+					selection: selection,
+					cols: cols,
+					data: data
+				}, props));
 			}
 		}]);
 

@@ -185,9 +185,11 @@ $(function() {
 
 	let ex3data = [];
 	let k = 0;
+	let j = 1;
 
 	for (i = 10000 - 1; i >= 0; i--) {
 		let row = {
+			id: j++,
 			col1: _.uniqueId('row-')
 		};
 
@@ -228,11 +230,16 @@ $(function() {
 		collapsable={true}
 		uniqueId={4}
 		rowHeight={40}
+		idField="id"
+
 		key={'testtable3'}
 		groupBy='nested1'
 		groupCol='col1'
 		cols={ex3cols}
 		data={ex3data}
 		selectable="multiple"
+		afterSelect={(data, indexes) => {
+			console.log('extselect', data, indexes);
+		}}
 	/>, body4);
 });
