@@ -156,7 +156,9 @@ const buildColumnFilter = (props, icon) => {
 
     component = (
       <props.filterComponent
-        data={props.data} // Same data as received by main component
+        data={props.data} // Initial data Inmutable
+        rawdata={props.rawdata} // Raw data Inmutable
+        indexed={props.indexed} // initial Indexed Obj
         selection={props.selection}
         idField={props.col}
         displayField={props.col}
@@ -235,10 +237,7 @@ function onOpen(node) {
     .to({opacity: 1}, 300)
     .onUpdate(function() {
       node.style.opacity = this.opacity;
-    })
-    .start();
-
-    console.timeEnd('open')
+    }).start();
 }
 
 /**

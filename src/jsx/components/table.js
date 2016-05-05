@@ -760,6 +760,7 @@ class ProperTable extends React.Component {
 						filterComponent={this.props.columnFilterComponent} // react component
 						data={this.state.initialData} // data for columnFilter
 						rawdata={this.state.rawdata} // data for columnFilter
+						indexed={this.state.initialIndexed}
 						selection={selection} // selection for complex filter
 						iconColor={this.props.iconColor} // icon color when column filter displayed
 						iconDefColor={this.props.iconDefColor} // icon color when column filter closed
