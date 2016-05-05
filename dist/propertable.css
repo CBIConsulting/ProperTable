@@ -293,6 +293,23 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
 .propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.selected .public_fixedDataTableCell_main {
   background-color: #b8e6ff; }
 
+.propertable.column-complex-filter {
+  min-width: 160px;
+  min-height: 250px;
+  width: 15%;
+  height: 22em;
+  background: #fff;
+  z-index: 100;
+  position: absolute; }
+
+.propertable-header-cell i {
+  position: absolute;
+  right: 6px;
+  top: 35%; }
+
+.propertable-header-cell i.fa-caret-square-o-down {
+  color: #D6D6D6; }
+
 .propertable-header-cell.sortable {
   cursor: pointer; }
   .propertable-header-cell.sortable span:hover,

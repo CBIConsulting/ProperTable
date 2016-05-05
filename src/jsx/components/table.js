@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactDOM from 'react-dom';
 import {Table, Column, Cell, ColumnGroup} from 'fixed-data-table';
 import Immutable from 'immutable';
 import _ from 'underscore';
@@ -27,6 +28,10 @@ const Set = require('es6-set');
  * multisort: Multisort allowed or not. True || False
  * selected: Rows selected by default. Get an array of ids or an id
  * idField: Field that can be used as an id for the default selected rows.
+ * columnFilterComponent: A react component to be rendered under the header icon. Must have afterSelect(selection) (selection is an array of column selected values (col.field)) and afterSort(sortDir) sort direction DEF | ASC | DESC
+ * sortIcons: An array like the const SortIcons in SortHeaderCell file to use instead
+ * iconColor: Color of the icon when the column filter is displayed or the column is filtered or ordered
+ * iconDefColor: Color of the icon when the column filter isn't displayed and the column isn't filtered or ordered
  */
 function defaultProps() {
 	return {
@@ -41,9 +46,14 @@ function defaultProps() {
 		rowHeight: 50,
 		idField: '_properId',
 		msgs: messages,
+		lang: 'ENG',
 		selectorWidth: 27,
 		colSortDirs: null,
-		multisort: false
+		multisort: false,
+		columnFilterComponent: null,
+		sortIcons: null,
+		iconColor: '#5E78D3',
+		iconDefColor: '#D6D6D6'
 	};
 }
 
@@ -125,12 +135,14 @@ class ProperTable extends React.Component {
 			colSortDirs: initialColSort.colSortDirs,
 			colSortVals: initialColSort.sortValues,
 			data: initialData.data,
+			initialData: initialData.initialData,
 			indexed: initialData.indexed,
 			initialIndexed: initialData.initialIndexed,
 			rawdata: initialData.rawdata,
 			sizes: Immutable.fromJS({}),
 			allSelected: false,
 			selection: new Set(),
+			selectionApplied: false,
 			sortCache: initialData.defSortCache
 		};
 	}
@@ -158,10 +170,12 @@ class ProperTable extends React.Component {
 
 					this.setState({
 						data: preparedData.data,
+						initialData: preparedData.initialData,
 						indexed: preparedData.indexed,
 						initialIndexed: preparedData.initialIndexed,
 						rawdata: preparedData.rawdata,
-						sortCache: preparedData.defSortCache
+						sortCache: preparedData.defSortCache,
+						selectionApplied: false
 					}, this.sortTable(nextState.colSortDirs, false));
 
 				} else if (colsChanged && dataChanged) {
@@ -173,10 +187,12 @@ class ProperTable extends React.Component {
 						colSortVals: colSortData.colSortVals,
 						cols: Immutable.fromJS(nextProps.cols),
 						data: preparedData.data,
+						initialData: preparedData.initialData,
 						indexed: preparedData.indexed,
 						initialIndexed: preparedData.initialIndexed,
 						rawdata: preparedData.rawdata,
-						sortCache: preparedData.defSortCache
+						sortCache: preparedData.defSortCache,
+						selectionApplied: false
 					}, this.sortTable(colSortData.colSortDirs, false));
 
 				} else if (colsChanged) {
@@ -235,7 +251,7 @@ class ProperTable extends React.Component {
 	prepareData(props = this.props, state = this.state) {
 		// The data will be inmutable inside the component
 		let data = Immutable.fromJS(props.data), index = 0, id, sortCache = [];
-		let indexed = {}, parsed = [], selectedarr = [];
+		let indexed = {}, initialData = null, parsed = [], selectedarr = [];
 		let keyField = this.props.idField;
 
 		if (props.selected) {
@@ -254,6 +270,7 @@ class ProperTable extends React.Component {
 		}
 
 		selectedarr = new Set(selectedarr);
+		let test = [];
 
 		// Parsing data to add new fields (selected or not, properId, rowIndex)
 		parsed = data.map(row => {
@@ -263,6 +280,7 @@ class ProperTable extends React.Component {
 				id = _.uniqueId();
 				row = row.set(keyField, id);
 			}
+			test.push(id);
 
 			if (selectedarr.has(id)) {
 				row = row.set('_selected', true);
@@ -280,9 +298,14 @@ class ProperTable extends React.Component {
 		// Prepare indexed data.
 		indexed = _.indexBy(parsed.toJSON(), keyField);
 
+		// The initial data will be necesary if the column has a filter to filter from the full data each time
+		// the column gets filtered and to back to defaul when restart filter
+
+
 		return {
 			rawdata: data,
 			data: parsed,
+			initialData: parsed,
 			indexed: indexed,
 			initialIndexed: clone(indexed),
 			defSortCache: sortCache
@@ -331,7 +354,7 @@ class ProperTable extends React.Component {
             colSortDirs = sortData.colSortDirs;
         }
 
-        // Through each element of the colSortDirs builded data build the colSortDirs with the default directions received,
+        // Through each element, of the colSortDirs built data, build the colSortDirs with the default directions received,
         // setting a position (position of priority to sort (it will be modified after click on the diferent columns)), if
         // the column is sortable or not and if the Table has multisort or just only single.
         for (let i = 0; i <= sortData.colSortDirs.length - 1; i++) {
@@ -350,7 +373,8 @@ class ProperTable extends React.Component {
          		position: i + 1,
          		sorted: false,
          		multisort: multisort, // single (false) (in this case only one at a time can be sorted) or multisort (true - all true)
-         		sortable: sortable
+         		sortable: sortable,
+         		selection: [] // Selected values of this column (to filter when has a complex filter)
          	});
         }
 
@@ -416,13 +440,81 @@ class ProperTable extends React.Component {
  * After that, update the state of the component
  *
  * @param {String} 		columnKey 	The name of the column which will be resort.
- * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
+ * @param {String} 		sortDir 	The new direction of the sort. ASC || DESC || DEF(AULT)
  */
 	onSortChange(columnKey, sortDir) {
-  		let newData = null;
   		let colSortDirs = this.updateSortDir(columnKey, sortDir);
 
   		this.sortTable(colSortDirs);
+	}
+
+/**
+ * Function called (just when a component has been sent in props columnFilterComponent) each time the user click on the header of a column,
+ * then apply's an filter over the initial data using the current selected values, also update the selection in the colSortDirs state
+ *
+ * @param {String} 		columnKey 	The 'field' of the column which will get a new selection filter from the complex filter.
+ * @param {object}		selection 	The values selected to filter this column (values from all the values of this column)
+ * @param {String} 		columnName 	(Just on clear filter) The name of the column which will be resort. To do after filtering
+ * @param {String} 		sortDir 	(Just on clear filter) The direction of the sort.
+ */
+	onColumnGetFiltered(columnKey, selection, columnName = null, sortDir = null) {
+		let colSortDirs = _.clone(this.state.colSortDirs), filter = '', selectionSet = {}, columnKeysFiltered = []; // new Set(selection)
+		let {data, initialData, indexed} = this.state;
+		let filteredData = initialData, idField = this.props.idField;
+
+		// Update selection of this column in the colSortDirs and add this values to the selection set array if the selection has more than 0
+		// elements.
+		colSortDirs = _.map(colSortDirs, element => {
+			if (element.column !== 'selector-multiple-column') {
+				if (element.field === columnKey) { // Update
+					element.selection = selection;
+				}
+
+				if (element.selection.length > 0) { // Build all selections
+					selectionSet[element.field] = new Set(element.selection);
+					columnKeysFiltered.push(element.field)
+				}
+			}
+
+			return element;
+		});
+
+		// Get the data that match with the selection (of all column filters)
+		if (_.size(selectionSet) > 0) {
+			let result = false;
+			filteredData = initialData.filter(element => {
+				columnKeysFiltered.every(column => {
+					result = selectionSet[column].has(element.get(column).toString());
+					return result;
+				});
+
+				return result;
+			});
+		}
+
+		// Apply selection and update index of each element in indexed data
+		filteredData = filteredData.map((element, index) => {
+			if (this.state.selection.has(element.get(idField))) {
+				element = element.set('_selected', true);
+			}
+			indexed[element.get(idField)]._rowIndex = index; // Update index into indexed data.
+
+			return element;
+		});
+
+		if (_.isNull(columnName) || _.isNull(sortDir)) {
+			this.setState({
+				data: filteredData,
+				indexed: indexed,
+				colSortDirs: colSortDirs
+			});
+		} else {
+			this.setState({
+				data: filteredData,
+				indexed: indexed,
+				colSortDirs: colSortDirs
+			}, this.onSortChange(columnName, sortDir));
+		}
 	}
 
 /**
@@ -498,6 +590,8 @@ class ProperTable extends React.Component {
  *
  * @param 	{array}		colSortDirs Sort settings of each column
  * @param 	{boolean}	sendSorted 	If the sorted data must be sent or not
+ * @param 	{array}		data 		Data to be sorted
+
  * @return 	{array}		-colSortDirs: Sorted colSortDirs
  *						-data: Sorted data to be updated in the component state.
  */
@@ -599,7 +693,7 @@ class ProperTable extends React.Component {
  * @return 	{object}	col 		The builded column or tree of columns
  */
 	parseColumn(colData, isChildren = false, hasNested = false) {
-		let col = null, colname = null, sortDir = 'DEF', sortable = null, className = null, extraProps = {
+		let col = null, colname = null, sortDir = 'DEF', sortable = null, selection = null, columnFilter = null, className = null, extraProps = {
 			width: 100,
 			fixed: false,
 			isResizable: true
@@ -639,18 +733,38 @@ class ProperTable extends React.Component {
 
 			// Get the initial dir of this column
 			this.state.colSortDirs.forEach(element => {
-				if (element.column === colname) sortDir = element.direction;
+				if (element.column === colname) {
+					sortDir = element.direction;
+					selection = element.selection || [];
+				}
 			});
 
 			// If this column can be sort or not.
 			sortable = _.isUndefined(colData.sortable) ? true : colData.sortable;
+
+			// Check for a complex filter component. In that case use onColumnFilter instead of onSortChange. That method render the received component
+			// just beside the icon of the column header
+			if (this.props.columnFilterComponent) { // react component
+				columnFilter = this.onColumnGetFiltered.bind(this);
+			}
 
 			col = <Column
 				columnKey={colname}
 				key={colname+'-column'}
 				header={
 					<SortHeaderCell
+						key={this.uniqueId + '-sort-header'}
+						uniqueId={this.uniqueId}
 						onSortChange={this.onSortChange.bind(this)}
+						columnFilter={columnFilter} // function || null
+						filterComponent={this.props.columnFilterComponent} // react component
+						data={this.state.initialData} // data for columnFilter
+						rawdata={this.state.rawdata} // data for columnFilter
+						selection={selection} // selection for complex filter
+						iconColor={this.props.iconColor} // icon color when column filter displayed
+						iconDefColor={this.props.iconDefColor} // icon color when column filter closed
+						col={colData.field}
+						lang={this.props.lang}
 						sortDir={sortDir}
 						children={colData.label}
 						sortable={sortable}
@@ -694,7 +808,7 @@ class ProperTable extends React.Component {
 		let columns = [], isNested = hasNested(this.state.cols), selColumn = null;
 
 		if (this.props.selectable == 'multiple') {
-			let somethingSelected = this.state.selection.size > 0;
+			let somethingSelected = this.state.selection.size > 0, allSelected = this.props.columnFilterComponent ? this.isAllSelected(this.state.data, this.state.selection) : this.state.allSelected;
 			let sortDir = 'DEF';
 			let selectedSet = null;
 
@@ -725,7 +839,7 @@ class ProperTable extends React.Component {
 						<Selector
 							onClick={this.handleSelectAll.bind(this)}
 							somethingSelected={somethingSelected}
-							allSelected={this.state.allSelected}
+							allSelected={allSelected}
 							isHeader={true}
 						/>
 					</SortHeaderCell>
@@ -764,15 +878,32 @@ class ProperTable extends React.Component {
 		e.preventDefault();
 
 		if (this.props.selectable) {
-			let allSelected = this.state.allSelected;
-			let newSelection = [];
-			let selection = null;
+			let idField = this.props.idField, value, selection = new Set(this.state.selection);
+			let {allSelected, data, indexed, rawdata} = this.state;
 
+ 			// Select all
 			if (!allSelected) {
-				newSelection = _.keys(this.state.indexed);
-			}
+ 				if (data.size < rawdata.size) { // Filtered
+ 					data.forEach(element => {
+						value = element.get(idField);
+						if (!selection.has(value.toString())) selection.add(value.toString());
+					});
+				} else {
+					selection = new Set(_.keys(indexed));
+				}
+			} else if (selection.size > 0) { // Unselect all
+				// Filtered data
+ 				if (data.size < rawdata.size) {
+ 					// Remove elements from selection
+ 					data.forEach(element => {
+						value = element.get(idField);
+						if (selection.has(value.toString())) selection.delete(value.toString());
+					});
 
-			selection = new Set(newSelection);
+ 				} else {
+ 					selection = new Set();
+ 				}
+			}
 
 			this.triggerSelection(selection);
 		}
@@ -792,6 +923,27 @@ class ProperTable extends React.Component {
 		if (this.props.selectable) {
 			this.toggleSelected(clickedId.toString());
 		}
+	}
+
+/**
+ * Check if all the current data are selected.
+ *
+ * @param {array}	data		The data to compare with selection
+ * @param {object}	selection	The current selection Set of values (idField)
+ */
+	isAllSelected(data, selection) {
+		let result = true;
+		if (data.size === this.state.rawdata.size) return selection.size >= this.state.data.size // Not filtered data
+
+		// Filtered data
+		data.forEach(element => {
+			if (!selection.has(element.get(this.props.idField).toString())) { // Some data not in selection
+				result = false;
+				return false;
+			}
+		});
+
+		return result;
 	}
 
 /**
@@ -823,7 +975,7 @@ class ProperTable extends React.Component {
  */
 	checkSelectionChange(nextProps, nextState) {
 		if (nextProps.selectable == 'multiple') {
-			if (nextState.selection.size !== this.state.selection.size) {
+			if (nextState.selection.size !== this.state.selection.size || (!nextState.selectionApplied && nextState.selection.size > 0)){
 				this.updateSelectionData(nextState.selection, nextState.allSelected);
 			}
 		} else if (nextProps.selectable == true) {
@@ -910,7 +1062,8 @@ class ProperTable extends React.Component {
 
 		this.setState({
 			data: newData,
-			indexed: newIndexed
+			indexed: newIndexed,
+			selectionApplied: true
 		});
 	}
 
@@ -925,12 +1078,12 @@ class ProperTable extends React.Component {
 		if (sendSelection) {
 			this.setState({
 				selection: newSelection,
-				allSelected: newSelection.size >= this.state.data.size
+				allSelected: this.isAllSelected(this.state.data, newSelection)
 			}, this.sendSelection);
 		} else {
 			this.setState({
 				selection: newSelection,
-				allSelected: newSelection.size >= this.state.data.size
+				allSelected: this.isAllSelected(this.state.data, newSelection)
 			});
 		}
 	}
@@ -1035,37 +1188,33 @@ class ProperTable extends React.Component {
 	}
 
 	render() {
-		let content = <div className="propertable-empty">{this.props.msgs.empty}</div>
-		let tableContent = null;
+		let content = <div className="propertable-empty">{this.props.msgs[this.props.lang].empty}</div>
+		let tableContent = this.buildTable();
 
-		if (this.state.data && this.state.data.size) {
-			tableContent = this.buildTable();
+		content = <Table
+			ref="fixeddatatable"
+			key={this.uniqueId+'-table'}
+			width={this.props.containerWidth || 100}
+			height={this.props.containerHeight || 100}
+			headerHeight={this.props.rowHeight}
+			groupHeaderHeight={this.props.rowHeight}
+			rowHeight={this.props.rowHeight}
+			rowsCount={this.state.data.size}
+			isColumnResizing={false}
+			onRowClick={this.handleRowClick.bind(this)}
+			rowClassNameGetter={this.getRowClassName.bind(this)}
+			onColumnResizeEndCallback={this.onResize.bind(this)}
+			className="propertable-table"
+			{...this.props}
+		>
+			{tableContent}
+		</Table>;
 
-			content = <Table
-				ref="fixeddatatable"
-				key={this.uniqueId+'-table'}
-				width={this.props.containerWidth || 100}
-				height={this.props.containerHeight || 100}
-				headerHeight={this.props.rowHeight}
-				groupHeaderHeight={this.props.rowHeight}
-				rowHeight={this.props.rowHeight}
-				rowsCount={this.state.data.size}
-				isColumnResizing={false}
-				onRowClick={this.handleRowClick.bind(this)}
-				rowClassNameGetter={this.getRowClassName.bind(this)}
-				onColumnResizeEndCallback={this.onResize.bind(this)}
-				className="propertable-table"
-				{...this.props}
-			>
-				{tableContent}
-			</Table>;
-		}
 
 		return <div id={this.uniqueId} className={'propertable '+this.props.className}>{content}</div>;
 	}
 }
 
 ProperTable.defaultProps = defaultProps();
-
 
 export default ProperTable;

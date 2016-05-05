@@ -21,9 +21,28 @@
 			}
 		}
 	}
+
+	&.column-complex-filter {
+		min-width: 160px;
+		min-height: 250px;
+		width: 15%;
+		height: 22em;
+		background: #fff;
+		z-index: 100;
+		position: absolute;
+	}
 }
 
 .propertable-header-cell {
+	i {
+		position: absolute;
+	    right: 6px;
+	    top: 35%;
+	}
+
+	i.fa-caret-square-o-down {
+		color: #D6D6D6;
+	}
 
 	&.sortable {
 		cursor: pointer;
