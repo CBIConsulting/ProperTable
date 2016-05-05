@@ -65,6 +65,7 @@ export default class Portal extends React.Component {
     }
 
     window.addEventListener('resize', this.handleResize.bind(this));
+    window.addEventListener("scroll", this.handleScroll.bind(this));
 
     if (this.props.isOpened) {
       this.openPortal();
@@ -102,7 +103,8 @@ export default class Portal extends React.Component {
       document.removeEventListener('touchstart', this.handleOutsideMouseClick);
     }
 
-    window.removeEventListener('resize', this.handleResize)
+    window.removeEventListener('resize', this.handleResize.bind(this));
+    window.removeEventListener("scroll", this.handleScroll.bind(this));
 
     this.closePortal(true);
   }
@@ -112,25 +114,22 @@ export default class Portal extends React.Component {
   }
 
   handleResize(e) {
-  	// Move portal if rendered
+  	// Close portal if rendered
   	if (this.node) {
   		this.closePortal();
-  		/**
-  		let rect = this.state.element.getBoundingClientRect(), top, left, x = this.state.x, y = this.state.y, node = this.node;
+  	}
+  }
+
+  handleScroll(e) {
+  	// Move portal if rendered
+  	if (this.node) {
+  		let rect = this.state.element.getBoundingClientRect(), top, y = this.state.y, node = this.node;
 
 	  	top = rect.top + 5;
-	  	left = rect.left + 5;
-  		if (left >= (window.innerWidth - window.innerWidth * 0.15)) left = left - window.innerWidth * 0.15;
 
-  		// Move node to new position with TWEEN animation
-    	new TWEEN.Tween({ top: y, left: x, position: 'absolute'})
-	    .to({ top: top, left: left }, 300)
-	    .easing(TWEEN.Easing.Cubic.In)
-	    .onUpdate(function() {
-	        CSSPropertyOperations.setValueForStyles(node, {'top': this.top, left: this.left});
-	    })
-	    .start();
-	    */
+  		// Move node to new position
+    	CSSPropertyOperations.setValueForStyles(node, {top: top});
+	    this.setState({y: top});
   	}
   }
 
@@ -144,7 +143,7 @@ export default class Portal extends React.Component {
         	this.node.className = props.className;
       	}
 
-	  	style.position = 'absolute';
+	  	style.position = 'fixed';
 	  	style.top = y + 5;
 	  	style.left = x + 5;
 

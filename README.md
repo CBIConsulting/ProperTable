@@ -109,13 +109,16 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		}}
 	```
 * selectable: If the rows (all table) can be selected or not and if that selection is multiple. Values: True || 'Multiple' || False
-* rowHeight: Height of each row in numerical value. (Integer
+* rowHeight: Height of each row in numerical value. (Integer)
+* lang: Lang of the component. Default 'ENG'
 * msgs: Get the translated messages of the current lang. (An example can be found in src/lang)
 	* Default:
 	```javascript
 		{
-			loading: 'loading...',
-			empty: 'No data found'
+			'ENG': {
+				loading: 'loading...',
+				empty: 'No data found'
+			}
 		};
 	```
 * selectorWidth: Width of the selector column, checkboxes. (Only if selectable is multible)
@@ -150,7 +153,34 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		<ProperTable idField="id" selected={[3,5,23]}.../>
 	```
 * multisort: Multisort allowed or not. (Boolean)
+* columnFilterComponent: React Component to be rendered on click column header icon. Gets data, sort, column selection... [SortHeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/sortHeaderCell.js)
+	*All data sent to the component:
+	```javascript
+		<props.filterComponent
+	        data={props.data} // Initial data Inmutable
+	        rawdata={props.rawdata} // Raw data Inmutable
+	        indexed={props.indexed} // initial Indexed Obj (indexed by)
+	        selection={col.selection}
+	        idField={col.field} // Field used as primary key or id
+	        displayField={col.field}
+	        lang={props.lang}
+	        sort={col.sortDir}
+	        uniqueId={props.uniqueId}
+	        rowFormater={props.formatter}
 
+	        // Your component must have this functions, one that return the new column selection, other one that return the new sort direction
+	        // and last one if you want a button to clean this column filter. The last one applys a selection and then the sort direction of the
+	        // second parameter.
+
+	        afterSelect={afterSelect} // function afterSelect(selectionArray);
+	        afterSort={afterSort} 	  // function afterSort(sortDirection);
+	        afterClear={afterClear}   // function afterSort(selection, sortDirection) -> afterClear([], 'DEF')
+	    />
+	```
+* sortIcons: An array like the const SortIcons in SortHeaderCell file to use instead [SortHeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/sortHeaderCell.js)
+* iconColor: Color of the icon to open the column filter (if that exist) in the header of column. This color is used on open / filtered or sorted.
+* iconDefColor: Color of the icon to open the column filter (if that exist) in the header of column. This color is used when filter component get close and the column is not filtered or sorted.
+* clearFilter: Set to true to clean all filters when using column filter components
 
 ### Basic Example
 ------------

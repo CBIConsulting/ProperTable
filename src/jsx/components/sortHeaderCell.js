@@ -164,6 +164,7 @@ const buildColumnFilter = (props, icon) => {
         displayField={props.col}
         lang={props.lang}
         sort={props.sortDir}
+        rowFormater={props.columnFormater}
         uniqueId={props.uniqueId}
         afterSelect={afterSelect}
         afterSort={afterSort}
@@ -183,7 +184,7 @@ const buildColumnFilter = (props, icon) => {
           iconColor={props.iconColor}
           iconDefColor={props.iconDefColor}
           isSortedOrFiltered={isSortedOrFiltered}
-          style={{opacity: 0, position: 'absolute'}}
+          style={{opacity: 0, position: 'fixed'}}
         >
         {component}
       </Portal>
