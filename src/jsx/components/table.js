@@ -1030,7 +1030,7 @@ class ProperTable extends React.Component {
 				newData = newData.set(rowIndex, rdata); // Set that row in the data object
 			}
 
-		} else if (!newAllSelected && newSelection.size > 0) { // Change one row data at a time
+		} else if (!newAllSelected && newSelection.size > 0 && newData.size === this.state.rawdata.size) { // Change one row data at a time
 			let changedId = null, selected = null;
 
 			// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
