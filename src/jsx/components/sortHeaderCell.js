@@ -132,7 +132,7 @@ const ColumnFilterIcons = {
  * @return {object}           The filter to be rendered
  */
 const buildColumnFilter = (props, icon) => {
-    let component, afterSelect, afterSort, afterClear, data = [], dataElementsSet = new Set(), field, isSortedOrFiltered = false;
+    let filter, afterSelect, afterSort, afterClear, isSortedOrFiltered = false;
 
     afterSelect = (selection) => {
       if (typeof props.columnFilter === 'function') {
@@ -154,25 +154,7 @@ const buildColumnFilter = (props, icon) => {
 
     if (props.sortDir !== 'DEF' || props.selection.length > 0) isSortedOrFiltered = true;
 
-    component = (
-      <props.filterComponent
-        data={props.data} // Initial data Inmutable
-        rawdata={props.rawdata} // Raw data Inmutable
-        indexed={props.indexed} // initial Indexed Obj
-        selection={props.selection}
-        idField={props.col}
-        displayField={props.col}
-        lang={props.lang}
-        sort={props.sortDir}
-        rowFormater={props.columnFormater}
-        uniqueId={props.uniqueId}
-        afterSelect={afterSelect}
-        afterSort={afterSort}
-        afterClear={afterClear}
-      />
-    );
-
-    return (
+    filter = (
       <Portal
           key={props.uniqueId + '-column-header-component'}
           className={'propertable column-complex-filter'}
@@ -186,9 +168,26 @@ const buildColumnFilter = (props, icon) => {
           isSortedOrFiltered={isSortedOrFiltered}
           style={{opacity: 0, position: 'fixed'}}
         >
-        {component}
+        <props.filterComponent
+          key={props.uniqueId + '-column-header-component-filter'}
+          data={props.data} // Initial data Inmutable
+          rawdata={props.rawdata} // Raw data Inmutable
+          indexed={props.indexed} // initial Indexed Obj
+          selection={props.selection}
+          idField={props.col}
+          displayField={props.col}
+          lang={props.lang}
+          sort={props.sortDir}
+          rowFormater={props.columnFormater}
+          uniqueId={props.uniqueId}
+          afterSelect={afterSelect}
+          afterSort={afterSort}
+          afterClear={afterClear}
+        />
       </Portal>
     );
+
+    return filter;
 };
 
 /**

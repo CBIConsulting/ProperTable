@@ -29,7 +29,7 @@ SOFTWARE.
 import React from 'react';
 import ReactDOM, {findDOMNode} from 'react-dom';
 import CSSPropertyOperations from 'react/lib/CSSPropertyOperations';
-import shallowCompare from 'react/lib/shallowCompare';
+import {shallowEqualImmutable} from 'react-immutable-render-mixin';
 import TWEEN from 'tween.js';
 
 const KEYCODES = {
@@ -110,7 +110,11 @@ export default class Portal extends React.Component {
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    return shallowCompare(this, nextProps, nextState);
+  	let propschanged = !shallowEqualImmutable(this.props, nextProps);
+  	let statechanged = !shallowEqualImmutable(this.state, nextState);
+  	let somethingchanged = propschanged || statechanged;
+
+    return somethingchanged;
   }
 
   handleResize(e) {
@@ -137,11 +141,11 @@ export default class Portal extends React.Component {
   	let style = props.style || {};
 
     if (!this.node) {
-      	this.node = document.createElement('div');
+    	this.node = document.createElement('div');
 
-      	if (props.className) {
-        	this.node.className = props.className;
-      	}
+    	if (props.className) {
+      	this.node.className = props.className;
+    	}
 
 	  	style.position = 'fixed';
 	  	style.top = y + 5;
@@ -150,7 +154,7 @@ export default class Portal extends React.Component {
 	  	if (style.left >= (window.innerWidth - window.innerWidth * 0.15)) style.left = x - window.innerWidth * 0.15;
     	CSSPropertyOperations.setValueForStyles(this.node, style);
 
-      	document.body.appendChild(this.node);
+      document.body.appendChild(this.node);
     }
 
     this.portal = ReactDOM.unstable_renderSubtreeIntoContainer(this, React.cloneElement(props.children, {closePortal: this.closePortal}), this.node, this.props.onUpdate);
@@ -176,19 +180,18 @@ export default class Portal extends React.Component {
     if (!element) {
     	element = ReactDOM.findDOMNode(e.target);
 	    element.style.color = this.props.iconColor;
-	} else {
-		if (this.rgb2hex(element.style.color) == this.props.iconColor && !this.props.isSortedOrFiltered) {
-			element.style.color = this.props.iconDefColor;
-		} else {
-			element.style.color = this.props.iconColor;
-		}
-	}
+  	} else {
+  		if (this.rgb2hex(element.style.color) == this.props.iconColor && !this.props.isSortedOrFiltered) {
+  			element.style.color = this.props.iconDefColor;
+  		} else {
+  			element.style.color = this.props.iconColor;
+  		}
+  	}
 
     this.openPortal(this.props, e.clientX, e.clientY, element);
   }
 
   openPortal(props = this.props, x = this.state.x, y = this.state.y, element = this.state.element) {
-    console.time('open')
     this.setState({active: true, x: x, y: y, element: element});
     this.renderPortal(props, x, y);
 
@@ -225,8 +228,8 @@ export default class Portal extends React.Component {
 
   //Function to convert hex format to a rgb color
   rgb2hex(rgb) {
- 	rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
- 	return "#" + this.hex(rgb[1]) + this.hex(rgb[2]) + this.hex(rgb[3]);
+   	rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+   	return "#" + this.hex(rgb[1]) + this.hex(rgb[2]) + this.hex(rgb[3]);
   }
 
   hex(x) {
