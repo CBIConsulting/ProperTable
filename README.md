@@ -74,10 +74,11 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
  	* name: Internal name. (String)
  	* field: Describe field data. {id, number, nestedField...} (String)
  	* label: Label in the column header. Could be an html tag, a string...
+ 	* fixed: If the column is fixed on horizontal scroll or not (Boolean)
  	* className: CSS class to add on columns header and each cell.(String)
  	* width: Column width in numerical value. Default 100 (Integer)
  	* sortable: If the column is sortable or not (Boolean)
- 	* uniqueId: An unique id for the Table. (Integer)
+ 	* uniqueId: An unique id for the Column. (Integer)
  	* formatter: Parser for the cell data before render. (Function)
  		* Ex:
  		```javascript
