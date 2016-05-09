@@ -46,19 +46,19 @@ import TWEEN from 'tween.js';
  * const MyColumn = (
  *     <Column
  *        header={
- *            <SortHeaderCell
+ *            <HeaderCell
  *              sortDir={ASC || DESC || DEF}
  *              sortable={true || false}
  *            />
  *              {children (label || Component)}
- *            </SortHeaderCell>
+ *            </HeaderCell>
  *        }
  *        ...
  *     />
  * );
  * ```
  */
-const SortHeaderCell = props => {
+const HeaderCell = props => {
   let sortDir = props.sortDir || null, sortable = props.sortable;
   let children = props.children || null;
   let sortIcon = null, columnFilter = null;
@@ -254,4 +254,4 @@ function beforeClose(node, removeFromDom) {
     .start();
 }
 
-export default SortHeaderCell;
+export default HeaderCell;

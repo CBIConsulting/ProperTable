@@ -1,5 +1,5 @@
 /**
-Portal vs 2.1.1 All rights to Vojtech Miksu. This is a copy with a couple of modifications to fill the needs of this project.
+Portal vs 2.1.1 All rights to Vojtech Miksu. This is a copy with some modifications to fill the needs of this project.
 
 https://github.com/tajo/react-portal
 
@@ -114,6 +114,13 @@ export default class Portal extends React.Component {
   	let statechanged = !shallowEqualImmutable(this.state, nextState);
   	let somethingchanged = propschanged || statechanged;
 
+    if (propschanged) {
+      if (nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered && !nextProps.isSortedOrFiltered) {
+        nextState.element.style.color = this.props.iconDefColor; // back to default color
+      } else if (nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered && nextProps.isSortedOrFiltered) {
+        nextState.element.style.color = this.props.iconColor;
+      }
+    }
     return somethingchanged;
   }
 

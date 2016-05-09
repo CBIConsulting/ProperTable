@@ -6,7 +6,7 @@ import _ from 'underscore';
 import messages from "../lang/messages";
 import Selector from './selector';
 import CellRenderer from './cellRenderer';
-import SortHeaderCell from './sortHeaderCell';
+import HeaderCell from './headerCell';
 import bs from 'binarysearch';
 import clone from 'clone';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
@@ -30,9 +30,10 @@ const Set = require('es6-set');
  * selected: Rows selected by default. Get an array of ids or an id
  * idField: Field that can be used as an id for the default selected rows.
  * columnFilterComponent: A react component to be rendered under the header icon. Must have afterSelect(selection) (selection is an array of column selected values (col.field)) and afterSort(sortDir) sort direction DEF | ASC | DESC
- * sortIcons: An array like the const SortIcons in SortHeaderCell file to use instead
+ * sortIcons: An array like the const SortIcons in HeaderCell file to use instead
  * iconColor: Color of the icon when the column filter is displayed or the column is filtered or ordered
  * iconDefColor: Color of the icon when the column filter isn't displayed and the column isn't filtered or ordered
+ * restartOnClick: Restart the sort and filter of each column. It should be either a React Element (in this case it has to have id (best) or className (add event to all elements with same class aswell)) or a Js object (JS element document.getElementById('btn')).
  */
 function defaultProps() {
 	return {
@@ -55,7 +56,7 @@ function defaultProps() {
 		sortIcons: null,
 		iconColor: '#5E78D3',
 		iconDefColor: '#D6D6D6',
-		clearFilter: false // Set to true to clean all filters when using column filter components
+		restartOnClick: null
 	};
 }
 
@@ -145,18 +146,27 @@ class ProperTable extends React.Component {
 			allSelected: false,
 			selection: new Set(),
 			selectionApplied: false,
-			sortCache: initialData.defSortCache,
-			clearFilter: false
+			sortCache: initialData.defSortCache
 		};
 	}
 
 	componentWillMount() {
 		// Sort the table if the sort direction of one or more columns are diferent than default and set the selection
 		this.applyDefault();
+
+		// Add new click listener if exist
+		if (this.props.restartOnClick) {
+			this.addClickListener(this.props.restartOnClick);
+		}
 	}
 
 	componentWillUnmount() {
 		cache.flush('formatted');
+
+		// Remove listener if exist
+		if (this.props.restartOnClick) {
+			this.removeClickListener(this.props.restartOnClick)
+		}
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
@@ -167,7 +177,7 @@ class ProperTable extends React.Component {
 		if (propschanged) {
 			let colsChanged = nextProps.cols.length != this.props.cols.length || !_.isEqual(nextProps.cols, this.props.cols);
 			let dataChanged = nextProps.data.length != this.props.data.length || !_.isEqual(nextProps.data, this.props.data);
-			let colData = null, preparedData = null, clearFilter = nextProps.clearFilter;
+			let colData = null, preparedData = null;
 
 			// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
 			// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
@@ -225,14 +235,9 @@ class ProperTable extends React.Component {
 
 			} else if (nextProps.selected) {
 				this.setDefaultSelection(nextProps);
-				if (clearFilter) this.clearFilter();
-				return false;
 
-			} else if (clearFilter) {
-				this.clearFilter();
 				return false;
 			}
-
 		}
 
 		return somethingchanged;
@@ -240,6 +245,70 @@ class ProperTable extends React.Component {
 
 	componentWillUpdate(nextProps, nextState) {
 		this.checkSelectionChange(nextProps, nextState);
+	}
+
+	componentWillReceiveProps(newProps) {
+		let restartOnClickChanged = !shallowEqualImmutable(this.props.restartOnClick, newProps.restartOnClick);
+
+		if (restartOnClickChanged) {
+			// Remove old listener if exist
+			if (this.props.restartOnClick) {
+				this.removeClickListener(this.props.restartOnClick)
+			}
+
+			// Add new listener if exist
+			if (newProps.restartOnClick) {
+				this.addClickListener(newProps.restartOnClick);
+			}
+		}
+	}
+
+/**
+ * Add a click listener to the props.restartOnClick element. The function clearFilterAndSort will be called when this elemente get clicked.
+ *
+ * @param {Js Element || React Element} restartOnClick 	Element which will have a new on click listener
+ */
+	addClickListener(restartOnClick) {
+		if (!React.isValidElement(restartOnClick)) { // Not React element
+			restartOnClick.addEventListener('click', this.clearFilterAndSort.bind(this));
+		} else {
+			let btn = null;
+
+			if (restartOnClick.props.id)	{
+				btn = document.getElementById(restartOnClick.props.id);
+				btn.addEventListener('click', this.clearFilterAndSort.bind(this));
+
+			} else if (this.props.restartOnClick.props.className){
+				btn = document.getElementsByClassName(restartOnClick.props.className);
+				for (let i = btn.length - 1; i >= 0; i--) {
+					btn[i].addEventListener('click', this.clearFilterAndSort.bind(this));
+				}
+			}
+		}
+	}
+
+/**
+ * Remove listener to the props.restartOnClick element.
+ *
+ * @param {Js Element || React Element} restartOnClick 	Element which have the on click listener
+ */
+	removeClickListener(restartOnClick) {
+		if (!React.isValidElement(restartOnClick)) { // Not React element
+			this.props.restartOnClick.removeEventListener('click', this.clearFilterAndSort.bind(this));
+		} else {
+			let btn = null;
+
+			if (restartOnClick.props.id)	{
+				btn = document.getElementById(restartOnClick.props.id);
+				btn.removeEventListener('click', this.clearFilterAndSort.bind(this));
+
+			} else if (restartOnClick.props.className){
+				btn = document.getElementsByClassName(restartOnClick.props.className);
+				for (let i = btn.length - 1; i >= 0; i--) {
+					btn[i].removeEventListener('click', this.clearFilterAndSort.bind(this));
+				}
+			}
+		}
 	}
 
 /**
@@ -489,17 +558,32 @@ class ProperTable extends React.Component {
 	}
 
 /**
- * Clear all column filters
+ * Clear all column filters and sort directions
  */
-	clearFilter() {
-		let colSettings = this.state.colSettings;
+	clearFilterAndSort(e) {
+		e.preventDefault();
+		let colSettings = this.state.colSettings, data, indexed = this.state.indexed;
 
 		colSettings = _.map(colSettings, element => {
 			element.selection = [];
 			element.direction = 'DEF';
+
+			return element;
+		});
+
+		// Apply default
+		data = this.state.initialData.map((element, index) => {
+			if (this.state.selection.has(element.get(this.props.idField))) {
+				element = element.set('_selected', true);
+			}
+			indexed[element.get(this.props.idField)]._rowIndex = index; // Update index into indexed data.
+
+			return element;
 		});
 
 		this.setState({
+			data: data,
+			indexed: indexed,
 			colSettings: colSettings
 		});
 	}
@@ -816,7 +900,7 @@ class ProperTable extends React.Component {
 				columnKey={colname}
 				key={colname+'-column'}
 				header={
-					<SortHeaderCell
+					<HeaderCell
 						key={this.uniqueId + '-sort-header'}
 						uniqueId={this.uniqueId}
 						onSortChange={this.onSortChange.bind(this)}
@@ -895,7 +979,7 @@ class ProperTable extends React.Component {
 				columnKey={'selector-multiple-column'}
 				key={_.uniqueId('selector-')}
 				header={
-					<SortHeaderCell
+					<HeaderCell
 						className={''}
 						onSortChange={this.onSortChange.bind(this)}
 						sortDir={sortDir}
@@ -907,7 +991,7 @@ class ProperTable extends React.Component {
 							allSelected={allSelected}
 							isHeader={true}
 						/>
-					</SortHeaderCell>
+					</HeaderCell>
 				}
 				cell={<Selector
 					data={this.state.data}
@@ -1232,7 +1316,7 @@ class ProperTable extends React.Component {
 	}
 
 	render() {
-		let content = <div className="propertable-empty">{this.props.msgs[this.props.lang].empty}</div>
+		let content = <div className="propertable-empty">{this.props.msgs[this.props.lang].empty}</div>;
 		let tableContent = this.buildTable();
 
 		content = <Table
@@ -1254,11 +1338,44 @@ class ProperTable extends React.Component {
 			{tableContent}
 		</Table>;
 
-
-		return <div id={this.uniqueId} className={'propertable '+this.props.className}>{content}</div>;
+		return <div key={this.uniqueId} id={this.uniqueId} className={'propertable '+this.props.className}> {content} </div>;
 	}
 }
 
 ProperTable.defaultProps = defaultProps();
+ProperTable.propTypes = {
+	className: React.PropTypes.string,
+	data: React.PropTypes.array,
+	cols: React.PropTypes.array.isRequired,
+	uniqueId: React.PropTypes.oneOfType([
+      	React.PropTypes.string,
+      	React.PropTypes.number
+    ]),
+	afterSort: React.PropTypes.func,
+	afterSelect: React.PropTypes.func,
+	selectable: React.PropTypes.oneOf([true, 'multiple', false]),
+	selected: React.PropTypes.oneOfType([
+      	React.PropTypes.string,
+      	React.PropTypes.array
+    ]),
+    rowHeight: React.PropTypes.number,
+    idField: React.PropTypes.string,
+    msgs: React.PropTypes.objectOf(React.PropTypes.object),
+    lang: React.PropTypes.string,
+    selectorWidth: React.PropTypes.number,
+    colSortDirs: React.PropTypes.array,
+    multisort: React.PropTypes.bool,
+    sortIcons: React.PropTypes.object,
+    iconColor: React.PropTypes.string,
+    iconDefColor: React.PropTypes.string,
+  	columnFilterComponent: React.PropTypes.oneOfType([
+      	React.PropTypes.element,
+      	React.PropTypes.func
+    ]),
+  	restartOnClick: React.PropTypes.oneOfType([
+      	React.PropTypes.element,
+      	React.PropTypes.object // Js element but not React element
+    ]),
+}
 
 export default ProperTable;
