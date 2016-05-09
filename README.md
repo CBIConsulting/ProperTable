@@ -153,7 +153,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		<ProperTable idField="id" selected={[3,5,23]}.../>
 	```
 * multisort: Multisort allowed or not. (Boolean)
-* columnFilterComponent: React Component to be rendered on click column header icon. Gets data, sort, column selection... [SortHeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/sortHeaderCell.js)
+* columnFilterComponent: React Component to be rendered on click column header icon. Gets data, sort, column selection... [HeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/headerCell.js)
 	*All data sent to the component:
 	```javascript
 		<props.filterComponent
@@ -177,10 +177,10 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 	        afterClear={afterClear}   // function afterSort(selection, sortDirection) -> afterClear([], 'DEF')
 	    />
 	```
-* sortIcons: An array like the const SortIcons in SortHeaderCell file to use instead [SortHeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/sortHeaderCell.js)
+* sortIcons: An array like the const SortIcons in HeaderCell file to use instead [HeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/headerCell.js)
 * iconColor: Color of the icon to open the column filter (if that exist) in the header of column. This color is used on open / filtered or sorted.
 * iconDefColor: Color of the icon to open the column filter (if that exist) in the header of column. This color is used when filter component get close and the column is not filtered or sorted.
-* restartOnClick: Restart the sort and filter (if the column has a Column Filter Component) of each column. It should be either a React Element (in this case it has to have id (best) or className (add events to all elements with same class aswell)) or a Js object (JS element document.getElementById('btn')).
+* restartOnClick: Restart the sort and filter (if the column has a Column Filter Component) of each column. It should be either a react element (in this case it has to have id (best) or className (add events to all elements with same class aswell)) or a Js element (JS element document.getElementById('btn')).
 	* Ex:
 	```javascript
 		render() {
