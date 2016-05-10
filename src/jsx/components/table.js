@@ -12,6 +12,8 @@ import clone from 'clone';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
 import cache from '../lib/rowcache';
 
+//Const
+const SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
 const Set = require('es6-set');
 
 /**
@@ -353,7 +355,6 @@ class ProperTable extends React.Component {
 		}
 
 		selectedarr = new Set(selectedarr);
-		let test = [];
 
 		// Parsing data to add new fields (selected or not, properId, rowIndex)
 		parsed = data.map(row => {
@@ -363,7 +364,6 @@ class ProperTable extends React.Component {
 				id = _.uniqueId();
 				row = row.set(keyField, id);
 			}
-			test.push(id);
 
 			if (selectedarr.has(id)) {
 				row = row.set('_selected', true);
@@ -451,19 +451,29 @@ class ProperTable extends React.Component {
 
          	// If has filter build a list without duplicates and it indexed
          	if (this.props.columnFilterComponent) {
-         		let idSet = new Set(), index = 0, rawdataIndex = 0, hasNulls = false, val;
+         		let idSet = new Set(), index = 0, rawdataIndex = 0, hasNulls = false, val, valid;
 
 				// Parsing data for filter
 				parsedData = rawdata.map(row => {
 					val = row.get(colData.field);
+					valid = false
 
-					if (!idSet.has(val)) {
-						idSet.add(val);
-						row = row.set(colData.field, val.toString());
-						row = row.set('_selected', false);
-						row = row.set('_rowIndex', index++); // data row index
-						row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
-						return row;
+					if (!_.isNull(val)){
+						if (colData.formatter) {
+							val = colData.formatter(val);
+ 						}
+
+						if (typeof val == 'string' && val.length > 0) valid = true;
+						else if (typeof val == 'number' && val > 0) valid = true;
+
+						if (!idSet.has(val) && valid) {
+							idSet.add(val);
+							row = row.set(colData.field, val.toString());
+							row = row.set('_selected', false);
+							row = row.set('_rowIndex', index++); // data row index
+							row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
+							return row;
+						}
 					}
 
 					rawdataIndex++; // add 1 to jump over duplicate values
@@ -498,7 +508,7 @@ class ProperTable extends React.Component {
         // Ordering by selected rows. Virtual column
         if (props.selectable == 'multiple') {
         	colSettings.push({
-         		column: 'selector-multiple-column', // Column name
+         		column: SELECTOR_COL_NAME, // Column name
          		field: '_selected',
          		direction: 'DEF',
          		position: sortData.colSortDirs.length + 1, // Last
@@ -548,7 +558,7 @@ class ProperTable extends React.Component {
 		});
 
 		if (this.props.selectable == 'multiple') {
-		  	sortVals['selector-multiple-column'] = function(val) {return val};
+		  	sortVals[SELECTOR_COL_NAME] = function(val) {return val};
 		}
 
 		return {
@@ -604,39 +614,52 @@ class ProperTable extends React.Component {
  * Function called (just when a component has been sent in props columnFilterComponent) each time the user click on the header of a column,
  * then apply's an filter over the initial data using the current selected values, also update the selection in the colSettings state
  *
- * @param {String} 		columnKey 	The 'field' of the column which will get a new selection filter from the complex filter.
+ * @param {String} 		columnKey 	The name of the column which will get a new selection filter from the complex filter.
  * @param {object}		selection 	The values selected to filter this column (values from all the values of this column)
- * @param {String} 		columnName 	(Just on clear filter) The name of the column which will be resort. To do after filtering
  * @param {String} 		sortDir 	(Just on clear filter) The direction of the sort.
  */
-	onColumnGetFiltered(columnKey, selection, columnName = null, sortDir = null) {
-		let colSettings = _.clone(this.state.colSettings), filter = '', selectionSet = {}, columnKeysFiltered = []; // new Set(selection)
+	onColumnGetFiltered(columnKey, selection, sortDir = null) {
+		let colSettings = _.clone(this.state.colSettings), filter = '', selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = []; // new Set(selection)
 		let {data, initialData, indexed} = this.state;
 		let filteredData = initialData, idField = this.props.idField;
 
 		// Update selection of this column in the colSettings and add this values to the selection set array if the selection has more than 0
 		// elements.
-		colSettings = _.map(colSettings, element => {
-			if (element.column !== 'selector-multiple-column') {
-				if (element.field === columnKey) { // Update
-					element.selection = selection;
+		colSettings = _.map(colSettings, col => {
+			if (col.column !== SELECTOR_COL_NAME) {
+				if (col.column === columnKey) { // Update
+					col.selection = selection;
 				}
 
-				if (element.selection.length > 0) { // Build all selections
-					selectionSet[element.field] = new Set(element.selection);
-					columnKeysFiltered.push(element.field)
+				if (col.selection.length > 0) { // Build all selection
+					selectionSet[col.column] = new Set(col.selection);
+					formatters[col.column] = col.formatter;
+					columnKeysFiltered.push(col.column);
+
+					// You send a column and get the asociated field, needed because more than 1 col can use data from same field. Name is the id key of column but
+					// field refer to data field.
+					fields[col.column] = col.field;
 				}
 			}
 
-			return element;
+			return col;
 		});
 
 		// Get the data that match with the selection (of all column filters)
 		if (_.size(selectionSet) > 0) {
-			let result = false;
+			let result = false, field, formatter, val;
+
 			filteredData = initialData.filter(element => {
 				columnKeysFiltered.every(column => {
-					result = selectionSet[column].has(element.get(column).toString());
+					field = fields[column];
+					formatter = formatters[column];
+					val = element.get(field);
+
+					if (formatter) {
+						val = formatter(val);
+					}
+
+					if (!_.isNull(val)) result = selectionSet[column].has(val.toString());
 					return result;
 				});
 
@@ -654,7 +677,7 @@ class ProperTable extends React.Component {
 			return element;
 		});
 
-		if (_.isNull(columnName) || _.isNull(sortDir)) {
+		if (_.isNull(sortDir)) {
 			this.setState({
 				data: filteredData,
 				indexed: indexed,
@@ -665,7 +688,7 @@ class ProperTable extends React.Component {
 				data: filteredData,
 				indexed: indexed,
 				colSettings: colSettings
-			}, this.onSortChange(columnName, sortDir));
+			}, this.onSortChange(columnKey, sortDir));
 		}
 	}
 
@@ -846,7 +869,7 @@ class ProperTable extends React.Component {
  */
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, sortDir = 'DEF', sortable = null, selection = null, columnFilter = null, hasComplexFilter = false;
-		let indexed = null, headerData = null, className = null, formatter = null, settings = null, extraProps = {
+		let indexed = null, headerData = null, className = null, settings = null, extraProps = {
 			width: 100,
 			fixed: false,
 			isResizable: true
@@ -919,7 +942,7 @@ class ProperTable extends React.Component {
 						colName={colData.name}
 						sortable={sortable}
 						userClassName={className}
-						columnFormater={settings.formatter} // Formatter function that get the value to be render and return it parsed
+						columnFormater={null} // Formatter function that get the value to be render and return it parsed settings.formatter
 					/>
 				}
 				cell={<CellRenderer tableId={this.uniqueId} idField={this.props.idField} indexed={this.state.indexed} data={this.state.data} colData={colData} col={colData.field}/>}
@@ -972,11 +995,11 @@ class ProperTable extends React.Component {
 				selectedSet = this.state.selection;
 			}
 
-			settings = _.findWhere(this.state.colSettings, {column: 'selector-multiple-column'})
+			settings = _.findWhere(this.state.colSettings, {column: SELECTOR_COL_NAME})
 			sortDir = settings.direction;
 
 			selColumn = <Column
-				columnKey={'selector-multiple-column'}
+				columnKey={SELECTOR_COL_NAME}
 				key={_.uniqueId('selector-')}
 				header={
 					<HeaderCell

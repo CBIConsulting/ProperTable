@@ -4,6 +4,9 @@ import _ from 'underscore';
 import Portal from './portal';
 import TWEEN from 'tween.js';
 
+//Const
+const SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
+
 //REQUEST ANIMATION FRAME POLYFILL
 ;(function() {
   'use strict';
@@ -61,14 +64,14 @@ import TWEEN from 'tween.js';
 const HeaderCell = props => {
   let sortDir = props.sortDir || null, sortable = props.sortable;
   let children = props.children || null;
-  let sortIcon = null, columnFilter = null;
+  let sortIcon = null, columnFilter = null, isSelectorCol = props.columnKey === SELECTOR_COL_NAME ? true : false;
   let userClass = props.userClassName || '';
   let className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
 
   // Check for custom icons array and if the column is sortable
   if (!_.isNull(sortDir) && sortable) {
     if (_.isNull(props.sortIcons) || _.isUndefined(props.sortIcons)) { //default sort icons
-      sortIcon = _.isNull(props.filterComponent) ? SortIcons[sortDir] : ColumnFilterIcons['DEF'];
+      sortIcon = _.isNull(props.filterComponent) ||  isSelectorCol ? SortIcons[sortDir] : ColumnFilterIcons['DEF'];
     } else { // custom sort icons
       sortIcon = props.sortIcons[sortDir];
     }
@@ -77,7 +80,7 @@ const HeaderCell = props => {
   }
 
   // Check if the columns have complex filter to be rendered behind the column
-  if (props.filterComponent && sortable) {
+  if (props.filterComponent && sortable && !isSelectorCol) {
     sortIcon = buildColumnFilter(props, sortIcon);
   }
 
@@ -87,7 +90,7 @@ const HeaderCell = props => {
         key={props.uniqueId + '-column-header-cell'}
         className={className + '_header'}
         onClick={(e) => {
-          if (!props.filterComponent) {
+          if (!props.filterComponent || isSelectorCol) {
             onSortChange(e, props, sortable);
           }
         }}
@@ -136,7 +139,7 @@ const buildColumnFilter = (props, icon) => {
 
     afterSelect = (selection) => {
       if (typeof props.columnFilter === 'function') {
-        props.columnFilter(props.col, selection);
+        props.columnFilter(props.columnKey, selection);
       }
     };
 
@@ -148,7 +151,7 @@ const buildColumnFilter = (props, icon) => {
 
     afterClear = (selection, direction) => { // must be ([], 'DEF')
        if (typeof props.columnFilter === 'function') {
-        props.columnFilter(props.col, selection, props.columnKey, direction);
+        props.columnFilter(props.columnKey, selection, direction);
       }
     };
 
