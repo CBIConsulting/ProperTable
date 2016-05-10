@@ -817,7 +817,7 @@ class ProperTable extends React.Component {
 					rowId = row.get(this.props.idField);
 
 					// sortCache [row-id] [column-id] = procesed value.
-					if (_.isUndefined(sortCache[rowId][element.field])) {
+					if (_.isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
 						sortCache[rowId][element.field] = sortParser(row.get(element.field));
 					}
 

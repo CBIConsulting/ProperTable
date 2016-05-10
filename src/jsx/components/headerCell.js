@@ -218,7 +218,7 @@ const nextSortDirection = sortDir => {
 const onSortChange = (e, props, sortable) => {
   e.preventDefault();
    // If you use a complex filter by column then it will be rendered under the header and has it's own methods
-  if (sortable && typeof props.columnFilter !== 'function') {
+  if (sortable) {
       if (typeof props.onSortChange === 'function') {
         props.onSortChange(props.columnKey, nextSortDirection(props.sortDir));
       }
