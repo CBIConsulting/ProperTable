@@ -643,7 +643,7 @@ var ProperTable =
 					});
 
 					// If has filter build a list without duplicates and it indexed
-					if (this.props.columnFilterComponent) {
+					if (this.props.columnFilterComponent && sortable) {
 						(function () {
 							var idSet = new Set(),
 							    index = 0,
@@ -657,21 +657,19 @@ var ProperTable =
 								val = row.get(colData.field);
 								valid = false;
 
-								if (!_underscore2['default'].isNull(val)) {
-									if (colData.formatter) {
-										val = colData.formatter(val);
-									}
+								// Only string or number values then formated (Dates, etc...) Not objects allowed
+								valid = typeof val === 'string' || typeof val === 'number' ? true : false;
 
-									if (typeof val == 'string' && val.length > 0) valid = true;else if (typeof val == 'number' && val > 0) valid = true;
+								if (valid && !_underscore2['default'].isNull(val) && val !== '' && !idSet.has(val)) {
+									idSet.add(val);
 
-									if (!idSet.has(val) && valid) {
-										idSet.add(val);
-										row = row.set(colData.field, val.toString());
-										row = row.set('_selected', false);
-										row = row.set('_rowIndex', index++); // data row index
-										row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
-										return row;
-									}
+									if (colData.formatter) val = colData.formatter(val);
+
+									row = row.set(colData.field, val.toString());
+									row = row.set('_selected', false);
+									row = row.set('_rowIndex', index++); // data row index
+									row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
+									return row;
 								}
 
 								rawdataIndex++; // add 1 to jump over duplicate values
@@ -890,22 +888,26 @@ var ProperTable =
 				// Get the data that match with the selection (of all column filters)
 				if (_underscore2['default'].size(selectionSet) > 0) {
 					(function () {
-						var result = false,
+						var result = void 0,
 						    field = void 0,
 						    formatter = void 0,
 						    val = void 0;
 
 						filteredData = initialData.filter(function (element) {
+
+							// If value has been found (result = true) then leave loop and return true
 							columnKeysFiltered.every(function (column) {
 								field = fields[column];
 								formatter = formatters[column];
 								val = element.get(field);
+								result = false;
 
-								if (formatter) {
-									val = formatter(val);
+								// Skip unvalid values
+								if (!_underscore2['default'].isNull(val) && typeof val === 'string' || typeof val === 'number') {
+									if (formatter) val = formatter(val);
+									result = selectionSet[column].has(val.toString());
 								}
 
-								if (!_underscore2['default'].isNull(val)) result = selectionSet[column].has(val.toString());
 								return result;
 							});
 
@@ -1085,7 +1087,7 @@ var ProperTable =
 							rowId = row.get(_this6.props.idField);
 
 							// sortCache [row-id] [column-id] = procesed value.
-							if (_underscore2['default'].isUndefined(sortCache[rowId][element.field])) {
+							if (_underscore2['default'].isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
 								sortCache[rowId][element.field] = sortParser(row.get(element.field));
 							}
 
@@ -14459,7 +14461,7 @@ var ProperTable =
 	      sortIcon = props.sortIcons[sortDir];
 	    }
 	  } else {
-	    sortIcon = _underscore2['default'].isNull(props.filterComponent) ? SortIcons['DEF'] : ColumnFilterIcons['DEF'];
+	    sortIcon = _underscore2['default'].isNull(props.filterComponent) ? SortIcons['DEF'] : ColumnFilterIcons['NONE'];
 	  }
 
 	  // Check if the columns have complex filter to be rendered behind the column
@@ -14510,7 +14512,8 @@ var ProperTable =
 	 *  Icons for column filter
 	 */
 	var ColumnFilterIcons = {
-	  DEF: _react2['default'].createElement('i', { key: 'def-icon', className: 'fa fa-caret-square-o-down' })
+	  DEF: _react2['default'].createElement('i', { key: 'def-icon', className: 'fa fa-caret-square-o-down' }),
+	  NONE: null
 	};
 
 	/**
@@ -14610,7 +14613,7 @@ var ProperTable =
 	var onSortChange = function onSortChange(e, props, sortable) {
 	  e.preventDefault();
 	  // If you use a complex filter by column then it will be rendered under the header and has it's own methods
-	  if (sortable && typeof props.columnFilter !== 'function') {
+	  if (sortable) {
 	    if (typeof props.onSortChange === 'function') {
 	      props.onSortChange(props.columnKey, nextSortDirection(props.sortDir));
 	    }

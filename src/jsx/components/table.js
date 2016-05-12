@@ -446,11 +446,11 @@ class ProperTable extends React.Component {
         	// Find the current column sort data and set direction (if the component got default sort direction for this column
         	// then it will get the direction otherwise direction will be always DEF)
          	colSortDirs.forEach(element => {
-         		if (element.column ==  colData.column) direction = element.direction;
+         		if (element.column == colData.column) direction = element.direction;
          	});
 
          	// If has filter build a list without duplicates and it indexed
-         	if (this.props.columnFilterComponent) {
+         	if (this.props.columnFilterComponent && sortable) {
          		let idSet = new Set(), index = 0, rawdataIndex = 0, hasNulls = false, val, valid;
 
 				// Parsing data for filter
@@ -458,22 +458,19 @@ class ProperTable extends React.Component {
 					val = row.get(colData.field);
 					valid = false
 
-					if (!_.isNull(val)){
-						if (colData.formatter) {
-							val = colData.formatter(val);
- 						}
+					// Only string or number values then formated (Dates, etc...) Not objects allowed
+					valid =  typeof val === 'string' || typeof val === 'number' ? true : false;
 
-						if (typeof val == 'string' && val.length > 0) valid = true;
-						else if (typeof val == 'number' && val > 0) valid = true;
+					if (valid && !_.isNull(val) && val !== '' && !idSet.has(val)) {
+						idSet.add(val);
 
-						if (!idSet.has(val) && valid) {
-							idSet.add(val);
-							row = row.set(colData.field, val.toString());
-							row = row.set('_selected', false);
-							row = row.set('_rowIndex', index++); // data row index
-							row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
-							return row;
-						}
+						if (colData.formatter) val = colData.formatter(val);
+
+						row = row.set(colData.field, val.toString());
+						row = row.set('_selected', false);
+						row = row.set('_rowIndex', index++); // data row index
+						row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
+						return row;
 					}
 
 					rawdataIndex++; // add 1 to jump over duplicate values
@@ -647,19 +644,23 @@ class ProperTable extends React.Component {
 
 		// Get the data that match with the selection (of all column filters)
 		if (_.size(selectionSet) > 0) {
-			let result = false, field, formatter, val;
+			let result, field, formatter, val;
 
 			filteredData = initialData.filter(element => {
+
+				// If value has been found (result = true) then leave loop and return true
 				columnKeysFiltered.every(column => {
 					field = fields[column];
 					formatter = formatters[column];
 					val = element.get(field);
+					result = false;
 
-					if (formatter) {
-						val = formatter(val);
+					// Skip unvalid values
+					if (!_.isNull(val) && typeof val === 'string' || typeof val === 'number') {
+						if (formatter) val = formatter(val);
+					 	result = selectionSet[column].has(val.toString());
 					}
 
-					if (!_.isNull(val)) result = selectionSet[column].has(val.toString());
 					return result;
 				});
 

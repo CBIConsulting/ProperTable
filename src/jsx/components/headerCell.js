@@ -76,7 +76,7 @@ const HeaderCell = props => {
       sortIcon = props.sortIcons[sortDir];
     }
   } else {
-    sortIcon = _.isNull(props.filterComponent) ? SortIcons['DEF'] : ColumnFilterIcons['DEF'];
+    sortIcon = _.isNull(props.filterComponent) ? SortIcons['DEF'] : ColumnFilterIcons['NONE'];
   }
 
   // Check if the columns have complex filter to be rendered behind the column
@@ -124,7 +124,8 @@ const SortIcons = {
  *  Icons for column filter
  */
 const ColumnFilterIcons = {
-  DEF: <i key="def-icon" className="fa fa-caret-square-o-down"/>
+  DEF: <i key="def-icon" className="fa fa-caret-square-o-down"/>,
+  NONE: null
 };
 
 /**
