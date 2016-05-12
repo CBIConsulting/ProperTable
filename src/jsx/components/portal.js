@@ -1,5 +1,5 @@
 /**
-Portal vs 2.1.1 All rights to Vojtech Miksu. This is a copy with a couple of modifications to fill the needs of this project.
+Portal vs 2.1.1 All rights to Vojtech Miksu. This is a copy with some modifications to fill the needs of this project.
 
 https://github.com/tajo/react-portal
 
@@ -29,7 +29,7 @@ SOFTWARE.
 import React from 'react';
 import ReactDOM, {findDOMNode} from 'react-dom';
 import CSSPropertyOperations from 'react/lib/CSSPropertyOperations';
-import shallowCompare from 'react/lib/shallowCompare';
+import {shallowEqualImmutable} from 'react-immutable-render-mixin';
 import TWEEN from 'tween.js';
 
 const KEYCODES = {
@@ -65,6 +65,7 @@ export default class Portal extends React.Component {
     }
 
     window.addEventListener('resize', this.handleResize.bind(this));
+    window.addEventListener("scroll", this.handleScroll.bind(this));
 
     if (this.props.isOpened) {
       this.openPortal();
@@ -102,35 +103,44 @@ export default class Portal extends React.Component {
       document.removeEventListener('touchstart', this.handleOutsideMouseClick);
     }
 
-    window.removeEventListener('resize', this.handleResize)
+    window.removeEventListener('resize', this.handleResize.bind(this));
+    window.removeEventListener("scroll", this.handleScroll.bind(this));
 
     this.closePortal(true);
   }
 
   shouldComponentUpdate(nextProps, nextState) {
-    return shallowCompare(this, nextProps, nextState);
+  	let propschanged = !shallowEqualImmutable(this.props, nextProps);
+  	let statechanged = !shallowEqualImmutable(this.state, nextState);
+  	let somethingchanged = propschanged || statechanged;
+
+    if (propschanged) {
+      if (nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered && !nextProps.isSortedOrFiltered) {
+        nextState.element.style.color = this.props.iconDefColor; // back to default color
+      } else if (nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered && nextProps.isSortedOrFiltered) {
+        nextState.element.style.color = this.props.iconColor;
+      }
+    }
+    return somethingchanged;
   }
 
   handleResize(e) {
-  	// Move portal if rendered
+  	// Close portal if rendered
   	if (this.node) {
   		this.closePortal();
-  		/**
-  		let rect = this.state.element.getBoundingClientRect(), top, left, x = this.state.x, y = this.state.y, node = this.node;
+  	}
+  }
+
+  handleScroll(e) {
+  	// Move portal if rendered
+  	if (this.node) {
+  		let rect = this.state.element.getBoundingClientRect(), top, y = this.state.y, node = this.node;
 
 	  	top = rect.top + 5;
-	  	left = rect.left + 5;
-  		if (left >= (window.innerWidth - window.innerWidth * 0.15)) left = left - window.innerWidth * 0.15;
 
-  		// Move node to new position with TWEEN animation
-    	new TWEEN.Tween({ top: y, left: x, position: 'absolute'})
-	    .to({ top: top, left: left }, 300)
-	    .easing(TWEEN.Easing.Cubic.In)
-	    .onUpdate(function() {
-	        CSSPropertyOperations.setValueForStyles(node, {'top': this.top, left: this.left});
-	    })
-	    .start();
-	    */
+  		// Move node to new position
+    	CSSPropertyOperations.setValueForStyles(node, {top: top});
+	    this.setState({y: top});
   	}
   }
 
@@ -138,20 +148,20 @@ export default class Portal extends React.Component {
   	let style = props.style || {};
 
     if (!this.node) {
-      	this.node = document.createElement('div');
+    	this.node = document.createElement('div');
 
-      	if (props.className) {
-        	this.node.className = props.className;
-      	}
+    	if (props.className) {
+      	this.node.className = props.className;
+    	}
 
-	  	style.position = 'absolute';
+	  	style.position = 'fixed';
 	  	style.top = y + 5;
 	  	style.left = x + 5;
 
 	  	if (style.left >= (window.innerWidth - window.innerWidth * 0.15)) style.left = x - window.innerWidth * 0.15;
     	CSSPropertyOperations.setValueForStyles(this.node, style);
 
-      	document.body.appendChild(this.node);
+      document.body.appendChild(this.node);
     }
 
     this.portal = ReactDOM.unstable_renderSubtreeIntoContainer(this, React.cloneElement(props.children, {closePortal: this.closePortal}), this.node, this.props.onUpdate);
@@ -177,19 +187,18 @@ export default class Portal extends React.Component {
     if (!element) {
     	element = ReactDOM.findDOMNode(e.target);
 	    element.style.color = this.props.iconColor;
-	} else {
-		if (this.rgb2hex(element.style.color) == this.props.iconColor && !this.props.isSortedOrFiltered) {
-			element.style.color = this.props.iconDefColor;
-		} else {
-			element.style.color = this.props.iconColor;
-		}
-	}
+  	} else {
+  		if (this.rgb2hex(element.style.color) == this.props.iconColor && !this.props.isSortedOrFiltered) {
+  			element.style.color = this.props.iconDefColor;
+  		} else {
+  			element.style.color = this.props.iconColor;
+  		}
+  	}
 
     this.openPortal(this.props, e.clientX, e.clientY, element);
   }
 
   openPortal(props = this.props, x = this.state.x, y = this.state.y, element = this.state.element) {
-    console.time('open')
     this.setState({active: true, x: x, y: y, element: element});
     this.renderPortal(props, x, y);
 
@@ -226,8 +235,8 @@ export default class Portal extends React.Component {
 
   //Function to convert hex format to a rgb color
   rgb2hex(rgb) {
- 	rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
- 	return "#" + this.hex(rgb[1]) + this.hex(rgb[2]) + this.hex(rgb[3]);
+   	rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+   	return "#" + this.hex(rgb[1]) + this.hex(rgb[2]) + this.hex(rgb[3]);
   }
 
   hex(x) {

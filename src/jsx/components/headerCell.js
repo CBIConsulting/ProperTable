@@ -4,6 +4,9 @@ import _ from 'underscore';
 import Portal from './portal';
 import TWEEN from 'tween.js';
 
+//Const
+const SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
+
 //REQUEST ANIMATION FRAME POLYFILL
 ;(function() {
   'use strict';
@@ -46,38 +49,38 @@ import TWEEN from 'tween.js';
  * const MyColumn = (
  *     <Column
  *        header={
- *            <SortHeaderCell
+ *            <HeaderCell
  *              sortDir={ASC || DESC || DEF}
  *              sortable={true || false}
  *            />
  *              {children (label || Component)}
- *            </SortHeaderCell>
+ *            </HeaderCell>
  *        }
  *        ...
  *     />
  * );
  * ```
  */
-const SortHeaderCell = props => {
+const HeaderCell = props => {
   let sortDir = props.sortDir || null, sortable = props.sortable;
   let children = props.children || null;
-  let sortIcon = null, columnFilter = null;
+  let sortIcon = null, columnFilter = null, isSelectorCol = props.columnKey === SELECTOR_COL_NAME ? true : false;
   let userClass = props.userClassName || '';
   let className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
 
   // Check for custom icons array and if the column is sortable
   if (!_.isNull(sortDir) && sortable) {
     if (_.isNull(props.sortIcons) || _.isUndefined(props.sortIcons)) { //default sort icons
-      sortIcon = _.isNull(props.filterComponent) ? SortIcons[sortDir] : ColumnFilterIcons['DEF'];
+      sortIcon = _.isNull(props.filterComponent) ||  isSelectorCol ? SortIcons[sortDir] : ColumnFilterIcons['DEF'];
     } else { // custom sort icons
       sortIcon = props.sortIcons[sortDir];
     }
   } else {
-    sortIcon = _.isNull(props.filterComponent) ? SortIcons['DEF'] : ColumnFilterIcons['DEF'];
+    sortIcon = _.isNull(props.filterComponent) ? SortIcons['DEF'] : ColumnFilterIcons['NONE'];
   }
 
   // Check if the columns have complex filter to be rendered behind the column
-  if (props.filterComponent && sortable) {
+  if (props.filterComponent && sortable && !isSelectorCol) {
     sortIcon = buildColumnFilter(props, sortIcon);
   }
 
@@ -87,7 +90,7 @@ const SortHeaderCell = props => {
         key={props.uniqueId + '-column-header-cell'}
         className={className + '_header'}
         onClick={(e) => {
-          if (!props.filterComponent) {
+          if (!props.filterComponent || isSelectorCol) {
             onSortChange(e, props, sortable);
           }
         }}
@@ -121,7 +124,8 @@ const SortIcons = {
  *  Icons for column filter
  */
 const ColumnFilterIcons = {
-  DEF: <i key="def-icon" className="fa fa-caret-square-o-down"/>
+  DEF: <i key="def-icon" className="fa fa-caret-square-o-down"/>,
+  NONE: null
 };
 
 /**
@@ -132,11 +136,11 @@ const ColumnFilterIcons = {
  * @return {object}           The filter to be rendered
  */
 const buildColumnFilter = (props, icon) => {
-    let component, afterSelect, afterSort, afterClear, data = [], dataElementsSet = new Set(), field, isSortedOrFiltered = false;
+    let filter, afterSelect, afterSort, afterClear, isSortedOrFiltered = false;
 
     afterSelect = (selection) => {
       if (typeof props.columnFilter === 'function') {
-        props.columnFilter(props.col, selection);
+        props.columnFilter(props.columnKey, selection);
       }
     };
 
@@ -148,30 +152,13 @@ const buildColumnFilter = (props, icon) => {
 
     afterClear = (selection, direction) => { // must be ([], 'DEF')
        if (typeof props.columnFilter === 'function') {
-        props.columnFilter(props.col, selection, props.columnKey, direction);
+        props.columnFilter(props.columnKey, selection, direction);
       }
     };
 
     if (props.sortDir !== 'DEF' || props.selection.length > 0) isSortedOrFiltered = true;
 
-    component = (
-      <props.filterComponent
-        data={props.data} // Initial data Inmutable
-        rawdata={props.rawdata} // Raw data Inmutable
-        indexed={props.indexed} // initial Indexed Obj
-        selection={props.selection}
-        idField={props.col}
-        displayField={props.col}
-        lang={props.lang}
-        sort={props.sortDir}
-        uniqueId={props.uniqueId}
-        afterSelect={afterSelect}
-        afterSort={afterSort}
-        afterClear={afterClear}
-      />
-    );
-
-    return (
+    filter = (
       <Portal
           key={props.uniqueId + '-column-header-component'}
           className={'propertable column-complex-filter'}
@@ -183,11 +170,28 @@ const buildColumnFilter = (props, icon) => {
           iconColor={props.iconColor}
           iconDefColor={props.iconDefColor}
           isSortedOrFiltered={isSortedOrFiltered}
-          style={{opacity: 0, position: 'absolute'}}
+          style={{opacity: 0, position: 'fixed'}}
         >
-        {component}
+        <props.filterComponent
+          key={props.uniqueId + '-column-header-component-filter'}
+          data={props.data} // Initial data Inmutable
+          rawdata={props.rawdata} // Raw data Inmutable
+          indexed={props.indexed} // initial Indexed Obj
+          selection={props.selection}
+          idField={props.col}
+          displayField={props.col}
+          lang={props.lang}
+          sort={props.sortDir}
+          rowFormater={props.columnFormater}
+          uniqueId={props.uniqueId}
+          afterSelect={afterSelect}
+          afterSort={afterSort}
+          afterClear={afterClear}
+        />
       </Portal>
     );
+
+    return filter;
 };
 
 /**
@@ -215,7 +219,7 @@ const nextSortDirection = sortDir => {
 const onSortChange = (e, props, sortable) => {
   e.preventDefault();
    // If you use a complex filter by column then it will be rendered under the header and has it's own methods
-  if (sortable && typeof props.columnFilter !== 'function') {
+  if (sortable) {
       if (typeof props.onSortChange === 'function') {
         props.onSortChange(props.columnKey, nextSortDirection(props.sortDir));
       }
@@ -254,4 +258,4 @@ function beforeClose(node, removeFromDom) {
     .start();
 }
 
-export default SortHeaderCell;
+export default HeaderCell;
