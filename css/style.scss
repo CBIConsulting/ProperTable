@@ -39,7 +39,23 @@
 		}
 	}
 
+	&.column-complex-filter {
+		min-width: 160px;
+		min-height: 250px;
+		width: 15%;
+		height: 22em;
+		background: #fff;
+		z-index: 100;
+		position: absolute;
+	}
+
 	.propertable-header-cell {
+
+		i {
+			&.short {
+				width: 8px;
+			}
+		}
 
 		&.sortable {
 			cursor: pointer;

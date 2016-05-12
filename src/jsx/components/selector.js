@@ -74,7 +74,7 @@ const Selector = (props) => {
 	}
 
 	// If all are selected (header) or the row is selected print a check into the FontAwesome checkbox.
-	if (allSelected || (row && row._selected)) {
+	if (allSelected || (row && row.get('_selected'))) {
 		content = <i className="fa fa-check-square-o"/>;
 	}
 

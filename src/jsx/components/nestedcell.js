@@ -3,7 +3,7 @@ import cache from '../lib/rowcache';
 
 const NestedCell = (props) => {
 	let level = props.rawData._level || 1;
-	let isExpanded = props.rawData._expanded;
+	let isExpanded = props.expanded;
 	let indent = [];
 	let icon = 'fa-plus-square-o';
 	let renderedIcon = null;

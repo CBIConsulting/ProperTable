@@ -5,6 +5,7 @@ import NestedCell from './nestedcell';
 import Immutable from 'immutable';
 import {keys, clone, extend, isArray} from 'underscore';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
+import cache from '../lib/rowcache';
 
 const Set = require('es6-set');
 
@@ -52,6 +53,7 @@ class TreeTable extends React.Component {
 	}
 
 	componentWillMount() {
+		this.uniqueId = this.props.uniqueId || _.uniqueId('propertable-');
 		this.prepareNestedData();
 		this.setDefaultSelection();
 	}
@@ -78,8 +80,6 @@ class TreeTable extends React.Component {
 					else selection = new Set([selected[0].toString()]);
 				}
 			}
-
-			console.log('default', selection);
 
 			this.triggerSelection(selection, false); // false -> don't send the selection
 		}
@@ -114,18 +114,6 @@ class TreeTable extends React.Component {
 			let newdata = [];
 			let oldFormatter = this.groupCol.formatter;
 
-			this.groupCol.formatter = (val, colData, rawdata) => {
-				let content = val;
-
-				if (typeof oldFormatter == 'function') {
-					content = oldFormatter(val, colData, rawdata);
-				}
-
-				return <NestedCell collapsable={props.collapsable} val={val} colData={colData} rawData={rawdata} onClick={this.toggleCollapse.bind(this, val, colData, rawdata)}>
-					{content}
-				</NestedCell>;
-			}
-
 			if (groupKeys && groupKeys.length) {
 				groupKeys.forEach((item) => {
 					let row = {};
@@ -154,17 +142,36 @@ class TreeTable extends React.Component {
 
 				this.data = newdata;
 			}
+
+			this.groupCol.formatter = (val, colData, rawdata) => {
+				let content = val;
+
+				if (typeof oldFormatter == 'function') {
+					content = oldFormatter(val, colData, rawdata);
+				}
+
+				if (rawdata[this.props.idField].toString().indexOf('__group__') !== 0) {
+					return content;
+				}
+
+				return <NestedCell expanded={this.state.expanded.has(val)}  collapsable={this.props.collapsable} val={val} colData={colData} rawData={rawdata} onClick={this.toggleCollapse.bind(this, val, colData, rawdata)}>
+					{content}
+				</NestedCell>;
+			}
 		}
 	}
 
 	toggleCollapse(val, colData, rawdata) {
 		let expanded = new Set(this.state.expanded.values());
+		let ckey = ['formatted', 'tb_'+this.uniqueId, 'r__'+rawdata[this.props.idField]];
 
 		if (expanded.has(val)) {
 			expanded.delete(val);
 		} else {
 			expanded.add(val);
 		}
+
+		cache.flush(ckey);
 
 		this.setState({expanded: expanded});
 	}
@@ -199,10 +206,11 @@ class TreeTable extends React.Component {
 	}
 
 	render() {
-		let {cols, data, afterSelect, afterSort, selection, ...props} = this.props;
+		let {cols, data, afterSelect, afterSort, selection, uniqueId, ...props} = this.props;
 		cols = this.cols;
 		data = this.data;
 		selection = [...this.state.selection];
+		uniqueId = this.uniqueId;
 
 		console.log('state selection', selection);
 
@@ -210,6 +218,7 @@ class TreeTable extends React.Component {
 			afterSelect={(selection, selectionArray) => {
 				this.onSelect(afterSelect, selection, selectionArray);
 			}}
+			uniqueId={uniqueId}
 			selection={selection}
 			cols={cols}
 			data={data}
