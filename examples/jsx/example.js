@@ -236,7 +236,7 @@ $(function() {
 		groupBy='nested1'
 		groupCol='col1'
 		cols={ex3cols}
-		data={ex3data}
+		data={ex3data.slice(0, 1000)}
 		selectable="multiple"
 		afterSelect={(data, indexes) => {
 			console.log('extselect', data, indexes);

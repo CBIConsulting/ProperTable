@@ -97,6 +97,10 @@ class TreeTable extends React.Component {
 		}
 	}
 
+	sendSelection() {
+		console.log('send selection');
+	}
+
 	prepareNestedData(props = this.props, state = this.state) {
 		this.cols = Immutable.fromJS(props.cols).toJS();
 		this.data = Immutable.fromJS(props.data).toJS();
@@ -152,6 +156,10 @@ class TreeTable extends React.Component {
 
 				if (rawdata[this.props.idField].toString().indexOf('__group__') !== 0) {
 					return content;
+				} else {
+					if (typeof this.colsByName[props.groupBy].formatter == 'function') {
+						content = this.colsByName[props.groupBy].formatter(val, this.colsByName[props.groupBy], rawdata);
+					}
 				}
 
 				return <NestedCell expanded={this.state.expanded.has(val)}  collapsable={this.props.collapsable} val={val} colData={colData} rawData={rawdata} onClick={this.toggleCollapse.bind(this, val, colData, rawdata)}>
@@ -187,9 +195,8 @@ class TreeTable extends React.Component {
 			selectionArray.forEach((k) => {
 				let isGroup = k.indexOf('__group__') === 0;
 
-				if (!isGroup) {
-					newSelArray.push(k.toString());
-				} else {
+				newSelArray.push(k.toString());
+				if (isGroup) {
 					let gkey = k.replace('__group__', '');
 					let items = _.pluck(this.grouped[gkey], this.props.idField);
 

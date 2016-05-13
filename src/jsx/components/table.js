@@ -1097,14 +1097,7 @@ class ProperTable extends React.Component {
 		let clickedId = clickedRow.get(this.props.idField);
 
 		if (this.props.selectable) {
-			console.log(clickedRow.get('_isGroup'));
-			if (!clickedRow.get('_isGroup')) {
-				this.toggleSelected(clickedId.toString());
-			} else {
-				if (typeof this.props.onGroupClick == 'function') {
-					this.props.onGroupClick(clickedRow);
-				}
-			}
+			this.toggleSelected(clickedId.toString());
 		}
 	}
 
@@ -1222,11 +1215,12 @@ class ProperTable extends React.Component {
 				});
 			}
 
-			newIndexed[changedId]._selected = selected; // Update indexed data
-			rowIndex =  newIndexed[changedId]._rowIndex; // Get data index
-			rdata = newData.get(rowIndex).set('_selected', selected); // Change the row in that index
-			newData = newData.set(rowIndex, rdata); // Set that row in the data object
-
+			if (changedId) {
+				newIndexed[changedId]._selected = selected; // Update indexed data
+				rowIndex =  newIndexed[changedId]._rowIndex; // Get data index
+				rdata = newData.get(rowIndex).set('_selected', selected); // Change the row in that index
+				newData = newData.set(rowIndex, rdata); // Set that row in the data object
+			}
 		} else { // Change all data
 			newData = newData.map((row) => {
 				rowid = row.get(this.props.idField);

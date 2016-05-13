@@ -44,10 +44,7 @@ const Selector = (props) => {
 
 	if (typeof props.rowIndex != 'undefined') {
 		row = props.data.get(props.rowIndex);
-
-		if (!row.get('_isGroup')) {
-			id = row.get(props.idField);
-		}
+		id = row.get(props.idField);
 	}
 
 	if (typeof props.allSelected !== 'undefined') {
