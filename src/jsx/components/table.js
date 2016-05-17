@@ -461,16 +461,18 @@ class ProperTable extends React.Component {
 					// Only string or number values then formated (Dates, etc...) Not objects allowed
 					valid =  typeof val === 'string' || typeof val === 'number' ? true : false;
 
-					if (valid && !_.isNull(val) && val !== '' && !idSet.has(val)) {
-						idSet.add(val);
-
+					if (valid && !_.isNull(val) && val !== '') {
 						if (colData.formatter) val = colData.formatter(val);
 
-						row = row.set(colData.field, val.toString());
-						row = row.set('_selected', false);
-						row = row.set('_rowIndex', index++); // data row index
-						row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
-						return row;
+						if (!idSet.has(val) && !_.isUndefined(val)){ // No repeat
+							idSet.add(val);
+
+							row = row.set(colData.field, val.toString());
+							row = row.set('_selected', false);
+							row = row.set('_rowIndex', index++); // data row index
+							row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
+							return row; // RETURN
+						}
 					}
 
 					rawdataIndex++; // add 1 to jump over duplicate values
