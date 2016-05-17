@@ -613,7 +613,7 @@ class ProperTable extends React.Component {
  *
  * @param {String} 		columnKey 	The name of the column which will get a new selection filter from the complex filter.
  * @param {object}		selection 	The values selected to filter this column (values from all the values of this column)
- * @param {String} 		sortDir 	(Just on clear filter) The direction of the sort.
+ * @param {String} 		sortDir 	(Just on clear filter) The direction of the sort. DEF
  */
 	onColumnGetFiltered(columnKey, selection, sortDir = null) {
 		let colSettings = _.clone(this.state.colSettings), filter = '', selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = []; // new Set(selection)
@@ -656,8 +656,13 @@ class ProperTable extends React.Component {
 					result = false;
 
 					// Skip unvalid values
-					if (!_.isNull(val) && typeof val === 'string' || typeof val === 'number') {
-						if (formatter) val = formatter(val);
+					if (_.isNull(val)) val = '';
+
+					if (typeof val === 'string' || typeof val === 'number') {
+						if (formatter) {
+							val = formatter(val);
+							if (_.isNull(val) || _.isUndefined(val)) val = '';
+						}
 					 	result = selectionSet[column].has(val.toString());
 					}
 
@@ -1348,7 +1353,7 @@ class ProperTable extends React.Component {
 			key={this.uniqueId+'-table'}
 			width={this.props.containerWidth || 100}
 			height={this.props.containerHeight || 100}
-			headerHeight={this.props.rowHeight}
+			headerHeight={this.props.headerHeight || this.props.rowHeight}
 			groupHeaderHeight={this.props.rowHeight}
 			rowHeight={this.props.rowHeight}
 			rowsCount={this.state.data.size}
