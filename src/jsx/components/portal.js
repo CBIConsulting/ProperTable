@@ -62,10 +62,9 @@ export default class Portal extends React.Component {
     if (this.props.closeOnOutsideClick) {
       document.addEventListener('mouseup', this.handleOutsideMouseClick);
       document.addEventListener('touchstart', this.handleOutsideMouseClick);
+      window.addEventListener('resize', this.handleResize.bind(this));
+      window.addEventListener("scroll", this.handleScroll.bind(this));
     }
-
-    window.addEventListener('resize', this.handleResize.bind(this));
-    window.addEventListener("scroll", this.handleScroll.bind(this));
 
     if (this.props.isOpened) {
       this.openPortal();
@@ -101,10 +100,9 @@ export default class Portal extends React.Component {
     if (this.props.closeOnOutsideClick) {
       document.removeEventListener('mouseup', this.handleOutsideMouseClick);
       document.removeEventListener('touchstart', this.handleOutsideMouseClick);
+      window.removeEventListener('resize', this.handleResize.bind(this));
+      window.removeEventListener("scroll", this.handleScroll.bind(this));
     }
-
-    window.removeEventListener('resize', this.handleResize.bind(this));
-    window.removeEventListener("scroll", this.handleScroll.bind(this));
 
     this.closePortal(true);
   }
@@ -154,11 +152,13 @@ export default class Portal extends React.Component {
       	this.node.className = props.className;
     	}
 
-	  	style.position = 'fixed';
-	  	style.top = y + 5;
-	  	style.left = x + 5;
+      if (this.props.repositioning) {
+  	  	style.position = 'fixed';
+  	  	style.top = y + 5;
+  	  	style.left = x + 5;
+      	if (style.left >= (window.innerWidth - window.innerWidth * 0.15)) style.left = x - window.innerWidth * 0.15;
+      }
 
-	  	if (style.left >= (window.innerWidth - window.innerWidth * 0.15)) style.left = x - window.innerWidth * 0.15;
     	CSSPropertyOperations.setValueForStyles(this.node, style);
 
       document.body.appendChild(this.node);
@@ -274,12 +274,14 @@ Portal.propTypes = {
   onClose: React.PropTypes.func,
   beforeClose: React.PropTypes.func,
   onUpdate: React.PropTypes.func,
-  isSortedOrFiltered: React.PropTypes.bool
+  isSortedOrFiltered: React.PropTypes.bool,
+  repositioning: React.PropTypes.bool
 };
 
 Portal.defaultProps = {
   onOpen: () => {},
   onClose: () => {},
   onUpdate: () => {},
-  isSortedOrFiltered: false
+  isSortedOrFiltered: false,
+  repositioning: true
 };
