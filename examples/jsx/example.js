@@ -202,7 +202,7 @@ $(function() {
 		ex3data.push(row);
 	}
 
-/*	ReactDOM.render(<App
+	ReactDOM.render(<App
 		key={'testtable'}
 		idField="id"
 		selected={[3,4]}
@@ -223,7 +223,7 @@ $(function() {
 		cols={ex3cols}
 		data={ex3data}
 		selectable="multiple"
-	/>, body3);*/
+	/>, body3);
 
 	ReactDOM.render(<ProperTable.TreeTable
 		key='pt4'
@@ -236,7 +236,7 @@ $(function() {
 		groupBy='nested1'
 		groupCol='col1'
 		cols={ex3cols}
-		data={ex3data.slice(0, 1000)}
+		data={ex3data.slice(0, 6)}
 		selectable="multiple"
 		afterSelect={(data, indexes) => {
 			console.log('extselect', data, indexes);

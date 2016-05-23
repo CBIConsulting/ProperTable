@@ -162,7 +162,14 @@ class TreeTable extends React.Component {
 					}
 				}
 
-				return <NestedCell expanded={this.state.expanded.has(val)}  collapsable={this.props.collapsable} val={val} colData={colData} rawData={rawdata} onClick={this.toggleCollapse.bind(this, val, colData, rawdata)}>
+				return <NestedCell
+					expanded={this.state.expanded.has(val)}
+					collapsable={this.props.collapsable}
+					val={val}
+					colData={colData}
+					rawData={rawdata}
+					onClick={this.toggleCollapse.bind(this, val, colData, rawdata)}
+				>
 					{content}
 				</NestedCell>;
 			}
@@ -201,7 +208,7 @@ class TreeTable extends React.Component {
 					let items = _.pluck(this.grouped[gkey], this.props.idField);
 
 					items.forEach((ik) => {
-						newSelArray.push(ik.toString());
+						newSelArray.push(ik);
 					});
 				}
 			});
@@ -209,24 +216,25 @@ class TreeTable extends React.Component {
 			newSelection = new Set(newSelArray);
 		}
 
+		cache.flush(['formatted', 'tb_'+this.uniqueId]);
 		this.setState({selection: newSelection});
 	}
 
 	render() {
-		let {cols, data, afterSelect, afterSort, selection, uniqueId, ...props} = this.props;
+		let {cols, data, afterSelect, afterSort, selected, uniqueId, ...props} = this.props;
+		const selection = [...this.state.selection];
 		cols = this.cols;
 		data = this.data;
-		selection = [...this.state.selection];
 		uniqueId = this.uniqueId;
 
-		console.log('state selection', selection);
+		console.log('state selection', selection, {...props});
 
 		return <Table
 			afterSelect={(selection, selectionArray) => {
 				this.onSelect(afterSelect, selection, selectionArray);
 			}}
 			uniqueId={uniqueId}
-			selection={selection}
+			selected={selection}
 			cols={cols}
 			data={data}
 			{...props}

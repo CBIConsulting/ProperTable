@@ -26,14 +26,7 @@ const NestedCell = (props) => {
 	}
 
 	if (props.rawData._hasChildren && props.collapsable) {
-		renderedIcon = <a
-			href="#"
-			onClick={(e) => {
-				e.preventDefault();
-			}}
-		>
-			<i className={"propertable-nested-icon fa "+icon+" fa-fw"} />
-		</a>;
+		renderedIcon = <i className={"propertable-nested-icon fa "+icon+" fa-fw"} />;
 	}
 
 	return <div className="propertable-nested-cell" onClick={(e) => {
