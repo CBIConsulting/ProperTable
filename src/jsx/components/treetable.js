@@ -46,10 +46,7 @@ class TreeTable extends React.Component {
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
-		let propschanged = !shallowEqualImmutable(this.props, nextProps);
-		let statechanged = !shallowEqualImmutable(this.state, nextState);
-
-		return propschanged || statechanged;
+		return  !shallowEqualImmutable(this.props, nextProps) || !shallowEqualImmutable(this.state, nextState);
 	}
 
 	componentWillMount() {
@@ -208,7 +205,7 @@ class TreeTable extends React.Component {
 					let items = _.pluck(this.grouped[gkey], this.props.idField);
 
 					items.forEach((ik) => {
-						newSelArray.push(ik);
+						newSelArray.push(ik.toString());
 					});
 				}
 			});

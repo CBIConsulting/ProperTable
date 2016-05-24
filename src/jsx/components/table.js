@@ -1222,7 +1222,7 @@ class ProperTable extends React.Component {
 				});
 			}
 
-			if (changedId) {
+			if (changedId && newIndexed[changedId]) {
 				newIndexed[changedId]._selected = selected; // Update indexed data
 				rowIndex =  newIndexed[changedId]._rowIndex; // Get data index
 				rdata = newData.get(rowIndex).set('_selected', selected); // Change the row in that index
@@ -1235,7 +1235,7 @@ class ProperTable extends React.Component {
 				rdata = row.set('_selected', selected);
 				curIndex = newIndexed[rowid];
 
-				if (curIndex._selected != selected) { // update indexed data
+				if (curIndex && curIndex._selected != selected) { // update indexed data
 					curIndex._selected = selected;
 					newIndexed[rowid] = curIndex;
 				}
