@@ -35,6 +35,10 @@ function defaultProps() {
 	};
 }
 
+function isGroupId(id) {
+	return id.toString().indexOf('__group__') === 0;
+}
+
 class TreeTable extends React.Component {
 	constructor(props) {
 		super(props);
@@ -46,7 +50,7 @@ class TreeTable extends React.Component {
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
-		return  !shallowEqualImmutable(this.props, nextProps) || !shallowEqualImmutable(this.state, nextState);
+		return !shallowEqualImmutable(this.props, nextProps) || !shallowEqualImmutable(this.state, nextState);
 	}
 
 	componentWillMount() {
@@ -94,8 +98,26 @@ class TreeTable extends React.Component {
 		}
 	}
 
-	sendSelection() {
-		console.log('send selection');
+	sendSelection(selection) {
+		let selArray = [];
+		let selData = [];
+
+		if (typeof this.props.afterSelect === 'function') {
+			selection.forEach(id => {
+				let row = null;
+
+				if (!isGroupId(id)) {
+					row = this.dataIndex[id];
+
+					if (row) {
+						selArray.push(row[this.props.idField]);
+						selData.push(row);
+					}
+				}
+			});
+
+			this.props.afterSelect(selData, selArray);
+		}
 	}
 
 	prepareNestedData(props = this.props, state = this.state) {
@@ -151,9 +173,7 @@ class TreeTable extends React.Component {
 					content = oldFormatter(val, colData, rawdata);
 				}
 
-				if (rawdata[this.props.idField].toString().indexOf('__group__') !== 0) {
-					return content;
-				} else {
+				if (rawdata[this.props.idField].toString().indexOf('__group__') === 0) {
 					if (typeof this.colsByName[props.groupBy].formatter == 'function') {
 						content = this.colsByName[props.groupBy].formatter(val, this.colsByName[props.groupBy], rawdata);
 					}
@@ -214,7 +234,7 @@ class TreeTable extends React.Component {
 		}
 
 		cache.flush(['formatted', 'tb_'+this.uniqueId]);
-		this.setState({selection: newSelection});
+		this.setState({selection: newSelection}, this.sendSelection.bind(this, newSelection));
 	}
 
 	render() {
@@ -223,8 +243,6 @@ class TreeTable extends React.Component {
 		cols = this.cols;
 		data = this.data;
 		uniqueId = this.uniqueId;
-
-		console.log('state selection', selection, {...props});
 
 		return <Table
 			afterSelect={(selection, selectionArray) => {
