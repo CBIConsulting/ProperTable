@@ -123,18 +123,26 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		};
 	```
 * selectorWidth: Width of the selector column, checkboxes. (Only if selectable is multible)
-* colSortDirs: To be sorted by default, direction (ASC, DESC, DEF) of the columns. (DEF -> Default)
+* colSortDirs: To be sorted, direction (ASC, DESC, DEF) of the columns. (DEF -> Default)
 	* Ex:
 	```javascript
 		[
 			{
-				name: column_1, // Column name
+				column: column_1, // Column name
 				direction: 'ASC'
 			},
 			{
-				name: column_2,
+				column: column_2,
 				direction: 'DEF'
 			}
+		]
+	```
+* colFilters: Filter of each column. It's a selection of values of that column. Works like the internal column filter, the keys are the names of the each column. Should be an array of values. It works that way because this filter was created thinking in a componen like ProperSearch ([Take a look here](https://cbiconsulting.github.io/ProperSearch/))
+	* Ex:
+	```javascript
+		[
+			column_name : ['value1', 'value2', 'value3'],
+			column_name2 : [1,2,64],
 		]
 	```
 * selected: Rows selected by default. Get an array of ids or an single id
@@ -177,6 +185,52 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 	        afterSort={afterSort} 	  // function afterSort(sortDirection);
 	        afterClear={afterClear}   // function afterSort(selection, sortDirection) -> afterClear([], 'DEF')
 	    />
+	```
+* getColSettings: This should be a function that get the column settings of the table. Each time the column settings changed (sort or filter of any column change) or get created then the function get the new settings. You must take care changing this array could cause unexpected behaviours. Name and field are the same as in Cols array, the selection field (selection of the column, array of filtered values of the column), direction ('DEF' *default || 'ASC' || 'DESC'), and other settings. Remenber that's a refenrence to an internal state, be very carefull. be very carefull. This props was thought to get the internal filters / sort data and show it externally (if you want to apply a change use the props colSortDirs and colFilters).
+	*Example:
+	```javascript
+	getColumnSettings(colSettings) {
+		let colSort = this.state.colSortDirs, colFilters = this.state.colFilters, oldSort;
+
+		colSettings.forEach(col => {
+			oldSort = _.findWhere(colSort, {column: col.column}); // Look for the object with that column name
+
+			if (oldSort) {
+				colSort[_.indexOf(colSort, oldSort)].direction = col.direction;
+			} else {
+				colSort.push({column: col.column, col.direction});
+			}
+
+			colFilters[col.column] = col.selection;
+		});
+
+		this.setState({
+			colSortDirs: colSort,
+			colFilters: colFilters,
+			colSettings: colSettings
+		});
+	}
+	...
+	updateSortColX(direction) {
+		let colSortDirs = this.state.colSortDirs;
+		let colX = _.findWhere(colSortDirs, {column: 'colX'});
+
+		if (colX) {
+			colSortDirs[_.indexOf(colSortDirs, colX)].direction = direction;
+		}
+
+		this.setState({
+			colSortDirs: colSortDirs
+		});
+	}
+	...
+	<Table
+		data: {data},
+		cols: {cols},
+		getColSettings: this.getColumnSettings.bind(this),
+		colSortDirs: this.state.colSortDirs.bind(this),
+		colFilters: this.state.colFilters.bind(this),
+	/>
 	```
 * sortIcons: An array like the const SortIcons in HeaderCell file to use instead [HeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/headerCell.js)
 * iconColor: Color of the icon to open the column filter (if that exist) in the header of column. This color is used on open / filtered or sorted.

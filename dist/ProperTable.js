@@ -55,6 +55,10 @@ var ProperTable =
 
 	var _table2 = _interopRequireDefault(_table);
 
+	var _portal = __webpack_require__(63);
+
+	var _portal2 = _interopRequireDefault(_portal);
+
 	var _formatters = __webpack_require__(139);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
@@ -75,6 +79,7 @@ var ProperTable =
 
 	exports["default"] = {
 		Table: (0, _reactDimensions2["default"])()(_table2["default"]),
+		Portal: _portal2["default"],
 		formatters: _formatters2["default"],
 		lang: _messages2["default"]
 	};
@@ -153,52 +158,6 @@ var ProperTable =
 	//Const
 	var SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
 	var Set = __webpack_require__(88);
-
-	/**
-	 * Component properties.
-	 *
-	 * cols: Describe columns data [name: colName, field: colField, formated: valFormater(), sortable: false ...]
-	 * data: Data of the table
-	 * afterSort: Function called after the data has been sorted. Return the rawdata sorted.
-	 * afterSelect: Function called after select a row. Return the seleted rows.
-	 * selectable: If the rows can be selected or not, and if that selection is multiple. Values: true || 'Multiple' || false
-	 * rowHeight: Height of each row in numerical value.
-	 * msgs: Get the translated messages of the current lang.
-	 * selectorWidth: Width of the selector column, checkboxes.
-	 * colSortDirs: To sort by default, direction (ASC, DESC, DEF(default)) of the columns. [{name: fieldName,  direction: 'DEF'},{},{}]
-	 * multisort: Multisort allowed or not. True || False
-	 * selected: Rows selected by default. Get an array of ids or an id
-	 * idField: Field that can be used as an id for the default selected rows.
-	 * columnFilterComponent: A react component to be rendered under the header icon. Must have afterSelect(selection) (selection is an array of column selected values (col.field)) and afterSort(sortDir) sort direction DEF | ASC | DESC
-	 * sortIcons: An array like the const SortIcons in HeaderCell file to use instead
-	 * iconColor: Color of the icon when the column filter is displayed or the column is filtered or ordered
-	 * iconDefColor: Color of the icon when the column filter isn't displayed and the column isn't filtered or ordered
-	 * restartOnClick: Restart the sort and filter of each column. It should be either a React Element (in this case it has to have id (best) or className (add event to all elements with same class aswell)) or a Js object (JS element document.getElementById('btn')).
-	 */
-	function defaultProps() {
-		return {
-			className: '',
-			cols: [],
-			data: [],
-			uniqueId: null,
-			afterSort: null,
-			afterSelect: null,
-			selectable: true,
-			selected: null,
-			rowHeight: 50,
-			idField: '_properId',
-			msgs: _messages2['default'],
-			lang: 'ENG',
-			selectorWidth: 27,
-			colSortDirs: null,
-			multisort: false,
-			columnFilterComponent: null,
-			sortIcons: null,
-			iconColor: '#5E78D3',
-			iconDefColor: '#D6D6D6',
-			restartOnClick: null
-		};
-	}
 
 	/**
 	 * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
@@ -287,10 +246,10 @@ var ProperTable =
 				initialIndexed: initialData.initialIndexed,
 				rawdata: initialData.rawdata,
 				sizes: _immutable2['default'].fromJS({}),
+				selection: initialData.defSelection,
+				sortCache: initialData.defSortCache,
 				allSelected: false,
-				selection: new Set(),
-				selectionApplied: false,
-				sortCache: initialData.defSortCache
+				sendSorted: false
 			};
 			return _this;
 		}
@@ -298,12 +257,26 @@ var ProperTable =
 		_createClass(ProperTable, [{
 			key: 'componentWillMount',
 			value: function componentWillMount() {
-				// Sort the table if the sort direction of one or more columns are diferent than default and set the selection
-				this.applyDefault();
+				this.uniqueId = this.props.uniqueId || _underscore2['default'].uniqueId('propertable-');
+
+				// Sort the table and apply filters if exist in props
+				this.applySettings();
 
 				// Add new click listener if exist
 				if (this.props.restartOnClick) {
 					this.addClickListener(this.props.restartOnClick);
+				}
+			}
+		}, {
+			key: 'componentDidMount',
+			value: function componentDidMount() {
+				// In some cases the callback of setState it's called before the new state is set up so we use a flag to prevent this.
+				if (this.state.sendSorted) {
+					this.setState({
+						sendSorted: false
+					}, this.sendSortedAndSettings(this.state.data, this.state.colSettings));
+				} else {
+					this.sendColSettings(this.state.colSettings);
 				}
 			}
 		}, {
@@ -326,8 +299,11 @@ var ProperTable =
 				var somethingchanged = propschanged || statechanged;
 
 				if (propschanged) {
-					var colsChanged = nextProps.cols.length != this.props.cols.length || !_underscore2['default'].isEqual(nextProps.cols, this.props.cols);
-					var dataChanged = nextProps.data.length != this.props.data.length || !_underscore2['default'].isEqual(nextProps.data, this.props.data);
+					var colsChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.cols, this.props.cols);
+					var dataChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.data, this.props.data);
+					var colSortDirsChanged = nextProps.colSortDirs ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colSortDirs, this.props.colSortDirs) : false;
+					var colFiltersChanged = nextProps.colFilters ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colFilters, this.props.colFilters) : false;
+					var selectedChanged = nextProps.selected ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.selected, this.props.selected) : false;
 					var colData = null,
 					    preparedData = null;
 
@@ -338,6 +314,7 @@ var ProperTable =
 
 						if (dataChanged) {
 							// The most probably case
+							var colSettings = nextState.colSettings;
 							preparedData = this.prepareData(nextProps, nextState);
 
 							this.setState({
@@ -347,8 +324,8 @@ var ProperTable =
 								initialIndexed: preparedData.initialIndexed,
 								rawdata: preparedData.rawdata,
 								sortCache: preparedData.defSortCache,
-								selectionApplied: false
-							}, this.sortTable(nextState.colSettings, false));
+								selection: preparedData.defSelection
+							}, this.applySettings(nextState.colSettings, nextProps));
 						} else if (colsChanged && dataChanged) {
 							preparedData = this.prepareData(nextProps, nextState);
 							colData = this.prepareColSettings(nextProps, preparedData.rawdata);
@@ -363,8 +340,8 @@ var ProperTable =
 								initialIndexed: preparedData.initialIndexed,
 								rawdata: preparedData.rawdata,
 								sortCache: preparedData.defSortCache,
-								selectionApplied: false
-							}, this.sortTable(colSortData.colSettings, false));
+								selection: preparedData.defSelection
+							}, this.applySettings(colData.colSettings, nextProps));
 						} else if (colsChanged) {
 							(function () {
 								var sortCache = [];
@@ -380,11 +357,13 @@ var ProperTable =
 									colSortParsers: colData.colSortParsers,
 									cols: _immutable2['default'].fromJS(nextProps.cols),
 									sortCache: sortCache
-								}, _this2.applyDefault(nextState.colSettings, nextProps)); // apply selection and sort
+								}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
 							})();
 						}
 
 						return false;
+					} else if (colSortDirsChanged || colFiltersChanged) {
+						this.applySettings(nextState.colSettings, nextProps);
 					} else if (nextProps.selected) {
 						this.setDefaultSelection(nextProps);
 
@@ -398,21 +377,32 @@ var ProperTable =
 			key: 'componentWillUpdate',
 			value: function componentWillUpdate(nextProps, nextState) {
 				this.checkSelectionChange(nextProps, nextState);
+
+				if (nextState.sendSorted) {
+					this.sendSortedAndSettings(nextState.data, nextState.colSettings);
+				}
+			}
+		}, {
+			key: 'componentDidUpdate',
+			value: function componentDidUpdate(prevProps, prevState) {
+				if (this.state.sendSorted) this.setState({ sendSorted: false });
 			}
 		}, {
 			key: 'componentWillReceiveProps',
 			value: function componentWillReceiveProps(newProps) {
-				var restartOnClickChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props.restartOnClick, newProps.restartOnClick);
+				if (newProps.restartOnClick || this.props.restartOnClick) {
+					var restartOnClickChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props.restartOnClick, newProps.restartOnClick);
 
-				if (restartOnClickChanged) {
-					// Remove old listener if exist
-					if (this.props.restartOnClick) {
-						this.removeClickListener(this.props.restartOnClick);
-					}
+					if (restartOnClickChanged) {
+						// Remove old listener if exist
+						if (this.props.restartOnClick) {
+							this.removeClickListener(this.props.restartOnClick);
+						}
 
-					// Add new listener if exist
-					if (newProps.restartOnClick) {
-						this.addClickListener(newProps.restartOnClick);
+						// Add new listener if exist
+						if (newProps.restartOnClick) {
+							this.addClickListener(newProps.restartOnClick);
+						}
 					}
 				}
 			}
@@ -472,28 +462,146 @@ var ProperTable =
 			}
 
 			/**
-	   * Apply default selection and sort table.
+	   * Apply the columns sort and filters over table data and update state.
 	   *
-	   * @param (array)	colSettings Sort / Filter settings of each column. From current or next state (case the props data/cols change)
-	   * @param (array)	props 		Component props (or nextProps)
+	   * @param (array)	colSettings 	Sort / Filter settings of each column. From current or next state (case the props data/cols change)
+	   * @param (object) 	props 			Component props or new props on update
 	   */
 
 		}, {
-			key: 'applyDefault',
-			value: function applyDefault() {
+			key: 'applySettings',
+			value: function applySettings() {
 				var colSettings = arguments.length <= 0 || arguments[0] === undefined ? this.state.colSettings : arguments[0];
 				var props = arguments.length <= 1 || arguments[1] === undefined ? this.props : arguments[1];
 
-				this.uniqueId = props.uniqueId || _underscore2['default'].uniqueId('propertable-');
-				this.sortTable(colSettings, false);
-				this.setDefaultSelection(props);
+				var selectionSet = {},
+				    columnKeysFiltered = [],
+				    fields = [],
+				    formatters = []; // new Set(selection)
+				var newData = null,
+				    hasFilter = false,
+				    hasSort = false;
+				var newCol = void 0,
+				    newFilter = void 0;
+
+				// Update settings
+				colSettings = _underscore2['default'].map(colSettings, function (col) {
+					if (props.colSortDirs) {
+						newCol = _underscore2['default'].findWhere(props.colSortDirs, { column: col.column });
+						if (newCol) col.direction = newCol.direction;
+					}
+
+					if (!hasSort && col.direction !== 'DEF') hasSort = true;
+
+					if (props.colFilters) {
+						newFilter = props.colFilters[col.column];
+						col.selection = newFilter ? newFilter : col.selection;
+					}
+
+					if (col.selection.length > 0) {
+						// Build all selection.
+						selectionSet[col.column] = new Set(col.selection);
+						formatters[col.column] = col.formatter;
+						columnKeysFiltered.push(col.column); // Columns filtered
+
+						// You send a column and get the asociated field, needed because more than 1 col can use data from same field. Name is the id key of column but
+						// field refer to data field.
+						fields[col.column] = col.field;
+
+						hasFilter = true;
+					}
+					return col;
+				});
+
+				newData = hasFilter ? this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields) : null;
+
+				if (hasSort) {
+					this.sortTable(colSettings, true, newData); // This method set state and send the col settings
+				} else if (hasFilter) {
+						this.setState(newData, this.sendColSettings(colSettings));
+					}
 			}
 
+			/**
+	   * Apply filters to the table data.
+	   *
+	   * @param (array) 	columns 	Names of the filtered columns
+	   * @param (array)	formatters	Formatters asociated with each column, by its name, to parse the data
+	   * @param (array)	filters 	Contains Set objects of selected values asociated with each column.
+	   * @param (array)	fields 		Fields asociated with each column name. More than 1 col can use data from same field. This array is key value, where the key is the col name and
+	   *								the value is the asociated field.
+	   *
+	   * @return (object)	-data 		Filtered data.
+	   *					-indexed 	Indexed data updated.
+	   */
+
+		}, {
+			key: 'applyFilters',
+			value: function applyFilters(columns, formatters, filters, fields) {
+				var _state = this.state;
+				var initialData = _state.initialData;
+				var indexed = _state.indexed;
+				var selection = _state.selection;
+
+				var filteredData = initialData,
+				    idField = this.props.idField;
+
+				// Get the data that match with the selection (of all column filters)
+				if (_underscore2['default'].size(filters) > 0) {
+					(function () {
+						var result = void 0,
+						    field = void 0,
+						    formatter = void 0,
+						    val = void 0;
+
+						filteredData = initialData.filter(function (element) {
+
+							// If value has been found (result = true) then leave loop and return true
+							columns.every(function (column) {
+								field = fields[column];
+								formatter = formatters[column];
+								val = element.get(field);
+								result = false;
+
+								// Skip unvalid values
+								if (_underscore2['default'].isNull(val)) val = '';
+
+								if (typeof val === 'string' || typeof val === 'number') {
+									if (formatter) {
+										val = formatter(val, null, null);
+										if (_underscore2['default'].isNull(val) || _underscore2['default'].isUndefined(val)) val = '';
+									}
+									result = filters[column].has(val.toString());
+								}
+
+								return result;
+							});
+
+							return result;
+						});
+					})();
+				}
+
+				// Apply selection and update index of each element in indexed data
+				filteredData = filteredData.map(function (element, index) {
+					if (selection.has(element.get(idField))) {
+						element = element.set('_selected', true);
+					}
+					indexed[element.get(idField)]._rowIndex = index; // Update index into indexed data.
+
+					return element;
+				});
+
+				return {
+					data: filteredData,
+					indexed: indexed
+				};
+			}
 			/**
 	   * Prepare the data received by the component for the internal working.
 	   * @param  (array)	props 	Component props (or nextProps)
 	   * @param  (array)	state 	Component state (or nextState)
-	   * @return (array)	-rawdata: The same data as the props.
+	   * @return (object)	-rawdata: The same data as the props.
 	   *					-indexed: Same as rawdata but indexed by the properId
 	   *					-data: Parsed data to add some fields necesary to internal working.
 	   */
@@ -512,24 +620,22 @@ var ProperTable =
 				var indexed = {},
 				    initialData = null,
 				    parsed = [],
-				    selectedarr = [];
+				    defSelection = new Set();
 				var keyField = this.props.idField;
 
 				if (props.selected) {
 					if (!_underscore2['default'].isArray(props.selected)) {
-						selectedarr = [props.selected];
+						defSelection = [props.selected];
 					} else {
-						if (props.selectable == 'multiple') selectedarr = props.selected;else selectedarr = [props.selected[0]];
+						if (props.selectable == 'multiple') defSelection = props.selected;else defSelection = [props.selected[0]];
 					}
+
+					defSelection = new Set(defSelection);
 				} else {
 					if (state && state.selection) {
-						state.selection.forEach(function (id) {
-							selectedarr.push(id);
-						});
+						defSelection = state.selection;
 					}
 				}
-
-				selectedarr = new Set(selectedarr);
 
 				// Parsing data to add new fields (selected or not, properId, rowIndex)
 				parsed = data.map(function (row) {
@@ -540,7 +646,7 @@ var ProperTable =
 						row = row.set(keyField, id);
 					}
 
-					if (selectedarr.has(id)) {
+					if (defSelection.has(id)) {
 						row = row.set('_selected', true);
 					} else {
 						row = row.set('_selected', false);
@@ -562,7 +668,8 @@ var ProperTable =
 					initialData: parsed,
 					indexed: indexed,
 					initialIndexed: (0, _clone2['default'])(indexed),
-					defSortCache: sortCache
+					defSortCache: sortCache,
+					defSelection: defSelection
 				};
 			}
 
@@ -633,14 +740,11 @@ var ProperTable =
 				// the column is sortable or not and if the Table has multisort or just only single.
 				for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
 					colData = sortData.colSortDirs[i];
-					direction = colData.direction;
 					sortable = colData.sortable !== null ? colData.sortable : true;
 
 					// Find the current column sort data and set direction (if the component got default sort direction for this column
 					// then it will get the direction otherwise direction will be always DEF)
-					colSortDirs.forEach(function (element) {
-						if (element.column == colData.column) direction = element.direction;
-					});
+					direction = _underscore2['default'].findWhere(colSortDirs, { column: colData.column }).direction;
 
 					// If has filter build a list without duplicates and it indexed
 					if (this.props.columnFilterComponent && sortable) {
@@ -660,16 +764,19 @@ var ProperTable =
 								// Only string or number values then formated (Dates, etc...) Not objects allowed
 								valid = typeof val === 'string' || typeof val === 'number' ? true : false;
 
-								if (valid && !_underscore2['default'].isNull(val) && val !== '' && !idSet.has(val)) {
-									idSet.add(val);
+								if (valid && !_underscore2['default'].isNull(val) && val !== '') {
+									if (colData.formatter) val = colData.formatter(val, null, null);
 
-									if (colData.formatter) val = colData.formatter(val);
+									if (!idSet.has(val) && !_underscore2['default'].isUndefined(val)) {
+										// No repeat
+										idSet.add(val);
 
-									row = row.set(colData.field, val.toString());
-									row = row.set('_selected', false);
-									row = row.set('_rowIndex', index++); // data row index
-									row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
-									return row;
+										row = row.set(colData.field, val.toString());
+										row = row.set('_selected', false);
+										row = row.set('_rowIndex', index++); // data row index
+										row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
+										return row; // RETURN
+									}
 								}
 
 								rawdataIndex++; // add 1 to jump over duplicate values
@@ -813,7 +920,7 @@ var ProperTable =
 					data: data,
 					indexed: indexed,
 					colSettings: colSettings
-				});
+				}, this.sendSortedAndSettings(data, colSettings));
 			}
 
 			/**
@@ -822,13 +929,18 @@ var ProperTable =
 	   *
 	   * @param {String} 		columnKey 	The name of the column which will be resort.
 	   * @param {String} 		sortDir 	The new direction of the sort. ASC || DESC || DEF(AULT)
+	   * @param {object}		newData 	In case this method is called after filtering data (don't update state twice for the same)
 	   */
 
 		}, {
 			key: 'onSortChange',
 			value: function onSortChange(columnKey, sortDir) {
-				var colSettings = this.updateSortDir(columnKey, sortDir);
-				this.sortTable(colSettings);
+				var newData = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+				var colSettings = newData ? newData.colSettings : this.state.colSettings;
+
+				colSettings = this.updateSortDir(columnKey, sortDir, colSettings);
+				this.sortTable(colSettings, true, newData);
 			}
 
 			/**
@@ -837,29 +949,21 @@ var ProperTable =
 	   *
 	   * @param {String} 		columnKey 	The name of the column which will get a new selection filter from the complex filter.
 	   * @param {object}		selection 	The values selected to filter this column (values from all the values of this column)
-	   * @param {String} 		sortDir 	(Just on clear filter) The direction of the sort.
+	   * @param {String} 		sortDir 	(Just on clear filter) The direction of the sort. DEF
 	   */
 
 		}, {
 			key: 'onColumnGetFiltered',
 			value: function onColumnGetFiltered(columnKey, selection) {
-				var _this5 = this;
-
 				var sortDir = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+				var colSettings = arguments.length <= 3 || arguments[3] === undefined ? this.state.colSettings : arguments[3];
 
-				var colSettings = _underscore2['default'].clone(this.state.colSettings),
-				    filter = '',
-				    selectionSet = {},
+				var selectionSet = {},
 				    columnKeysFiltered = [],
 				    fields = [],
 				    formatters = []; // new Set(selection)
-				var _state = this.state;
-				var data = _state.data;
-				var initialData = _state.initialData;
-				var indexed = _state.indexed;
-
-				var filteredData = initialData,
-				    idField = this.props.idField;
+				var newData = [],
+				    hasSort = false;
 
 				// Update selection of this column in the colSettings and add this values to the selection set array if the selection has more than 0
 				// elements.
@@ -869,6 +973,8 @@ var ProperTable =
 							// Update
 							col.selection = selection;
 						}
+
+						if (!hasSort && col.direction !== 'DEF') hasSort = true;
 
 						if (col.selection.length > 0) {
 							// Build all selection
@@ -885,60 +991,21 @@ var ProperTable =
 					return col;
 				});
 
-				// Get the data that match with the selection (of all column filters)
-				if (_underscore2['default'].size(selectionSet) > 0) {
-					(function () {
-						var result = void 0,
-						    field = void 0,
-						    formatter = void 0,
-						    val = void 0;
+				// Apply selections
+				newData = this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields);
+				newData.colSettings = colSettings;
 
-						filteredData = initialData.filter(function (element) {
-
-							// If value has been found (result = true) then leave loop and return true
-							columnKeysFiltered.every(function (column) {
-								field = fields[column];
-								formatter = formatters[column];
-								val = element.get(field);
-								result = false;
-
-								// Skip unvalid values
-								if (!_underscore2['default'].isNull(val) && typeof val === 'string' || typeof val === 'number') {
-									if (formatter) val = formatter(val);
-									result = selectionSet[column].has(val.toString());
-								}
-
-								return result;
-							});
-
-							return result;
-						});
-					})();
-				}
-
-				// Apply selection and update index of each element in indexed data
-				filteredData = filteredData.map(function (element, index) {
-					if (_this5.state.selection.has(element.get(idField))) {
-						element = element.set('_selected', true);
-					}
-					indexed[element.get(idField)]._rowIndex = index; // Update index into indexed data.
-
-					return element;
-				});
-
+				// In case we didn't get a sort direction then only sort the filtered data (if sort different than default) applying colSettings and update state.
 				if (_underscore2['default'].isNull(sortDir)) {
-					this.setState({
-						data: filteredData,
-						indexed: indexed,
-						colSettings: colSettings
-					});
+					if (hasSort) {
+						this.sortTable(colSettings, true, newData);
+					} else {
+						this.setState(newData, this.sendColSettings(colSettings)); // All columns have sort to default
+					}
 				} else {
-					this.setState({
-						data: filteredData,
-						indexed: indexed,
-						colSettings: colSettings
-					}, this.onSortChange(columnKey, sortDir));
-				}
+						// Update col Settings with new sort direction for this column, then sort the data and update the component's state.
+						this.onSortChange(columnKey, sortDir, newData);
+					}
 			}
 
 			/**
@@ -949,14 +1016,16 @@ var ProperTable =
 	   *
 	   * @param {String} 		columnKey 	The name of the column which will be resort.
 	   * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
+	   * @param {array}		colSettings ColSettings to update
 	   * @return {array}		colSettings Updated colSettings array.
 	   */
 
 		}, {
 			key: 'updateSortDir',
 			value: function updateSortDir(columnKey, sortDir) {
-				var colSettings = this.state.colSettings || [],
-				    position = 1;
+				var colSettings = arguments.length <= 2 || arguments[2] === undefined ? this.state.colSettings : arguments[2];
+
+				var position = 1;
 
 				// Single sorting.
 				if (!this.props.multisort) {
@@ -1019,7 +1088,7 @@ var ProperTable =
 	   *
 	   * @param 	{array}		colSettings Sort settings of each column
 	   * @param 	{boolean}	sendSorted 	If the sorted data must be sent or not
-	   * @param 	{array}		data 		Data to be sorted
+	   * @param 	{object}	newData 	In case this method is called after filtering data (don't update state twice for the same)
 	  
 	   * @return 	{array}		-colSettings: Sorted column in colSettings
 	   *						-data: Sorted data to be updated in the component state.
@@ -1029,54 +1098,55 @@ var ProperTable =
 			key: 'sortTable',
 			value: function sortTable(colSettings) {
 				var sendSorted = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+				var newData = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
 
-				var data = this.state.data;
+				var data = newData ? newData.data : this.state.data,
+				    indexedData = newData ? newData.indexed : this.state.indexed;
+				var sendSortedAllowed = sendSorted;
 
 				colSettings = _underscore2['default'].sortBy(colSettings, function (element) {
 					return element.position;
 				}).reverse();
 
-				data = this.sortColumns(data, colSettings);
+				data = this.sortColumns(data, indexedData, colSettings);
 
-				if (sendSorted) {
-					this.setState({
-						data: data.data,
-						indexed: data.indexed,
-						colSettings: colSettings,
-						sortCache: data.sortCache
-					}, this.sendSortedData(data.data));
-				} else {
-					this.setState({
-						data: data.data,
-						indexed: data.indexed,
-						colSettings: colSettings,
-						sortCache: data.sortCache
-					});
+				if (sendSortedAllowed && typeof this.props.afterSort !== 'function' && typeof this.props.getColSettings !== 'function') {
+					sendSortedAllowed = false;
 				}
+
+				this.setState({
+					data: data.data,
+					indexed: data.indexed,
+					colSettings: colSettings,
+					sortCache: data.sortCache,
+					sendSorted: sendSortedAllowed
+				});
 			}
 
 			/**
 	   * Get the current colSettings state, sort it by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
 	   *
 	   * @param 	{array}		data 		Data to be render in the Table
+	   * @param 	{array}		indexed 	Indexed data to be updated (its row index)
 	   * @param 	{array}		colSettings Sort / filter settings of each column. Sorted by its .position
 	   * @return 	{array}		sortedData 	Sorted data to be updated in the component state.
 	   */
 
 		}, {
 			key: 'sortColumns',
-			value: function sortColumns(data, colSettings) {
-				var _this6 = this;
+			value: function sortColumns(data, indexed, colSettings) {
+				var _this5 = this;
 
 				var sortedData = data,
-				    indexed = _underscore2['default'].clone(this.state.indexed);
+				    indexedData = indexed;
 				var colSortParsers = this.state.colSortParsers,
 				    sortParser = null,
 				    sortCache = this.state.sortCache;
 				var defaultSort = true,
 				    element = null,
 				    position = null,
-				    rowId = void 0;
+				    rowId = void 0,
+				    val = void 0;
 
 				colSettings.forEach(function (element) {
 					// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
@@ -1084,11 +1154,12 @@ var ProperTable =
 						sortParser = colSortParsers[element.column];
 
 						sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
-							rowId = row.get(_this6.props.idField);
+							rowId = row.get(_this5.props.idField);
 
 							// sortCache [row-id] [column-id] = procesed value.
 							if (_underscore2['default'].isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
-								sortCache[rowId][element.field] = sortParser(row.get(element.field));
+								val = sortParser(row.get(element.field));
+								sortCache[rowId][element.field] = val || ''; // Turn null's into empty values
 							}
 
 							return sortCache[rowId][element.field];
@@ -1117,12 +1188,12 @@ var ProperTable =
 
 				// Update index into indexed data.
 				sortedData.map(function (element, index) {
-					indexed[element.get(_this6.props.idField)]._rowIndex = index;
+					indexedData[element.get(_this5.props.idField)]._rowIndex = index;
 				});
 
 				return {
 					data: sortedData,
-					indexed: indexed,
+					indexed: indexedData,
 					sortCache: sortCache
 				};
 			}
@@ -1140,7 +1211,7 @@ var ProperTable =
 		}, {
 			key: 'parseColumn',
 			value: function parseColumn(colData) {
-				var _this7 = this;
+				var _this6 = this;
 
 				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
@@ -1247,7 +1318,7 @@ var ProperTable =
 				} else {
 					// Call the method recursively to all the childrens of this column.
 					var inner = colData.children.map(function (c) {
-						return _this7.parseColumn(c, true);
+						return _this6.parseColumn(c, true);
 					});
 
 					col = _react2['default'].createElement(
@@ -1278,7 +1349,7 @@ var ProperTable =
 		}, {
 			key: 'buildTable',
 			value: function buildTable() {
-				var _this8 = this;
+				var _this7 = this;
 
 				var columns = [],
 				    isNested = hasNested(this.state.cols),
@@ -1344,7 +1415,7 @@ var ProperTable =
 				}
 
 				this.state.cols.forEach(function (col) {
-					columns.push(_this8.parseColumn(col.toJSON(), false, isNested));
+					columns.push(_this7.parseColumn(col.toJSON(), false, isNested));
 				});
 
 				return columns;
@@ -1360,16 +1431,16 @@ var ProperTable =
 		}, {
 			key: 'handleSelectAll',
 			value: function handleSelectAll(e) {
-				var _this9 = this;
+				var _this8 = this;
 
 				e.preventDefault();
 
 				if (this.props.selectable) {
 					(function () {
-						var idField = _this9.props.idField,
+						var idField = _this8.props.idField,
 						    value = void 0,
-						    selection = new Set(_this9.state.selection);
-						var _state2 = _this9.state;
+						    selection = new Set(_this8.state.selection);
+						var _state2 = _this8.state;
 						var allSelected = _state2.allSelected;
 						var data = _state2.data;
 						var indexed = _state2.indexed;
@@ -1401,7 +1472,7 @@ var ProperTable =
 							}
 						}
 
-						_this9.triggerSelection(selection);
+						_this8.triggerSelection(selection);
 					})();
 				}
 			}
@@ -1435,14 +1506,14 @@ var ProperTable =
 		}, {
 			key: 'isAllSelected',
 			value: function isAllSelected(data, selection) {
-				var _this10 = this;
+				var _this9 = this;
 
 				var result = true;
 				if (data.size === this.state.rawdata.size) return selection.size >= this.state.data.size; // Not filtered data
 
 				// Filtered data
 				data.forEach(function (element) {
-					if (!selection.has(element.get(_this10.props.idField).toString())) {
+					if (!selection.has(element.get(_this9.props.idField).toString())) {
 						// Some data not in selection
 						result = false;
 						return false;
@@ -1487,7 +1558,7 @@ var ProperTable =
 			key: 'checkSelectionChange',
 			value: function checkSelectionChange(nextProps, nextState) {
 				if (nextProps.selectable == 'multiple') {
-					if (nextState.selection.size !== this.state.selection.size || !nextState.selectionApplied && nextState.selection.size > 0) {
+					if (nextState.selection.size !== this.state.selection.size) {
 						this.updateSelectionData(nextState.selection, nextState.allSelected);
 					}
 				} else if (nextProps.selectable == true) {
@@ -1510,7 +1581,7 @@ var ProperTable =
 		}, {
 			key: 'updateSelectionData',
 			value: function updateSelectionData(newSelection) {
-				var _this11 = this;
+				var _this10 = this;
 
 				var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
@@ -1572,7 +1643,7 @@ var ProperTable =
 					} else {
 							// Change all data
 							newData = newData.map(function (row) {
-								rowid = row.get(_this11.props.idField);
+								rowid = row.get(_this10.props.idField);
 								selected = newSelection.has(rowid.toString());
 								rdata = row.set('_selected', selected);
 								curIndex = newIndexed[rowid];
@@ -1589,8 +1660,7 @@ var ProperTable =
 
 				this.setState({
 					data: newData,
-					indexed: newIndexed,
-					selectionApplied: true
+					indexed: newIndexed
 				});
 			}
 
@@ -1628,13 +1698,13 @@ var ProperTable =
 		}, {
 			key: 'sendSelection',
 			value: function sendSelection() {
-				var _this12 = this;
+				var _this11 = this;
 
 				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
 				if (typeof this.props.afterSelect == 'function') {
 					(function () {
-						var _state3 = _this12.state;
+						var _state3 = _this11.state;
 						var selection = _state3.selection;
 						var initialIndexed = _state3.initialIndexed;
 						var rawdata = _state3.rawdata;
@@ -1664,40 +1734,70 @@ var ProperTable =
 
 						output = _underscore2['default'].compact(output);
 
-						if (_this12.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
+						if (_this11.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
 							output = output[0];
 						}
 
-						_this12.props.afterSelect(output, selectionArray);
+						_this11.props.afterSelect(output, selectionArray);
 					})();
 				}
 			}
 
 			/**
+	   * Send sorted data and column settings to the props getColSettings and afterSort
+	   *
+	   * @param (object)	data 			Component's data
+	   * @param (array)	colSettings 	Column settings of the table
+	   */
+
+		}, {
+			key: 'sendSortedAndSettings',
+			value: function sendSortedAndSettings(data, colSettings) {
+				this.sendSortedData(data);
+				this.sendColSettings(colSettings);
+			}
+
+			/**
 	   * If the method afterSort in the components props has a function then call it sending the sorted data in the rawdata.
+	   *
+	   * @param (object)	data 			Component's data
 	   */
 
 		}, {
 			key: 'sendSortedData',
 			value: function sendSortedData(data) {
-				var _this13 = this;
+				var _this12 = this;
 
 				if (typeof this.props.afterSort == 'function') {
 					(function () {
-						var _state4 = _this13.state;
+						var _state4 = _this12.state;
 						var initialIndexed = _state4.initialIndexed;
 						var rawdata = _state4.rawdata;
 
 						var output = [];
 
 						output = data.map(function (row) {
-							var rowIndex = initialIndexed[row.get(_this13.props.idField)]._rowIndex;
+							var rowIndex = initialIndexed[row.get(_this12.props.idField)]._rowIndex;
 
 							return rawdata.get(rowIndex);
 						});
 
-						_this13.props.afterSort(output.toJSON());
+						_this12.props.afterSort(output.toJSON());
 					})();
+				}
+			}
+
+			/**
+	   * Send the colSettings if the prop getColSettings is a function.
+	   *
+	   * @param (array)	colSettings 	Column settings of the table
+	   */
+
+		}, {
+			key: 'sendColSettings',
+			value: function sendColSettings(colSettings) {
+				if (typeof this.props.getColSettings === 'function' && colSettings) {
+					this.props.getColSettings(colSettings);
 				}
 			}
 
@@ -1743,7 +1843,7 @@ var ProperTable =
 						key: this.uniqueId + '-table',
 						width: this.props.containerWidth || 100,
 						height: this.props.containerHeight || 100,
-						headerHeight: this.props.rowHeight,
+						headerHeight: this.props.headerHeight || this.props.rowHeight,
 						groupHeaderHeight: this.props.rowHeight,
 						rowHeight: this.props.rowHeight,
 						rowsCount: this.state.data.size,
@@ -1769,7 +1869,6 @@ var ProperTable =
 		return ProperTable;
 	}(_react2['default'].Component);
 
-	ProperTable.defaultProps = defaultProps();
 	ProperTable.propTypes = {
 		className: _react2['default'].PropTypes.string,
 		data: _react2['default'].PropTypes.array,
@@ -1784,14 +1883,41 @@ var ProperTable =
 		msgs: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.object),
 		lang: _react2['default'].PropTypes.string,
 		selectorWidth: _react2['default'].PropTypes.number,
-		colSortDirs: _react2['default'].PropTypes.array,
 		multisort: _react2['default'].PropTypes.bool,
 		sortIcons: _react2['default'].PropTypes.object,
 		iconColor: _react2['default'].PropTypes.string,
 		iconDefColor: _react2['default'].PropTypes.string,
-		columnFilterComponent: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.element, _react2['default'].PropTypes.func]),
+		columnFilterComponent: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.object, _react2['default'].PropTypes.func]),
 		restartOnClick: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.element, _react2['default'].PropTypes.object // Js element but not React element
-		])
+		]),
+		getColSettings: _react2['default'].PropTypes.func,
+		colSortDirs: _react2['default'].PropTypes.arrayOf(_react2['default'].PropTypes.object),
+		colFilters: _react2['default'].PropTypes.arrayOf(_react2['default'].PropTypes.array)
+	};
+
+	ProperTable.defaultProps = {
+		className: '',
+		cols: [],
+		data: [],
+		uniqueId: null,
+		afterSort: null,
+		afterSelect: null,
+		selectable: true,
+		selected: null,
+		rowHeight: 50,
+		idField: '_properId',
+		msgs: _messages2['default'],
+		lang: 'ENG',
+		selectorWidth: 27,
+		multisort: false,
+		columnFilterComponent: null,
+		sortIcons: null,
+		iconColor: '#5E78D3',
+		iconDefColor: '#D6D6D6',
+		restartOnClick: null,
+		getColSettings: null,
+		colSortDirs: null,
+		colFilters: null
 	};
 
 	exports['default'] = ProperTable;
@@ -14749,10 +14875,9 @@ var ProperTable =
 	      if (this.props.closeOnOutsideClick) {
 	        document.addEventListener('mouseup', this.handleOutsideMouseClick);
 	        document.addEventListener('touchstart', this.handleOutsideMouseClick);
+	        window.addEventListener('resize', this.handleResize.bind(this));
+	        window.addEventListener("scroll", this.handleScroll.bind(this));
 	      }
-
-	      window.addEventListener('resize', this.handleResize.bind(this));
-	      window.addEventListener("scroll", this.handleScroll.bind(this));
 
 	      if (this.props.isOpened) {
 	        this.openPortal();
@@ -14790,10 +14915,9 @@ var ProperTable =
 	      if (this.props.closeOnOutsideClick) {
 	        document.removeEventListener('mouseup', this.handleOutsideMouseClick);
 	        document.removeEventListener('touchstart', this.handleOutsideMouseClick);
+	        window.removeEventListener('resize', this.handleResize.bind(this));
+	        window.removeEventListener("scroll", this.handleScroll.bind(this));
 	      }
-
-	      window.removeEventListener('resize', this.handleResize.bind(this));
-	      window.removeEventListener("scroll", this.handleScroll.bind(this));
 
 	      this.closePortal(true);
 	    }
@@ -14853,11 +14977,13 @@ var ProperTable =
 	          this.node.className = props.className;
 	        }
 
-	        style.position = 'fixed';
-	        style.top = y + 5;
-	        style.left = x + 5;
+	        if (this.props.repositioning) {
+	          style.position = 'fixed';
+	          style.top = y + 5;
+	          style.left = x + 5;
+	          if (style.left >= window.innerWidth - window.innerWidth * 0.15) style.left = x - window.innerWidth * 0.15;
+	        }
 
-	        if (style.left >= window.innerWidth - window.innerWidth * 0.15) style.left = x - window.innerWidth * 0.15;
 	        _CSSPropertyOperations2['default'].setValueForStyles(this.node, style);
 
 	        document.body.appendChild(this.node);
@@ -15003,14 +15129,16 @@ var ProperTable =
 	  onClose: _react2['default'].PropTypes.func,
 	  beforeClose: _react2['default'].PropTypes.func,
 	  onUpdate: _react2['default'].PropTypes.func,
-	  isSortedOrFiltered: _react2['default'].PropTypes.bool
+	  isSortedOrFiltered: _react2['default'].PropTypes.bool,
+	  repositioning: _react2['default'].PropTypes.bool
 	};
 
 	Portal.defaultProps = {
 	  onOpen: function onOpen() {},
 	  onClose: function onClose() {},
 	  onUpdate: function onUpdate() {},
-	  isSortedOrFiltered: false
+	  isSortedOrFiltered: false,
+	  repositioning: true
 	};
 	module.exports = exports['default'];
 
