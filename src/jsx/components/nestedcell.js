@@ -8,6 +8,7 @@ const NestedCell = (props) => {
 	let icon = 'fa-plus-square-o';
 	let renderedIcon = null;
 	let offset = level - 1;
+	let onClick = null;
 
 	if (offset) {
 		let extraclass = '';
@@ -26,13 +27,15 @@ const NestedCell = (props) => {
 	}
 
 	if (props.rawData._hasChildren && props.collapsable) {
+		onClick = (e) => {
+			e.stopPropagation();
+			props.onClick();
+		};
+
 		renderedIcon = <i className={"propertable-nested-icon fa "+icon+" fa-fw"} />;
 	}
 
-	return <div className="propertable-nested-cell" onClick={(e) => {
-		e.stopPropagation();
-		props.onClick();
-	}}>
+	return <div className="propertable-nested-cell" onClick={onClick}>
 		{indent} {renderedIcon} {props.children}
 	</div>;
 };

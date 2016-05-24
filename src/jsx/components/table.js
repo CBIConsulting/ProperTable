@@ -144,6 +144,8 @@ class ProperTable extends React.Component {
 		let statechanged = !shallowEqualImmutable(this.state, nextState);
 		let somethingchanged = propschanged || statechanged;
 
+		console.log('scu', nextProps.selected);
+
 		if (propschanged) {
 			let colsChanged = !shallowEqualImmutable(nextProps.cols, this.props.cols);
 			let dataChanged = !shallowEqualImmutable(nextProps.data, this.props.data);
@@ -424,10 +426,15 @@ class ProperTable extends React.Component {
 		if (props.selected) {
 			if (!_.isArray(props.selected)) {
 				defSelection = [props.selected.toString()];
-			} else {
-				if (props.selectable == 'multiple') defSelection = props.selected.toString().split(',');
-				else defSelection = [props.selected[0].toString()];
+			} else if(props.selected.length) {
+				if (props.selectable == 'multiple') {
+					defSelection = props.selected.toString().split(',');
+				} else {
+
+					defSelection = [props.selected[0].toString()];
+				}
 			}
+
 			defSelection = new Set(defSelection);
 
 		} else {
@@ -1179,6 +1186,7 @@ class ProperTable extends React.Component {
 	toggleSelected(id) {
 		let selection = new Set(this.state.selection);
 
+		console.log('me toggleo', id, selection);
 		if (selection.has(id)) {
 			selection.delete(id);  // Returns a copy of the array with the instance with that properId deleted.
 		} else {
