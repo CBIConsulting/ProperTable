@@ -149,7 +149,6 @@ class ProperTable extends React.Component {
 			let dataChanged = !shallowEqualImmutable(nextProps.data, this.props.data);
 			let colSortDirsChanged = nextProps.colSortDirs ? !shallowEqualImmutable(nextProps.colSortDirs, this.props.colSortDirs) : false;
 			let colFiltersChanged = nextProps.colFilters ? !shallowEqualImmutable(nextProps.colFilters, this.props.colFilters) : false;
-			let selectedChanged = nextProps.selected ? !shallowEqualImmutable(nextProps.selected, this.props.selected) : false;
 			let colData = null, preparedData = null;
 
 			// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
