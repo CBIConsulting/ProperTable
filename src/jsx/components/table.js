@@ -423,12 +423,11 @@ class ProperTable extends React.Component {
 
 		if (props.selected) {
 			if (!_.isArray(props.selected)) {
-				defSelection = [props.selected];
+				defSelection = [props.selected.toString()];
 			} else {
-				if (props.selectable == 'multiple') defSelection = props.selected;
-				else defSelection = [props.selected[0]];
+				if (props.selectable == 'multiple') defSelection = props.selected.toString().split(',');
+				else defSelection = [props.selected[0].toString()];
 			}
-
 			defSelection = new Set(defSelection);
 
 		} else {
@@ -1456,6 +1455,7 @@ ProperTable.propTypes = {
 	selectable: React.PropTypes.oneOf([true, 'multiple', false]),
 	selected: React.PropTypes.oneOfType([
       	React.PropTypes.string,
+      	React.PropTypes.number,
       	React.PropTypes.array
     ]),
     rowHeight: React.PropTypes.number,
@@ -1468,7 +1468,7 @@ ProperTable.propTypes = {
     iconColor: React.PropTypes.string,
     iconDefColor: React.PropTypes.string,
   	columnFilterComponent: React.PropTypes.oneOfType([
-      	React.PropTypes.object,
+  		React.PropTypes.object,
       	React.PropTypes.func
     ]),
   	restartOnClick: React.PropTypes.oneOfType([
