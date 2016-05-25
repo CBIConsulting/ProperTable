@@ -212,7 +212,7 @@ class TreeTable extends React.Component {
 		let newSelection = new Set(this.state.selection);
 		let newSelArray = [];
 
-		console.log('he seleccionado', selection, selectionArray, this.data);
+		//console.log('he seleccionado', selection, selectionArray, this.data);
 
 		if (!selection.length && extcb) {
 			this.props.afterSelect([], []);
