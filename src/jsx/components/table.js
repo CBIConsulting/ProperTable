@@ -445,7 +445,7 @@ class ProperTable extends React.Component {
 
 		// Parsing data to add new fields (selected or not, properId, rowIndex)
 		parsed = data.map(row => {
-			id = row.get(keyField, false);
+			id = row.get(keyField, false).toString();
 
 			if (!id) {
 				id = _.uniqueId();
