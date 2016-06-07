@@ -140,10 +140,10 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * colFilters: Filter of each column. It's a selection of values of that column. Works like the internal column filter, the keys are the names of the each column. Should be an array of values. It works that way because this filter was created thinking in a componen like ProperSearch ([Take a look here](https://cbiconsulting.github.io/ProperSearch/))
 	* Ex:
 	```javascript
-		[
+		{
 			column_name : ['value1', 'value2', 'value3'],
 			column_name2 : [1,2,64],
-		]
+		}
 	```
 * selected: Rows selected by default. Get an array of ids or an single id
 * idField: Field that can be used as an id for the default selected rows.
@@ -261,6 +261,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 			);
 		}
 	```
+* restartOnClickType: This prop allows you to set if you want the restartOnClick element to clear both (filters and sort) or just one of them. Default both. The options are 'clear_filters', 'clear_sort' or 'clear_both'.
 
 ### Basic Example
 ------------

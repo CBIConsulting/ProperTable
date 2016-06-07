@@ -44,6 +44,8 @@ export default class Portal extends React.Component {
     	active: false,
     	x: 0,
     	y: 0,
+      width: null,
+      height: null,
     	element: null  // element clicked to open the portal
     };
     this.handleWrapperClick = this.handleWrapperClick.bind(this);
@@ -143,7 +145,7 @@ export default class Portal extends React.Component {
   }
 
   renderPortal(props, x = this.state.x, y = this.state.y) {
-  	let style = props.style || {};
+  	let style = props.style || {}, width = this.props.width || 280;
 
     if (!this.node) {
     	this.node = document.createElement('div');
@@ -156,7 +158,9 @@ export default class Portal extends React.Component {
   	  	style.position = 'fixed';
   	  	style.top = y + 5;
   	  	style.left = x + 5;
-      	if (style.left >= (window.innerWidth - window.innerWidth * 0.15)) style.left = x - window.innerWidth * 0.15;
+        if (this.props.width) style.width = this.props.width;
+        if (this.props.height) style.height = this.props.height;
+      	if (style.left >= (window.innerWidth - width)) style.left = x - width;
       }
 
     	CSSPropertyOperations.setValueForStyles(this.node, style);
