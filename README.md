@@ -37,8 +37,6 @@ Features of ProperTable:
   * Jumping to a row or column
   * Controlled scroll API allows touch support
 
-
-
 The compiled and compressed ProperTable distribution file can be found in the dist folder along with the css file. Add the default stylesheet `dist/propertable.min.css`, then import it into any module.
 
 ## Live Demo
@@ -51,7 +49,7 @@ The compiled and compressed ProperTable distribution file can be found in the di
 * moment
 
 ## Preview
-![screen shot 2016-03-29 at 10 30 00] (examples/screenshots/example_2.png "Example with some tables and different configurations")
+![screen shot 2016-03-29 at 10 30 00](examples/screenshots/example_2.png "Example with some tables and different configurations")
 
 
 ## How to start
@@ -71,29 +69,35 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 ### Component properties
 
 * cols: Describe columns data. (Array)
- 	* name: Internal name. (String)
- 	* field: Describe field data. {id, number, nestedField...} (String)
- 	* label: Label in the column header. Could be an html tag, a string...
- 	* fixed: If the column is fixed on horizontal scroll or not (Boolean)
- 	* className: CSS class to add on columns header and each cell.(String)
- 	* width: Column width in numerical value. Default 100 (Integer)
- 	* sortable: If the column is sortable or not (Boolean)
- 	* uniqueId: An unique id for the Column. (Integer)
- 	* formatter: Parser for the cell data before render. (Function)
- 		* Ex:
- 		```javascript
-			formatter: function(value) {
-				return ProperTable.formatters.number(value+1);
-			}
-		```
-	* sortVal: Parser for the column cells before sort. (Function)
-		* Ex:
-		```javascript
-			sortVal: function(value) {
-				return value.toString();
-			}
-		```
-	* children: Children column of the current column. Should have the same structure as a column (Array)
+	* Mandatory properties:
+	 	* name: Internal name. Must be unique.(String)
+	 	* field: Describe field data. {id, number, nestedField...} (String)
+	 	* label: Label in the column header. Could be an html tag, a string (in this cases uses a FixedDataTable Cell)...
+	* Optional properties:
+	 	* fixed: If the column is fixed on horizontal scroll or not (Boolean) Default false
+	 	* className: CSS class to add on columns header and each cell.(String)
+	 	* width: Column width. (Integer) Default 100
+	 	* maxWidth: Max. width in numeric. (Integer) Default infinite
+	 	* flexGrow: Same as flexgrow of FixedDataTables. But this works only when the width and maxWidth are undefined or null. (Integer)
+	 	* sortable: If the column is sortable or not (Boolean) Default true
+	 	* uniqueId: An unique id for the Column. (Integer)
+	 	* isResizable: If the column is resizable. (Boolean) Default true
+	 	* isVisible: If the column must be rendered. (Boolean) Default true
+	 	* formatter: Parser for the cell data before render. (Function)
+	 		* Ex:
+	 		```javascript
+				formatter: function(value) {
+					return ProperTable.formatters.number(value+1);
+				}
+			```
+		* sortVal: Parser for the column cells before sort. (Function)
+			* Ex:
+			```javascript
+				sortVal: function(value) {
+					return value.toString();
+				}
+			```
+		* children: Children column of the current column. Should have the same structure as a column. Each column can have multiple childrens (Array)
 * data: Data of the table (Array)
 * afterSort: Function called after the data has been sorted. Return the raw data sorted.
 	* Ex:
@@ -105,8 +109,9 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * afterSelect: Function called after select a row. Return the seleted rows.
 	* Ex:
 	```javascript
-		afterSelect={function(data) {
+		afterSelect={function(data, selection) {
 			console.log('Selected rows: ', data);
+			console.log('Selected row ids: ', selection);
 		}}
 	```
 * selectable: If the rows (all table) can be selected or not and if that selection is multiple. Values: True || 'Multiple' || False
@@ -123,26 +128,29 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		};
 	```
 * selectorWidth: Width of the selector column, checkboxes. (Only if selectable is multible)
-* colSortDirs: To be sorted, direction (ASC, DESC, DEF) of the columns. (DEF -> Default)
-	* Ex:
-	```javascript
-		[
-			{
-				column: column_1, // Column name
-				direction: 'ASC'
-			},
-			{
-				column: column_2,
-				direction: 'DEF'
-			}
-		]
-	```
-* colFilters: Filter of each column. It's a selection of values of that column. Works like the internal column filter, the keys are the names of the each column. Should be an array of values. It works that way because this filter was created thinking in a componen like ProperSearch ([Take a look here](https://cbiconsulting.github.io/ProperSearch/))
+* colSortDirs: Sort direction of each column, to be applied to the table, indexed by column name. That's usefull to sort the table by sending which column must be sorted, it's faster and easier than sort data outside and then send it to the component, because in that case the data must be procesed for internal working. Values (ASC, DESC, DEF) (DEF -> Default)
 	* Ex:
 	```javascript
 		{
-			column_name : ['value1', 'value2', 'value3'],
-			column_name2 : [1,2,64],
+			column_1: 'ASC',
+			column_5: 'DESC'
+		}
+	```
+* colFilters: Filters for each column indexed by column name. Works like the internal column filter, the keys are the names of the each column. It's highly recomended to use this property instead of apply a filter over data outside and then send data to the component. It's an object which contain objects indexed by column name. By default the property type is 'selection' if it's undefined, then you cand send something like {columnName: {selection: [val1, val2]}}. The selection is an array of values of the column, makes a filter getting only the rows that match with that value in that column. When set type to 'operation' the operationValue and OperationType must exist, the operationType it's the filter type ('equals', 'contains'...) and the operationValue it's the value to compare with each value of the column. [See docs here...](https://github.com/CBIConsulting/ProperTable/tree/dev/docs/SETTINGS.md)
+	* Ex:
+	```javascript
+		{
+			column_1 : {
+				type: 'selection', // 'selection' or 'operation'
+				operationValue: 34, // Operation value. Ex: 'Jhon Snow'
+				operationType: 'bigger', // Operation type. Ex: 'equals', 'contains'...
+				selection: ['Jhon Snow', 'Jhon Smith', 'Walter White']
+			},
+			column_5 : type: col.filterType,
+				operationValue: col.operationFilterValue,
+				operationType: col.operationFilterType,
+				selection: col.selection
+			}
 		}
 	```
 * selected: Rows selected by default. Get an array of ids or an single id
@@ -186,51 +194,12 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 	        afterClear={afterClear}   // function afterSort(selection, sortDirection) -> afterClear([], 'DEF')
 	    />
 	```
-* getColSettings: This should be a function that get the column settings of the table. Each time the column settings changed (sort or filter of any column change) or get created then the function get the new settings. You must take care changing this array could cause unexpected behaviours. Name and field are the same as in Cols array, the selection field (selection of the column, array of filtered values of the column), direction ('DEF' *default || 'ASC' || 'DESC'), and other settings. Remenber that's a refenrence to an internal state, be very carefull. be very carefull. This props was thought to get the internal filters / sort data and show it externally (if you want to apply a change use the props colSortDirs and colFilters).
+* getColSettings: Function that get the column settings of the table. Each time the column settings changed (sort or filter of any column change) or get created then the function get the new settings. Name and field are the same as in Cols array, the selection field (selection of the column, array of filtered values of the column), direction ('DEF' *default || 'ASC' || 'DESC'), and other settings. Remenber that's a refenrence to an internal state, be very carefull. This property was thought to get the internal filters / sort data and show it externally (if you want to apply a change use the properties colSortDirs and colFilters). It's usefull when you have a filter component for the column and you want to have external filters aswell, then you can update the colSortDirs and colFilters externally (not causig a rerender)  [See docs here...](https://github.com/CBIConsulting/ProperTable/tree/dev/docs/SETTINGS.md)
 	*Example:
 	```javascript
 	getColumnSettings(colSettings) {
-		let colSort = this.state.colSortDirs, colFilters = this.state.colFilters, oldSort;
-
-		colSettings.forEach(col => {
-			oldSort = _.findWhere(colSort, {column: col.column}); // Look for the object with that column name
-
-			if (oldSort) {
-				colSort[_.indexOf(colSort, oldSort)].direction = col.direction;
-			} else {
-				colSort.push({column: col.column, col.direction});
-			}
-
-			colFilters[col.column] = col.selection;
-		});
-
-		this.setState({
-			colSortDirs: colSort,
-			colFilters: colFilters,
-			colSettings: colSettings
-		});
+		console.log(colSettings);
 	}
-	...
-	updateSortColX(direction) {
-		let colSortDirs = this.state.colSortDirs;
-		let colX = _.findWhere(colSortDirs, {column: 'colX'});
-
-		if (colX) {
-			colSortDirs[_.indexOf(colSortDirs, colX)].direction = direction;
-		}
-
-		this.setState({
-			colSortDirs: colSortDirs
-		});
-	}
-	...
-	<Table
-		data: {data},
-		cols: {cols},
-		getColSettings: this.getColumnSettings.bind(this),
-		colSortDirs: this.state.colSortDirs.bind(this),
-		colFilters: this.state.colFilters.bind(this),
-	/>
 	```
 * sortIcons: An array like the const SortIcons in HeaderCell file to use instead [HeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/headerCell.js)
 * iconColor: Color of the icon to open the column filter (if that exist) in the header of column. This color is used on open / filtered or sorted.

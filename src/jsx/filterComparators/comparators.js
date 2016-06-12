@@ -1,4 +1,5 @@
 import formatters from "../formatters/formatters";
+import moment from "moment";
 
 const NOTEQUALS = 'notequals';
 const EQUALS = "equals";
@@ -7,6 +8,8 @@ const LOWERTHAN = 'lower';
 const AFTERDATE = 'after';
 const BEFOREDATE = 'before';
 const BETWEENDATES = 'between';
+const ONDATE = 'on';
+const NOTONDATE = 'noton';
 const STARTSWITH = 'start';
 const FINISHWITH = 'finish';
 const CONTAINS = 'contains';
@@ -25,15 +28,13 @@ export default {
 	},
 	// FOR DATE FIELDS
 	[AFTERDATE]: (value, compareTo) => {
-		let d1 = formatters.toUnix(value) || 0, d2 = formatters.toUnix(compareTo) || 0;
-		return d1 > d2;
+		return  moment(value).isAfter(compareTo);
 	},
 	[BEFOREDATE]: (value, compareTo) => {
-		let d1 = formatters.toUnix(value) || 0, d2 = formatters.toUnix(compareTo) || 0;
-		return d1 < d2;
+		return moment(value).isBefore(compareTo);
 	},
 	[BETWEENDATES]: (value, compareTo) => {
-		let separator, d1Start, d1End, d2;
+		let separator, d1Start, d1End;
 
 		if (!value || !compareTo) return false;
 		separator = value.indexOf('%-%');
@@ -42,10 +43,16 @@ export default {
 			return false;
 		}
 
-		d1Start = formatters.toUnix(value.substring(0, separator + 1)) || 0;
-		d1End = formatters.toUnix(value.substring(separator + 3)) || 0;
-		d2 = formatters.toUnix(compareTo) || 0;
-		return d1Start <= d2 && d1End >= d2;
+		d1Start = value.substring(0, separator + 1);
+		d1End = value.substring(separator + 3);
+
+		return moment(compareTo).isBetween(d1Start, d1End);
+	},
+	[ONDATE]: (value, compareTo) => {
+		return moment(value).isSame(compareTo, 'day');
+	},
+	[NOTONDATE]: (value, compareTo) => {
+		return !moment(value).isSame(compareTo, 'day');
 	},
 	// FOR OTHER FIELD TYPES
 	[NOTEQUALS]: (value, compareTo) => {

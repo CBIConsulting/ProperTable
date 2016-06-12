@@ -59,7 +59,7 @@ var ProperTable =
 
 	var _portal2 = _interopRequireDefault(_portal);
 
-	var _formatters = __webpack_require__(139);
+	var _formatters = __webpack_require__(91);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -67,14 +67,14 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(142);
+	var _reactDimensions = __webpack_require__(144);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	if (true) {
-		__webpack_require__(144);
+		__webpack_require__(146);
 	}
 
 	exports["default"] = {
@@ -98,6 +98,8 @@ var ProperTable =
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	var _CLEAR_OPTIONS;
 
 	var _react = __webpack_require__(2);
 
@@ -147,6 +149,18 @@ var ProperTable =
 
 	var _rowcache2 = _interopRequireDefault(_rowcache);
 
+	var _moment = __webpack_require__(88);
+
+	var _moment2 = _interopRequireDefault(_moment);
+
+	var _normalizer = __webpack_require__(89);
+
+	var _normalizer2 = _interopRequireDefault(_normalizer);
+
+	var _comparators = __webpack_require__(90);
+
+	var _comparators2 = _interopRequireDefault(_comparators);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -155,31 +169,24 @@ var ProperTable =
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
 	//Const
 	var SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
-	var Set = __webpack_require__(88);
-
-	/**
-	 * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
-	 * column inside a ColumnGroup even if the column has not childrens.
-	 *
-	 * @param (array)		cols  	Describe columns
-	 * @return (boolean)	result	True if has nested columns or false otherwhise
-	 */
-	function hasNested(cols) {
-		var result = false;
-
-		if (cols.size) {
-			cols.forEach(function (c) {
-				if (c.get('children') && c.get('children').size) {
-					result = true;
-					return false;
-				}
-			});
-		}
-
-		return result;
-	}
+	var DEFAULT_SORT_DIRECTION = 'DEF';
+	var ASCENDING_SORT_DIRECTION = 'ASC';
+	var DESCENDING_SORT_DIRECTION = 'DESC';
+	var SELECTED_FIELD = '_selected';
+	var ROW_INDEX_FIELD = '_rowIndex';
+	var RAWDATA_INDEX_FIELD = '_rawDataIndex';
+	var MULTIPLE_SELECTION = 'multiple';
+	var CLEAR_FILTERS = 'clear_filters';
+	var CLEAR_SORT = 'clear_sort';
+	var CLEAR_BOTH = 'clear_both';
+	var FILTERTYPE_SELECTION = 'selection';
+	var FILTERTYPE_CUSTOM = 'operation';
+	var Set = __webpack_require__(93);
+	var CLEAR_OPTIONS = (_CLEAR_OPTIONS = {}, _defineProperty(_CLEAR_OPTIONS, CLEAR_BOTH, { sort: true, filters: true }), _defineProperty(_CLEAR_OPTIONS, CLEAR_FILTERS, { sort: false, filters: true }), _defineProperty(_CLEAR_OPTIONS, CLEAR_SORT, { sort: true, filters: false }), _CLEAR_OPTIONS);
 
 	/**
 	 * A proper table component based on react Fixed-DataTables with an amount of new functionalities.
@@ -299,7 +306,8 @@ var ProperTable =
 				var somethingchanged = propschanged || statechanged;
 
 				if (propschanged) {
-					var colsChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.cols, this.props.cols);
+					var colsDeepCompare = this.deepColsCompare(nextProps.cols, this.props.cols);
+					var colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges;
 					var dataChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.data, this.props.data);
 					var colSortDirsChanged = nextProps.colSortDirs ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colSortDirs, this.props.colSortDirs) : false;
 					var colFiltersChanged = nextProps.colFilters ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colFilters, this.props.colFilters) : false;
@@ -309,10 +317,11 @@ var ProperTable =
 					// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
 					// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
 					if (colsChanged || dataChanged) {
-						_rowcache2['default'].flush('formatted');
 
-						if (dataChanged) {
+						if (dataChanged && this.props.data.length > 0) {
 							// The most probably case
+							_rowcache2['default'].flush('formatted');
+
 							var colSettings = nextState.colSettings;
 							preparedData = this.prepareData(nextProps, nextState);
 
@@ -325,7 +334,9 @@ var ProperTable =
 								sortCache: preparedData.defSortCache,
 								selection: preparedData.defSelection
 							}, this.applySettings(nextState.colSettings, nextProps));
-						} else if (colsChanged && dataChanged) {
+						} else if ((colsChanged || this.props.data.length === 0) && dataChanged) {
+							_rowcache2['default'].flush('formatted');
+
 							preparedData = this.prepareData(nextProps, nextState);
 							colData = this.prepareColSettings(nextProps, preparedData.rawdata);
 
@@ -340,29 +351,45 @@ var ProperTable =
 								rawdata: preparedData.rawdata,
 								sortCache: preparedData.defSortCache,
 								selection: preparedData.defSelection
-							}, this.applySettings(colData.colSettings, nextProps));
+							}, this.applySettings(colData.colSettings, nextProps, true, true, true));
 						} else if (colsChanged) {
-							(function () {
-								var sortCache = [];
-								colData = _this2.prepareColSettings(nextProps, _this2.state.rawdata);
+							if (colsDeepCompare.hasChangedDeeply) {
+								(function () {
+									var sortCache = [];
 
-								// Restart cache
-								nextState.data.forEach(function (row) {
-									sortCache[row.get(_this2.props.idField)] = {};
-								});
+									_rowcache2['default'].flush('formatted');
+									colData = _this2.prepareColSettings(nextProps, _this2.state.rawdata);
 
-								_this2.setState({
-									colSettings: colData.colSettings,
-									colSortParsers: colData.colSortParsers,
-									cols: _immutable2['default'].fromJS(nextProps.cols),
-									sortCache: sortCache
-								}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
-							})();
+									// Restart cache
+									nextState.data.forEach(function (row) {
+										sortCache[row.get(_this2.props.idField)] = {};
+									});
+
+									_this2.setState({
+										colSettings: colData.colSettings,
+										colSortParsers: colData.colSortParsers,
+										cols: _immutable2['default'].fromJS(nextProps.cols),
+										sortCache: sortCache
+									}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+								})();
+							} else {
+									(function () {
+										var cols = _this2.state.cols;
+
+										_underscore2['default'].each(colsDeepCompare.changedCols, function (col, index) {
+											cols = cols.set(index, Inmutable.fromJS(col));
+										});
+
+										_this2.setState({
+											cols: cols
+										});
+									})();
+								}
 						}
 
 						return false;
 					} else if (colSortDirsChanged || colFiltersChanged) {
-						this.applySettings(nextState.colSettings, nextProps);
+						this.applySettings(nextState.colSettings, nextProps, colSortDirsChanged, colFiltersChanged);
 					} else if (nextProps.selected) {
 						this.setDefaultSelection(nextProps);
 
@@ -404,6 +431,70 @@ var ProperTable =
 						}
 					}
 				}
+			}
+
+			/**
+	   * Check if cols has changed deeply. This function is made to optimize shouldComponentUpdate when the visibility or something
+	   * like that has changed but it's not a big change, so colSettings still been the same. If has changed deeply then re-build the
+	   * colSettings and restart sortCache, if it's just a small change like in class, label, isVisible, etc, then update the changed
+	   * columns only.
+	   *
+	   * @param (array) 	nextCols		Next columns received by the table
+	   * @param (array)	currentCols		The current columns of the table
+	   *
+	   * @return (object) result
+	   *						- (boolean) hasChangedDeeply  	If has changed deeply
+	   *						- (boolean) hasSmallChanges 	If the properties which could be updated in hot has changed. Class, fixed, isVisible...
+	   * 						- (object)  changedCols 		Object with the changed cols indexed by the index (when it has just small changes)
+	   */
+
+		}, {
+			key: 'deepColsCompare',
+			value: function deepColsCompare(nextCols, currentCols) {
+				var nextLength = nextCols.length,
+				    currentLength = currentCols.length,
+				    hasChangedDeeply = false,
+				    hasSmallChanges = false,
+				    changedCols = {};
+				var fixedChanged = void 0,
+				    classNameChanged = void 0,
+				    isVisibleChanged = void 0,
+				    labelChanged = void 0,
+				    somethingchanged = void 0,
+				    curCol = void 0;
+
+				if (currentCols.length !== nextCols.length) {
+					hasChangedDeeply = true;
+				} else {
+					_underscore2['default'].every(nextCols, function (col, index) {
+						curCol = currentCols[index];
+
+						if (col.name !== curCol.name || col.field !== curCol.field || col.sortable !== curCol.sortable || col.uniqueId !== curCol.uniqueId || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.formatter, curCol.formatter) || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.sortVal, curCol.sortVal) || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.children, curCol.children)) {
+
+							hasChangedDeeply = true;
+							return false; // Break
+						}
+
+						fixedChanged = col.fixed !== curCol.fixed;
+						classNameChanged = col.className !== curCol.className;
+						isVisibleChanged = col.isVisible !== curCol.isVisible;
+						labelChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.label, curCol.label);
+						somethingchanged = fixedChanged || classNameChanged || isVisibleChanged || labelChanged;
+
+						if (somethingchanged) {
+							changedCols[index] = _underscore2['default'].clone(col);
+							hasSmallChanges = true;
+						}
+
+						return true; // Next
+					});
+				}
+
+				return {
+					hasChangedDeeply: hasChangedDeeply,
+					hasSmallChanges: hasSmallChanges,
+					changedCols: changedCols
+				};
 			}
 
 			/**
@@ -465,6 +556,8 @@ var ProperTable =
 	   *
 	   * @param (array)	colSettings 	Sort / Filter settings of each column. From current or next state (case the props data/cols change)
 	   * @param (object) 	props 			Component props or new props on update
+	   * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
+	   * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
 	   */
 
 		}, {
@@ -472,34 +565,79 @@ var ProperTable =
 			value: function applySettings() {
 				var colSettings = arguments.length <= 0 || arguments[0] === undefined ? this.state.colSettings : arguments[0];
 				var props = arguments.length <= 1 || arguments[1] === undefined ? this.props : arguments[1];
+				var updateSort = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+
+				var _this3 = this;
+
+				var updateFilters = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
+				var forceSendSettings = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
 
 				var selectionSet = {},
 				    columnKeysFiltered = [],
 				    fields = [],
-				    formatters = []; // new Set(selection)
-				var newData = null,
+				    formatters = [],
+				    newData = null,
 				    hasFilter = false,
-				    hasSort = false;
-				var newCol = void 0,
-				    newFilter = void 0;
+				    hasSort = false,
+				    newDirection = void 0;
+				var updateSortAllowed = updateSort && props.colSortDirs && _underscore2['default'].size(props.colSortDirs) > 0;
+				var updateFiltersAllowed = updateFilters && props.colFilters,
+				    hasSelectionFilter = void 0,
+				    hasCustomFilter = void 0,
+				    operations = {};
+				var sortedData = [],
+				    dateTypes = new Set(['between', 'after', 'before', 'on', 'noton']); // Date filters
 
 				// Update settings
 				colSettings = _underscore2['default'].map(colSettings, function (col) {
-					if (props.colSortDirs) {
-						newCol = _underscore2['default'].findWhere(props.colSortDirs, { column: col.column });
-						if (newCol) col.direction = newCol.direction;
+					hasSelectionFilter = false;
+					hasCustomFilter = false;
+
+					if (updateSortAllowed) {
+						newDirection = props.colSortDirs[col.column];
+						if (newDirection && col.direction !== newDirection) {
+							sortedData.push({ name: col.column, direction: newDirection }); // To be applied after
+							hasSort = true;
+						}
+					} else if (col.direction !== DEFAULT_SORT_DIRECTION) {
+						hasSort = true;
 					}
 
-					if (!hasSort && col.direction !== 'DEF') hasSort = true;
+					if (updateFiltersAllowed) {
+						if (props.colFilters[col.column]) {
+							var newFilter = props.colFilters[col.column];
 
-					if (props.colFilters) {
-						newFilter = props.colFilters[col.column];
-						col.selection = newFilter ? newFilter : col.selection;
+							if (!newFilter.type || newFilter.type === FILTERTYPE_SELECTION) {
+								if (!hasFilter) {
+									if (col.filterType !== FILTERTYPE_SELECTION) {
+										// Has changed Type
+										hasFilter = true;
+									} else {
+										hasFilter = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.selection, newFilter.selection);
+									}
+								}
+
+								col.filterType = FILTERTYPE_SELECTION;
+								col.selection = newFilter.selection;
+							} else if (newFilter.type === FILTERTYPE_CUSTOM) {
+								if (!hasFilter && (col.customFilterType !== newFilter.operationType || col.customFilterValue !== newFilter.operationValue)) {
+									hasFilter = true;
+								}
+
+								col.filterType = FILTERTYPE_CUSTOM;
+								col.customFilterType = newFilter.operationType;
+								col.customFilterValue = newFilter.operationValue;
+							}
+						}
+					} else if (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.customFilterValue.length > 0) {
+						hasFilter = true;
 					}
 
-					if (col.selection.length > 0) {
-						// Build all selection.
-						selectionSet[col.column] = new Set(col.selection);
+					hasSelectionFilter = col.selection.length > 0 && col.filterType === FILTERTYPE_SELECTION;
+					if (!hasSelectionFilter) hasCustomFilter = col.customFilterValue.length > 0 && col.filterType === FILTERTYPE_CUSTOM;
+
+					// Build all selection || operation filter in case it has filter
+					if (hasSelectionFilter || hasCustomFilter) {
 						formatters[col.column] = col.formatter;
 						columnKeysFiltered.push(col.column); // Columns filtered
 
@@ -507,17 +645,37 @@ var ProperTable =
 						// field refer to data field.
 						fields[col.column] = col.field;
 
-						hasFilter = true;
+						if (hasSelectionFilter) {
+							selectionSet[col.column] = new Set(col.selection);
+							operations[col.column] = null;
+						} else {
+							selectionSet[col.column] = null;
+							operations[col.column] = { type: col.customFilterType, value: col.customFilterValue };
+							if (dateTypes.has(col.customFilterType) && col.customFilterValue.length > 0) {
+								if (!(0, _moment2['default'])(col.customFilterValue).isValid()) console.warn('Invalid date format: ' + operations[column].value);
+							}
+						}
 					}
+
 					return col;
 				});
 
-				newData = hasFilter ? this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields) : null;
+				// Update sort on settings
+				if (hasSort && sortedData.length > 0) {
+					sortedData.forEach(function (sortObj) {
+						colSettings = _this3.updateSortDir(sortObj.name, sortObj.direction, colSettings);
+					});
+				}
+
+				// In case has sort and filter the sortTable() function gets the filtered data.
+				newData = hasFilter ? this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields, operations) : null;
 
 				if (hasSort) {
-					this.sortTable(colSettings, true, newData); // This method set state and send the col settings
+					this.sortTable(colSettings, true, newData); // This method set state and send the cols settings
 				} else if (hasFilter) {
 						this.setState(newData, this.sendColSettings(colSettings));
+					} else if (forceSendSettings) {
+						this.sendColSettings(colSettings);
 					}
 			}
 
@@ -529,6 +687,8 @@ var ProperTable =
 	   * @param (array)	filters 	Contains Set objects of selected values asociated with each column.
 	   * @param (array)	fields 		Fields asociated with each column name. More than 1 col can use data from same field. This array is key value, where the key is the col name and
 	   *								the value is the asociated field.
+	   * @param (array)	operations 	In case has some custom filters in a column or more. This parameter contains a object of objects indexed by column name, has the type of the
+	   *								filter and the value.
 	   *
 	   * @return (object)	-data 		Filtered data.
 	   *					-indexed 	Indexed data updated.
@@ -537,13 +697,19 @@ var ProperTable =
 		}, {
 			key: 'applyFilters',
 			value: function applyFilters(columns, formatters, filters, fields) {
+				var _this4 = this;
+
+				var operations = arguments.length <= 4 || arguments[4] === undefined ? [] : arguments[4];
 				var _state = this.state;
 				var initialData = _state.initialData;
 				var indexed = _state.indexed;
 				var selection = _state.selection;
 
 				var filteredData = initialData,
-				    idField = this.props.idField;
+				    idField = this.props.idField,
+				    formatterAllowed = void 0,
+				    applyFormatter = void 0;
+				var notAllowed = new Set(['between', 'after', 'before', 'on', 'noton']); // Date filters
 
 				// Get the data that match with the selection (of all column filters)
 				if (_underscore2['default'].size(filters) > 0) {
@@ -561,16 +727,31 @@ var ProperTable =
 								formatter = formatters[column];
 								val = element.get(field);
 								result = false;
+								applyFormatter = true;
 
 								// Skip unvalid values
 								if (_underscore2['default'].isNull(val)) val = '';
 
 								if (typeof val === 'string' || typeof val === 'number') {
+
 									if (formatter) {
-										val = formatter(val, null, null);
-										if (_underscore2['default'].isNull(val) || _underscore2['default'].isUndefined(val)) val = '';
+										if (operations[column] && operations[column].type) {
+											if (notAllowed.has(operations[column].type)) {
+												applyFormatter = false;
+											}
+										}
+
+										if (applyFormatter) {
+											val = formatter(val, null, null);
+											if (_underscore2['default'].isNull(val) || _underscore2['default'].isUndefined(val)) val = '';
+										}
 									}
-									result = filters[column].has(val.toString());
+
+									if (filters[column]) {
+										result = filters[column].has(val.toString());
+									} else if (operations[column]) {
+										result = _this4.customFilter(operations[column].type, operations[column].value, val);
+									}
 								}
 
 								return result;
@@ -584,7 +765,7 @@ var ProperTable =
 				// Apply selection and update index of each element in indexed data
 				filteredData = filteredData.map(function (element, index) {
 					if (selection.has(element.get(idField))) {
-						element = element.set('_selected', true);
+						element = element.set(SELECTED_FIELD, true);
 					}
 					indexed[element.get(idField)]._rowIndex = index; // Update index into indexed data.
 
@@ -596,6 +777,7 @@ var ProperTable =
 					indexed: indexed
 				};
 			}
+
 			/**
 	   * Prepare the data received by the component for the internal working.
 	   * @param  (array)	props 	Component props (or nextProps)
@@ -626,7 +808,7 @@ var ProperTable =
 					if (!_underscore2['default'].isArray(props.selected)) {
 						defSelection = [props.selected.toString()];
 					} else {
-						if (props.selectable == 'multiple') defSelection = props.selected.toString().split(',');else defSelection = [props.selected[0].toString()];
+						if (props.selectable == MULTIPLE_SELECTION) defSelection = props.selected.toString().split(',');else defSelection = [props.selected[0].toString()];
 					}
 					defSelection = new Set(defSelection);
 				} else {
@@ -645,12 +827,12 @@ var ProperTable =
 					}
 
 					if (defSelection.has(id)) {
-						row = row.set('_selected', true);
+						row = row.set(SELECTED_FIELD, true);
 					} else {
-						row = row.set('_selected', false);
+						row = row.set(SELECTED_FIELD, false);
 					}
 
-					row = row.set('_rowIndex', index++);
+					row = row.set(ROW_INDEX_FIELD, index++);
 
 					sortCache[id] = {};
 
@@ -692,7 +874,7 @@ var ProperTable =
 						if (!_underscore2['default'].isArray(selected)) {
 							selection = new Set([selected.toString()]);
 						} else {
-							if (props.selectable == 'multiple') selection = new Set(selected.toString().split(','));else selection = new Set([selected[0].toString()]);
+							if (props.selectable == MULTIPLE_SELECTION) selection = new Set(selected.toString().split(','));else selection = new Set([selected[0].toString()]);
 						}
 					}
 
@@ -716,8 +898,7 @@ var ProperTable =
 				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
 				var rawdata = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
-				var colSortDirs = props.colSortDirs,
-				    cols = props.cols,
+				var cols = props.cols,
 				    colSettings = [];
 				var sortData = this.buildColSortDirs(cols); // Build the initial colsortdirs using the cols array.
 				var multisort = props.multisort,
@@ -727,11 +908,7 @@ var ProperTable =
 				    indexed = null,
 				    parsedData = null;
 
-				// If the component doesn't receive the colSortDirs array with a diferent direction than default then set to
-				// colSortDirs the default values.
-				if (_underscore2['default'].isNull(colSortDirs)) {
-					colSortDirs = sortData.colSortDirs;
-				}
+				// The default sort dirs (in case that's exist) will be applied in applyColSettings
 
 				// Through each element, of the colSortDirs built data, build the colSortDirs with the default directions received,
 				// setting a position (position of priority to sort (it will be modified after click on the diferent columns)), if
@@ -739,10 +916,6 @@ var ProperTable =
 				for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
 					colData = sortData.colSortDirs[i];
 					sortable = colData.sortable !== null ? colData.sortable : true;
-
-					// Find the current column sort data and set direction (if the component got default sort direction for this column
-					// then it will get the direction otherwise direction will be always DEF)
-					direction = _underscore2['default'].findWhere(colSortDirs, { column: colData.column }).direction;
 
 					// If has filter build a list without duplicates and it indexed
 					if (this.props.columnFilterComponent && sortable) {
@@ -770,9 +943,9 @@ var ProperTable =
 										idSet.add(val);
 
 										row = row.set(colData.field, val.toString());
-										row = row.set('_selected', false);
-										row = row.set('_rowIndex', index++); // data row index
-										row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
+										row = row.set(SELECTED_FIELD, false);
+										row = row.set(ROW_INDEX_FIELD, index++); // data row index
+										row = row.set(RAWDATA_INDEX_FIELD, rawdataIndex++); // rawData row index
 										return row; // RETURN
 									}
 								}
@@ -797,12 +970,15 @@ var ProperTable =
 					colSettings.push({
 						column: colData.column, // Column name
 						field: colData.field,
-						direction: direction,
+						direction: colData.direction,
 						position: i + 1,
 						sorted: false,
 						multisort: multisort, // single (false) (in this case only one at a time can be sorted) or multisort (true - all true)
 						sortable: sortable,
+						filterType: FILTERTYPE_SELECTION,
 						selection: [], // Selected values of this column (to filter when has a complex filter)
+						customFilterType: 'contains',
+						customFilterValue: '',
 						indexedData: indexed, // Indexed by this column (just if has complex filter)
 						data: parsedData,
 						formatter: colData.formatter
@@ -810,16 +986,19 @@ var ProperTable =
 				}
 
 				// Ordering by selected rows. Virtual column
-				if (props.selectable == 'multiple') {
+				if (props.selectable == MULTIPLE_SELECTION) {
 					colSettings.push({
 						column: SELECTOR_COL_NAME, // Column name
-						field: '_selected',
-						direction: 'DEF',
+						field: SELECTED_FIELD,
+						direction: DEFAULT_SORT_DIRECTION,
 						position: sortData.colSortDirs.length + 1, // Last
 						sorted: false,
 						multisort: multisort,
 						sortable: true,
+						filterType: FILTERTYPE_SELECTION,
 						selection: [],
+						customFilterType: 'contains',
+						customFilterValue: '',
 						indexedData: [],
 						data: [],
 						formatter: null
@@ -846,7 +1025,7 @@ var ProperTable =
 		}, {
 			key: 'buildColSortDirs',
 			value: function buildColSortDirs(cols) {
-				var _this3 = this;
+				var _this5 = this;
 
 				var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
 				var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
@@ -862,16 +1041,16 @@ var ProperTable =
 						colSortDirs.push({
 							column: element.name,
 							field: element.field,
-							direction: 'DEF',
+							direction: DEFAULT_SORT_DIRECTION,
 							sortable: sortable,
 							formatter: formatter
 						});
 					} else {
-						_this3.buildColSortDirs(element.children, colSortDirs, sortVals);
+						_this5.buildColSortDirs(element.children, colSortDirs, sortVals);
 					}
 				});
 
-				if (this.props.selectable == 'multiple') {
+				if (this.props.selectable == MULTIPLE_SELECTION) {
 					sortVals[SELECTOR_COL_NAME] = function (val) {
 						return val;
 					};
@@ -884,32 +1063,49 @@ var ProperTable =
 			}
 
 			/**
+	   * Return if the value is valid with the type in comparison with compareTo string.
+	   *
+	   * @param (string) 		type 		Type of the filter. Must be Equals, Starts With...
+	   * @param (string) 		value 		Value of the filter.
+	   * @param (string) 		compareTo 	Value of the field to be checked
+	   *
+	   * @return (boolean) 	result
+	   */
+
+		}, {
+			key: 'customFilter',
+			value: function customFilter(type, value, compareTo) {
+				return _comparators2['default'][type](_normalizer2['default'].normalize(value), _normalizer2['default'].normalize(compareTo));
+			}
+
+			/**
 	   * Clear all column filters and sort directions
 	   */
 
 		}, {
 			key: 'clearFilterAndSort',
 			value: function clearFilterAndSort(e) {
-				var _this4 = this;
+				var _this6 = this;
 
 				e.preventDefault();
 				var colSettings = this.state.colSettings,
 				    data = void 0,
 				    indexed = this.state.indexed;
+				var clear = CLEAR_OPTIONS[this.props.restartOnClickType];
 
 				colSettings = _underscore2['default'].map(colSettings, function (element) {
-					element.selection = [];
-					element.direction = 'DEF';
+					if (clear.filters) element.selection = [];
+					if (clear.sort) element.direction = DEFAULT_SORT_DIRECTION;
 
 					return element;
 				});
 
 				// Apply default
 				data = this.state.initialData.map(function (element, index) {
-					if (_this4.state.selection.has(element.get(_this4.props.idField))) {
-						element = element.set('_selected', true);
+					if (_this6.state.selection.has(element.get(_this6.props.idField))) {
+						element = element.set(SELECTED_FIELD, true);
 					}
-					indexed[element.get(_this4.props.idField)]._rowIndex = index; // Update index into indexed data.
+					indexed[element.get(_this6.props.idField)]._rowIndex = index; // Update index into indexed data.
 
 					return element;
 				});
@@ -919,6 +1115,31 @@ var ProperTable =
 					indexed: indexed,
 					colSettings: colSettings
 				}, this.sendSortedAndSettings(data, colSettings));
+			}
+
+			/**
+	   * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
+	   * column inside a ColumnGroup even if the column has not childrens.
+	   *
+	   * @param (array)		cols  	Describe columns
+	   * @return (boolean)	result	True if has nested columns or false otherwhise
+	   */
+
+		}, {
+			key: 'hasNested',
+			value: function hasNested(cols) {
+				var result = false;
+
+				if (cols.size) {
+					cols.forEach(function (c) {
+						if (c.get('children') && c.get('children').size) {
+							result = true;
+							return false;
+						}
+					});
+				}
+
+				return result;
 			}
 
 			/**
@@ -972,7 +1193,7 @@ var ProperTable =
 							col.selection = selection;
 						}
 
-						if (!hasSort && col.direction !== 'DEF') hasSort = true;
+						if (!hasSort && col.direction !== DEFAULT_SORT_DIRECTION) hasSort = true;
 
 						if (col.selection.length > 0) {
 							// Build all selection
@@ -1032,7 +1253,7 @@ var ProperTable =
 							colSettings[i].direction = sortDir;
 							colSettings[i].multisort = true;
 						} else {
-							colSettings[i].direction = 'DEF';
+							colSettings[i].direction = DEFAULT_SORT_DIRECTION;
 							colSettings[i].multisort = false;
 						}
 					}
@@ -1054,10 +1275,10 @@ var ProperTable =
 
 							// If the sort direction is not default and the column isn't already sorted then add one to the initial position
 							// and set the column to sorted. Otherwise if the sort direction is default set it to unsorted.
-							if (sortDir != 'DEF' && !colSettings[_i].sorted) {
+							if (sortDir != DEFAULT_SORT_DIRECTION && !colSettings[_i].sorted) {
 								initialPos++;
 								colSettings[_i].sorted = true;
-							} else if (sortDir == 'DEF') {
+							} else if (sortDir == DEFAULT_SORT_DIRECTION) {
 								colSettings[_i].sorted = false;
 							}
 						}
@@ -1071,7 +1292,7 @@ var ProperTable =
 						if (colSettings[_i2].position < position && colSettings[_i2].position >= initialPos) {
 							// Move element to the next position only if the new sort direction wasn't default, in that case keep the element in the same
 							// sorting priority position.
-							if (colSettings[_i2].direction == 'DEF') colSettings[_i2].position = colSettings[_i2].position + 1;
+							if (colSettings[_i2].direction == DEFAULT_SORT_DIRECTION) colSettings[_i2].position = colSettings[_i2].position + 1;
 						}
 					}
 
@@ -1133,7 +1354,7 @@ var ProperTable =
 		}, {
 			key: 'sortColumns',
 			value: function sortColumns(data, indexed, colSettings) {
-				var _this5 = this;
+				var _this7 = this;
 
 				var sortedData = data,
 				    indexedData = indexed;
@@ -1148,11 +1369,11 @@ var ProperTable =
 
 				colSettings.forEach(function (element) {
 					// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
-					if (element.direction != 'DEF' && element.multisort && element.sortable) {
+					if (element.direction != DEFAULT_SORT_DIRECTION && element.multisort && element.sortable) {
 						sortParser = colSortParsers[element.column];
 
 						sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
-							rowId = row.get(_this5.props.idField);
+							rowId = row.get(_this7.props.idField);
 
 							// sortCache [row-id] [column-id] = procesed value.
 							if (_underscore2['default'].isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
@@ -1164,9 +1385,9 @@ var ProperTable =
 						}, function (val1, val2) {
 							if (val1 == val2) {
 								return 0;
-							} else if (element.direction == 'ASC') {
+							} else if (element.direction == ASCENDING_SORT_DIRECTION) {
 								return val1 > val2 ? 1 : -1;
-							} else if (element.direction == 'DESC') {
+							} else if (element.direction == DESCENDING_SORT_DIRECTION) {
 								return val1 > val2 ? -1 : 1;
 							}
 						});
@@ -1178,7 +1399,7 @@ var ProperTable =
 				if (defaultSort) {
 					//  Set to default
 					sortedData = data.sortBy(function (row, rowIndex, allData) {
-						return row.get('_rowIndex');
+						return row.get(ROW_INDEX_FIELD);
 					}, function (val1, val2) {
 						return val1 > val2 ? 1 : val1 == val2 ? 0 : -1;
 					});
@@ -1186,7 +1407,7 @@ var ProperTable =
 
 				// Update index into indexed data.
 				sortedData.map(function (element, index) {
-					indexedData[element.get(_this5.props.idField)]._rowIndex = index;
+					indexedData[element.get(_this7.props.idField)]._rowIndex = index;
 				});
 
 				return {
@@ -1209,14 +1430,14 @@ var ProperTable =
 		}, {
 			key: 'parseColumn',
 			value: function parseColumn(colData) {
-				var _this6 = this;
+				var _this8 = this;
 
 				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
 
 				var col = null,
 				    colname = null,
-				    sortDir = 'DEF',
+				    sortDir = DEFAULT_SORT_DIRECTION,
 				    sortable = null,
 				    selection = null,
 				    columnFilter = null,
@@ -1246,24 +1467,24 @@ var ProperTable =
 				if (!colData.width && !colData.maxWidth) {
 					extraProps.flexGrow = 1;
 
-					if (typeof colData.flex != 'undefined') {
+					if (colData.flex !== undefined) {
 						extraProps.flexGrow = colData.flex;
 					}
 				}
 
-				if (typeof colData.fixed !== 'undefined') {
+				if (colData.fixed !== undefined) {
 					extraProps.fixed = colData.fixed;
 				}
 
-				if (typeof colData.isResizable !== 'undefined') {
+				if (colData.isResizable !== undefined) {
 					extraProps.isResizable = colData.isResizable;
 				}
 
 				// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
 				// setting the result inside this columns group.
-				if (typeof colData.children == 'undefined' || !colData.children.length) {
+				if (colData.children === undefined || !colData.children.length) {
 					// Get column settings
-					settings = _underscore2['default'].findWhere(this.state.colSettings, { column: colname });
+					settings = _underscore2['default'].findWhere(this.state.colSettings, { column: colname }) || {};
 
 					// If this column can be sort or not.
 					sortable = _underscore2['default'].isUndefined(colData.sortable) ? true : colData.sortable;
@@ -1296,6 +1517,7 @@ var ProperTable =
 							sortDir: settings.direction,
 							children: colData.label,
 							colName: colData.name,
+							filterWidth: this.props.filterWidth,
 							sortable: sortable,
 							userClassName: className,
 							columnFormater: null // Formatter function that get the value to be render and return it parsed settings.formatter
@@ -1315,9 +1537,12 @@ var ProperTable =
 					}
 				} else {
 					// Call the method recursively to all the childrens of this column.
-					var inner = colData.children.map(function (c) {
-						return _this6.parseColumn(c, true);
+					var hasFalsy = false,
+					    inner = colData.children.map(function (c) {
+						if (c.isVisible === undefined || c.isVisible) return _this8.parseColumn(c, true);else hasFalsy = true;
 					});
+
+					if (hasFalsy) inner = _underscore2['default'].compact(inner);
 
 					col = _react2['default'].createElement(
 						_fixedDataTable.ColumnGroup,
@@ -1347,17 +1572,17 @@ var ProperTable =
 		}, {
 			key: 'buildTable',
 			value: function buildTable() {
-				var _this7 = this;
+				var _this9 = this;
 
 				var columns = [],
-				    isNested = hasNested(this.state.cols),
+				    isNested = this.hasNested(this.state.cols),
 				    selColumn = null;
 
-				if (this.props.selectable == 'multiple') {
+				if (this.props.selectable == MULTIPLE_SELECTION) {
 					var somethingSelected = this.state.selection.size > 0,
 					    allSelected = this.props.columnFilterComponent ? this.isAllSelected(this.state.data, this.state.selection) : this.state.allSelected;
 					var settings = null,
-					    sortDir = 'DEF',
+					    sortDir = DEFAULT_SORT_DIRECTION,
 					    selectedSet = null;
 
 					if (this.props.selected) {
@@ -1379,7 +1604,7 @@ var ProperTable =
 						header: _react2['default'].createElement(
 							_headerCell2['default'],
 							{
-								className: '',
+								className: 'selector-column-header',
 								onSortChange: this.onSortChange.bind(this),
 								sortDir: sortDir,
 								sortable: true
@@ -1413,7 +1638,9 @@ var ProperTable =
 				}
 
 				this.state.cols.forEach(function (col) {
-					columns.push(_this7.parseColumn(col.toJSON(), false, isNested));
+					if (col.get('isVisible', true)) {
+						columns.push(_this9.parseColumn(col.toJSON(), false, isNested));
+					}
 				});
 
 				return columns;
@@ -1429,16 +1656,16 @@ var ProperTable =
 		}, {
 			key: 'handleSelectAll',
 			value: function handleSelectAll(e) {
-				var _this8 = this;
+				var _this10 = this;
 
 				e.preventDefault();
 
 				if (this.props.selectable) {
 					(function () {
-						var idField = _this8.props.idField,
+						var idField = _this10.props.idField,
 						    value = void 0,
-						    selection = new Set(_this8.state.selection);
-						var _state2 = _this8.state;
+						    selection = new Set(_this10.state.selection);
+						var _state2 = _this10.state;
 						var allSelected = _state2.allSelected;
 						var data = _state2.data;
 						var indexed = _state2.indexed;
@@ -1470,7 +1697,7 @@ var ProperTable =
 							}
 						}
 
-						_this8.triggerSelection(selection);
+						_this10.triggerSelection(selection);
 					})();
 				}
 			}
@@ -1504,14 +1731,14 @@ var ProperTable =
 		}, {
 			key: 'isAllSelected',
 			value: function isAllSelected(data, selection) {
-				var _this9 = this;
+				var _this11 = this;
 
 				var result = true;
 				if (data.size === this.state.rawdata.size) return selection.size >= this.state.data.size; // Not filtered data
 
 				// Filtered data
 				data.forEach(function (element) {
-					if (!selection.has(element.get(_this9.props.idField).toString())) {
+					if (!selection.has(element.get(_this11.props.idField).toString())) {
 						// Some data not in selection
 						result = false;
 						return false;
@@ -1535,7 +1762,7 @@ var ProperTable =
 				if (selection.has(id)) {
 					selection['delete'](id); // Returns a copy of the array with the instance with that properId deleted.
 				} else {
-						if (this.props.selectable == 'multiple') {
+						if (this.props.selectable == MULTIPLE_SELECTION) {
 							selection.add(id);
 						} else {
 							selection = new Set([id]);
@@ -1555,7 +1782,7 @@ var ProperTable =
 		}, {
 			key: 'checkSelectionChange',
 			value: function checkSelectionChange(nextProps, nextState) {
-				if (nextProps.selectable == 'multiple') {
+				if (nextProps.selectable == MULTIPLE_SELECTION) {
 					if (nextState.selection.size !== this.state.selection.size) {
 						this.updateSelectionData(nextState.selection, nextState.allSelected);
 					}
@@ -1579,7 +1806,7 @@ var ProperTable =
 		}, {
 			key: 'updateSelectionData',
 			value: function updateSelectionData(newSelection) {
-				var _this10 = this;
+				var _this12 = this;
 
 				var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
@@ -1592,20 +1819,20 @@ var ProperTable =
 				    newData = this.state.data,
 				    rowIndex = null;
 
-				if (this.props.selectable != 'multiple') {
+				if (this.props.selectable != MULTIPLE_SELECTION) {
 					var oldId = oldSelection.values().next().value || null;
 
 					if (!_underscore2['default'].isNull(oldId)) {
 						newIndexed[oldId]._selected = false; // Update indexed data
 						rowIndex = newIndexed[oldId]._rowIndex; // Get data index
-						rdata = newData.get(rowIndex).set('_selected', false); // Change the row in that index
+						rdata = newData.get(rowIndex).set(SELECTED_FIELD, false); // Change the row in that index
 						newData = newData.set(rowIndex, rdata); // Set that row in the data object
 					}
 
 					if (!_underscore2['default'].isNull(newSelection)) {
 						newIndexed[newSelection]._selected = true; // Update indexed data
 						rowIndex = newIndexed[newSelection]._rowIndex; // Get data index
-						rdata = newData.get(rowIndex).set('_selected', true); // Change the row in that index
+						rdata = newData.get(rowIndex).set(SELECTED_FIELD, true); // Change the row in that index
 						newData = newData.set(rowIndex, rdata); // Set that row in the data object
 					}
 				} else if (!newAllSelected && newSelection.size > 0 && newData.size === this.state.rawdata.size) {
@@ -1636,14 +1863,14 @@ var ProperTable =
 
 						newIndexed[changedId]._selected = _selected; // Update indexed data
 						rowIndex = newIndexed[changedId]._rowIndex; // Get data index
-						rdata = newData.get(rowIndex).set('_selected', _selected); // Change the row in that index
+						rdata = newData.get(rowIndex).set(SELECTED_FIELD, _selected); // Change the row in that index
 						newData = newData.set(rowIndex, rdata); // Set that row in the data object
 					} else {
 							// Change all data
 							newData = newData.map(function (row) {
-								rowid = row.get(_this10.props.idField);
+								rowid = row.get(_this12.props.idField);
 								selected = newSelection.has(rowid.toString());
-								rdata = row.set('_selected', selected);
+								rdata = row.set(SELECTED_FIELD, selected);
 								curIndex = newIndexed[rowid];
 
 								if (curIndex._selected != selected) {
@@ -1696,13 +1923,13 @@ var ProperTable =
 		}, {
 			key: 'sendSelection',
 			value: function sendSelection() {
-				var _this11 = this;
+				var _this13 = this;
 
 				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
 				if (typeof this.props.afterSelect == 'function') {
 					(function () {
-						var _state3 = _this11.state;
+						var _state3 = _this13.state;
 						var selection = _state3.selection;
 						var initialIndexed = _state3.initialIndexed;
 						var rawdata = _state3.rawdata;
@@ -1732,11 +1959,11 @@ var ProperTable =
 
 						output = _underscore2['default'].compact(output);
 
-						if (_this11.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
+						if (_this13.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
 							output = output[0];
 						}
 
-						_this11.props.afterSelect(output, selectionArray);
+						_this13.props.afterSelect(output, selectionArray);
 					})();
 				}
 			}
@@ -1764,23 +1991,23 @@ var ProperTable =
 		}, {
 			key: 'sendSortedData',
 			value: function sendSortedData(data) {
-				var _this12 = this;
+				var _this14 = this;
 
 				if (typeof this.props.afterSort == 'function') {
 					(function () {
-						var _state4 = _this12.state;
+						var _state4 = _this14.state;
 						var initialIndexed = _state4.initialIndexed;
 						var rawdata = _state4.rawdata;
 
 						var output = [];
 
 						output = data.map(function (row) {
-							var rowIndex = initialIndexed[row.get(_this12.props.idField)]._rowIndex;
+							var rowIndex = initialIndexed[row.get(_this14.props.idField)]._rowIndex;
 
 							return rawdata.get(rowIndex);
 						});
 
-						_this12.props.afterSort(output.toJSON());
+						_this14.props.afterSort(output.toJSON());
 					})();
 				}
 			}
@@ -1810,7 +2037,7 @@ var ProperTable =
 			key: 'getRowClassName',
 			value: function getRowClassName(index) {
 				var addClass = 'propertable-row',
-				    selected = this.state.data.get(index).get('_selected');
+				    selected = this.state.data.get(index).get(SELECTED_FIELD);
 
 				if (selected) addClass += ' selected';
 
@@ -1874,7 +2101,7 @@ var ProperTable =
 		uniqueId: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.string, _react2['default'].PropTypes.number]),
 		afterSort: _react2['default'].PropTypes.func,
 		afterSelect: _react2['default'].PropTypes.func,
-		selectable: _react2['default'].PropTypes.oneOf([true, 'multiple', false]),
+		selectable: _react2['default'].PropTypes.oneOf([true, MULTIPLE_SELECTION, false]),
 		selected: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.string, _react2['default'].PropTypes.number, _react2['default'].PropTypes.array]),
 		rowHeight: _react2['default'].PropTypes.number,
 		idField: _react2['default'].PropTypes.string,
@@ -1888,9 +2115,11 @@ var ProperTable =
 		columnFilterComponent: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.object, _react2['default'].PropTypes.func]),
 		restartOnClick: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.element, _react2['default'].PropTypes.object // Js element but not React element
 		]),
+		restartOnClickType: _react2['default'].PropTypes.oneOf([CLEAR_FILTERS, CLEAR_SORT, CLEAR_BOTH]),
 		getColSettings: _react2['default'].PropTypes.func,
-		colSortDirs: _react2['default'].PropTypes.arrayOf(_react2['default'].PropTypes.object),
-		colFilters: _react2['default'].PropTypes.arrayOf(_react2['default'].PropTypes.array)
+		colSortDirs: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.string),
+		colFilters: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.object),
+		filterWidth: _react2['default'].PropTypes.number
 	};
 
 	ProperTable.defaultProps = {
@@ -1913,9 +2142,11 @@ var ProperTable =
 		iconColor: '#5E78D3',
 		iconDefColor: '#D6D6D6',
 		restartOnClick: null,
+		restartOnClickType: CLEAR_BOTH,
 		getColSettings: null,
 		colSortDirs: null,
-		colFilters: null
+		colFilters: null,
+		filterWidth: null
 	};
 
 	exports['default'] = ProperTable;
@@ -14511,6 +14742,35 @@ var ProperTable =
 
 	//Const
 	var SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
+	var DEFAULT_SORT_DIRECTION = 'DEF';
+	var ASCENDING_SORT_DIRECTION = 'ASC';
+	var DESCENDING_SORT_DIRECTION = 'DESC';
+
+	/**
+	 *  Possible Sort Types Default || ASC || DESC
+	 */
+	var SortTypes = {
+	  ASC: ASCENDING_SORT_DIRECTION,
+	  DESC: DESCENDING_SORT_DIRECTION,
+	  DEF: DEFAULT_SORT_DIRECTION
+	};
+
+	/**
+	 *  Asociated Icons when it's sorting
+	 */
+	var SortIcons = {
+	  ASC: _react2['default'].createElement('i', { key: 'asc-icon', className: 'fa fa-long-arrow-up' }),
+	  DESC: _react2['default'].createElement('i', { key: 'desc-icon', className: 'fa fa-long-arrow-down' }),
+	  DEF: null
+	};
+
+	/**
+	 *  Icons for column filter
+	 */
+	var ColumnFilterIcons = {
+	  DEF: _react2['default'].createElement('i', { key: 'def-icon', className: 'fa fa-caret-square-o-down' }),
+	  NONE: null
+	};
 
 	//REQUEST ANIMATION FRAME POLYFILL
 	;(function () {
@@ -14579,13 +14839,13 @@ var ProperTable =
 	  if (!_underscore2['default'].isNull(sortDir) && sortable) {
 	    if (_underscore2['default'].isNull(props.sortIcons) || _underscore2['default'].isUndefined(props.sortIcons)) {
 	      //default sort icons
-	      sortIcon = _underscore2['default'].isNull(props.filterComponent) || isSelectorCol ? SortIcons[sortDir] : ColumnFilterIcons['DEF'];
+	      sortIcon = _underscore2['default'].isNull(props.filterComponent) || isSelectorCol ? SortIcons[sortDir] : ColumnFilterIcons[DEFAULT_SORT_DIRECTION];
 	    } else {
 	      // custom sort icons
 	      sortIcon = props.sortIcons[sortDir];
 	    }
 	  } else {
-	    sortIcon = _underscore2['default'].isNull(props.filterComponent) ? SortIcons['DEF'] : ColumnFilterIcons['NONE'];
+	    sortIcon = _underscore2['default'].isNull(props.filterComponent) ? SortIcons[DEFAULT_SORT_DIRECTION] : ColumnFilterIcons['NONE'];
 	  }
 
 	  // Check if the columns have complex filter to be rendered behind the column
@@ -14615,32 +14875,6 @@ var ProperTable =
 	};
 
 	/**
-	 *  Possible Sort Types Default || ASC || DESC
-	 */
-	var SortTypes = {
-	  ASC: 'ASC',
-	  DESC: 'DESC',
-	  DEF: 'DEF'
-	};
-
-	/**
-	 *  Asociated Icons when it's sorting
-	 */
-	var SortIcons = {
-	  ASC: _react2['default'].createElement('i', { key: 'asc-icon', className: 'fa fa-long-arrow-up' }),
-	  DESC: _react2['default'].createElement('i', { key: 'desc-icon', className: 'fa fa-long-arrow-down' }),
-	  DEF: null
-	};
-
-	/**
-	 *  Icons for column filter
-	 */
-	var ColumnFilterIcons = {
-	  DEF: _react2['default'].createElement('i', { key: 'def-icon', className: 'fa fa-caret-square-o-down' }),
-	  NONE: null
-	};
-
-	/**
 	 * Build and return the complex filter received in params
 	 *
 	 * @param {object} props      The props of the component
@@ -14653,6 +14887,7 @@ var ProperTable =
 	      afterSort = void 0,
 	      afterClear = void 0,
 	      isSortedOrFiltered = false;
+	  var portalWidth = props.filterWidth || 280;
 
 	  afterSelect = function afterSelect(selection) {
 	    if (typeof props.columnFilter === 'function') {
@@ -14673,7 +14908,7 @@ var ProperTable =
 	    }
 	  };
 
-	  if (props.sortDir !== 'DEF' || props.selection.length > 0) isSortedOrFiltered = true;
+	  if (props.sortDir !== DEFAULT_SORT_DIRECTION || props.selection.length > 0) isSortedOrFiltered = true;
 
 	  filter = _react2['default'].createElement(
 	    _portal2['default'],
@@ -14688,7 +14923,8 @@ var ProperTable =
 	      iconColor: props.iconColor,
 	      iconDefColor: props.iconDefColor,
 	      isSortedOrFiltered: isSortedOrFiltered,
-	      style: { opacity: 0, position: 'fixed' }
+	      width: portalWidth,
+	      style: { opacity: 0, position: 'fixed', width: portalWidth }
 	    },
 	    _react2['default'].createElement(props.filterComponent, {
 	      key: props.uniqueId + '-column-header-component-filter',
@@ -14852,6 +15088,8 @@ var ProperTable =
 	      active: false,
 	      x: 0,
 	      y: 0,
+	      width: null,
+	      height: null,
 	      element: null // element clicked to open the portal
 	    };
 	    _this.handleWrapperClick = _this.handleWrapperClick.bind(_this);
@@ -14966,7 +15204,8 @@ var ProperTable =
 	      var x = arguments.length <= 1 || arguments[1] === undefined ? this.state.x : arguments[1];
 	      var y = arguments.length <= 2 || arguments[2] === undefined ? this.state.y : arguments[2];
 
-	      var style = props.style || {};
+	      var style = props.style || {},
+	          width = this.props.width || 280;
 
 	      if (!this.node) {
 	        this.node = document.createElement('div');
@@ -14979,7 +15218,9 @@ var ProperTable =
 	          style.position = 'fixed';
 	          style.top = y + 5;
 	          style.left = x + 5;
-	          if (style.left >= window.innerWidth - window.innerWidth * 0.15) style.left = x - window.innerWidth * 0.15;
+	          if (this.props.width) style.width = this.props.width;
+	          if (this.props.height) style.height = this.props.height;
+	          if (style.left >= window.innerWidth - width) style.left = x - width;
 	        }
 
 	        _CSSPropertyOperations2['default'].setValueForStyles(this.node, style);
@@ -19229,12 +19470,9 @@ var ProperTable =
 
 /***/ },
 /* 88 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	'use strict';
-
-	module.exports = __webpack_require__(89)() ? Set : __webpack_require__(90);
-
+	module.exports = moment;
 
 /***/ },
 /* 89 */
@@ -19242,1448 +19480,57 @@ var ProperTable =
 
 	'use strict';
 
-	module.exports = function () {
-		var set, iterator, result;
-		if (typeof Set !== 'function') return false;
-		set = new Set(['raz', 'dwa', 'trzy']);
-		if (String(set) !== '[object Set]') return false;
-		if (set.size !== 3) return false;
-		if (typeof set.add !== 'function') return false;
-		if (typeof set.clear !== 'function') return false;
-		if (typeof set.delete !== 'function') return false;
-		if (typeof set.entries !== 'function') return false;
-		if (typeof set.forEach !== 'function') return false;
-		if (typeof set.has !== 'function') return false;
-		if (typeof set.keys !== 'function') return false;
-		if (typeof set.values !== 'function') return false;
-
-		iterator = set.values();
-		result = iterator.next();
-		if (result.done !== false) return false;
-		if (result.value !== 'raz') return false;
-
-		return true;
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	var charMap = {
+		'a': /[áÁàÀãÃâÂäÄåÅāĀąĄ]/g,
+		'e': /[éÉèÈêÊëËēĒėĖęĘ]/g,
+		'i': /[îÎíÍìÌïÏīĪįĮ]/g,
+		'l': /[łŁ]/g,
+		'o': /[ôÔòÒøØōŌóÓõÕöÖ]/g,
+		'u': /[ûÛúÚùÙüÜūŪ]/g,
+		'c': /[çÇčČćĆ]/g,
+		's': /[śŚšŠ]/g,
+		'z': /[źŹżŻ]/g,
+		'': /[@#~$!º|"·%&¬()=?¿¡*+\^`´{};:[\]\\]/g
 	};
 
+	exports['default'] = {
+		normalize: function normalize(value) {
+			var scapeLess = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+			var parseToLower = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+			var trim = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
+
+			var internalVal = value.toString();
+
+			if (parseToLower && trim) {
+				internalVal = internalVal.trim().toLowerCase();
+			} else if (parseToLower) {
+				internalVal = internalVal.toLowerCase();
+			} else if (trim) {
+				internalVal = internalVal.trim();
+			}
+
+			if (!scapeLess) {
+				charMap[''] = /[@#~$!º|"·%&¬()=?¿¡*+\^`´{};:[\].\-/\\]/g;
+			}
+
+			for (var char in charMap) {
+				try {
+					internalVal = internalVal.replace(charMap[char], char);
+				} catch (e) {
+					console.warn('Normalize error on ', value);
+				}
+			}
+
+			return internalVal;
+		}
+	};
+	module.exports = exports['default'];
 
 /***/ },
 /* 90 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var clear          = __webpack_require__(91)
-	  , eIndexOf       = __webpack_require__(93)
-	  , setPrototypeOf = __webpack_require__(99)
-	  , callable       = __webpack_require__(104)
-	  , d              = __webpack_require__(105)
-	  , ee             = __webpack_require__(117)
-	  , Symbol         = __webpack_require__(118)
-	  , iterator       = __webpack_require__(123)
-	  , forOf          = __webpack_require__(127)
-	  , Iterator       = __webpack_require__(137)
-	  , isNative       = __webpack_require__(138)
-
-	  , call = Function.prototype.call
-	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
-	  , SetPoly, getValues, NativeSet;
-
-	if (isNative) NativeSet = Set;
-
-	module.exports = SetPoly = function Set(/*iterable*/) {
-		var iterable = arguments[0], self;
-		if (!(this instanceof SetPoly)) throw new TypeError('Constructor requires \'new\'');
-		if (isNative && setPrototypeOf) self = setPrototypeOf(new NativeSet(), getPrototypeOf(this));
-		else self = this;
-		if (iterable != null) iterator(iterable);
-		defineProperty(self, '__setData__', d('c', []));
-		if (!iterable) return self;
-		forOf(iterable, function (value) {
-			if (eIndexOf.call(this, value) !== -1) return;
-			this.push(value);
-		}, self.__setData__);
-		return self;
-	};
-
-	if (isNative) {
-		if (setPrototypeOf) setPrototypeOf(SetPoly, NativeSet);
-		SetPoly.prototype = Object.create(NativeSet.prototype, { constructor: d(SetPoly) });
-	}
-
-	ee(Object.defineProperties(SetPoly.prototype, {
-		add: d(function (value) {
-			if (this.has(value)) return this;
-			this.emit('_add', this.__setData__.push(value) - 1, value);
-			return this;
-		}),
-		clear: d(function () {
-			if (!this.__setData__.length) return;
-			clear.call(this.__setData__);
-			this.emit('_clear');
-		}),
-		delete: d(function (value) {
-			var index = eIndexOf.call(this.__setData__, value);
-			if (index === -1) return false;
-			this.__setData__.splice(index, 1);
-			this.emit('_delete', index, value);
-			return true;
-		}),
-		entries: d(function () { return new Iterator(this, 'key+value'); }),
-		forEach: d(function (cb/*, thisArg*/) {
-			var thisArg = arguments[1], iterator, result, value;
-			callable(cb);
-			iterator = this.values();
-			result = iterator._next();
-			while (result !== undefined) {
-				value = iterator._resolve(result);
-				call.call(cb, thisArg, value, value, this);
-				result = iterator._next();
-			}
-		}),
-		has: d(function (value) {
-			return (eIndexOf.call(this.__setData__, value) !== -1);
-		}),
-		keys: d(getValues = function () { return this.values(); }),
-		size: d.gs(function () { return this.__setData__.length; }),
-		values: d(function () { return new Iterator(this); }),
-		toString: d(function () { return '[object Set]'; })
-	}));
-	defineProperty(SetPoly.prototype, Symbol.iterator, d(getValues));
-	defineProperty(SetPoly.prototype, Symbol.toStringTag, d('c', 'Set'));
-
-
-/***/ },
-/* 91 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Inspired by Google Closure:
-	// http://closure-library.googlecode.com/svn/docs/
-	// closure_goog_array_array.js.html#goog.array.clear
-
-	'use strict';
-
-	var value = __webpack_require__(92);
-
-	module.exports = function () {
-		value(this).length = 0;
-		return this;
-	};
-
-
-/***/ },
-/* 92 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function (value) {
-		if (value == null) throw new TypeError("Cannot use null or undefined");
-		return value;
-	};
-
-
-/***/ },
-/* 93 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var toPosInt = __webpack_require__(94)
-	  , value    = __webpack_require__(92)
-
-	  , indexOf = Array.prototype.indexOf
-	  , hasOwnProperty = Object.prototype.hasOwnProperty
-	  , abs = Math.abs, floor = Math.floor;
-
-	module.exports = function (searchElement/*, fromIndex*/) {
-		var i, l, fromIndex, val;
-		if (searchElement === searchElement) { //jslint: ignore
-			return indexOf.apply(this, arguments);
-		}
-
-		l = toPosInt(value(this).length);
-		fromIndex = arguments[1];
-		if (isNaN(fromIndex)) fromIndex = 0;
-		else if (fromIndex >= 0) fromIndex = floor(fromIndex);
-		else fromIndex = toPosInt(this.length) - floor(abs(fromIndex));
-
-		for (i = fromIndex; i < l; ++i) {
-			if (hasOwnProperty.call(this, i)) {
-				val = this[i];
-				if (val !== val) return i; //jslint: ignore
-			}
-		}
-		return -1;
-	};
-
-
-/***/ },
-/* 94 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var toInteger = __webpack_require__(95)
-
-	  , max = Math.max;
-
-	module.exports = function (value) { return max(0, toInteger(value)); };
-
-
-/***/ },
-/* 95 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var sign = __webpack_require__(96)
-
-	  , abs = Math.abs, floor = Math.floor;
-
-	module.exports = function (value) {
-		if (isNaN(value)) return 0;
-		value = Number(value);
-		if ((value === 0) || !isFinite(value)) return value;
-		return sign(value) * floor(abs(value));
-	};
-
-
-/***/ },
-/* 96 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(97)()
-		? Math.sign
-		: __webpack_require__(98);
-
-
-/***/ },
-/* 97 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		var sign = Math.sign;
-		if (typeof sign !== 'function') return false;
-		return ((sign(10) === 1) && (sign(-20) === -1));
-	};
-
-
-/***/ },
-/* 98 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function (value) {
-		value = Number(value);
-		if (isNaN(value) || (value === 0)) return value;
-		return (value > 0) ? 1 : -1;
-	};
-
-
-/***/ },
-/* 99 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(100)()
-		? Object.setPrototypeOf
-		: __webpack_require__(101);
-
-
-/***/ },
-/* 100 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var create = Object.create, getPrototypeOf = Object.getPrototypeOf
-	  , x = {};
-
-	module.exports = function (/*customCreate*/) {
-		var setPrototypeOf = Object.setPrototypeOf
-		  , customCreate = arguments[0] || create;
-		if (typeof setPrototypeOf !== 'function') return false;
-		return getPrototypeOf(setPrototypeOf(customCreate(null), x)) === x;
-	};
-
-
-/***/ },
-/* 101 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Big thanks to @WebReflection for sorting this out
-	// https://gist.github.com/WebReflection/5593554
-
-	'use strict';
-
-	var isObject      = __webpack_require__(102)
-	  , value         = __webpack_require__(92)
-
-	  , isPrototypeOf = Object.prototype.isPrototypeOf
-	  , defineProperty = Object.defineProperty
-	  , nullDesc = { configurable: true, enumerable: false, writable: true,
-			value: undefined }
-	  , validate;
-
-	validate = function (obj, prototype) {
-		value(obj);
-		if ((prototype === null) || isObject(prototype)) return obj;
-		throw new TypeError('Prototype must be null or an object');
-	};
-
-	module.exports = (function (status) {
-		var fn, set;
-		if (!status) return null;
-		if (status.level === 2) {
-			if (status.set) {
-				set = status.set;
-				fn = function (obj, prototype) {
-					set.call(validate(obj, prototype), prototype);
-					return obj;
-				};
-			} else {
-				fn = function (obj, prototype) {
-					validate(obj, prototype).__proto__ = prototype;
-					return obj;
-				};
-			}
-		} else {
-			fn = function self(obj, prototype) {
-				var isNullBase;
-				validate(obj, prototype);
-				isNullBase = isPrototypeOf.call(self.nullPolyfill, obj);
-				if (isNullBase) delete self.nullPolyfill.__proto__;
-				if (prototype === null) prototype = self.nullPolyfill;
-				obj.__proto__ = prototype;
-				if (isNullBase) defineProperty(self.nullPolyfill, '__proto__', nullDesc);
-				return obj;
-			};
-		}
-		return Object.defineProperty(fn, 'level', { configurable: false,
-			enumerable: false, writable: false, value: status.level });
-	}((function () {
-		var x = Object.create(null), y = {}, set
-		  , desc = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__');
-
-		if (desc) {
-			try {
-				set = desc.set; // Opera crashes at this point
-				set.call(x, y);
-			} catch (ignore) { }
-			if (Object.getPrototypeOf(x) === y) return { set: set, level: 2 };
-		}
-
-		x.__proto__ = y;
-		if (Object.getPrototypeOf(x) === y) return { level: 2 };
-
-		x = {};
-		x.__proto__ = y;
-		if (Object.getPrototypeOf(x) === y) return { level: 1 };
-
-		return false;
-	}())));
-
-	__webpack_require__(103);
-
-
-/***/ },
-/* 102 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var map = { function: true, object: true };
-
-	module.exports = function (x) {
-		return ((x != null) && map[typeof x]) || false;
-	};
-
-
-/***/ },
-/* 103 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
-
-	'use strict';
-
-	var create = Object.create, shim;
-
-	if (!__webpack_require__(100)()) {
-		shim = __webpack_require__(101);
-	}
-
-	module.exports = (function () {
-		var nullObject, props, desc;
-		if (!shim) return create;
-		if (shim.level !== 1) return create;
-
-		nullObject = {};
-		props = {};
-		desc = { configurable: false, enumerable: false, writable: true,
-			value: undefined };
-		Object.getOwnPropertyNames(Object.prototype).forEach(function (name) {
-			if (name === '__proto__') {
-				props[name] = { configurable: true, enumerable: false, writable: true,
-					value: undefined };
-				return;
-			}
-			props[name] = desc;
-		});
-		Object.defineProperties(nullObject, props);
-
-		Object.defineProperty(shim, 'nullPolyfill', { configurable: false,
-			enumerable: false, writable: false, value: nullObject });
-
-		return function (prototype, props) {
-			return create((prototype === null) ? nullObject : prototype, props);
-		};
-	}());
-
-
-/***/ },
-/* 104 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function (fn) {
-		if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
-		return fn;
-	};
-
-
-/***/ },
-/* 105 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var assign        = __webpack_require__(106)
-	  , normalizeOpts = __webpack_require__(112)
-	  , isCallable    = __webpack_require__(113)
-	  , contains      = __webpack_require__(114)
-
-	  , d;
-
-	d = module.exports = function (dscr, value/*, options*/) {
-		var c, e, w, options, desc;
-		if ((arguments.length < 2) || (typeof dscr !== 'string')) {
-			options = value;
-			value = dscr;
-			dscr = null;
-		} else {
-			options = arguments[2];
-		}
-		if (dscr == null) {
-			c = w = true;
-			e = false;
-		} else {
-			c = contains.call(dscr, 'c');
-			e = contains.call(dscr, 'e');
-			w = contains.call(dscr, 'w');
-		}
-
-		desc = { value: value, configurable: c, enumerable: e, writable: w };
-		return !options ? desc : assign(normalizeOpts(options), desc);
-	};
-
-	d.gs = function (dscr, get, set/*, options*/) {
-		var c, e, options, desc;
-		if (typeof dscr !== 'string') {
-			options = set;
-			set = get;
-			get = dscr;
-			dscr = null;
-		} else {
-			options = arguments[3];
-		}
-		if (get == null) {
-			get = undefined;
-		} else if (!isCallable(get)) {
-			options = get;
-			get = set = undefined;
-		} else if (set == null) {
-			set = undefined;
-		} else if (!isCallable(set)) {
-			options = set;
-			set = undefined;
-		}
-		if (dscr == null) {
-			c = true;
-			e = false;
-		} else {
-			c = contains.call(dscr, 'c');
-			e = contains.call(dscr, 'e');
-		}
-
-		desc = { get: get, set: set, configurable: c, enumerable: e };
-		return !options ? desc : assign(normalizeOpts(options), desc);
-	};
-
-
-/***/ },
-/* 106 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(107)()
-		? Object.assign
-		: __webpack_require__(108);
-
-
-/***/ },
-/* 107 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		var assign = Object.assign, obj;
-		if (typeof assign !== 'function') return false;
-		obj = { foo: 'raz' };
-		assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
-		return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
-	};
-
-
-/***/ },
-/* 108 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var keys  = __webpack_require__(109)
-	  , value = __webpack_require__(92)
-
-	  , max = Math.max;
-
-	module.exports = function (dest, src/*, …srcn*/) {
-		var error, i, l = max(arguments.length, 2), assign;
-		dest = Object(value(dest));
-		assign = function (key) {
-			try { dest[key] = src[key]; } catch (e) {
-				if (!error) error = e;
-			}
-		};
-		for (i = 1; i < l; ++i) {
-			src = arguments[i];
-			keys(src).forEach(assign);
-		}
-		if (error !== undefined) throw error;
-		return dest;
-	};
-
-
-/***/ },
-/* 109 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(110)()
-		? Object.keys
-		: __webpack_require__(111);
-
-
-/***/ },
-/* 110 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		try {
-			Object.keys('primitive');
-			return true;
-		} catch (e) { return false; }
-	};
-
-
-/***/ },
-/* 111 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var keys = Object.keys;
-
-	module.exports = function (object) {
-		return keys(object == null ? object : Object(object));
-	};
-
-
-/***/ },
-/* 112 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var forEach = Array.prototype.forEach, create = Object.create;
-
-	var process = function (src, obj) {
-		var key;
-		for (key in src) obj[key] = src[key];
-	};
-
-	module.exports = function (options/*, …options*/) {
-		var result = create(null);
-		forEach.call(arguments, function (options) {
-			if (options == null) return;
-			process(Object(options), result);
-		});
-		return result;
-	};
-
-
-/***/ },
-/* 113 */
-/***/ function(module, exports) {
-
-	// Deprecated
-
-	'use strict';
-
-	module.exports = function (obj) { return typeof obj === 'function'; };
-
-
-/***/ },
-/* 114 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(115)()
-		? String.prototype.contains
-		: __webpack_require__(116);
-
-
-/***/ },
-/* 115 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var str = 'razdwatrzy';
-
-	module.exports = function () {
-		if (typeof str.contains !== 'function') return false;
-		return ((str.contains('dwa') === true) && (str.contains('foo') === false));
-	};
-
-
-/***/ },
-/* 116 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var indexOf = String.prototype.indexOf;
-
-	module.exports = function (searchString/*, position*/) {
-		return indexOf.call(this, searchString, arguments[1]) > -1;
-	};
-
-
-/***/ },
-/* 117 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var d        = __webpack_require__(105)
-	  , callable = __webpack_require__(104)
-
-	  , apply = Function.prototype.apply, call = Function.prototype.call
-	  , create = Object.create, defineProperty = Object.defineProperty
-	  , defineProperties = Object.defineProperties
-	  , hasOwnProperty = Object.prototype.hasOwnProperty
-	  , descriptor = { configurable: true, enumerable: false, writable: true }
-
-	  , on, once, off, emit, methods, descriptors, base;
-
-	on = function (type, listener) {
-		var data;
-
-		callable(listener);
-
-		if (!hasOwnProperty.call(this, '__ee__')) {
-			data = descriptor.value = create(null);
-			defineProperty(this, '__ee__', descriptor);
-			descriptor.value = null;
-		} else {
-			data = this.__ee__;
-		}
-		if (!data[type]) data[type] = listener;
-		else if (typeof data[type] === 'object') data[type].push(listener);
-		else data[type] = [data[type], listener];
-
-		return this;
-	};
-
-	once = function (type, listener) {
-		var once, self;
-
-		callable(listener);
-		self = this;
-		on.call(this, type, once = function () {
-			off.call(self, type, once);
-			apply.call(listener, this, arguments);
-		});
-
-		once.__eeOnceListener__ = listener;
-		return this;
-	};
-
-	off = function (type, listener) {
-		var data, listeners, candidate, i;
-
-		callable(listener);
-
-		if (!hasOwnProperty.call(this, '__ee__')) return this;
-		data = this.__ee__;
-		if (!data[type]) return this;
-		listeners = data[type];
-
-		if (typeof listeners === 'object') {
-			for (i = 0; (candidate = listeners[i]); ++i) {
-				if ((candidate === listener) ||
-						(candidate.__eeOnceListener__ === listener)) {
-					if (listeners.length === 2) data[type] = listeners[i ? 0 : 1];
-					else listeners.splice(i, 1);
-				}
-			}
-		} else {
-			if ((listeners === listener) ||
-					(listeners.__eeOnceListener__ === listener)) {
-				delete data[type];
-			}
-		}
-
-		return this;
-	};
-
-	emit = function (type) {
-		var i, l, listener, listeners, args;
-
-		if (!hasOwnProperty.call(this, '__ee__')) return;
-		listeners = this.__ee__[type];
-		if (!listeners) return;
-
-		if (typeof listeners === 'object') {
-			l = arguments.length;
-			args = new Array(l - 1);
-			for (i = 1; i < l; ++i) args[i - 1] = arguments[i];
-
-			listeners = listeners.slice();
-			for (i = 0; (listener = listeners[i]); ++i) {
-				apply.call(listener, this, args);
-			}
-		} else {
-			switch (arguments.length) {
-			case 1:
-				call.call(listeners, this);
-				break;
-			case 2:
-				call.call(listeners, this, arguments[1]);
-				break;
-			case 3:
-				call.call(listeners, this, arguments[1], arguments[2]);
-				break;
-			default:
-				l = arguments.length;
-				args = new Array(l - 1);
-				for (i = 1; i < l; ++i) {
-					args[i - 1] = arguments[i];
-				}
-				apply.call(listeners, this, args);
-			}
-		}
-	};
-
-	methods = {
-		on: on,
-		once: once,
-		off: off,
-		emit: emit
-	};
-
-	descriptors = {
-		on: d(on),
-		once: d(once),
-		off: d(off),
-		emit: d(emit)
-	};
-
-	base = defineProperties({}, descriptors);
-
-	module.exports = exports = function (o) {
-		return (o == null) ? create(base) : defineProperties(Object(o), descriptors);
-	};
-	exports.methods = methods;
-
-
-/***/ },
-/* 118 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(119)() ? Symbol : __webpack_require__(120);
-
-
-/***/ },
-/* 119 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		var symbol;
-		if (typeof Symbol !== 'function') return false;
-		symbol = Symbol('test symbol');
-		try { String(symbol); } catch (e) { return false; }
-		if (typeof Symbol.iterator === 'symbol') return true;
-
-		// Return 'true' for polyfills
-		if (typeof Symbol.isConcatSpreadable !== 'object') return false;
-		if (typeof Symbol.iterator !== 'object') return false;
-		if (typeof Symbol.toPrimitive !== 'object') return false;
-		if (typeof Symbol.toStringTag !== 'object') return false;
-		if (typeof Symbol.unscopables !== 'object') return false;
-
-		return true;
-	};
-
-
-/***/ },
-/* 120 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
-
-	'use strict';
-
-	var d              = __webpack_require__(105)
-	  , validateSymbol = __webpack_require__(121)
-
-	  , create = Object.create, defineProperties = Object.defineProperties
-	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
-	  , NativeSymbol, SymbolPolyfill, HiddenSymbol, globalSymbols = create(null);
-
-	if (typeof Symbol === 'function') NativeSymbol = Symbol;
-
-	var generateName = (function () {
-		var created = create(null);
-		return function (desc) {
-			var postfix = 0, name, ie11BugWorkaround;
-			while (created[desc + (postfix || '')]) ++postfix;
-			desc += (postfix || '');
-			created[desc] = true;
-			name = '@@' + desc;
-			defineProperty(objPrototype, name, d.gs(null, function (value) {
-				// For IE11 issue see:
-				// https://connect.microsoft.com/IE/feedbackdetail/view/1928508/
-				//    ie11-broken-getters-on-dom-objects
-				// https://github.com/medikoo/es6-symbol/issues/12
-				if (ie11BugWorkaround) return;
-				ie11BugWorkaround = true;
-				defineProperty(this, name, d(value));
-				ie11BugWorkaround = false;
-			}));
-			return name;
-		};
-	}());
-
-	// Internal constructor (not one exposed) for creating Symbol instances.
-	// This one is used to ensure that `someSymbol instanceof Symbol` always return false
-	HiddenSymbol = function Symbol(description) {
-		if (this instanceof HiddenSymbol) throw new TypeError('TypeError: Symbol is not a constructor');
-		return SymbolPolyfill(description);
-	};
-
-	// Exposed `Symbol` constructor
-	// (returns instances of HiddenSymbol)
-	module.exports = SymbolPolyfill = function Symbol(description) {
-		var symbol;
-		if (this instanceof Symbol) throw new TypeError('TypeError: Symbol is not a constructor');
-		symbol = create(HiddenSymbol.prototype);
-		description = (description === undefined ? '' : String(description));
-		return defineProperties(symbol, {
-			__description__: d('', description),
-			__name__: d('', generateName(description))
-		});
-	};
-	defineProperties(SymbolPolyfill, {
-		for: d(function (key) {
-			if (globalSymbols[key]) return globalSymbols[key];
-			return (globalSymbols[key] = SymbolPolyfill(String(key)));
-		}),
-		keyFor: d(function (s) {
-			var key;
-			validateSymbol(s);
-			for (key in globalSymbols) if (globalSymbols[key] === s) return key;
-		}),
-
-		// If there's native implementation of given symbol, let's fallback to it
-		// to ensure proper interoperability with other native functions e.g. Array.from
-		hasInstance: d('', (NativeSymbol && NativeSymbol.hasInstance) || SymbolPolyfill('hasInstance')),
-		isConcatSpreadable: d('', (NativeSymbol && NativeSymbol.isConcatSpreadable) ||
-			SymbolPolyfill('isConcatSpreadable')),
-		iterator: d('', (NativeSymbol && NativeSymbol.iterator) || SymbolPolyfill('iterator')),
-		match: d('', (NativeSymbol && NativeSymbol.match) || SymbolPolyfill('match')),
-		replace: d('', (NativeSymbol && NativeSymbol.replace) || SymbolPolyfill('replace')),
-		search: d('', (NativeSymbol && NativeSymbol.search) || SymbolPolyfill('search')),
-		species: d('', (NativeSymbol && NativeSymbol.species) || SymbolPolyfill('species')),
-		split: d('', (NativeSymbol && NativeSymbol.split) || SymbolPolyfill('split')),
-		toPrimitive: d('', (NativeSymbol && NativeSymbol.toPrimitive) || SymbolPolyfill('toPrimitive')),
-		toStringTag: d('', (NativeSymbol && NativeSymbol.toStringTag) || SymbolPolyfill('toStringTag')),
-		unscopables: d('', (NativeSymbol && NativeSymbol.unscopables) || SymbolPolyfill('unscopables'))
-	});
-
-	// Internal tweaks for real symbol producer
-	defineProperties(HiddenSymbol.prototype, {
-		constructor: d(SymbolPolyfill),
-		toString: d('', function () { return this.__name__; })
-	});
-
-	// Proper implementation of methods exposed on Symbol.prototype
-	// They won't be accessible on produced symbol instances as they derive from HiddenSymbol.prototype
-	defineProperties(SymbolPolyfill.prototype, {
-		toString: d(function () { return 'Symbol (' + validateSymbol(this).__description__ + ')'; }),
-		valueOf: d(function () { return validateSymbol(this); })
-	});
-	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toPrimitive, d('',
-		function () { return validateSymbol(this); }));
-	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toStringTag, d('c', 'Symbol'));
-
-	// Proper implementaton of toPrimitive and toStringTag for returned symbol instances
-	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toStringTag,
-		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toStringTag]));
-
-	// Note: It's important to define `toPrimitive` as last one, as some implementations
-	// implement `toPrimitive` natively without implementing `toStringTag` (or other specified symbols)
-	// And that may invoke error in definition flow:
-	// See: https://github.com/medikoo/es6-symbol/issues/13#issuecomment-164146149
-	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toPrimitive,
-		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toPrimitive]));
-
-
-/***/ },
-/* 121 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isSymbol = __webpack_require__(122);
-
-	module.exports = function (value) {
-		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
-		return value;
-	};
-
-
-/***/ },
-/* 122 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function (x) {
-		return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
-	};
-
-
-/***/ },
-/* 123 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isIterable = __webpack_require__(124);
-
-	module.exports = function (value) {
-		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
-		return value;
-	};
-
-
-/***/ },
-/* 124 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isArguments    = __webpack_require__(125)
-	  , isString       = __webpack_require__(126)
-	  , iteratorSymbol = __webpack_require__(118).iterator
-
-	  , isArray = Array.isArray;
-
-	module.exports = function (value) {
-		if (value == null) return false;
-		if (isArray(value)) return true;
-		if (isString(value)) return true;
-		if (isArguments(value)) return true;
-		return (typeof value[iteratorSymbol] === 'function');
-	};
-
-
-/***/ },
-/* 125 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var toString = Object.prototype.toString
-
-	  , id = toString.call((function () { return arguments; }()));
-
-	module.exports = function (x) { return (toString.call(x) === id); };
-
-
-/***/ },
-/* 126 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var toString = Object.prototype.toString
-
-	  , id = toString.call('');
-
-	module.exports = function (x) {
-		return (typeof x === 'string') || (x && (typeof x === 'object') &&
-			((x instanceof String) || (toString.call(x) === id))) || false;
-	};
-
-
-/***/ },
-/* 127 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isArguments = __webpack_require__(125)
-	  , callable    = __webpack_require__(104)
-	  , isString    = __webpack_require__(126)
-	  , get         = __webpack_require__(128)
-
-	  , isArray = Array.isArray, call = Function.prototype.call
-	  , some = Array.prototype.some;
-
-	module.exports = function (iterable, cb/*, thisArg*/) {
-		var mode, thisArg = arguments[2], result, doBreak, broken, i, l, char, code;
-		if (isArray(iterable) || isArguments(iterable)) mode = 'array';
-		else if (isString(iterable)) mode = 'string';
-		else iterable = get(iterable);
-
-		callable(cb);
-		doBreak = function () { broken = true; };
-		if (mode === 'array') {
-			some.call(iterable, function (value) {
-				call.call(cb, thisArg, value, doBreak);
-				if (broken) return true;
-			});
-			return;
-		}
-		if (mode === 'string') {
-			l = iterable.length;
-			for (i = 0; i < l; ++i) {
-				char = iterable[i];
-				if ((i + 1) < l) {
-					code = char.charCodeAt(0);
-					if ((code >= 0xD800) && (code <= 0xDBFF)) char += iterable[++i];
-				}
-				call.call(cb, thisArg, char, doBreak);
-				if (broken) break;
-			}
-			return;
-		}
-		result = iterable.next();
-
-		while (!result.done) {
-			call.call(cb, thisArg, result.value, doBreak);
-			if (broken) return;
-			result = iterable.next();
-		}
-	};
-
-
-/***/ },
-/* 128 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isArguments    = __webpack_require__(125)
-	  , isString       = __webpack_require__(126)
-	  , ArrayIterator  = __webpack_require__(129)
-	  , StringIterator = __webpack_require__(136)
-	  , iterable       = __webpack_require__(123)
-	  , iteratorSymbol = __webpack_require__(118).iterator;
-
-	module.exports = function (obj) {
-		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
-		if (isArguments(obj)) return new ArrayIterator(obj);
-		if (isString(obj)) return new StringIterator(obj);
-		return new ArrayIterator(obj);
-	};
-
-
-/***/ },
-/* 129 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var setPrototypeOf = __webpack_require__(99)
-	  , contains       = __webpack_require__(114)
-	  , d              = __webpack_require__(105)
-	  , Iterator       = __webpack_require__(130)
-
-	  , defineProperty = Object.defineProperty
-	  , ArrayIterator;
-
-	ArrayIterator = module.exports = function (arr, kind) {
-		if (!(this instanceof ArrayIterator)) return new ArrayIterator(arr, kind);
-		Iterator.call(this, arr);
-		if (!kind) kind = 'value';
-		else if (contains.call(kind, 'key+value')) kind = 'key+value';
-		else if (contains.call(kind, 'key')) kind = 'key';
-		else kind = 'value';
-		defineProperty(this, '__kind__', d('', kind));
-	};
-	if (setPrototypeOf) setPrototypeOf(ArrayIterator, Iterator);
-
-	ArrayIterator.prototype = Object.create(Iterator.prototype, {
-		constructor: d(ArrayIterator),
-		_resolve: d(function (i) {
-			if (this.__kind__ === 'value') return this.__list__[i];
-			if (this.__kind__ === 'key+value') return [i, this.__list__[i]];
-			return i;
-		}),
-		toString: d(function () { return '[object Array Iterator]'; })
-	});
-
-
-/***/ },
-/* 130 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var clear    = __webpack_require__(91)
-	  , assign   = __webpack_require__(106)
-	  , callable = __webpack_require__(104)
-	  , value    = __webpack_require__(92)
-	  , d        = __webpack_require__(105)
-	  , autoBind = __webpack_require__(131)
-	  , Symbol   = __webpack_require__(118)
-
-	  , defineProperty = Object.defineProperty
-	  , defineProperties = Object.defineProperties
-	  , Iterator;
-
-	module.exports = Iterator = function (list, context) {
-		if (!(this instanceof Iterator)) return new Iterator(list, context);
-		defineProperties(this, {
-			__list__: d('w', value(list)),
-			__context__: d('w', context),
-			__nextIndex__: d('w', 0)
-		});
-		if (!context) return;
-		callable(context.on);
-		context.on('_add', this._onAdd);
-		context.on('_delete', this._onDelete);
-		context.on('_clear', this._onClear);
-	};
-
-	defineProperties(Iterator.prototype, assign({
-		constructor: d(Iterator),
-		_next: d(function () {
-			var i;
-			if (!this.__list__) return;
-			if (this.__redo__) {
-				i = this.__redo__.shift();
-				if (i !== undefined) return i;
-			}
-			if (this.__nextIndex__ < this.__list__.length) return this.__nextIndex__++;
-			this._unBind();
-		}),
-		next: d(function () { return this._createResult(this._next()); }),
-		_createResult: d(function (i) {
-			if (i === undefined) return { done: true, value: undefined };
-			return { done: false, value: this._resolve(i) };
-		}),
-		_resolve: d(function (i) { return this.__list__[i]; }),
-		_unBind: d(function () {
-			this.__list__ = null;
-			delete this.__redo__;
-			if (!this.__context__) return;
-			this.__context__.off('_add', this._onAdd);
-			this.__context__.off('_delete', this._onDelete);
-			this.__context__.off('_clear', this._onClear);
-			this.__context__ = null;
-		}),
-		toString: d(function () { return '[object Iterator]'; })
-	}, autoBind({
-		_onAdd: d(function (index) {
-			if (index >= this.__nextIndex__) return;
-			++this.__nextIndex__;
-			if (!this.__redo__) {
-				defineProperty(this, '__redo__', d('c', [index]));
-				return;
-			}
-			this.__redo__.forEach(function (redo, i) {
-				if (redo >= index) this.__redo__[i] = ++redo;
-			}, this);
-			this.__redo__.push(index);
-		}),
-		_onDelete: d(function (index) {
-			var i;
-			if (index >= this.__nextIndex__) return;
-			--this.__nextIndex__;
-			if (!this.__redo__) return;
-			i = this.__redo__.indexOf(index);
-			if (i !== -1) this.__redo__.splice(i, 1);
-			this.__redo__.forEach(function (redo, i) {
-				if (redo > index) this.__redo__[i] = --redo;
-			}, this);
-		}),
-		_onClear: d(function () {
-			if (this.__redo__) clear.call(this.__redo__);
-			this.__nextIndex__ = 0;
-		})
-	})));
-
-	defineProperty(Iterator.prototype, Symbol.iterator, d(function () {
-		return this;
-	}));
-	defineProperty(Iterator.prototype, Symbol.toStringTag, d('', 'Iterator'));
-
-
-/***/ },
-/* 131 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var copy       = __webpack_require__(132)
-	  , map        = __webpack_require__(133)
-	  , callable   = __webpack_require__(104)
-	  , validValue = __webpack_require__(92)
-
-	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
-	  , hasOwnProperty = Object.prototype.hasOwnProperty
-	  , define;
-
-	define = function (name, desc, bindTo) {
-		var value = validValue(desc) && callable(desc.value), dgs;
-		dgs = copy(desc);
-		delete dgs.writable;
-		delete dgs.value;
-		dgs.get = function () {
-			if (hasOwnProperty.call(this, name)) return value;
-			desc.value = bind.call(value, (bindTo == null) ? this : this[bindTo]);
-			defineProperty(this, name, desc);
-			return this[name];
-		};
-		return dgs;
-	};
-
-	module.exports = function (props/*, bindTo*/) {
-		var bindTo = arguments[1];
-		return map(props, function (desc, name) {
-			return define(name, desc, bindTo);
-		});
-	};
-
-
-/***/ },
-/* 132 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var assign = __webpack_require__(106)
-	  , value  = __webpack_require__(92);
-
-	module.exports = function (obj) {
-		var copy = Object(value(obj));
-		if (copy !== obj) return copy;
-		return assign({}, obj);
-	};
-
-
-/***/ },
-/* 133 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var callable = __webpack_require__(104)
-	  , forEach  = __webpack_require__(134)
-
-	  , call = Function.prototype.call;
-
-	module.exports = function (obj, cb/*, thisArg*/) {
-		var o = {}, thisArg = arguments[2];
-		callable(cb);
-		forEach(obj, function (value, key, obj, index) {
-			o[key] = call.call(cb, thisArg, value, key, obj, index);
-		});
-		return o;
-	};
-
-
-/***/ },
-/* 134 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(135)('forEach');
-
-
-/***/ },
-/* 135 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Internal method, used by iteration functions.
-	// Calls a function for each key-value pair found in object
-	// Optionally takes compareFn to iterate object in specific order
-
-	'use strict';
-
-	var callable = __webpack_require__(104)
-	  , value    = __webpack_require__(92)
-
-	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
-	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-	module.exports = function (method, defVal) {
-		return function (obj, cb/*, thisArg, compareFn*/) {
-			var list, thisArg = arguments[2], compareFn = arguments[3];
-			obj = Object(value(obj));
-			callable(cb);
-
-			list = keys(obj);
-			if (compareFn) {
-				list.sort((typeof compareFn === 'function') ? bind.call(compareFn, obj) : undefined);
-			}
-			if (typeof method !== 'function') method = list[method];
-			return call.call(method, list, function (key, index) {
-				if (!propertyIsEnumerable.call(obj, key)) return defVal;
-				return call.call(cb, thisArg, obj[key], key, obj, index);
-			});
-		};
-	};
-
-
-/***/ },
-/* 136 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Thanks @mathiasbynens
-	// http://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
-
-	'use strict';
-
-	var setPrototypeOf = __webpack_require__(99)
-	  , d              = __webpack_require__(105)
-	  , Iterator       = __webpack_require__(130)
-
-	  , defineProperty = Object.defineProperty
-	  , StringIterator;
-
-	StringIterator = module.exports = function (str) {
-		if (!(this instanceof StringIterator)) return new StringIterator(str);
-		str = String(str);
-		Iterator.call(this, str);
-		defineProperty(this, '__length__', d('', str.length));
-
-	};
-	if (setPrototypeOf) setPrototypeOf(StringIterator, Iterator);
-
-	StringIterator.prototype = Object.create(Iterator.prototype, {
-		constructor: d(StringIterator),
-		_next: d(function () {
-			if (!this.__list__) return;
-			if (this.__nextIndex__ < this.__length__) return this.__nextIndex__++;
-			this._unBind();
-		}),
-		_resolve: d(function (i) {
-			var char = this.__list__[i], code;
-			if (this.__nextIndex__ === this.__length__) return char;
-			code = char.charCodeAt(0);
-			if ((code >= 0xD800) && (code <= 0xDBFF)) return char + this.__list__[this.__nextIndex__++];
-			return char;
-		}),
-		toString: d(function () { return '[object String Iterator]'; })
-	});
-
-
-/***/ },
-/* 137 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var setPrototypeOf    = __webpack_require__(99)
-	  , contains          = __webpack_require__(114)
-	  , d                 = __webpack_require__(105)
-	  , Iterator          = __webpack_require__(130)
-	  , toStringTagSymbol = __webpack_require__(118).toStringTag
-
-	  , defineProperty = Object.defineProperty
-	  , SetIterator;
-
-	SetIterator = module.exports = function (set, kind) {
-		if (!(this instanceof SetIterator)) return new SetIterator(set, kind);
-		Iterator.call(this, set.__setData__, set);
-		if (!kind) kind = 'value';
-		else if (contains.call(kind, 'key+value')) kind = 'key+value';
-		else kind = 'value';
-		defineProperty(this, '__kind__', d('', kind));
-	};
-	if (setPrototypeOf) setPrototypeOf(SetIterator, Iterator);
-
-	SetIterator.prototype = Object.create(Iterator.prototype, {
-		constructor: d(SetIterator),
-		_resolve: d(function (i) {
-			if (this.__kind__ === 'value') return this.__list__[i];
-			return [this.__list__[i], this.__list__[i]];
-		}),
-		toString: d(function () { return '[object Set Iterator]'; })
-	});
-	defineProperty(SetIterator.prototype, toStringTagSymbol, d('c', 'Set Iterator'));
-
-
-/***/ },
-/* 138 */
-/***/ function(module, exports) {
-
-	// Exports true if environment provides native `Set` implementation,
-	// whatever that is.
-
-	'use strict';
-
-	module.exports = (function () {
-		if (typeof Set === 'undefined') return false;
-		return (Object.prototype.toString.call(Set.prototype) === '[object Set]');
-	}());
-
-
-/***/ },
-/* 139 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -20692,11 +19539,119 @@ var ProperTable =
 		value: true
 	});
 
-	var _moment = __webpack_require__(140);
+	var _BIGGERTHAN$LOWERTHAN;
+
+	var _formatters = __webpack_require__(91);
+
+	var _formatters2 = _interopRequireDefault(_formatters);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+	var NOTEQUALS = 'notequals';
+	var EQUALS = "equals";
+	var BIGGERTHAN = 'bigger';
+	var LOWERTHAN = 'lower';
+	var AFTERDATE = 'after';
+	var BEFOREDATE = 'before';
+	var BETWEENDATES = 'between';
+	var STARTSWITH = 'start';
+	var FINISHWITH = 'finish';
+	var CONTAINS = 'contains';
+	var NOTCONTAINS = 'notContains';
+	var EMPTY = 'empty';
+
+	exports["default"] = (_BIGGERTHAN$LOWERTHAN = {}, _defineProperty(_BIGGERTHAN$LOWERTHAN, BIGGERTHAN, function (value, compareTo) {
+		var n1 = _formatters2["default"].number(value) || 0,
+		    n2 = _formatters2["default"].number(compareTo) || 0;
+		return n1 > n2;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, LOWERTHAN, function (value, compareTo) {
+		var n1 = _formatters2["default"].number(value) || 0,
+		    n2 = _formatters2["default"].number(compareTo) || 0;
+		return n1 < n2;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, AFTERDATE, function (value, compareTo) {
+		var d1 = _formatters2["default"].toUnix(value) || 0,
+		    d2 = _formatters2["default"].toUnix(compareTo) || 0;
+		return d1 > d2;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, BEFOREDATE, function (value, compareTo) {
+		var d1 = _formatters2["default"].toUnix(value) || 0,
+		    d2 = _formatters2["default"].toUnix(compareTo) || 0;
+		return d1 < d2;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, BETWEENDATES, function (value, compareTo) {
+		var separator = void 0,
+		    d1Start = void 0,
+		    d1End = void 0,
+		    d2 = void 0;
+
+		if (!value || !compareTo) return false;
+		separator = value.indexOf('%-%');
+
+		if (separator === -1) {
+			return false;
+		}
+
+		d1Start = _formatters2["default"].toUnix(value.substring(0, separator + 1)) || 0;
+		d1End = _formatters2["default"].toUnix(value.substring(separator + 3)) || 0;
+		d2 = _formatters2["default"].toUnix(compareTo) || 0;
+		return d1Start <= d2 && d1End >= d2;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, NOTEQUALS, function (value, compareTo) {
+		return value !== compareTo;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, EQUALS, function (value, compareTo) {
+		return value === compareTo;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, STARTSWITH, function (value, compareTo) {
+		if (!value || !compareTo || !value.length || !compareTo.length) return false;
+
+		var valLength = value.length;
+		return compareTo.length >= valLength ? value === compareTo.substring(0, valLength) : false;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, FINISHWITH, function (value, compareTo) {
+		if (!value || !compareTo || !value.length || !compareTo.length) return false;
+
+		var valLength = value.length,
+		    compareLength = compareTo.length;
+		return compareTo.length >= value.length ? value === compareTo.substring(compareLength - valLength) : false;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, CONTAINS, function (value, compareTo) {
+		var result = void 0;
+
+		if (!value || !compareTo) result = false;else result = compareTo.indexOf(value) !== -1;
+
+		return result;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, NOTCONTAINS, function (value, compareTo) {
+		var result = void 0;
+
+		if (!value || !compareTo) result = false;else result = compareTo.indexOf(value) === -1;
+
+		return result;
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, EMPTY, function (value, compareTo) {
+		var result = void 0;
+
+		if (value !== 'yes' && value !== 'no' || compareTo === null || compareTo.length === undefined) return false;
+
+		if (value === 'yes') {
+			result = compareTo.length === 0;
+		} else {
+			result = compareTo.length > 0;
+		}
+
+		return result;
+	}), _BIGGERTHAN$LOWERTHAN);
+	module.exports = exports['default'];
+
+/***/ },
+/* 91 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+
+	var _moment = __webpack_require__(88);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(141);
+	var _numeral = __webpack_require__(92);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -20763,13 +19718,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 140 */
-/***/ function(module, exports) {
-
-	module.exports = moment;
-
-/***/ },
-/* 141 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -21454,7 +20403,1462 @@ var ProperTable =
 
 
 /***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(94)() ? Set : __webpack_require__(95);
+
+
+/***/ },
+/* 94 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var set, iterator, result;
+		if (typeof Set !== 'function') return false;
+		set = new Set(['raz', 'dwa', 'trzy']);
+		if (String(set) !== '[object Set]') return false;
+		if (set.size !== 3) return false;
+		if (typeof set.add !== 'function') return false;
+		if (typeof set.clear !== 'function') return false;
+		if (typeof set.delete !== 'function') return false;
+		if (typeof set.entries !== 'function') return false;
+		if (typeof set.forEach !== 'function') return false;
+		if (typeof set.has !== 'function') return false;
+		if (typeof set.keys !== 'function') return false;
+		if (typeof set.values !== 'function') return false;
+
+		iterator = set.values();
+		result = iterator.next();
+		if (result.done !== false) return false;
+		if (result.value !== 'raz') return false;
+
+		return true;
+	};
+
+
+/***/ },
+/* 95 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var clear          = __webpack_require__(96)
+	  , eIndexOf       = __webpack_require__(98)
+	  , setPrototypeOf = __webpack_require__(104)
+	  , callable       = __webpack_require__(109)
+	  , d              = __webpack_require__(110)
+	  , ee             = __webpack_require__(122)
+	  , Symbol         = __webpack_require__(123)
+	  , iterator       = __webpack_require__(128)
+	  , forOf          = __webpack_require__(132)
+	  , Iterator       = __webpack_require__(142)
+	  , isNative       = __webpack_require__(143)
+
+	  , call = Function.prototype.call
+	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
+	  , SetPoly, getValues, NativeSet;
+
+	if (isNative) NativeSet = Set;
+
+	module.exports = SetPoly = function Set(/*iterable*/) {
+		var iterable = arguments[0], self;
+		if (!(this instanceof SetPoly)) throw new TypeError('Constructor requires \'new\'');
+		if (isNative && setPrototypeOf) self = setPrototypeOf(new NativeSet(), getPrototypeOf(this));
+		else self = this;
+		if (iterable != null) iterator(iterable);
+		defineProperty(self, '__setData__', d('c', []));
+		if (!iterable) return self;
+		forOf(iterable, function (value) {
+			if (eIndexOf.call(this, value) !== -1) return;
+			this.push(value);
+		}, self.__setData__);
+		return self;
+	};
+
+	if (isNative) {
+		if (setPrototypeOf) setPrototypeOf(SetPoly, NativeSet);
+		SetPoly.prototype = Object.create(NativeSet.prototype, { constructor: d(SetPoly) });
+	}
+
+	ee(Object.defineProperties(SetPoly.prototype, {
+		add: d(function (value) {
+			if (this.has(value)) return this;
+			this.emit('_add', this.__setData__.push(value) - 1, value);
+			return this;
+		}),
+		clear: d(function () {
+			if (!this.__setData__.length) return;
+			clear.call(this.__setData__);
+			this.emit('_clear');
+		}),
+		delete: d(function (value) {
+			var index = eIndexOf.call(this.__setData__, value);
+			if (index === -1) return false;
+			this.__setData__.splice(index, 1);
+			this.emit('_delete', index, value);
+			return true;
+		}),
+		entries: d(function () { return new Iterator(this, 'key+value'); }),
+		forEach: d(function (cb/*, thisArg*/) {
+			var thisArg = arguments[1], iterator, result, value;
+			callable(cb);
+			iterator = this.values();
+			result = iterator._next();
+			while (result !== undefined) {
+				value = iterator._resolve(result);
+				call.call(cb, thisArg, value, value, this);
+				result = iterator._next();
+			}
+		}),
+		has: d(function (value) {
+			return (eIndexOf.call(this.__setData__, value) !== -1);
+		}),
+		keys: d(getValues = function () { return this.values(); }),
+		size: d.gs(function () { return this.__setData__.length; }),
+		values: d(function () { return new Iterator(this); }),
+		toString: d(function () { return '[object Set]'; })
+	}));
+	defineProperty(SetPoly.prototype, Symbol.iterator, d(getValues));
+	defineProperty(SetPoly.prototype, Symbol.toStringTag, d('c', 'Set'));
+
+
+/***/ },
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Inspired by Google Closure:
+	// http://closure-library.googlecode.com/svn/docs/
+	// closure_goog_array_array.js.html#goog.array.clear
+
+	'use strict';
+
+	var value = __webpack_require__(97);
+
+	module.exports = function () {
+		value(this).length = 0;
+		return this;
+	};
+
+
+/***/ },
+/* 97 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (value) {
+		if (value == null) throw new TypeError("Cannot use null or undefined");
+		return value;
+	};
+
+
+/***/ },
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toPosInt = __webpack_require__(99)
+	  , value    = __webpack_require__(97)
+
+	  , indexOf = Array.prototype.indexOf
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , abs = Math.abs, floor = Math.floor;
+
+	module.exports = function (searchElement/*, fromIndex*/) {
+		var i, l, fromIndex, val;
+		if (searchElement === searchElement) { //jslint: ignore
+			return indexOf.apply(this, arguments);
+		}
+
+		l = toPosInt(value(this).length);
+		fromIndex = arguments[1];
+		if (isNaN(fromIndex)) fromIndex = 0;
+		else if (fromIndex >= 0) fromIndex = floor(fromIndex);
+		else fromIndex = toPosInt(this.length) - floor(abs(fromIndex));
+
+		for (i = fromIndex; i < l; ++i) {
+			if (hasOwnProperty.call(this, i)) {
+				val = this[i];
+				if (val !== val) return i; //jslint: ignore
+			}
+		}
+		return -1;
+	};
+
+
+/***/ },
+/* 99 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toInteger = __webpack_require__(100)
+
+	  , max = Math.max;
+
+	module.exports = function (value) { return max(0, toInteger(value)); };
+
+
+/***/ },
+/* 100 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var sign = __webpack_require__(101)
+
+	  , abs = Math.abs, floor = Math.floor;
+
+	module.exports = function (value) {
+		if (isNaN(value)) return 0;
+		value = Number(value);
+		if ((value === 0) || !isFinite(value)) return value;
+		return sign(value) * floor(abs(value));
+	};
+
+
+/***/ },
+/* 101 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(102)()
+		? Math.sign
+		: __webpack_require__(103);
+
+
+/***/ },
+/* 102 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var sign = Math.sign;
+		if (typeof sign !== 'function') return false;
+		return ((sign(10) === 1) && (sign(-20) === -1));
+	};
+
+
+/***/ },
+/* 103 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (value) {
+		value = Number(value);
+		if (isNaN(value) || (value === 0)) return value;
+		return (value > 0) ? 1 : -1;
+	};
+
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(105)()
+		? Object.setPrototypeOf
+		: __webpack_require__(106);
+
+
+/***/ },
+/* 105 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var create = Object.create, getPrototypeOf = Object.getPrototypeOf
+	  , x = {};
+
+	module.exports = function (/*customCreate*/) {
+		var setPrototypeOf = Object.setPrototypeOf
+		  , customCreate = arguments[0] || create;
+		if (typeof setPrototypeOf !== 'function') return false;
+		return getPrototypeOf(setPrototypeOf(customCreate(null), x)) === x;
+	};
+
+
+/***/ },
+/* 106 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Big thanks to @WebReflection for sorting this out
+	// https://gist.github.com/WebReflection/5593554
+
+	'use strict';
+
+	var isObject      = __webpack_require__(107)
+	  , value         = __webpack_require__(97)
+
+	  , isPrototypeOf = Object.prototype.isPrototypeOf
+	  , defineProperty = Object.defineProperty
+	  , nullDesc = { configurable: true, enumerable: false, writable: true,
+			value: undefined }
+	  , validate;
+
+	validate = function (obj, prototype) {
+		value(obj);
+		if ((prototype === null) || isObject(prototype)) return obj;
+		throw new TypeError('Prototype must be null or an object');
+	};
+
+	module.exports = (function (status) {
+		var fn, set;
+		if (!status) return null;
+		if (status.level === 2) {
+			if (status.set) {
+				set = status.set;
+				fn = function (obj, prototype) {
+					set.call(validate(obj, prototype), prototype);
+					return obj;
+				};
+			} else {
+				fn = function (obj, prototype) {
+					validate(obj, prototype).__proto__ = prototype;
+					return obj;
+				};
+			}
+		} else {
+			fn = function self(obj, prototype) {
+				var isNullBase;
+				validate(obj, prototype);
+				isNullBase = isPrototypeOf.call(self.nullPolyfill, obj);
+				if (isNullBase) delete self.nullPolyfill.__proto__;
+				if (prototype === null) prototype = self.nullPolyfill;
+				obj.__proto__ = prototype;
+				if (isNullBase) defineProperty(self.nullPolyfill, '__proto__', nullDesc);
+				return obj;
+			};
+		}
+		return Object.defineProperty(fn, 'level', { configurable: false,
+			enumerable: false, writable: false, value: status.level });
+	}((function () {
+		var x = Object.create(null), y = {}, set
+		  , desc = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__');
+
+		if (desc) {
+			try {
+				set = desc.set; // Opera crashes at this point
+				set.call(x, y);
+			} catch (ignore) { }
+			if (Object.getPrototypeOf(x) === y) return { set: set, level: 2 };
+		}
+
+		x.__proto__ = y;
+		if (Object.getPrototypeOf(x) === y) return { level: 2 };
+
+		x = {};
+		x.__proto__ = y;
+		if (Object.getPrototypeOf(x) === y) return { level: 1 };
+
+		return false;
+	}())));
+
+	__webpack_require__(108);
+
+
+/***/ },
+/* 107 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var map = { function: true, object: true };
+
+	module.exports = function (x) {
+		return ((x != null) && map[typeof x]) || false;
+	};
+
+
+/***/ },
+/* 108 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
+
+	'use strict';
+
+	var create = Object.create, shim;
+
+	if (!__webpack_require__(105)()) {
+		shim = __webpack_require__(106);
+	}
+
+	module.exports = (function () {
+		var nullObject, props, desc;
+		if (!shim) return create;
+		if (shim.level !== 1) return create;
+
+		nullObject = {};
+		props = {};
+		desc = { configurable: false, enumerable: false, writable: true,
+			value: undefined };
+		Object.getOwnPropertyNames(Object.prototype).forEach(function (name) {
+			if (name === '__proto__') {
+				props[name] = { configurable: true, enumerable: false, writable: true,
+					value: undefined };
+				return;
+			}
+			props[name] = desc;
+		});
+		Object.defineProperties(nullObject, props);
+
+		Object.defineProperty(shim, 'nullPolyfill', { configurable: false,
+			enumerable: false, writable: false, value: nullObject });
+
+		return function (prototype, props) {
+			return create((prototype === null) ? nullObject : prototype, props);
+		};
+	}());
+
+
+/***/ },
+/* 109 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (fn) {
+		if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+		return fn;
+	};
+
+
+/***/ },
+/* 110 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var assign        = __webpack_require__(111)
+	  , normalizeOpts = __webpack_require__(117)
+	  , isCallable    = __webpack_require__(118)
+	  , contains      = __webpack_require__(119)
+
+	  , d;
+
+	d = module.exports = function (dscr, value/*, options*/) {
+		var c, e, w, options, desc;
+		if ((arguments.length < 2) || (typeof dscr !== 'string')) {
+			options = value;
+			value = dscr;
+			dscr = null;
+		} else {
+			options = arguments[2];
+		}
+		if (dscr == null) {
+			c = w = true;
+			e = false;
+		} else {
+			c = contains.call(dscr, 'c');
+			e = contains.call(dscr, 'e');
+			w = contains.call(dscr, 'w');
+		}
+
+		desc = { value: value, configurable: c, enumerable: e, writable: w };
+		return !options ? desc : assign(normalizeOpts(options), desc);
+	};
+
+	d.gs = function (dscr, get, set/*, options*/) {
+		var c, e, options, desc;
+		if (typeof dscr !== 'string') {
+			options = set;
+			set = get;
+			get = dscr;
+			dscr = null;
+		} else {
+			options = arguments[3];
+		}
+		if (get == null) {
+			get = undefined;
+		} else if (!isCallable(get)) {
+			options = get;
+			get = set = undefined;
+		} else if (set == null) {
+			set = undefined;
+		} else if (!isCallable(set)) {
+			options = set;
+			set = undefined;
+		}
+		if (dscr == null) {
+			c = true;
+			e = false;
+		} else {
+			c = contains.call(dscr, 'c');
+			e = contains.call(dscr, 'e');
+		}
+
+		desc = { get: get, set: set, configurable: c, enumerable: e };
+		return !options ? desc : assign(normalizeOpts(options), desc);
+	};
+
+
+/***/ },
+/* 111 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(112)()
+		? Object.assign
+		: __webpack_require__(113);
+
+
+/***/ },
+/* 112 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var assign = Object.assign, obj;
+		if (typeof assign !== 'function') return false;
+		obj = { foo: 'raz' };
+		assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
+		return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+	};
+
+
+/***/ },
+/* 113 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var keys  = __webpack_require__(114)
+	  , value = __webpack_require__(97)
+
+	  , max = Math.max;
+
+	module.exports = function (dest, src/*, …srcn*/) {
+		var error, i, l = max(arguments.length, 2), assign;
+		dest = Object(value(dest));
+		assign = function (key) {
+			try { dest[key] = src[key]; } catch (e) {
+				if (!error) error = e;
+			}
+		};
+		for (i = 1; i < l; ++i) {
+			src = arguments[i];
+			keys(src).forEach(assign);
+		}
+		if (error !== undefined) throw error;
+		return dest;
+	};
+
+
+/***/ },
+/* 114 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(115)()
+		? Object.keys
+		: __webpack_require__(116);
+
+
+/***/ },
+/* 115 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		try {
+			Object.keys('primitive');
+			return true;
+		} catch (e) { return false; }
+	};
+
+
+/***/ },
+/* 116 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var keys = Object.keys;
+
+	module.exports = function (object) {
+		return keys(object == null ? object : Object(object));
+	};
+
+
+/***/ },
+/* 117 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var forEach = Array.prototype.forEach, create = Object.create;
+
+	var process = function (src, obj) {
+		var key;
+		for (key in src) obj[key] = src[key];
+	};
+
+	module.exports = function (options/*, …options*/) {
+		var result = create(null);
+		forEach.call(arguments, function (options) {
+			if (options == null) return;
+			process(Object(options), result);
+		});
+		return result;
+	};
+
+
+/***/ },
+/* 118 */
+/***/ function(module, exports) {
+
+	// Deprecated
+
+	'use strict';
+
+	module.exports = function (obj) { return typeof obj === 'function'; };
+
+
+/***/ },
+/* 119 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(120)()
+		? String.prototype.contains
+		: __webpack_require__(121);
+
+
+/***/ },
+/* 120 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var str = 'razdwatrzy';
+
+	module.exports = function () {
+		if (typeof str.contains !== 'function') return false;
+		return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+	};
+
+
+/***/ },
+/* 121 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var indexOf = String.prototype.indexOf;
+
+	module.exports = function (searchString/*, position*/) {
+		return indexOf.call(this, searchString, arguments[1]) > -1;
+	};
+
+
+/***/ },
+/* 122 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var d        = __webpack_require__(110)
+	  , callable = __webpack_require__(109)
+
+	  , apply = Function.prototype.apply, call = Function.prototype.call
+	  , create = Object.create, defineProperty = Object.defineProperty
+	  , defineProperties = Object.defineProperties
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , descriptor = { configurable: true, enumerable: false, writable: true }
+
+	  , on, once, off, emit, methods, descriptors, base;
+
+	on = function (type, listener) {
+		var data;
+
+		callable(listener);
+
+		if (!hasOwnProperty.call(this, '__ee__')) {
+			data = descriptor.value = create(null);
+			defineProperty(this, '__ee__', descriptor);
+			descriptor.value = null;
+		} else {
+			data = this.__ee__;
+		}
+		if (!data[type]) data[type] = listener;
+		else if (typeof data[type] === 'object') data[type].push(listener);
+		else data[type] = [data[type], listener];
+
+		return this;
+	};
+
+	once = function (type, listener) {
+		var once, self;
+
+		callable(listener);
+		self = this;
+		on.call(this, type, once = function () {
+			off.call(self, type, once);
+			apply.call(listener, this, arguments);
+		});
+
+		once.__eeOnceListener__ = listener;
+		return this;
+	};
+
+	off = function (type, listener) {
+		var data, listeners, candidate, i;
+
+		callable(listener);
+
+		if (!hasOwnProperty.call(this, '__ee__')) return this;
+		data = this.__ee__;
+		if (!data[type]) return this;
+		listeners = data[type];
+
+		if (typeof listeners === 'object') {
+			for (i = 0; (candidate = listeners[i]); ++i) {
+				if ((candidate === listener) ||
+						(candidate.__eeOnceListener__ === listener)) {
+					if (listeners.length === 2) data[type] = listeners[i ? 0 : 1];
+					else listeners.splice(i, 1);
+				}
+			}
+		} else {
+			if ((listeners === listener) ||
+					(listeners.__eeOnceListener__ === listener)) {
+				delete data[type];
+			}
+		}
+
+		return this;
+	};
+
+	emit = function (type) {
+		var i, l, listener, listeners, args;
+
+		if (!hasOwnProperty.call(this, '__ee__')) return;
+		listeners = this.__ee__[type];
+		if (!listeners) return;
+
+		if (typeof listeners === 'object') {
+			l = arguments.length;
+			args = new Array(l - 1);
+			for (i = 1; i < l; ++i) args[i - 1] = arguments[i];
+
+			listeners = listeners.slice();
+			for (i = 0; (listener = listeners[i]); ++i) {
+				apply.call(listener, this, args);
+			}
+		} else {
+			switch (arguments.length) {
+			case 1:
+				call.call(listeners, this);
+				break;
+			case 2:
+				call.call(listeners, this, arguments[1]);
+				break;
+			case 3:
+				call.call(listeners, this, arguments[1], arguments[2]);
+				break;
+			default:
+				l = arguments.length;
+				args = new Array(l - 1);
+				for (i = 1; i < l; ++i) {
+					args[i - 1] = arguments[i];
+				}
+				apply.call(listeners, this, args);
+			}
+		}
+	};
+
+	methods = {
+		on: on,
+		once: once,
+		off: off,
+		emit: emit
+	};
+
+	descriptors = {
+		on: d(on),
+		once: d(once),
+		off: d(off),
+		emit: d(emit)
+	};
+
+	base = defineProperties({}, descriptors);
+
+	module.exports = exports = function (o) {
+		return (o == null) ? create(base) : defineProperties(Object(o), descriptors);
+	};
+	exports.methods = methods;
+
+
+/***/ },
+/* 123 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(124)() ? Symbol : __webpack_require__(125);
+
+
+/***/ },
+/* 124 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var symbol;
+		if (typeof Symbol !== 'function') return false;
+		symbol = Symbol('test symbol');
+		try { String(symbol); } catch (e) { return false; }
+		if (typeof Symbol.iterator === 'symbol') return true;
+
+		// Return 'true' for polyfills
+		if (typeof Symbol.isConcatSpreadable !== 'object') return false;
+		if (typeof Symbol.iterator !== 'object') return false;
+		if (typeof Symbol.toPrimitive !== 'object') return false;
+		if (typeof Symbol.toStringTag !== 'object') return false;
+		if (typeof Symbol.unscopables !== 'object') return false;
+
+		return true;
+	};
+
+
+/***/ },
+/* 125 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
+
+	'use strict';
+
+	var d              = __webpack_require__(110)
+	  , validateSymbol = __webpack_require__(126)
+
+	  , create = Object.create, defineProperties = Object.defineProperties
+	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
+	  , NativeSymbol, SymbolPolyfill, HiddenSymbol, globalSymbols = create(null);
+
+	if (typeof Symbol === 'function') NativeSymbol = Symbol;
+
+	var generateName = (function () {
+		var created = create(null);
+		return function (desc) {
+			var postfix = 0, name, ie11BugWorkaround;
+			while (created[desc + (postfix || '')]) ++postfix;
+			desc += (postfix || '');
+			created[desc] = true;
+			name = '@@' + desc;
+			defineProperty(objPrototype, name, d.gs(null, function (value) {
+				// For IE11 issue see:
+				// https://connect.microsoft.com/IE/feedbackdetail/view/1928508/
+				//    ie11-broken-getters-on-dom-objects
+				// https://github.com/medikoo/es6-symbol/issues/12
+				if (ie11BugWorkaround) return;
+				ie11BugWorkaround = true;
+				defineProperty(this, name, d(value));
+				ie11BugWorkaround = false;
+			}));
+			return name;
+		};
+	}());
+
+	// Internal constructor (not one exposed) for creating Symbol instances.
+	// This one is used to ensure that `someSymbol instanceof Symbol` always return false
+	HiddenSymbol = function Symbol(description) {
+		if (this instanceof HiddenSymbol) throw new TypeError('TypeError: Symbol is not a constructor');
+		return SymbolPolyfill(description);
+	};
+
+	// Exposed `Symbol` constructor
+	// (returns instances of HiddenSymbol)
+	module.exports = SymbolPolyfill = function Symbol(description) {
+		var symbol;
+		if (this instanceof Symbol) throw new TypeError('TypeError: Symbol is not a constructor');
+		symbol = create(HiddenSymbol.prototype);
+		description = (description === undefined ? '' : String(description));
+		return defineProperties(symbol, {
+			__description__: d('', description),
+			__name__: d('', generateName(description))
+		});
+	};
+	defineProperties(SymbolPolyfill, {
+		for: d(function (key) {
+			if (globalSymbols[key]) return globalSymbols[key];
+			return (globalSymbols[key] = SymbolPolyfill(String(key)));
+		}),
+		keyFor: d(function (s) {
+			var key;
+			validateSymbol(s);
+			for (key in globalSymbols) if (globalSymbols[key] === s) return key;
+		}),
+
+		// If there's native implementation of given symbol, let's fallback to it
+		// to ensure proper interoperability with other native functions e.g. Array.from
+		hasInstance: d('', (NativeSymbol && NativeSymbol.hasInstance) || SymbolPolyfill('hasInstance')),
+		isConcatSpreadable: d('', (NativeSymbol && NativeSymbol.isConcatSpreadable) ||
+			SymbolPolyfill('isConcatSpreadable')),
+		iterator: d('', (NativeSymbol && NativeSymbol.iterator) || SymbolPolyfill('iterator')),
+		match: d('', (NativeSymbol && NativeSymbol.match) || SymbolPolyfill('match')),
+		replace: d('', (NativeSymbol && NativeSymbol.replace) || SymbolPolyfill('replace')),
+		search: d('', (NativeSymbol && NativeSymbol.search) || SymbolPolyfill('search')),
+		species: d('', (NativeSymbol && NativeSymbol.species) || SymbolPolyfill('species')),
+		split: d('', (NativeSymbol && NativeSymbol.split) || SymbolPolyfill('split')),
+		toPrimitive: d('', (NativeSymbol && NativeSymbol.toPrimitive) || SymbolPolyfill('toPrimitive')),
+		toStringTag: d('', (NativeSymbol && NativeSymbol.toStringTag) || SymbolPolyfill('toStringTag')),
+		unscopables: d('', (NativeSymbol && NativeSymbol.unscopables) || SymbolPolyfill('unscopables'))
+	});
+
+	// Internal tweaks for real symbol producer
+	defineProperties(HiddenSymbol.prototype, {
+		constructor: d(SymbolPolyfill),
+		toString: d('', function () { return this.__name__; })
+	});
+
+	// Proper implementation of methods exposed on Symbol.prototype
+	// They won't be accessible on produced symbol instances as they derive from HiddenSymbol.prototype
+	defineProperties(SymbolPolyfill.prototype, {
+		toString: d(function () { return 'Symbol (' + validateSymbol(this).__description__ + ')'; }),
+		valueOf: d(function () { return validateSymbol(this); })
+	});
+	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toPrimitive, d('',
+		function () { return validateSymbol(this); }));
+	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toStringTag, d('c', 'Symbol'));
+
+	// Proper implementaton of toPrimitive and toStringTag for returned symbol instances
+	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toStringTag,
+		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toStringTag]));
+
+	// Note: It's important to define `toPrimitive` as last one, as some implementations
+	// implement `toPrimitive` natively without implementing `toStringTag` (or other specified symbols)
+	// And that may invoke error in definition flow:
+	// See: https://github.com/medikoo/es6-symbol/issues/13#issuecomment-164146149
+	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toPrimitive,
+		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toPrimitive]));
+
+
+/***/ },
+/* 126 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isSymbol = __webpack_require__(127);
+
+	module.exports = function (value) {
+		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
+		return value;
+	};
+
+
+/***/ },
+/* 127 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (x) {
+		return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
+	};
+
+
+/***/ },
+/* 128 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isIterable = __webpack_require__(129);
+
+	module.exports = function (value) {
+		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
+		return value;
+	};
+
+
+/***/ },
+/* 129 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments    = __webpack_require__(130)
+	  , isString       = __webpack_require__(131)
+	  , iteratorSymbol = __webpack_require__(123).iterator
+
+	  , isArray = Array.isArray;
+
+	module.exports = function (value) {
+		if (value == null) return false;
+		if (isArray(value)) return true;
+		if (isString(value)) return true;
+		if (isArguments(value)) return true;
+		return (typeof value[iteratorSymbol] === 'function');
+	};
+
+
+/***/ },
+/* 130 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var toString = Object.prototype.toString
+
+	  , id = toString.call((function () { return arguments; }()));
+
+	module.exports = function (x) { return (toString.call(x) === id); };
+
+
+/***/ },
+/* 131 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var toString = Object.prototype.toString
+
+	  , id = toString.call('');
+
+	module.exports = function (x) {
+		return (typeof x === 'string') || (x && (typeof x === 'object') &&
+			((x instanceof String) || (toString.call(x) === id))) || false;
+	};
+
+
+/***/ },
+/* 132 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments = __webpack_require__(130)
+	  , callable    = __webpack_require__(109)
+	  , isString    = __webpack_require__(131)
+	  , get         = __webpack_require__(133)
+
+	  , isArray = Array.isArray, call = Function.prototype.call
+	  , some = Array.prototype.some;
+
+	module.exports = function (iterable, cb/*, thisArg*/) {
+		var mode, thisArg = arguments[2], result, doBreak, broken, i, l, char, code;
+		if (isArray(iterable) || isArguments(iterable)) mode = 'array';
+		else if (isString(iterable)) mode = 'string';
+		else iterable = get(iterable);
+
+		callable(cb);
+		doBreak = function () { broken = true; };
+		if (mode === 'array') {
+			some.call(iterable, function (value) {
+				call.call(cb, thisArg, value, doBreak);
+				if (broken) return true;
+			});
+			return;
+		}
+		if (mode === 'string') {
+			l = iterable.length;
+			for (i = 0; i < l; ++i) {
+				char = iterable[i];
+				if ((i + 1) < l) {
+					code = char.charCodeAt(0);
+					if ((code >= 0xD800) && (code <= 0xDBFF)) char += iterable[++i];
+				}
+				call.call(cb, thisArg, char, doBreak);
+				if (broken) break;
+			}
+			return;
+		}
+		result = iterable.next();
+
+		while (!result.done) {
+			call.call(cb, thisArg, result.value, doBreak);
+			if (broken) return;
+			result = iterable.next();
+		}
+	};
+
+
+/***/ },
+/* 133 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments    = __webpack_require__(130)
+	  , isString       = __webpack_require__(131)
+	  , ArrayIterator  = __webpack_require__(134)
+	  , StringIterator = __webpack_require__(141)
+	  , iterable       = __webpack_require__(128)
+	  , iteratorSymbol = __webpack_require__(123).iterator;
+
+	module.exports = function (obj) {
+		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
+		if (isArguments(obj)) return new ArrayIterator(obj);
+		if (isString(obj)) return new StringIterator(obj);
+		return new ArrayIterator(obj);
+	};
+
+
+/***/ },
+/* 134 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var setPrototypeOf = __webpack_require__(104)
+	  , contains       = __webpack_require__(119)
+	  , d              = __webpack_require__(110)
+	  , Iterator       = __webpack_require__(135)
+
+	  , defineProperty = Object.defineProperty
+	  , ArrayIterator;
+
+	ArrayIterator = module.exports = function (arr, kind) {
+		if (!(this instanceof ArrayIterator)) return new ArrayIterator(arr, kind);
+		Iterator.call(this, arr);
+		if (!kind) kind = 'value';
+		else if (contains.call(kind, 'key+value')) kind = 'key+value';
+		else if (contains.call(kind, 'key')) kind = 'key';
+		else kind = 'value';
+		defineProperty(this, '__kind__', d('', kind));
+	};
+	if (setPrototypeOf) setPrototypeOf(ArrayIterator, Iterator);
+
+	ArrayIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(ArrayIterator),
+		_resolve: d(function (i) {
+			if (this.__kind__ === 'value') return this.__list__[i];
+			if (this.__kind__ === 'key+value') return [i, this.__list__[i]];
+			return i;
+		}),
+		toString: d(function () { return '[object Array Iterator]'; })
+	});
+
+
+/***/ },
+/* 135 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var clear    = __webpack_require__(96)
+	  , assign   = __webpack_require__(111)
+	  , callable = __webpack_require__(109)
+	  , value    = __webpack_require__(97)
+	  , d        = __webpack_require__(110)
+	  , autoBind = __webpack_require__(136)
+	  , Symbol   = __webpack_require__(123)
+
+	  , defineProperty = Object.defineProperty
+	  , defineProperties = Object.defineProperties
+	  , Iterator;
+
+	module.exports = Iterator = function (list, context) {
+		if (!(this instanceof Iterator)) return new Iterator(list, context);
+		defineProperties(this, {
+			__list__: d('w', value(list)),
+			__context__: d('w', context),
+			__nextIndex__: d('w', 0)
+		});
+		if (!context) return;
+		callable(context.on);
+		context.on('_add', this._onAdd);
+		context.on('_delete', this._onDelete);
+		context.on('_clear', this._onClear);
+	};
+
+	defineProperties(Iterator.prototype, assign({
+		constructor: d(Iterator),
+		_next: d(function () {
+			var i;
+			if (!this.__list__) return;
+			if (this.__redo__) {
+				i = this.__redo__.shift();
+				if (i !== undefined) return i;
+			}
+			if (this.__nextIndex__ < this.__list__.length) return this.__nextIndex__++;
+			this._unBind();
+		}),
+		next: d(function () { return this._createResult(this._next()); }),
+		_createResult: d(function (i) {
+			if (i === undefined) return { done: true, value: undefined };
+			return { done: false, value: this._resolve(i) };
+		}),
+		_resolve: d(function (i) { return this.__list__[i]; }),
+		_unBind: d(function () {
+			this.__list__ = null;
+			delete this.__redo__;
+			if (!this.__context__) return;
+			this.__context__.off('_add', this._onAdd);
+			this.__context__.off('_delete', this._onDelete);
+			this.__context__.off('_clear', this._onClear);
+			this.__context__ = null;
+		}),
+		toString: d(function () { return '[object Iterator]'; })
+	}, autoBind({
+		_onAdd: d(function (index) {
+			if (index >= this.__nextIndex__) return;
+			++this.__nextIndex__;
+			if (!this.__redo__) {
+				defineProperty(this, '__redo__', d('c', [index]));
+				return;
+			}
+			this.__redo__.forEach(function (redo, i) {
+				if (redo >= index) this.__redo__[i] = ++redo;
+			}, this);
+			this.__redo__.push(index);
+		}),
+		_onDelete: d(function (index) {
+			var i;
+			if (index >= this.__nextIndex__) return;
+			--this.__nextIndex__;
+			if (!this.__redo__) return;
+			i = this.__redo__.indexOf(index);
+			if (i !== -1) this.__redo__.splice(i, 1);
+			this.__redo__.forEach(function (redo, i) {
+				if (redo > index) this.__redo__[i] = --redo;
+			}, this);
+		}),
+		_onClear: d(function () {
+			if (this.__redo__) clear.call(this.__redo__);
+			this.__nextIndex__ = 0;
+		})
+	})));
+
+	defineProperty(Iterator.prototype, Symbol.iterator, d(function () {
+		return this;
+	}));
+	defineProperty(Iterator.prototype, Symbol.toStringTag, d('', 'Iterator'));
+
+
+/***/ },
+/* 136 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var copy       = __webpack_require__(137)
+	  , map        = __webpack_require__(138)
+	  , callable   = __webpack_require__(109)
+	  , validValue = __webpack_require__(97)
+
+	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , define;
+
+	define = function (name, desc, bindTo) {
+		var value = validValue(desc) && callable(desc.value), dgs;
+		dgs = copy(desc);
+		delete dgs.writable;
+		delete dgs.value;
+		dgs.get = function () {
+			if (hasOwnProperty.call(this, name)) return value;
+			desc.value = bind.call(value, (bindTo == null) ? this : this[bindTo]);
+			defineProperty(this, name, desc);
+			return this[name];
+		};
+		return dgs;
+	};
+
+	module.exports = function (props/*, bindTo*/) {
+		var bindTo = arguments[1];
+		return map(props, function (desc, name) {
+			return define(name, desc, bindTo);
+		});
+	};
+
+
+/***/ },
+/* 137 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var assign = __webpack_require__(111)
+	  , value  = __webpack_require__(97);
+
+	module.exports = function (obj) {
+		var copy = Object(value(obj));
+		if (copy !== obj) return copy;
+		return assign({}, obj);
+	};
+
+
+/***/ },
+/* 138 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var callable = __webpack_require__(109)
+	  , forEach  = __webpack_require__(139)
+
+	  , call = Function.prototype.call;
+
+	module.exports = function (obj, cb/*, thisArg*/) {
+		var o = {}, thisArg = arguments[2];
+		callable(cb);
+		forEach(obj, function (value, key, obj, index) {
+			o[key] = call.call(cb, thisArg, value, key, obj, index);
+		});
+		return o;
+	};
+
+
+/***/ },
+/* 139 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(140)('forEach');
+
+
+/***/ },
+/* 140 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Internal method, used by iteration functions.
+	// Calls a function for each key-value pair found in object
+	// Optionally takes compareFn to iterate object in specific order
+
+	'use strict';
+
+	var callable = __webpack_require__(109)
+	  , value    = __webpack_require__(97)
+
+	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
+	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	module.exports = function (method, defVal) {
+		return function (obj, cb/*, thisArg, compareFn*/) {
+			var list, thisArg = arguments[2], compareFn = arguments[3];
+			obj = Object(value(obj));
+			callable(cb);
+
+			list = keys(obj);
+			if (compareFn) {
+				list.sort((typeof compareFn === 'function') ? bind.call(compareFn, obj) : undefined);
+			}
+			if (typeof method !== 'function') method = list[method];
+			return call.call(method, list, function (key, index) {
+				if (!propertyIsEnumerable.call(obj, key)) return defVal;
+				return call.call(cb, thisArg, obj[key], key, obj, index);
+			});
+		};
+	};
+
+
+/***/ },
+/* 141 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Thanks @mathiasbynens
+	// http://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
+
+	'use strict';
+
+	var setPrototypeOf = __webpack_require__(104)
+	  , d              = __webpack_require__(110)
+	  , Iterator       = __webpack_require__(135)
+
+	  , defineProperty = Object.defineProperty
+	  , StringIterator;
+
+	StringIterator = module.exports = function (str) {
+		if (!(this instanceof StringIterator)) return new StringIterator(str);
+		str = String(str);
+		Iterator.call(this, str);
+		defineProperty(this, '__length__', d('', str.length));
+
+	};
+	if (setPrototypeOf) setPrototypeOf(StringIterator, Iterator);
+
+	StringIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(StringIterator),
+		_next: d(function () {
+			if (!this.__list__) return;
+			if (this.__nextIndex__ < this.__length__) return this.__nextIndex__++;
+			this._unBind();
+		}),
+		_resolve: d(function (i) {
+			var char = this.__list__[i], code;
+			if (this.__nextIndex__ === this.__length__) return char;
+			code = char.charCodeAt(0);
+			if ((code >= 0xD800) && (code <= 0xDBFF)) return char + this.__list__[this.__nextIndex__++];
+			return char;
+		}),
+		toString: d(function () { return '[object String Iterator]'; })
+	});
+
+
+/***/ },
 /* 142 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var setPrototypeOf    = __webpack_require__(104)
+	  , contains          = __webpack_require__(119)
+	  , d                 = __webpack_require__(110)
+	  , Iterator          = __webpack_require__(135)
+	  , toStringTagSymbol = __webpack_require__(123).toStringTag
+
+	  , defineProperty = Object.defineProperty
+	  , SetIterator;
+
+	SetIterator = module.exports = function (set, kind) {
+		if (!(this instanceof SetIterator)) return new SetIterator(set, kind);
+		Iterator.call(this, set.__setData__, set);
+		if (!kind) kind = 'value';
+		else if (contains.call(kind, 'key+value')) kind = 'key+value';
+		else kind = 'value';
+		defineProperty(this, '__kind__', d('', kind));
+	};
+	if (setPrototypeOf) setPrototypeOf(SetIterator, Iterator);
+
+	SetIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(SetIterator),
+		_resolve: d(function (i) {
+			if (this.__kind__ === 'value') return this.__list__[i];
+			return [this.__list__[i], this.__list__[i]];
+		}),
+		toString: d(function () { return '[object Set Iterator]'; })
+	});
+	defineProperty(SetIterator.prototype, toStringTagSymbol, d('c', 'Set Iterator'));
+
+
+/***/ },
+/* 143 */
+/***/ function(module, exports) {
+
+	// Exports true if environment provides native `Set` implementation,
+	// whatever that is.
+
+	'use strict';
+
+	module.exports = (function () {
+		if (typeof Set === 'undefined') return false;
+		return (Object.prototype.toString.call(Set.prototype) === '[object Set]');
+	}());
+
+
+/***/ },
+/* 144 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -21470,7 +21874,7 @@ var ProperTable =
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	var React = __webpack_require__(2);
-	var onElementResize = __webpack_require__(143);
+	var onElementResize = __webpack_require__(145);
 
 	var defaultContainerStyle = {
 	  width: '100%',
@@ -21631,13 +22035,30 @@ var ProperTable =
 	        value: function componentWillUnmount() {
 	          this.getWindow().removeEventListener('resize', this.onResize);
 	        }
+
+	        /**
+	         * Returns the underlying wrapped component instance.
+	         * Useful if you need to access a method or property of the component
+	         * passed to react-dimensions.
+	         *
+	         * @return {object} The rendered React component
+	         **/
+
+	      }, {
+	        key: 'getWrappedInstance',
+	        value: function getWrappedInstance() {
+	          this.refs.wrappedInstance;
+	        }
 	      }, {
 	        key: 'render',
 	        value: function render() {
 	          return React.createElement(
 	            'div',
 	            { style: containerStyle, ref: 'container' },
-	            (this.state.containerWidth || this.state.containerHeight) && React.createElement(ComposedComponent, _extends({}, this.state, this.props, { updateDimensions: this.updateDimensions }))
+	            (this.state.containerWidth || this.state.containerHeight) && React.createElement(ComposedComponent, _extends({}, this.state, this.props, {
+	              updateDimensions: this.updateDimensions,
+	              ref: 'wrappedInstance'
+	            }))
 	          );
 	        }
 	      }]);
@@ -21649,83 +22070,92 @@ var ProperTable =
 
 
 /***/ },
-/* 143 */
+/* 145 */
 /***/ function(module, exports) {
 
-	module.exports = function(element, fn) {
-	  var window = this;
-	  var document = window.document;
+	var exports = function exports(element, fn) {
+	  var window = this
+	  var document = window.document
+	  var isIE
+	  var requestFrame
 
-	  var attachEvent = document.attachEvent;
-	  if (typeof navigator !== "undefined") {
-	    var isIE = navigator.userAgent.match(/Trident/) || navigator.userAgent.match(/Edge/);
+	  var attachEvent = document.attachEvent
+	  if (typeof navigator !== 'undefined') {
+	    isIE = navigator.userAgent.match(/Trident/) || navigator.userAgent.match(/Edge/)
 	  }
 
-	  var requestFrame = (function() {
-	    var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || function(fn) {
-	        return window.setTimeout(fn, 20);
-	      };
-	    return function(fn) {
-	      return raf(fn);
-	    };
-	  })();
+	  requestFrame = (function () {
+	    var raf = window.requestAnimationFrame ||
+	      window.mozRequestAnimationFrame ||
+	        window.webkitRequestAnimationFrame ||
+	          function fallbackRAF(func) {
+	            return window.setTimeout(func, 20)
+	          }
+	    return function requestFrameFunction(func) {
+	      return raf(func)
+	    }
+	  })()
 
-	  var cancelFrame = (function() {
-	    var cancel = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame ||
-	      window.clearTimeout;
-	    return function(id) {
-	      return cancel(id);
-	    };
-	  })();
+	  var cancelFrame = (function () {
+	    var cancel = window.cancelAnimationFrame ||
+	      window.mozCancelAnimationFrame ||
+	        window.webkitCancelAnimationFrame ||
+	          window.clearTimeout
+	    return function cancelFrameFunction(id) {
+	      return cancel(id)
+	    }
+	  })()
 
 	  function resizeListener(e) {
-	    var win = e.target || e.srcElement;
+	    var win = e.target || e.srcElement
 	    if (win.__resizeRAF__) {
-	      cancelFrame(win.__resizeRAF__);
+	      cancelFrame(win.__resizeRAF__)
 	    }
-	    win.__resizeRAF__ = requestFrame(function() {
-	      var trigger = win.__resizeTrigger__;
-	      trigger.__resizeListeners__.forEach(function(fn) {
-	        fn.call(trigger, e);
-	      });
-	    });
+	    win.__resizeRAF__ = requestFrame(function () {
+	      var trigger = win.__resizeTrigger__
+	      trigger.__resizeListeners__.forEach(function (fn) {
+	        fn.call(trigger, e)
+	      })
+	    })
 	  }
 
-	  function objectLoad(e) {
-	    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__;
-	    this.contentDocument.defaultView.addEventListener('resize', resizeListener);
+	  function objectLoad() {
+	    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__
+	    this.contentDocument.defaultView.addEventListener('resize', resizeListener)
 	  }
 
 	  if (!element.__resizeListeners__) {
-	    element.__resizeListeners__ = [];
+	    element.__resizeListeners__ = []
 	    if (attachEvent) {
-	      element.__resizeTrigger__ = element;
-	      element.attachEvent('onresize', resizeListener);
+	      element.__resizeTrigger__ = element
+	      element.attachEvent('onresize', resizeListener)
 	    } else {
-	      if (getComputedStyle(element).position == 'static') {
-	        element.style.position = 'relative';
+	      if (getComputedStyle(element).position === 'static') {
+	        element.style.position = 'relative'
 	      }
-	      var obj = element.__resizeTrigger__ = document.createElement('object');
-	      obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
-	      obj.setAttribute('class', 'resize-sensor');
-	      obj.__resizeElement__ = element;
-	      obj.onload = objectLoad;
-	      obj.type = 'text/html';
+	      var obj = element.__resizeTrigger__ = document.createElement('object')
+	      obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;')
+	      obj.setAttribute('class', 'resize-sensor')
+	      obj.__resizeElement__ = element
+	      obj.onload = objectLoad
+	      obj.type = 'text/html'
 	      if (isIE) {
-	        element.appendChild(obj);
+	        element.appendChild(obj)
 	      }
-	      obj.data = 'about:blank';
+	      obj.data = 'about:blank'
 	      if (!isIE) {
-	        element.appendChild(obj);
+	        element.appendChild(obj)
 	      }
 	    }
 	  }
-	  element.__resizeListeners__.push(fn);
-	};
+	  element.__resizeListeners__.push(fn)
+	}
+
+	module.exports = (typeof window === 'undefined') ? exports : exports.bind(window)
 
 
 /***/ },
-/* 144 */
+/* 146 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin

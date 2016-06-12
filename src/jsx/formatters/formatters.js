@@ -50,17 +50,4 @@ export default {
 
 		return result;
 	},
-	toUnix: function(value = null) {
-		if (value === null) {
-			return null;
-		}
-
-		let result = moment(value).unix();
-
-		if (result == 'Invalid date') {
-			return null;
-		}
-
-		return result;
-	},
 };

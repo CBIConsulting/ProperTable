@@ -11,7 +11,9 @@ import bs from 'binarysearch';
 import clone from 'clone';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
 import cache from '../lib/rowcache';
-import CUSTOM_FILTER_COMPARATORS from "../filterComparators/comparators";
+import moment from "moment";
+import normalizer from '../lib/normalizer';
+import comparators from "../filterComparators/comparators";
 
 //Const
 const SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
@@ -139,7 +141,8 @@ class ProperTable extends React.Component {
 		let somethingchanged = propschanged || statechanged;
 
 		if (propschanged) {
-			let colsChanged = !shallowEqualImmutable(nextProps.cols, this.props.cols);
+			let colsDeepCompare = this.deepColsCompare(nextProps.cols, this.props.cols);
+			let colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges;
 			let dataChanged = !shallowEqualImmutable(nextProps.data, this.props.data);
 			let colSortDirsChanged = nextProps.colSortDirs ? !shallowEqualImmutable(nextProps.colSortDirs, this.props.colSortDirs) : false;
 			let colFiltersChanged = nextProps.colFilters ? !shallowEqualImmutable(nextProps.colFilters, this.props.colFilters) : false;
@@ -148,9 +151,10 @@ class ProperTable extends React.Component {
 			// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
 			// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
 			if (colsChanged || dataChanged) {
-				cache.flush('formatted');
 
 				if (dataChanged && this.props.data.length > 0) { // The most probably case
+					cache.flush('formatted');
+
 					let colSettings = nextState.colSettings;
 					preparedData = this.prepareData(nextProps, nextState);
 
@@ -165,6 +169,8 @@ class ProperTable extends React.Component {
 					}, this.applySettings(nextState.colSettings, nextProps));
 
 				} else if ((colsChanged || this.props.data.length === 0) && dataChanged) {
+					cache.flush('formatted');
+
 					preparedData = this.prepareData(nextProps, nextState);
 					colData =  this.prepareColSettings(nextProps, preparedData.rawdata);
 
@@ -182,20 +188,35 @@ class ProperTable extends React.Component {
 					}, this.applySettings(colData.colSettings, nextProps, true, true, true));
 
 				} else if (colsChanged) {
-					let sortCache = [];
-					colData =  this.prepareColSettings(nextProps, this.state.rawdata);
+					if (colsDeepCompare.hasChangedDeeply) {
+						let sortCache = [];
 
-					// Restart cache
-					nextState.data.forEach(row => {
-						sortCache[row.get(this.props.idField)] = {};
-					});
+						cache.flush('formatted');
+						colData =  this.prepareColSettings(nextProps, this.state.rawdata);
 
-					this.setState({
-						colSettings: colData.colSettings,
-						colSortParsers: colData.colSortParsers,
-						cols: Immutable.fromJS(nextProps.cols),
-						sortCache: sortCache
-					}, this.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+						// Restart cache
+						nextState.data.forEach(row => {
+							sortCache[row.get(this.props.idField)] = {};
+						});
+
+						this.setState({
+							colSettings: colData.colSettings,
+							colSortParsers: colData.colSortParsers,
+							cols: Immutable.fromJS(nextProps.cols),
+							sortCache: sortCache
+						}, this.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+
+					} else {
+						let cols = this.state.cols;
+
+						_.each(colsDeepCompare.changedCols, (col, index) => {
+							cols = cols.set(index, Inmutable.fromJS(col));
+						});
+
+						this.setState({
+							cols: cols
+						});
+					}
 				}
 
 				return false;
@@ -240,6 +261,60 @@ class ProperTable extends React.Component {
 					this.addClickListener(newProps.restartOnClick);
 				}
 			}
+		}
+	}
+
+/**
+ * Check if cols has changed deeply. This function is made to optimize shouldComponentUpdate when the visibility or something
+ * like that has changed but it's not a big change, so colSettings still been the same. If has changed deeply then re-build the
+ * colSettings and restart sortCache, if it's just a small change like in class, label, isVisible, etc, then update the changed
+ * columns only.
+ *
+ * @param (array) 	nextCols		Next columns received by the table
+ * @param (array)	currentCols		The current columns of the table
+ *
+ * @return (object) result
+ *						- (boolean) hasChangedDeeply  	If has changed deeply
+ *						- (boolean) hasSmallChanges 	If the properties which could be updated in hot has changed. Class, fixed, isVisible...
+ * 						- (object)  changedCols 		Object with the changed cols indexed by the index (when it has just small changes)
+ */
+	deepColsCompare(nextCols, currentCols) {
+		let nextLength = nextCols.length, currentLength = currentCols.length, hasChangedDeeply = false, hasSmallChanges = false, changedCols = {};
+		let fixedChanged, classNameChanged, isVisibleChanged, labelChanged, somethingchanged, curCol;
+
+		if (currentCols.length !== nextCols.length) {
+			hasChangedDeeply = true;
+		} else {
+			_.every(nextCols, (col, index) => {
+				curCol = currentCols[index];
+
+				if (col.name !== curCol.name || col.field !== curCol.field || col.sortable !== curCol.sortable ||  col.uniqueId !== curCol.uniqueId
+					|| !shallowEqualImmutable(col.formatter, curCol.formatter) || !shallowEqualImmutable(col.sortVal, curCol.sortVal)
+					|| !shallowEqualImmutable(col.children, curCol.children)) {
+
+					hasChangedDeeply = true;
+					return false; // Break
+				}
+
+				fixedChanged = col.fixed !== curCol.fixed;
+				classNameChanged = col.className !== curCol.className;
+				isVisibleChanged = col.isVisible !== curCol.isVisible;
+				labelChanged = !shallowEqualImmutable(col.label, curCol.label);
+				somethingchanged = fixedChanged || classNameChanged || isVisibleChanged || labelChanged;
+
+				if (somethingchanged) {
+					changedCols[index] = _.clone(col);
+					hasSmallChanges = true;
+				}
+
+				return true; // Next
+			});
+		}
+
+		return {
+			hasChangedDeeply: hasChangedDeeply,
+			hasSmallChanges: hasSmallChanges,
+			changedCols: changedCols
 		}
 	}
 
@@ -300,9 +375,10 @@ class ProperTable extends React.Component {
  * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
  */
 	applySettings(colSettings = this.state.colSettings, props = this.props, updateSort = true, updateFilters = true, forceSendSettings = false) {
-		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newCol;
-		let updateSortAllowed = updateSort && props.colSortDirs && props.colSortDirs.length > 0;
+		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newDirection;
+		let updateSortAllowed = updateSort && props.colSortDirs && _.size(props.colSortDirs) > 0;
 		let updateFiltersAllowed = updateFilters && props.colFilters, hasSelectionFilter, hasCustomFilter, operations = {};
+		let sortedData = [], dateTypes = new Set(['between', 'after', 'before', 'on', 'noton']); // Date filters
 
 		// Update settings
 		colSettings = _.map(colSettings, col => {
@@ -310,9 +386,9 @@ class ProperTable extends React.Component {
 			hasCustomFilter = false;
 
 			if (updateSortAllowed) {
-				newCol = _.findWhere(props.colSortDirs, {column: col.column});
-				if (newCol && col.direction !== newCol.direction) {
-					col.direction = newCol.direction;
+				newDirection = props.colSortDirs[col.column];
+				if (newDirection && col.direction !== newDirection) {
+					sortedData.push({name: col.column, direction: newDirection}); // To be applied after
 					hasSort = true;
 				}
 			} else if (col.direction !== DEFAULT_SORT_DIRECTION) {
@@ -324,29 +400,33 @@ class ProperTable extends React.Component {
 					let newFilter = props.colFilters[col.column];
 
 					if (!newFilter.type || newFilter.type === FILTERTYPE_SELECTION) {
-
-						if (!hasFilter && col.filterType !== FILTERTYPE_SELECTION) hasFilter = true;
-						else if (!hasFilter) hasFilter = !shallowEqualImmutable(col.selection, newFilter.selection);
+						if (!hasFilter) {
+							if (col.filterType !== FILTERTYPE_SELECTION) { // Has changed Type
+								hasFilter = true;
+							} else {
+							 	hasFilter = !shallowEqualImmutable(col.selection, newFilter.selection);
+							}
+						}
 
 						col.filterType = FILTERTYPE_SELECTION;
 						col.selection = newFilter.selection;
 
 					} else if (newFilter.type === FILTERTYPE_CUSTOM) {
-						if (!hasFilter && ((col.customFilterType !== newFilter.operationType) || (col.customFilterValue !== newFilter.operationValue))) {
+						if (!hasFilter && ((col.operationFilterType !== newFilter.operationType) || (col.operationFilterValue !== newFilter.operationValue))) {
 							hasFilter = true;
 						}
 
 						col.filterType = FILTERTYPE_CUSTOM;
-						col.customFilterType = newFilter.operationType;
-						col.customFilterValue = newFilter.operationValue;
+						col.operationFilterType = newFilter.operationType;
+						col.operationFilterValue = newFilter.operationValue;
 					}
 				}
-			} else if ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0) || (col.filterType === FILTERTYPE_CUSTOM && col.customFilterValue.length > 0)) {
+			} else if ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0) || (col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
 				hasFilter = true;
 			}
 
 			hasSelectionFilter = col.selection.length > 0 && col.filterType === FILTERTYPE_SELECTION;
-			if (!hasSelectionFilter) hasCustomFilter =  col.customFilterValue.length > 0 && col.filterType === FILTERTYPE_CUSTOM;
+			if (!hasSelectionFilter) hasCustomFilter =  col.operationFilterValue.length > 0 && col.filterType === FILTERTYPE_CUSTOM;
 
 			// Build all selection || operation filter in case it has filter
 			if (hasSelectionFilter || hasCustomFilter) {
@@ -361,14 +441,24 @@ class ProperTable extends React.Component {
 					selectionSet[col.column] = new Set(col.selection);
 					operations[col.column] = null;
 
-				} else if (hasCustomFilter) {
+				} else {
 					selectionSet[col.column] = null;
-					operations[col.column] = {type: col.customFilterType, value: col.customFilterValue};
+					operations[col.column] = {type: col.operationFilterType, value: col.operationFilterValue};
+					if (dateTypes.has(col.operationFilterType) && col.operationFilterValue.length > 0) {
+						if (!moment(col.operationFilterValue).isValid()) console.warn('Invalid date format: ' + operations[column].value);
+					}
 				}
 			}
 
 			return col;
 		});
+
+		// Update sort on settings
+		if (hasSort && sortedData.length > 0) {
+			sortedData.forEach(sortObj => {
+				colSettings = this.updateSortDir(sortObj.name, sortObj.direction, colSettings);
+			});
+		}
 
 		// In case has sort and filter the sortTable() function gets the filtered data.
 		newData = hasFilter ? this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields, operations) : null;
@@ -396,9 +486,10 @@ class ProperTable extends React.Component {
  * @return (object)	-data 		Filtered data.
  *					-indexed 	Indexed data updated.
  */
-	applyFilters(columns, formatters, filters, fields) {
+	applyFilters(columns, formatters, filters, fields, operations = []) {
 		let {initialData, indexed, selection} = this.state;
-		let filteredData = initialData, idField = this.props.idField;
+		let filteredData = initialData, idField = this.props.idField, formatterAllowed, applyFormatter;
+		let notAllowed = new Set(['between', 'after', 'before', 'on', 'noton']); // Date filters
 
 		// Get the data that match with the selection (of all column filters)
 		if (_.size(filters) > 0) {
@@ -412,14 +503,24 @@ class ProperTable extends React.Component {
 					formatter = formatters[column];
 					val = element.get(field);
 					result = false;
+					applyFormatter = true;
 
 					// Skip unvalid values
 					if (_.isNull(val)) val = '';
 
 					if (typeof val === 'string' || typeof val === 'number') {
+
 						if (formatter) {
-							val = formatter(val, null, null);
-							if (_.isNull(val) || _.isUndefined(val)) val = '';
+							if (operations[column] && operations[column].type) {
+							 	if (notAllowed.has(operations[column].type)) {
+							 		applyFormatter = false;
+								}
+							}
+
+							if (applyFormatter) {
+								val = formatter(val, null, null);
+								if (_.isNull(val) || _.isUndefined(val)) val = '';
+							}
 						}
 
 						if (filters[column]) {
@@ -614,8 +715,8 @@ class ProperTable extends React.Component {
          		sortable: sortable,
          		filterType: FILTERTYPE_SELECTION,
          		selection: [], // Selected values of this column (to filter when has a complex filter)
-         		customFilterType: 'equals',
-         		customFilterValue: '',
+         		operationFilterType: 'contains',
+         		operationFilterValue: '',
          		indexedData: indexed, // Indexed by this column (just if has complex filter)
          		data: parsedData,
          		formatter: colData.formatter
@@ -634,8 +735,8 @@ class ProperTable extends React.Component {
          		sortable: true,
          		filterType: FILTERTYPE_SELECTION,
          		selection: [],
-         		customFilterType: 'equals',
-         		customFilterValue: '',
+         		operationFilterType: 'contains',
+         		operationFilterValue: '',
          		indexedData: [],
          		data: [],
          		formatter: null,
@@ -697,7 +798,7 @@ class ProperTable extends React.Component {
  * @return (boolean) 	result
  */
 	customFilter(type, value, compareTo) {
-		return CUSTOM_FILTER_COMPARATORS[type](value.toString().toLowerCase(), compareTo.toString().toLowerCase());
+		return comparators[type](normalizer.normalize(value), normalizer.normalize(compareTo));
 	}
 
 /**
@@ -1020,24 +1121,24 @@ class ProperTable extends React.Component {
 		if (!colData.width && !colData.maxWidth) {
 			extraProps.flexGrow = 1;
 
-			if (typeof colData.flex != 'undefined') {
+			if (colData.flex !== undefined) {
 				extraProps.flexGrow = colData.flex;
 			}
 		}
 
-		if (typeof colData.fixed !== 'undefined') {
+		if (colData.fixed !== undefined) {
 			extraProps.fixed = colData.fixed;
 		}
 
-		if (typeof colData.isResizable !== 'undefined') {
+		if (colData.isResizable !== undefined) {
 			extraProps.isResizable = colData.isResizable;
 		}
 
 		// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
 		// setting the result inside this columns group.
-		if (typeof colData.children == 'undefined' || !colData.children.length) {
+		if (colData.children === undefined || !colData.children.length) {
 			// Get column settings
-			settings = _.findWhere(this.state.colSettings, {column: colname});
+			settings = _.findWhere(this.state.colSettings, {column: colname}) || {};
 
 			// If this column can be sort or not.
 			sortable = _.isUndefined(colData.sortable) ? true : colData.sortable;
@@ -1088,7 +1189,12 @@ class ProperTable extends React.Component {
 			}
 		} else {
 			// Call the method recursively to all the childrens of this column.
-			let inner = colData.children.map((c) => this.parseColumn(c, true));
+			let hasFalsy = false, inner = colData.children.map((c) => {
+				if (c.isVisible === undefined || c.isVisible) return this.parseColumn(c, true);
+				else hasFalsy = true;
+			});
+
+			if (hasFalsy) inner = _.compact(inner);
 
 			col = <ColumnGroup
 				columnKey={colname}
@@ -1134,7 +1240,7 @@ class ProperTable extends React.Component {
 				key={_.uniqueId('selector-')}
 				header={
 					<HeaderCell
-						className={''}
+						className={'selector-column-header'}
 						onSortChange={this.onSortChange.bind(this)}
 						sortDir={sortDir}
 						sortable={true}
@@ -1165,7 +1271,9 @@ class ProperTable extends React.Component {
 		}
 
 		this.state.cols.forEach((col) => {
-			columns.push(this.parseColumn(col.toJSON(), false, isNested));
+			if (col.get('isVisible', true)) {
+				columns.push(this.parseColumn(col.toJSON(), false, isNested));
+			}
 		});
 
 		return columns;
@@ -1554,7 +1662,7 @@ ProperTable.propTypes = {
     ]),
     restartOnClickType: React.PropTypes.oneOf([CLEAR_FILTERS, CLEAR_SORT, CLEAR_BOTH]),
     getColSettings: React.PropTypes.func,
-    colSortDirs: React.PropTypes.arrayOf(React.PropTypes.object),
+    colSortDirs: React.PropTypes.objectOf(React.PropTypes.string),
     colFilters: React.PropTypes.objectOf(React.PropTypes.object),
     filterWidth: React.PropTypes.number,
 }
