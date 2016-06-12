@@ -2,15 +2,14 @@
 
 ## Filters
 The colFilters property of the table must be an object that contain objects indexed by the column name. Each element should have this structure:
-	* Ex:
-	```javascript
-		columnName: {
-			type: 'selection', // 'selection' or 'operation'
-			operationValue: 34, // Operation value. Ex: 'Jhon Snow'
-			operationType: 'bigger', // Operation type. Ex: 'equals', 'contains'...
-			selection: ['Jhon Snow', 'Jhon Smith', 'Walter White']
-		}
-	```
+```javascript
+	columnName: {
+		type: 'selection', // 'selection' or 'operation'
+		operationValue: 34, // Operation value. Ex: 'Jhon Snow'
+		operationType: 'bigger', // Operation type. Ex: 'equals', 'contains'...
+		selection: ['Jhon Snow', 'Jhon Smith', 'Walter White']
+	}
+```
 By default the type will be selection, so you can set only the selection property, in case you set the type to 'operation' then the operationValue and operationType are mandatory properties. The operation type its one of then:
 ```javascript
 	// For numbers
