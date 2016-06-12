@@ -377,7 +377,7 @@ var ProperTable =
 										var cols = _this2.state.cols;
 
 										_underscore2['default'].each(colsDeepCompare.changedCols, function (col, index) {
-											cols = cols.set(index, Inmutable.fromJS(col));
+											cols = cols.set(index, _immutable2['default'].fromJS(col));
 										});
 
 										_this2.setState({

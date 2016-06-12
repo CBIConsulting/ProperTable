@@ -210,7 +210,7 @@ class ProperTable extends React.Component {
 						let cols = this.state.cols;
 
 						_.each(colsDeepCompare.changedCols, (col, index) => {
-							cols = cols.set(index, Inmutable.fromJS(col));
+							cols = cols.set(index, Immutable.fromJS(col));
 						});
 
 						this.setState({
