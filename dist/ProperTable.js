@@ -620,21 +620,21 @@ var ProperTable =
 								col.filterType = FILTERTYPE_SELECTION;
 								col.selection = newFilter.selection;
 							} else if (newFilter.type === FILTERTYPE_CUSTOM) {
-								if (!hasFilter && (col.customFilterType !== newFilter.operationType || col.customFilterValue !== newFilter.operationValue)) {
+								if (!hasFilter && (col.operationFilterType !== newFilter.operationType || col.operationFilterValue !== newFilter.operationValue)) {
 									hasFilter = true;
 								}
 
 								col.filterType = FILTERTYPE_CUSTOM;
-								col.customFilterType = newFilter.operationType;
-								col.customFilterValue = newFilter.operationValue;
+								col.operationFilterType = newFilter.operationType;
+								col.operationFilterValue = newFilter.operationValue;
 							}
 						}
-					} else if (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.customFilterValue.length > 0) {
+					} else if (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0) {
 						hasFilter = true;
 					}
 
 					hasSelectionFilter = col.selection.length > 0 && col.filterType === FILTERTYPE_SELECTION;
-					if (!hasSelectionFilter) hasCustomFilter = col.customFilterValue.length > 0 && col.filterType === FILTERTYPE_CUSTOM;
+					if (!hasSelectionFilter) hasCustomFilter = col.operationFilterValue.length > 0 && col.filterType === FILTERTYPE_CUSTOM;
 
 					// Build all selection || operation filter in case it has filter
 					if (hasSelectionFilter || hasCustomFilter) {
@@ -650,9 +650,9 @@ var ProperTable =
 							operations[col.column] = null;
 						} else {
 							selectionSet[col.column] = null;
-							operations[col.column] = { type: col.customFilterType, value: col.customFilterValue };
-							if (dateTypes.has(col.customFilterType) && col.customFilterValue.length > 0) {
-								if (!(0, _moment2['default'])(col.customFilterValue).isValid()) console.warn('Invalid date format: ' + operations[column].value);
+							operations[col.column] = { type: col.operationFilterType, value: col.operationFilterValue };
+							if (dateTypes.has(col.operationFilterType) && col.operationFilterValue.length > 0) {
+								if (!(0, _moment2['default'])(col.operationFilterValue).isValid()) console.warn('Invalid date format: ' + operations[column].value);
 							}
 						}
 					}
@@ -977,8 +977,8 @@ var ProperTable =
 						sortable: sortable,
 						filterType: FILTERTYPE_SELECTION,
 						selection: [], // Selected values of this column (to filter when has a complex filter)
-						customFilterType: 'contains',
-						customFilterValue: '',
+						operationFilterType: 'contains',
+						operationFilterValue: '',
 						indexedData: indexed, // Indexed by this column (just if has complex filter)
 						data: parsedData,
 						formatter: colData.formatter
@@ -997,8 +997,8 @@ var ProperTable =
 						sortable: true,
 						filterType: FILTERTYPE_SELECTION,
 						selection: [],
-						customFilterType: 'contains',
-						customFilterValue: '',
+						operationFilterType: 'contains',
+						operationFilterValue: '',
 						indexedData: [],
 						data: [],
 						formatter: null
@@ -19545,6 +19545,10 @@ var ProperTable =
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
+	var _moment = __webpack_require__(88);
+
+	var _moment2 = _interopRequireDefault(_moment);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
@@ -19556,6 +19560,8 @@ var ProperTable =
 	var AFTERDATE = 'after';
 	var BEFOREDATE = 'before';
 	var BETWEENDATES = 'between';
+	var ONDATE = 'on';
+	var NOTONDATE = 'noton';
 	var STARTSWITH = 'start';
 	var FINISHWITH = 'finish';
 	var CONTAINS = 'contains';
@@ -19571,18 +19577,13 @@ var ProperTable =
 		    n2 = _formatters2["default"].number(compareTo) || 0;
 		return n1 < n2;
 	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, AFTERDATE, function (value, compareTo) {
-		var d1 = _formatters2["default"].toUnix(value) || 0,
-		    d2 = _formatters2["default"].toUnix(compareTo) || 0;
-		return d1 > d2;
+		return (0, _moment2["default"])(value).isAfter(compareTo);
 	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, BEFOREDATE, function (value, compareTo) {
-		var d1 = _formatters2["default"].toUnix(value) || 0,
-		    d2 = _formatters2["default"].toUnix(compareTo) || 0;
-		return d1 < d2;
+		return (0, _moment2["default"])(value).isBefore(compareTo);
 	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, BETWEENDATES, function (value, compareTo) {
 		var separator = void 0,
 		    d1Start = void 0,
-		    d1End = void 0,
-		    d2 = void 0;
+		    d1End = void 0;
 
 		if (!value || !compareTo) return false;
 		separator = value.indexOf('%-%');
@@ -19591,10 +19592,14 @@ var ProperTable =
 			return false;
 		}
 
-		d1Start = _formatters2["default"].toUnix(value.substring(0, separator + 1)) || 0;
-		d1End = _formatters2["default"].toUnix(value.substring(separator + 3)) || 0;
-		d2 = _formatters2["default"].toUnix(compareTo) || 0;
-		return d1Start <= d2 && d1End >= d2;
+		d1Start = value.substring(0, separator + 1);
+		d1End = value.substring(separator + 3);
+
+		return (0, _moment2["default"])(compareTo).isBetween(d1Start, d1End);
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, ONDATE, function (value, compareTo) {
+		return (0, _moment2["default"])(value).isSame(compareTo, 'day');
+	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, NOTONDATE, function (value, compareTo) {
+		return !(0, _moment2["default"])(value).isSame(compareTo, 'day');
 	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, NOTEQUALS, function (value, compareTo) {
 		return value !== compareTo;
 	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, EQUALS, function (value, compareTo) {
