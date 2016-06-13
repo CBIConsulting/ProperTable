@@ -19,13 +19,16 @@ Used technologies:
 
 Features of ProperTable:
 
-* Fixed Column/s on scrolling
-* Rows selection with callback (return selected rows data)
+* Fixed Column/s on scrolling 
+* Rows selection with callback (return selected rows data and the id's)
 * Sorting (single column, multiple column sorting)
 * Cell Formating
 * Column Resizing (Fill the container, if the content is bigger than the container then show a horizontal scrollbar)
+* The visibility of each column could be updated in hot.
 * Default Sorting allowed
 * Default Selected rows allowed
+* Apply filters / sort to internal data using the colFilters and colSortDirs properties in a easy, fast and clean way.
+* Allows to use a custom filter component for each column, rendered in column header after header icon get clicked. (Uses a custom Portal to render based on [React Portal](https://github.com/tajo/react-portal))
 * From FixedDataTable:
   * Fixed headers and footer
   * Both fixed and scrollable columns
@@ -117,16 +120,6 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * selectable: If the rows (all table) can be selected or not and if that selection is multiple. Values: True || 'Multiple' || False
 * rowHeight: Height of each row in numerical value. (Integer)
 * lang: Lang of the component. Default 'ENG'
-* msgs: Get the translated messages of the current lang. (An example can be found in src/lang)
-	* Default:
-	```javascript
-		{
-			'ENG': {
-				loading: 'loading...',
-				empty: 'No data found'
-			}
-		};
-	```
 * selectorWidth: Width of the selector column, checkboxes. (Only if selectable is multible)
 * colSortDirs: Sort direction of each column, to be applied to the table, indexed by column name. That's usefull to sort the table by sending which column must be sorted, it's faster and easier than sort data outside and then send it to the component, because in that case the data must be procesed for internal working. Values (ASC, DESC, DEF) (DEF -> Default)
 	* Ex:
@@ -146,7 +139,8 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 				operationType: 'bigger', // Operation type. Ex: 'equals', 'contains'...
 				selection: ['Jhon Snow', 'Jhon Smith', 'Walter White']
 			},
-			column_5 : type: col.filterType,
+			column_5 : {
+				type: col.filterType,
 				operationValue: col.operationFilterValue,
 				operationType: col.operationFilterType,
 				selection: col.selection
@@ -171,35 +165,35 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 	```
 * multisort: Multisort allowed or not. (Boolean)
 * columnFilterComponent: React Component to be rendered on click column header icon. Gets data, sort, column selection... [HeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/headerCell.js)
-	*All data sent to the component:
+	* All data sent to the component:
 	```javascript
 		<props.filterComponent
-	        data={props.data} // Initial data Inmutable
-	        rawdata={props.rawdata} // Raw data Inmutable
-	        indexed={props.indexed} // initial Indexed Obj (indexed by)
-	        selection={col.selection}
-	        idField={col.field} // Field used as primary key or id
-	        displayField={col.field}
-	        lang={props.lang}
-	        sort={col.sortDir}
-	        uniqueId={props.uniqueId}
-	        rowFormater={props.formatter}
-
-	        // Your component must have this functions, one that return the new column selection, other one that return the new sort direction
-	        // and last one if you want a button to clean this column filter. The last one applys a selection and then the sort direction of the
-	        // second parameter.
-
-	        afterSelect={afterSelect} // function afterSelect(selectionArray);
-	        afterSort={afterSort} 	  // function afterSort(sortDirection);
-	        afterClear={afterClear}   // function afterSort(selection, sortDirection) -> afterClear([], 'DEF')
-	    />
+		        data={props.data} // Initial data Inmutable
+		        rawdata={props.rawdata} // Raw data Inmutable
+		        indexed={props.indexed} // initial Indexed Obj (indexed by)
+		        selection={col.selection}
+		        idField={col.field} // Field used as primary key or id
+		        displayField={col.field}
+		        lang={props.lang}
+		        sort={col.sortDir}
+		        uniqueId={props.uniqueId}
+		        rowFormater={props.formatter}
+	
+		        // Your component must have this functions, one that return the new column selection, other one that return the new sort direction
+		        // and last one if you want a button to clean this column filter. The last one applys a selection and then the sort direction of the
+		        // second parameter.
+	
+		        afterSelect={afterSelect} // function afterSelect(selectionArray);
+		        afterSort={afterSort} 	  // function afterSort(sortDirection);
+		        afterClear={afterClear}   // function afterSort(selection, sortDirection) -> afterClear([], 'DEF')
+		 />
 	```
 * getColSettings: Function that get the column settings of the table. Each time the column settings changed (sort or filter of any column change) or get created then the function get the new settings. Name and field are the same as in Cols array, the selection field (selection of the column, array of filtered values of the column), direction ('DEF' *default || 'ASC' || 'DESC'), and other settings. Remenber that's a refenrence to an internal state, be very carefull. This property was thought to get the internal filters / sort data and show it externally (if you want to apply a change use the properties colSortDirs and colFilters). It's usefull when you have a filter component for the column and you want to have external filters aswell, then you can update the colSortDirs and colFilters externally (not causig a rerender)  [See docs here...](https://github.com/CBIConsulting/ProperTable/tree/dev/docs/SETTINGS.md)
-	*Example:
+	* Ex:
 	```javascript
-	getColumnSettings(colSettings) {
-		console.log(colSettings);
-	}
+		getColumnSettings(colSettings) {
+			console.log(colSettings);
+		}
 	```
 * sortIcons: An array like the const SortIcons in HeaderCell file to use instead [HeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/headerCell.js)
 * iconColor: Color of the icon to open the column filter (if that exist) in the header of column. This color is used on open / filtered or sorted.
