@@ -6,6 +6,36 @@ import TWEEN from 'tween.js';
 
 //Const
 const SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
+const DEFAULT_SORT_DIRECTION = 'DEF';
+const ASCENDING_SORT_DIRECTION = 'ASC';
+const DESCENDING_SORT_DIRECTION = 'DESC';
+
+/**
+ *  Possible Sort Types Default || ASC || DESC
+ */
+const SortTypes = {
+  ASC: ASCENDING_SORT_DIRECTION,
+  DESC: DESCENDING_SORT_DIRECTION,
+  DEF: DEFAULT_SORT_DIRECTION
+};
+
+/**
+ *  Asociated Icons when it's sorting
+ */
+const SortIcons = {
+  ASC: <i key="asc-icon" className="fa fa-long-arrow-up"/>,
+  DESC: <i key="desc-icon" className="fa fa-long-arrow-down"/>,
+  DEF: null
+};
+
+/**
+ *  Icons for column filter
+ */
+const ColumnFilterIcons = {
+  DEF: <i key="def-icon" className="fa fa-caret-square-o-down"/>,
+  NONE: null
+};
+
 
 //REQUEST ANIMATION FRAME POLYFILL
 ;(function() {
@@ -71,12 +101,12 @@ const HeaderCell = props => {
   // Check for custom icons array and if the column is sortable
   if (!_.isNull(sortDir) && sortable) {
     if (_.isNull(props.sortIcons) || _.isUndefined(props.sortIcons)) { //default sort icons
-      sortIcon = _.isNull(props.filterComponent) ||  isSelectorCol ? SortIcons[sortDir] : ColumnFilterIcons['DEF'];
+      sortIcon = _.isNull(props.filterComponent) ||  isSelectorCol ? SortIcons[sortDir] : ColumnFilterIcons[DEFAULT_SORT_DIRECTION];
     } else { // custom sort icons
       sortIcon = props.sortIcons[sortDir];
     }
   } else {
-    sortIcon = _.isNull(props.filterComponent) ? SortIcons['DEF'] : ColumnFilterIcons['NONE'];
+    sortIcon = _.isNull(props.filterComponent) ? SortIcons[DEFAULT_SORT_DIRECTION] : ColumnFilterIcons['NONE'];
   }
 
   // Check if the columns have complex filter to be rendered behind the column
@@ -103,32 +133,6 @@ const HeaderCell = props => {
 };
 
 /**
- *  Possible Sort Types Default || ASC || DESC
- */
-const SortTypes = {
-  ASC: 'ASC',
-  DESC: 'DESC',
-  DEF: 'DEF'
-};
-
-/**
- *  Asociated Icons when it's sorting
- */
-const SortIcons = {
-  ASC: <i key="asc-icon" className="fa fa-long-arrow-up"/>,
-  DESC: <i key="desc-icon" className="fa fa-long-arrow-down"/>,
-  DEF: null
-};
-
-/**
- *  Icons for column filter
- */
-const ColumnFilterIcons = {
-  DEF: <i key="def-icon" className="fa fa-caret-square-o-down"/>,
-  NONE: null
-};
-
-/**
  * Build and return the complex filter received in params
  *
  * @param {object} props      The props of the component
@@ -137,6 +141,7 @@ const ColumnFilterIcons = {
  */
 const buildColumnFilter = (props, icon) => {
     let filter, afterSelect, afterSort, afterClear, isSortedOrFiltered = false;
+    let portalWidth = props.filterWidth || 280;
 
     afterSelect = (selection) => {
       if (typeof props.columnFilter === 'function') {
@@ -156,7 +161,7 @@ const buildColumnFilter = (props, icon) => {
       }
     };
 
-    if (props.sortDir !== 'DEF' || props.selection.length > 0) isSortedOrFiltered = true;
+    if (props.sortDir !== DEFAULT_SORT_DIRECTION || props.selection.length > 0) isSortedOrFiltered = true;
 
     filter = (
       <Portal
@@ -170,7 +175,8 @@ const buildColumnFilter = (props, icon) => {
           iconColor={props.iconColor}
           iconDefColor={props.iconDefColor}
           isSortedOrFiltered={isSortedOrFiltered}
-          style={{opacity: 0, position: 'fixed'}}
+          width={portalWidth}
+          style={{opacity: 0, position: 'fixed', width: portalWidth}}
         >
         <props.filterComponent
           key={props.uniqueId + '-column-header-component-filter'}

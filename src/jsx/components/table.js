@@ -11,32 +11,44 @@ import bs from 'binarysearch';
 import clone from 'clone';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
 import cache from '../lib/rowcache';
+import moment from "moment";
+import normalizer from '../lib/normalizer';
+import comparators from "../filterComparators/comparators";
 
 //Const
 const SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
+const DEFAULT_SORT_DIRECTION = 'DEF';
+const ASCENDING_SORT_DIRECTION = 'ASC';
+const DESCENDING_SORT_DIRECTION = 'DESC';
+const SELECTED_FIELD = '_selected';
+const ROW_INDEX_FIELD = '_rowIndex';
+const RAWDATA_INDEX_FIELD = '_rawDataIndex';
+const MULTIPLE_SELECTION = 'multiple';
+const CLEAR_FILTERS = 'clear_filters';
+const CLEAR_SORT = 'clear_sort';
+const CLEAR_BOTH = 'clear_both';
+const FILTERTYPE_SELECTION = 'selection';
+const FILTERTYPE_CUSTOM = 'operation';
+const NOTEQUALS = 'notequals';
+const EQUALS = "equals";
+const BIGGERTHAN = 'bigger';
+const LOWERTHAN = 'lower';
+const AFTERDATE = 'after';
+const BEFOREDATE = 'before';
+const BETWEENDATES = 'between';
+const ONDATE = 'on';
+const NOTONDATE = 'noton';
+const STARTSWITH = 'start';
+const FINISHWITH = 'finish';
+const CONTAINS = 'contains';
+const NOTCONTAINS = 'notContains';
+const EMPTY = 'empty';
+const CACHE_NAME = 'formatted';
 const Set = require('es6-set');
-
-
-/**
- * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
- * column inside a ColumnGroup even if the column has not childrens.
- *
- * @param (array)		cols  	Describe columns
- * @return (boolean)	result	True if has nested columns or false otherwhise
- */
-function hasNested(cols) {
-	let result = false;
-
-	if (cols.size) {
-		cols.forEach((c) => {
-			if (c.get('children') && c.get('children').size) {
-				result = true;
-				return false;
-			}
-		});
-	}
-
-	return result;
+const CLEAR_OPTIONS = {
+	[CLEAR_BOTH]: {sort: true, filters: true},
+	[CLEAR_FILTERS]: {sort: false, filters: true},
+	[CLEAR_SORT]: {sort: true, filters: false},
 }
 
 /**
@@ -82,7 +94,6 @@ function hasNested(cols) {
 class ProperTable extends React.Component {
 
 	constructor(props) {
-
 		super(props);
 
 		// Get initial data
@@ -131,7 +142,7 @@ class ProperTable extends React.Component {
 	}
 
 	componentWillUnmount() {
-		cache.flush('formatted');
+		cache.flush(CACHE_NAME);
 
 		// Remove listener if exist
 		if (this.props.restartOnClick) {
@@ -145,7 +156,8 @@ class ProperTable extends React.Component {
 		let somethingchanged = propschanged || statechanged;
 
 		if (propschanged) {
-			let colsChanged = !shallowEqualImmutable(nextProps.cols, this.props.cols);
+			let colsDeepCompare = this.deepColsCompare(nextProps.cols, this.props.cols);
+			let colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges;
 			let dataChanged = !shallowEqualImmutable(nextProps.data, this.props.data);
 			let colSortDirsChanged = nextProps.colSortDirs ? !shallowEqualImmutable(nextProps.colSortDirs, this.props.colSortDirs) : false;
 			let colFiltersChanged = nextProps.colFilters ? !shallowEqualImmutable(nextProps.colFilters, this.props.colFilters) : false;
@@ -154,9 +166,10 @@ class ProperTable extends React.Component {
 			// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
 			// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
 			if (colsChanged || dataChanged) {
-				cache.flush('formatted');
 
-				if (dataChanged) { // The most probably case
+				if (dataChanged && this.props.data.length > 0) { // The most probably case
+					cache.flush(CACHE_NAME);
+
 					let colSettings = nextState.colSettings;
 					preparedData = this.prepareData(nextProps, nextState);
 
@@ -170,7 +183,9 @@ class ProperTable extends React.Component {
 						selection: preparedData.defSelection,
 					}, this.applySettings(nextState.colSettings, nextProps));
 
-				} else if (colsChanged && dataChanged) {
+				} else if ((colsChanged || this.props.data.length === 0) && dataChanged) {
+					cache.flush(CACHE_NAME);
+
 					preparedData = this.prepareData(nextProps, nextState);
 					colData =  this.prepareColSettings(nextProps, preparedData.rawdata);
 
@@ -185,29 +200,44 @@ class ProperTable extends React.Component {
 						rawdata: preparedData.rawdata,
 						sortCache: preparedData.defSortCache,
 						selection: preparedData.defSelection,
-					}, this.applySettings(colData.colSettings, nextProps));
+					}, this.applySettings(colData.colSettings, nextProps, true, true, true));
 
 				} else if (colsChanged) {
-					let sortCache = [];
-					colData =  this.prepareColSettings(nextProps, this.state.rawdata);
+					if (colsDeepCompare.hasChangedDeeply) {
+						let sortCache = [];
 
-					// Restart cache
-					nextState.data.forEach(row => {
-						sortCache[row.get(this.props.idField)] = {};
-					});
+						cache.flush(CACHE_NAME);
+						colData =  this.prepareColSettings(nextProps, this.state.rawdata);
 
-					this.setState({
-						colSettings: colData.colSettings,
-						colSortParsers: colData.colSortParsers,
-						cols: Immutable.fromJS(nextProps.cols),
-						sortCache: sortCache
-					}, this.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+						// Restart cache
+						nextState.data.forEach(row => {
+							sortCache[row.get(this.props.idField)] = {};
+						});
+
+						this.setState({
+							colSettings: colData.colSettings,
+							colSortParsers: colData.colSortParsers,
+							cols: Immutable.fromJS(nextProps.cols),
+							sortCache: sortCache
+						}, this.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+
+					} else {
+						let cols = this.state.cols;
+
+						_.each(colsDeepCompare.changedCols, (col, index) => {
+							cols = cols.set(index, Immutable.fromJS(col));
+						});
+
+						this.setState({
+							cols: cols
+						});
+					}
 				}
 
 				return false;
 
 			} else if (colSortDirsChanged || colFiltersChanged) {
-				this.applySettings(nextState.colSettings, nextProps);
+				this.applySettings(nextState.colSettings, nextProps, colSortDirsChanged, colFiltersChanged);
 
 			} else if (nextProps.selected) {
 				this.setDefaultSelection(nextProps);
@@ -246,6 +276,60 @@ class ProperTable extends React.Component {
 					this.addClickListener(newProps.restartOnClick);
 				}
 			}
+		}
+	}
+
+/**
+ * Check if cols has changed deeply. This function is made to optimize shouldComponentUpdate when the visibility or something
+ * like that has changed but it's not a big change, so colSettings still been the same. If has changed deeply then re-build the
+ * colSettings and restart sortCache, if it's just a small change like in class, label, isVisible, etc, then update the changed
+ * columns only.
+ *
+ * @param (array) 	nextCols		Next columns received by the table
+ * @param (array)	currentCols		The current columns of the table
+ *
+ * @return (object) result
+ *						- (boolean) hasChangedDeeply  	If has changed deeply
+ *						- (boolean) hasSmallChanges 	If the properties which could be updated in hot has changed. Class, fixed, isVisible...
+ * 						- (object)  changedCols 		Object with the changed cols indexed by the index (when it has just small changes)
+ */
+	deepColsCompare(nextCols, currentCols) {
+		let nextLength = nextCols.length, currentLength = currentCols.length, hasChangedDeeply = false, hasSmallChanges = false, changedCols = {};
+		let fixedChanged, classNameChanged, isVisibleChanged, labelChanged, somethingchanged, curCol;
+
+		if (currentCols.length !== nextCols.length) {
+			hasChangedDeeply = true;
+		} else {
+			_.every(nextCols, (col, index) => {
+				curCol = currentCols[index];
+
+				if (col.name !== curCol.name || col.field !== curCol.field || col.sortable !== curCol.sortable ||  col.uniqueId !== curCol.uniqueId
+					|| !shallowEqualImmutable(col.formatter, curCol.formatter) || !shallowEqualImmutable(col.sortVal, curCol.sortVal)
+					|| !shallowEqualImmutable(col.children, curCol.children)) {
+
+					hasChangedDeeply = true;
+					return false; // Break
+				}
+
+				fixedChanged = col.fixed !== curCol.fixed;
+				classNameChanged = col.className !== curCol.className;
+				isVisibleChanged = col.isVisible !== curCol.isVisible;
+				labelChanged = !shallowEqualImmutable(col.label, curCol.label);
+				somethingchanged = fixedChanged || classNameChanged || isVisibleChanged || labelChanged;
+
+				if (somethingchanged) {
+					changedCols[index] = _.clone(col);
+					hasSmallChanges = true;
+				}
+
+				return true; // Next
+			});
+		}
+
+		return {
+			hasChangedDeeply: hasChangedDeeply,
+			hasSmallChanges: hasSmallChanges,
+			changedCols: changedCols
 		}
 	}
 
@@ -302,28 +386,65 @@ class ProperTable extends React.Component {
  *
  * @param (array)	colSettings 	Sort / Filter settings of each column. From current or next state (case the props data/cols change)
  * @param (object) 	props 			Component props or new props on update
+ * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
+ * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
  */
-	applySettings(colSettings = this.state.colSettings, props = this.props) {
-		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = []; // new Set(selection)
-		let newData = null, hasFilter = false, hasSort = false;
-		let newCol, newFilter;
+	applySettings(colSettings = this.state.colSettings, props = this.props, updateSort = true, updateFilters = true, forceSendSettings = false) {
+		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newDirection;
+		let updateSortAllowed = updateSort && props.colSortDirs && _.size(props.colSortDirs) > 0;
+		let updateFiltersAllowed = updateFilters && props.colFilters, hasSelectionFilter, hasCustomFilter, operations = {};
+		let sortedData = [], dateTypes = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
 
 		// Update settings
 		colSettings = _.map(colSettings, col => {
-			if (props.colSortDirs) {
-				newCol = _.findWhere(props.colSortDirs, {column: col.column});
-				if (newCol) col.direction = newCol.direction;
+			hasSelectionFilter = false;
+			hasCustomFilter = false;
+
+			if (updateSortAllowed) {
+				newDirection = props.colSortDirs[col.column];
+				if (newDirection && col.direction !== newDirection) {
+					sortedData.push({name: col.column, direction: newDirection}); // To be applied after
+					hasSort = true;
+				}
+			} else if (col.direction !== DEFAULT_SORT_DIRECTION) {
+				hasSort = true;
 			}
 
-			if (!hasSort && col.direction !== 'DEF') hasSort = true;
+			if (updateFiltersAllowed) {
+				if (props.colFilters[col.column]) {
+					let newFilter = props.colFilters[col.column];
 
-			if (props.colFilters) {
-				newFilter = props.colFilters[col.column];
-				col.selection = newFilter ? newFilter : col.selection;
+					if (!newFilter.type || newFilter.type === FILTERTYPE_SELECTION) {
+						if (!hasFilter) {
+							if (col.filterType !== FILTERTYPE_SELECTION) { // Has changed Type
+								hasFilter = true;
+							} else {
+							 	hasFilter = !shallowEqualImmutable(col.selection, newFilter.selection);
+							}
+						}
+
+						col.filterType = FILTERTYPE_SELECTION;
+						col.selection = newFilter.selection;
+
+					} else if (newFilter.type === FILTERTYPE_CUSTOM) {
+						if (!hasFilter && ((col.operationFilterType !== newFilter.operationType) || (col.operationFilterValue !== newFilter.operationValue))) {
+							hasFilter = true;
+						}
+
+						col.filterType = FILTERTYPE_CUSTOM;
+						col.operationFilterType = newFilter.operationType;
+						col.operationFilterValue = newFilter.operationValue;
+					}
+				}
+			} else if ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0) || (col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
+				hasFilter = true;
 			}
 
-			if (col.selection.length > 0) { // Build all selection.
-				selectionSet[col.column] = new Set(col.selection);
+			hasSelectionFilter = col.selection.length > 0 && col.filterType === FILTERTYPE_SELECTION;
+			if (!hasSelectionFilter) hasCustomFilter =  col.operationFilterValue.length > 0 && col.filterType === FILTERTYPE_CUSTOM;
+
+			// Build all selection || operation filter in case it has filter
+			if (hasSelectionFilter || hasCustomFilter) {
 				formatters[col.column] = col.formatter;
 				columnKeysFiltered.push(col.column); // Columns filtered
 
@@ -331,17 +452,38 @@ class ProperTable extends React.Component {
 				// field refer to data field.
 				fields[col.column] = col.field;
 
-				hasFilter = true;
+				if (hasSelectionFilter) {
+					selectionSet[col.column] = new Set(col.selection);
+					operations[col.column] = null;
+
+				} else {
+					selectionSet[col.column] = null;
+					operations[col.column] = {type: col.operationFilterType, value: col.operationFilterValue};
+					if (dateTypes.has(col.operationFilterType) && col.operationFilterValue.length > 0) {
+						if (!moment(col.operationFilterValue).isValid()) console.warn('Invalid date format: ' + operations[column].value);
+					}
+				}
 			}
+
 			return col;
 		});
 
-		newData = hasFilter ? this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields) : null;
+		// Update sort on settings
+		if (hasSort && sortedData.length > 0) {
+			sortedData.forEach(sortObj => {
+				colSettings = this.updateSortDir(sortObj.name, sortObj.direction, colSettings);
+			});
+		}
+
+		// In case has sort and filter the sortTable() function gets the filtered data.
+		newData = hasFilter ? this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields, operations) : null;
 
 		if (hasSort) {
-			this.sortTable(colSettings, true, newData); // This method set state and send the col settings
+			this.sortTable(colSettings, true, newData); // This method set state and send the cols settings
 		} else if (hasFilter) {
 			this.setState(newData, this.sendColSettings(colSettings));
+		} else if (forceSendSettings) {
+			this.sendColSettings(colSettings);
 		}
 	}
 
@@ -353,13 +495,16 @@ class ProperTable extends React.Component {
  * @param (array)	filters 	Contains Set objects of selected values asociated with each column.
  * @param (array)	fields 		Fields asociated with each column name. More than 1 col can use data from same field. This array is key value, where the key is the col name and
  *								the value is the asociated field.
+ * @param (array)	operations 	In case has some custom filters in a column or more. This parameter contains a object of objects indexed by column name, has the type of the
+ *								filter and the value.
  *
  * @return (object)	-data 		Filtered data.
  *					-indexed 	Indexed data updated.
  */
-	applyFilters(columns, formatters, filters, fields) {
+	applyFilters(columns, formatters, filters, fields, operations = []) {
 		let {initialData, indexed, selection} = this.state;
-		let filteredData = initialData, idField = this.props.idField;
+		let filteredData = initialData, idField = this.props.idField, formatterAllowed, applyFormatter;
+		let notAllowed = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
 
 		// Get the data that match with the selection (of all column filters)
 		if (_.size(filters) > 0) {
@@ -373,16 +518,31 @@ class ProperTable extends React.Component {
 					formatter = formatters[column];
 					val = element.get(field);
 					result = false;
+					applyFormatter = true;
 
 					// Skip unvalid values
 					if (_.isNull(val)) val = '';
 
 					if (typeof val === 'string' || typeof val === 'number') {
+
 						if (formatter) {
-							val = formatter(val, null, null);
-							if (_.isNull(val) || _.isUndefined(val)) val = '';
+							if (operations[column] && operations[column].type) {
+							 	if (notAllowed.has(operations[column].type)) {
+							 		applyFormatter = false;
+								}
+							}
+
+							if (applyFormatter) {
+								val = formatter(val, null, null);
+								if (_.isNull(val) || _.isUndefined(val)) val = '';
+							}
 						}
-					 	result = filters[column].has(val.toString());
+
+						if (filters[column]) {
+					 		result = filters[column].has(val.toString());
+					 	} else if (operations[column]) {
+					 		result = this.customFilter(operations[column].type, operations[column].value, val);
+					 	}
 					}
 
 					return result;
@@ -395,7 +555,7 @@ class ProperTable extends React.Component {
 		// Apply selection and update index of each element in indexed data
 		filteredData = filteredData.map((element, index) => {
 			if (selection.has(element.get(idField))) {
-				element = element.set('_selected', true);
+				element = element.set(SELECTED_FIELD, true);
 			}
 			indexed[element.get(idField)]._rowIndex = index; // Update index into indexed data.
 
@@ -407,6 +567,7 @@ class ProperTable extends React.Component {
 			indexed: indexed,
 		}
 	}
+
 /**
  * Prepare the data received by the component for the internal working.
  * @param  (array)	props 	Component props (or nextProps)
@@ -424,13 +585,9 @@ class ProperTable extends React.Component {
 		if (props.selected) {
 			if (!_.isArray(props.selected)) {
 				defSelection = [props.selected.toString()];
-			} else if(props.selected.length) {
-				if (props.selectable == 'multiple') {
-					defSelection = props.selected.toString().split(',');
-				} else {
-
-					defSelection = [props.selected[0].toString()];
-				}
+			} else {
+				if (props.selectable == MULTIPLE_SELECTION) defSelection = props.selected.toString().split(',');
+				else defSelection = [props.selected[0].toString()];
 			}
 
 			defSelection = new Set(defSelection);
@@ -451,13 +608,12 @@ class ProperTable extends React.Component {
 			}
 
 			if (defSelection.has(id)) {
-				row = row.set('_selected', true);
+				row = row.set(SELECTED_FIELD, true);
 			} else {
-				row = row.set('_selected', false);
+				row = row.set(SELECTED_FIELD, false);
 			}
 
-			row = row.set('_rowIndex', index++);
-
+			row = row.set(ROW_INDEX_FIELD, index++);
 			sortCache[id] = {};
 
 			return row;
@@ -492,7 +648,7 @@ class ProperTable extends React.Component {
 				if (!_.isArray(selected)) {
 					selection = new Set([selected.toString()]);
 				} else {
-					if (props.selectable == 'multiple') selection = new Set(selected.toString().split(','));
+					if (props.selectable == MULTIPLE_SELECTION) selection = new Set(selected.toString().split(','));
 					else selection = new Set([selected[0].toString()]);
 				}
 			}
@@ -511,15 +667,11 @@ class ProperTable extends React.Component {
  *					-colSortParsers: 	Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
  */
 	prepareColSettings(props = this.props, rawdata = null) {
-        let colSortDirs = props.colSortDirs, cols = props.cols, colSettings = [];
+        let cols = props.cols, colSettings = [];
         let sortData = this.buildColSortDirs(cols); // Build the initial colsortdirs using the cols array.
         let multisort = props.multisort, direction = null, sortable = null, colData = null, indexed = null, parsedData = null;
 
-		// If the component doesn't receive the colSortDirs array with a diferent direction than default then set to
-		// colSortDirs the default values.
-        if (_.isNull(colSortDirs)) {
-            colSortDirs = sortData.colSortDirs;
-        }
+		// The default sort dirs (in case that's exist) will be applied in applyColSettings
 
         // Through each element, of the colSortDirs built data, build the colSortDirs with the default directions received,
         // setting a position (position of priority to sort (it will be modified after click on the diferent columns)), if
@@ -527,10 +679,6 @@ class ProperTable extends React.Component {
         for (let i = 0; i <= sortData.colSortDirs.length - 1; i++) {
         	colData = sortData.colSortDirs[i];
         	sortable = colData.sortable !== null ? colData.sortable : true;
-
-        	// Find the current column sort data and set direction (if the component got default sort direction for this column
-        	// then it will get the direction otherwise direction will be always DEF)
-        	direction = _.findWhere(colSortDirs, {column: colData.column}).direction;
 
          	// If has filter build a list without duplicates and it indexed
          	if (this.props.columnFilterComponent && sortable) {
@@ -551,9 +699,9 @@ class ProperTable extends React.Component {
 							idSet.add(val);
 
 							row = row.set(colData.field, val.toString());
-							row = row.set('_selected', false);
-							row = row.set('_rowIndex', index++); // data row index
-							row = row.set('_rawDataIndex', rawdataIndex++); // rawData row index
+							row = row.set(SELECTED_FIELD, false);
+							row = row.set(ROW_INDEX_FIELD, index++); // data row index
+							row = row.set(RAWDATA_INDEX_FIELD, rawdataIndex++); // rawData row index
 							return row; // RETURN
 						}
 					}
@@ -575,12 +723,15 @@ class ProperTable extends React.Component {
          	colSettings.push({
          		column: colData.column, // Column name
          		field: colData.field,
-         		direction: direction,
+         		direction: colData.direction,
          		position: i + 1,
          		sorted: false,
          		multisort: multisort, // single (false) (in this case only one at a time can be sorted) or multisort (true - all true)
          		sortable: sortable,
+         		filterType: FILTERTYPE_SELECTION,
          		selection: [], // Selected values of this column (to filter when has a complex filter)
+         		operationFilterType: CONTAINS,
+         		operationFilterValue: '',
          		indexedData: indexed, // Indexed by this column (just if has complex filter)
          		data: parsedData,
          		formatter: colData.formatter
@@ -588,16 +739,19 @@ class ProperTable extends React.Component {
         }
 
         // Ordering by selected rows. Virtual column
-        if (props.selectable == 'multiple') {
+        if (props.selectable == MULTIPLE_SELECTION) {
         	colSettings.push({
          		column: SELECTOR_COL_NAME, // Column name
-         		field: '_selected',
-         		direction: 'DEF',
+         		field: SELECTED_FIELD,
+         		direction: DEFAULT_SORT_DIRECTION,
          		position: sortData.colSortDirs.length + 1, // Last
          		sorted: false,
          		multisort: multisort,
          		sortable: true,
+         		filterType: FILTERTYPE_SELECTION,
          		selection: [],
+         		operationFilterType: CONTAINS,
+         		operationFilterValue: '',
          		indexedData: [],
          		data: [],
          		formatter: null,
@@ -630,7 +784,7 @@ class ProperTable extends React.Component {
 				colSortDirs.push({
 					column: element.name,
 					field: element.field,
-					direction: 'DEF',
+					direction: DEFAULT_SORT_DIRECTION,
 					sortable: sortable,
 					formatter: formatter
 				});
@@ -639,7 +793,7 @@ class ProperTable extends React.Component {
 			}
 		});
 
-		if (this.props.selectable == 'multiple') {
+		if (this.props.selectable == MULTIPLE_SELECTION) {
 		  	sortVals[SELECTOR_COL_NAME] = function(val) {return val};
 		}
 
@@ -650,15 +804,29 @@ class ProperTable extends React.Component {
 	}
 
 /**
+ * Return if the value is valid with the type in comparison with compareTo string.
+ *
+ * @param (string) 		type 		Type of the filter. Must be Equals, Starts With...
+ * @param (string) 		value 		Value of the filter.
+ * @param (string) 		compareTo 	Value of the field to be checked
+ *
+ * @return (boolean) 	result
+ */
+	customFilter(type, value, compareTo) {
+		return comparators[type](normalizer.normalize(value), normalizer.normalize(compareTo));
+	}
+
+/**
  * Clear all column filters and sort directions
  */
 	clearFilterAndSort(e) {
 		e.preventDefault();
 		let colSettings = this.state.colSettings, data, indexed = this.state.indexed;
+		let clear = CLEAR_OPTIONS[this.props.restartOnClickType];
 
 		colSettings = _.map(colSettings, element => {
-			element.selection = [];
-			element.direction = 'DEF';
+			if (clear.filters) element.selection = [];
+			if (clear.sort) element.direction = DEFAULT_SORT_DIRECTION;
 
 			return element;
 		});
@@ -666,7 +834,7 @@ class ProperTable extends React.Component {
 		// Apply default
 		data = this.state.initialData.map((element, index) => {
 			if (this.state.selection.has(element.get(this.props.idField))) {
-				element = element.set('_selected', true);
+				element = element.set(SELECTED_FIELD, true);
 			}
 			indexed[element.get(this.props.idField)]._rowIndex = index; // Update index into indexed data.
 
@@ -678,6 +846,28 @@ class ProperTable extends React.Component {
 			indexed: indexed,
 			colSettings: colSettings
 		}, this.sendSortedAndSettings(data, colSettings));
+	}
+
+/**
+ * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
+ * column inside a ColumnGroup even if the column has not childrens.
+ *
+ * @param (array)		cols  	Describe columns
+ * @return (boolean)	result	True if has nested columns or false otherwhise
+ */
+	hasNested(cols) {
+		let result = false;
+
+		if (cols.size) {
+			cols.forEach((c) => {
+				if (c.get('children') && c.get('children').size) {
+					result = true;
+					return false;
+				}
+			});
+		}
+
+		return result;
 	}
 
 /**
@@ -715,7 +905,7 @@ class ProperTable extends React.Component {
 					col.selection = selection;
 				}
 
-				if (!hasSort && col.direction !== 'DEF') hasSort = true;
+				if (!hasSort && col.direction !== DEFAULT_SORT_DIRECTION) hasSort = true;
 
 				if (col.selection.length > 0) { // Build all selection
 					selectionSet[col.column] = new Set(col.selection);
@@ -769,7 +959,7 @@ class ProperTable extends React.Component {
 					colSettings[i].direction = sortDir;
 					colSettings[i].multisort = true;
 				} else {
-					colSettings[i].direction = 'DEF';
+					colSettings[i].direction = DEFAULT_SORT_DIRECTION;
 					colSettings[i].multisort = false;
 				}
 			}
@@ -790,10 +980,10 @@ class ProperTable extends React.Component {
 
 					// If the sort direction is not default and the column isn't already sorted then add one to the initial position
 					// and set the column to sorted. Otherwise if the sort direction is default set it to unsorted.
-					if (sortDir != 'DEF' && !colSettings[i].sorted) {
+					if (sortDir != DEFAULT_SORT_DIRECTION && !colSettings[i].sorted) {
 						initialPos++;
 						colSettings[i].sorted = true;
-					} else if (sortDir == 'DEF') {
+					} else if (sortDir == DEFAULT_SORT_DIRECTION) {
 					 	colSettings[i].sorted = false;
 					}
 				}
@@ -807,7 +997,7 @@ class ProperTable extends React.Component {
 				if (colSettings[i].position < position && colSettings[i].position >= initialPos) {
 					// Move element to the next position only if the new sort direction wasn't default, in that case keep the element in the same
 					// sorting priority position.
-					if (colSettings[i].direction == 'DEF') colSettings[i].position = colSettings[i].position + 1;
+					if (colSettings[i].direction == DEFAULT_SORT_DIRECTION) colSettings[i].position = colSettings[i].position + 1;
 				}
 			}
 
@@ -865,7 +1055,7 @@ class ProperTable extends React.Component {
 
 		colSettings.forEach((element) => {
 			// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
-			if (element.direction != 'DEF' && element.multisort && element.sortable) {
+			if (element.direction != DEFAULT_SORT_DIRECTION && element.multisort && element.sortable) {
 				sortParser = colSortParsers[element.column];
 
 				sortedData = sortedData.sortBy((row, rowIndex, allData) => {
@@ -881,9 +1071,9 @@ class ProperTable extends React.Component {
 				}, (val1, val2) => {
 					if (val1 == val2) {
 						return 0;
-					} else if (element.direction == 'ASC') {
+					} else if (element.direction == ASCENDING_SORT_DIRECTION) {
 						return val1 > val2? 1 : -1;
-					} else if (element.direction == 'DESC') {
+					} else if (element.direction == DESCENDING_SORT_DIRECTION) {
 					 	return val1 > val2? -1 : 1;
 					}
 				});
@@ -895,7 +1085,7 @@ class ProperTable extends React.Component {
 		if (defaultSort) {
 			//  Set to default
 			sortedData = data.sortBy((row, rowIndex, allData) => {
-	  			return row.get('_rowIndex');
+	  			return row.get(ROW_INDEX_FIELD);
 			}, (val1, val2) => {
 				return val1 > val2? 1 : (val1 == val2 ? 0:-1);
 			});
@@ -924,7 +1114,7 @@ class ProperTable extends React.Component {
  * @return 	{object}	col 		The builded column or tree of columns
  */
 	parseColumn(colData, isChildren = false, hasNested = false) {
-		let col = null, colname = null, sortDir = 'DEF', sortable = null, selection = null, columnFilter = null, hasComplexFilter = false;
+		let col = null, colname = null, sortDir = DEFAULT_SORT_DIRECTION, sortable = null, selection = null, columnFilter = null, hasComplexFilter = false;
 		let indexed = null, headerData = null, className = null, settings = null, extraProps = {
 			width: 100,
 			fixed: false,
@@ -946,24 +1136,24 @@ class ProperTable extends React.Component {
 		if (!colData.width && !colData.maxWidth) {
 			extraProps.flexGrow = 1;
 
-			if (typeof colData.flex != 'undefined') {
+			if (colData.flex !== undefined) {
 				extraProps.flexGrow = colData.flex;
 			}
 		}
 
-		if (typeof colData.fixed !== 'undefined') {
+		if (colData.fixed !== undefined) {
 			extraProps.fixed = colData.fixed;
 		}
 
-		if (typeof colData.isResizable !== 'undefined') {
+		if (colData.isResizable !== undefined) {
 			extraProps.isResizable = colData.isResizable;
 		}
 
 		// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
 		// setting the result inside this columns group.
-		if (typeof colData.children == 'undefined' || !colData.children.length) {
+		if (colData.children === undefined || !colData.children.length) {
 			// Get column settings
-			settings = _.findWhere(this.state.colSettings, {column: colname});
+			settings = _.findWhere(this.state.colSettings, {column: colname}) || {};
 
 			// If this column can be sort or not.
 			sortable = _.isUndefined(colData.sortable) ? true : colData.sortable;
@@ -996,6 +1186,7 @@ class ProperTable extends React.Component {
 						sortDir={settings.direction}
 						children={colData.label}
 						colName={colData.name}
+						filterWidth={this.props.filterWidth}
 						sortable={sortable}
 						userClassName={className}
 						columnFormater={null} // Formatter function that get the value to be render and return it parsed settings.formatter
@@ -1013,7 +1204,12 @@ class ProperTable extends React.Component {
 			}
 		} else {
 			// Call the method recursively to all the childrens of this column.
-			let inner = colData.children.map((c) => this.parseColumn(c, true));
+			let hasFalsy = false, inner = colData.children.map((c) => {
+				if (c.isVisible === undefined || c.isVisible) return this.parseColumn(c, true);
+				else hasFalsy = true;
+			});
+
+			if (hasFalsy) inner = _.compact(inner);
 
 			col = <ColumnGroup
 				columnKey={colname}
@@ -1035,11 +1231,11 @@ class ProperTable extends React.Component {
  * @return {array} 	columns 	Array with all the columns to be rendered.
  */
 	buildTable() {
-		let columns = [], isNested = hasNested(this.state.cols), selColumn = null;
+		let columns = [], isNested = this.hasNested(this.state.cols), selColumn = null;
 
-		if (this.props.selectable == 'multiple') {
+		if (this.props.selectable == MULTIPLE_SELECTION) {
 			let somethingSelected = this.state.selection.size > 0, allSelected = this.props.columnFilterComponent ? this.isAllSelected(this.state.data, this.state.selection) : this.state.allSelected;
-			let settings = null, sortDir = 'DEF', selectedSet = null;
+			let settings = null, sortDir = DEFAULT_SORT_DIRECTION, selectedSet = null;
 
 			if (this.props.selected) {
 				if (!_.isArray(this.props.selected)) {
@@ -1059,7 +1255,7 @@ class ProperTable extends React.Component {
 				key={_.uniqueId('selector-')}
 				header={
 					<HeaderCell
-						className={''}
+						className={'selector-column-header'}
 						onSortChange={this.onSortChange.bind(this)}
 						sortDir={sortDir}
 						sortable={true}
@@ -1092,7 +1288,9 @@ class ProperTable extends React.Component {
 		}
 
 		this.state.cols.forEach((col) => {
-			columns.push(this.parseColumn(col.toJSON(), false, isNested));
+			if (col.get('isVisible', true)) {
+				columns.push(this.parseColumn(col.toJSON(), false, isNested));
+			}
 		});
 
 		return columns;
@@ -1187,7 +1385,7 @@ class ProperTable extends React.Component {
 		if (selection.has(id)) {
 			selection.delete(id);  // Returns a copy of the array with the instance with that properId deleted.
 		} else {
-			if (this.props.selectable == 'multiple') {
+			if (this.props.selectable == MULTIPLE_SELECTION) {
 				selection.add(id);
 			} else {
 				selection = new Set([id]);
@@ -1204,7 +1402,7 @@ class ProperTable extends React.Component {
  * @param {object}	nextState	The state that will be set for the updated component
  */
 	checkSelectionChange(nextProps, nextState) {
-		if (nextProps.selectable == 'multiple') {
+		if (nextProps.selectable == MULTIPLE_SELECTION) {
 			if (nextState.selection.size !== this.state.selection.size){
 				this.updateSelectionData(nextState.selection, nextState.allSelected);
 			}
@@ -1229,20 +1427,20 @@ class ProperTable extends React.Component {
 		let oldSelection = this.state.selection;
 		let rowid = null, selected = null, rdata = null, curIndex = null, newData = this.state.data, rowIndex = null;
 
-		if (this.props.selectable != 'multiple') {
+		if (this.props.selectable != MULTIPLE_SELECTION) {
 			let oldId = oldSelection.values().next().value || null;
 
 			if (!_.isNull(oldId)) {
 				newIndexed[oldId]._selected = false; // Update indexed data
 				rowIndex =  newIndexed[oldId]._rowIndex; // Get data index
-				rdata = newData.get(rowIndex).set('_selected', false); // Change the row in that index
+				rdata = newData.get(rowIndex).set(SELECTED_FIELD, false); // Change the row in that index
 				newData = newData.set(rowIndex, rdata); // Set that row in the data object
 			}
 
 			if (!_.isNull(newSelection)) {
 				newIndexed[newSelection]._selected = true; // Update indexed data
 				rowIndex =  newIndexed[newSelection]._rowIndex; // Get data index
-				rdata = newData.get(rowIndex).set('_selected', true); // Change the row in that index
+				rdata = newData.get(rowIndex).set(SELECTED_FIELD, true); // Change the row in that index
 				newData = newData.set(rowIndex, rdata); // Set that row in the data object
 			}
 
@@ -1272,14 +1470,14 @@ class ProperTable extends React.Component {
 			if (changedId && newIndexed[changedId]) {
 				newIndexed[changedId]._selected = selected; // Update indexed data
 				rowIndex =  newIndexed[changedId]._rowIndex; // Get data index
-				rdata = newData.get(rowIndex).set('_selected', selected); // Change the row in that index
+				rdata = newData.get(rowIndex).set(SELECTED_FIELD, selected); // Change the row in that index
 				newData = newData.set(rowIndex, rdata); // Set that row in the data object
 			}
 		} else { // Change all data
 			newData = newData.map((row) => {
 				rowid = row.get(this.props.idField);
 				selected = newSelection.has(rowid.toString());
-				rdata = row.set('_selected', selected);
+				rdata = row.set(SELECTED_FIELD, selected);
 				curIndex = newIndexed[rowid];
 
 				if (curIndex && curIndex._selected != selected) { // update indexed data
@@ -1406,7 +1604,7 @@ class ProperTable extends React.Component {
  * @param {integer}	index	Index of the row which will get the new classes.
  */
 	getRowClassName(index) {
-		let addClass = 'propertable-row', selected = this.state.data.get(index).get('_selected');
+		let addClass = 'propertable-row', selected = this.state.data.get(index).get(SELECTED_FIELD);
 
 		if (selected) addClass += ' selected';
 
@@ -1457,7 +1655,7 @@ ProperTable.propTypes = {
     ]),
 	afterSort: React.PropTypes.func,
 	afterSelect: React.PropTypes.func,
-	selectable: React.PropTypes.oneOf([true, 'multiple', false]),
+	selectable: React.PropTypes.oneOf([true, MULTIPLE_SELECTION, false]),
 	selected: React.PropTypes.oneOfType([
       	React.PropTypes.string,
       	React.PropTypes.number,
@@ -1480,9 +1678,11 @@ ProperTable.propTypes = {
       	React.PropTypes.element,
       	React.PropTypes.object // Js element but not React element
     ]),
+    restartOnClickType: React.PropTypes.oneOf([CLEAR_FILTERS, CLEAR_SORT, CLEAR_BOTH]),
     getColSettings: React.PropTypes.func,
-    colSortDirs: React.PropTypes.arrayOf(React.PropTypes.object),
-    colFilters: React.PropTypes.arrayOf(React.PropTypes.array),
+    colSortDirs: React.PropTypes.objectOf(React.PropTypes.string),
+    colFilters: React.PropTypes.objectOf(React.PropTypes.object),
+    filterWidth: React.PropTypes.number,
 }
 
 ProperTable.defaultProps = {
@@ -1505,9 +1705,11 @@ ProperTable.defaultProps = {
 	iconColor: '#5E78D3',
 	iconDefColor: '#D6D6D6',
 	restartOnClick: null,
+	restartOnClickType: CLEAR_BOTH,
 	getColSettings: null,
 	colSortDirs: null,
 	colFilters: null,
+	filterWidth: null
 }
 
 export default ProperTable;

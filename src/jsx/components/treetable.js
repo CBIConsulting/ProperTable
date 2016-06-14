@@ -7,37 +7,14 @@ import {keys, clone, extend, isArray} from 'underscore';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
 import cache from '../lib/rowcache';
 
+const CACHE_NAME = 'formatted';
+const GROUP = '__group__';
+const MULTIPLE_SELECTION = 'multiple';
+const CLEAR_FILTERS = 'clear_filters';
+const CLEAR_SORT = 'clear_sort';
+const CLEAR_BOTH = 'clear_both';
 const Set = require('es6-set');
 
-function defaultProps() {
-	return {
-		groupBy: null,
-		groupCol: null,
-		nestedBy: null,
-		nestedParentField: 'parent_id',
-		collapsable: true,
-		expanded: [],
-		className: '',
-		cols: [],
-		data: [],
-		uniqueId: null,
-		afterSort: null,
-		afterSelect: null,
-		selectable: true,
-		selected: null,
-		rowHeight: 50,
-		idField: '_properId',
-		msgs: messages,
-		onGroupClick: null,
-		selectorWidth: 27,
-		colSortDirs: null,
-		multisort: false
-	};
-}
-
-function isGroupId(id) {
-	return id.toString().indexOf('__group__') === 0;
-}
 
 class TreeTable extends React.Component {
 	constructor(props) {
@@ -77,7 +54,7 @@ class TreeTable extends React.Component {
 				if (!isArray(selected)) {
 					selection = new Set([selected.toString()]);
 				} else {
-					if (props.selectable == 'multiple') selection = new Set(selected.toString().split(','));
+					if (props.selectable === 'multiple') selection = new Set(selected.toString().split(','));
 					else selection = new Set([selected[0].toString()]);
 				}
 			}
@@ -106,7 +83,7 @@ class TreeTable extends React.Component {
 			selection.forEach(id => {
 				let row = null;
 
-				if (!isGroupId(id)) {
+				if (!this.isGroupId(id)) {
 					row = this.dataIndex[id];
 
 					if (row) {
@@ -118,6 +95,10 @@ class TreeTable extends React.Component {
 
 			this.props.afterSelect(selData, selArray);
 		}
+	}
+
+	isGroupId(id) {
+		return id.toString().indexOf(GROUP) === 0;
 	}
 
 	prepareNestedData(props = this.props, state = this.state) {
@@ -142,7 +123,7 @@ class TreeTable extends React.Component {
 					let row = {};
 
 					row[props.groupCol] = item;
-					row[props.idField] = '__group__'+item;
+					row[props.idField] = GROUP+item;
 					row._level = 1;
 					row._isGroup = true;
 					row._hasChildren = true;
@@ -169,12 +150,12 @@ class TreeTable extends React.Component {
 			this.groupCol.formatter = (val, colData, rawdata) => {
 				let content = val;
 
-				if (typeof oldFormatter == 'function') {
+				if (typeof oldFormatter === 'function') {
 					content = oldFormatter(val, colData, rawdata);
 				}
 
-				if (rawdata[this.props.idField].toString().indexOf('__group__') === 0) {
-					if (typeof this.colsByName[props.groupBy].formatter == 'function') {
+				if (rawdata[this.props.idField].toString().indexOf(GROUP) === 0) {
+					if (typeof this.colsByName[props.groupBy].formatter === 'function') {
 						content = this.colsByName[props.groupBy].formatter(val, this.colsByName[props.groupBy], rawdata);
 					}
 				}
@@ -195,7 +176,7 @@ class TreeTable extends React.Component {
 
 	toggleCollapse(val, colData, rawdata) {
 		let expanded = new Set(this.state.expanded.values());
-		let ckey = ['formatted', 'tb_'+this.uniqueId, 'r__'+rawdata[this.props.idField]];
+		let ckey = [CACHE_NAME, 'tb_'+this.uniqueId, 'r__'+rawdata[this.props.idField]];
 
 		if (expanded.has(val)) {
 			expanded.delete(val);
@@ -219,11 +200,11 @@ class TreeTable extends React.Component {
 			newSelection = new Set();
 		} else {
 			selectionArray.forEach((k) => {
-				let isGroup = k.indexOf('__group__') === 0;
+				let isGroup = k.indexOf(GROUP) === 0;
 
 				newSelArray.push(k.toString());
 				if (isGroup) {
-					let gkey = k.replace('__group__', '');
+					let gkey = k.replace(GROUP, '');
 					let items = _.pluck(this.grouped[gkey], this.props.idField);
 
 					items.forEach((ik) => {
@@ -235,13 +216,13 @@ class TreeTable extends React.Component {
 			newSelection = new Set(newSelArray);
 		}
 
-		cache.flush(['formatted', 'tb_'+this.uniqueId]);
+		cache.flush([CACHE_NAME, 'tb_'+this.uniqueId]);
 		this.setState({selection: newSelection}, this.sendSelection.bind(this, newSelection));
 	}
 
 	render() {
 		let {cols, data, afterSelect, afterSort, selected, uniqueId, ...props} = this.props;
-		const selection = [...this.state.selection];
+		let selection = [...this.state.selection];
 		cols = this.cols;
 		data = this.data;
 		uniqueId = this.uniqueId;
@@ -261,6 +242,80 @@ class TreeTable extends React.Component {
 	}
 }
 
-TreeTable.defaultProps = defaultProps();
+TreeTable.propTypes = {
+	className: React.PropTypes.string,
+	data: React.PropTypes.array,
+	cols: React.PropTypes.array.isRequired,
+	uniqueId: React.PropTypes.oneOfType([
+      	React.PropTypes.string,
+      	React.PropTypes.number
+    ]),
+	afterSort: React.PropTypes.func,
+	afterSelect: React.PropTypes.func,
+	selectable: React.PropTypes.oneOf([true, MULTIPLE_SELECTION, false]),
+	selected: React.PropTypes.oneOfType([
+      	React.PropTypes.string,
+      	React.PropTypes.number,
+      	React.PropTypes.array
+    ]),
+    rowHeight: React.PropTypes.number,
+    idField: React.PropTypes.string,
+    msgs: React.PropTypes.objectOf(React.PropTypes.object),
+    lang: React.PropTypes.string,
+    selectorWidth: React.PropTypes.number,
+    multisort: React.PropTypes.bool,
+    sortIcons: React.PropTypes.object,
+    iconColor: React.PropTypes.string,
+    iconDefColor: React.PropTypes.string,
+  	columnFilterComponent: React.PropTypes.oneOfType([
+  		React.PropTypes.object,
+      	React.PropTypes.func
+    ]),
+  	restartOnClick: React.PropTypes.oneOfType([
+      	React.PropTypes.element,
+      	React.PropTypes.object // Js element but not React element
+    ]),
+    restartOnClickType: React.PropTypes.oneOf([CLEAR_FILTERS, CLEAR_SORT, CLEAR_BOTH]),
+    getColSettings: React.PropTypes.func,
+    colSortDirs: React.PropTypes.objectOf(React.PropTypes.string),
+    colFilters: React.PropTypes.objectOf(React.PropTypes.object),
+    filterWidth: React.PropTypes.number,
+}
+
+TreeTable.defaultProps = {
+	className: '',
+	cols: [],
+	data: [],
+	uniqueId: null,
+	afterSort: null,
+	afterSelect: null,
+	selectable: true,
+	selected: null,
+	rowHeight: 50,
+	idField: '_properId',
+	msgs: messages,
+	lang: 'ENG',
+	selectorWidth: 27,
+	multisort: false,
+	columnFilterComponent: null,
+	sortIcons: null,
+	iconColor: '#5E78D3',
+	iconDefColor: '#D6D6D6',
+	restartOnClick: null,
+	restartOnClickType: CLEAR_BOTH,
+	getColSettings: null,
+	colSortDirs: null,
+	colFilters: null,
+	filterWidth: null,
+
+	// PROPS of Three
+	groupBy: null,
+	groupCol: null,
+	nestedBy: null,
+	nestedParentField: 'parent_id',
+	collapsable: true,
+	expanded: [],
+	onGroupClick: null
+}
 
 export default TreeTable;
