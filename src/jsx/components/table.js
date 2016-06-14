@@ -29,6 +29,21 @@ const CLEAR_SORT = 'clear_sort';
 const CLEAR_BOTH = 'clear_both';
 const FILTERTYPE_SELECTION = 'selection';
 const FILTERTYPE_CUSTOM = 'operation';
+const NOTEQUALS = 'notequals';
+const EQUALS = "equals";
+const BIGGERTHAN = 'bigger';
+const LOWERTHAN = 'lower';
+const AFTERDATE = 'after';
+const BEFOREDATE = 'before';
+const BETWEENDATES = 'between';
+const ONDATE = 'on';
+const NOTONDATE = 'noton';
+const STARTSWITH = 'start';
+const FINISHWITH = 'finish';
+const CONTAINS = 'contains';
+const NOTCONTAINS = 'notContains';
+const EMPTY = 'empty';
+const CACHE_NAME = 'formatted';
 const Set = require('es6-set');
 const CLEAR_OPTIONS = {
 	[CLEAR_BOTH]: {sort: true, filters: true},
@@ -127,7 +142,7 @@ class ProperTable extends React.Component {
 	}
 
 	componentWillUnmount() {
-		cache.flush('formatted');
+		cache.flush(CACHE_NAME);
 
 		// Remove listener if exist
 		if (this.props.restartOnClick) {
@@ -153,7 +168,7 @@ class ProperTable extends React.Component {
 			if (colsChanged || dataChanged) {
 
 				if (dataChanged && this.props.data.length > 0) { // The most probably case
-					cache.flush('formatted');
+					cache.flush(CACHE_NAME);
 
 					let colSettings = nextState.colSettings;
 					preparedData = this.prepareData(nextProps, nextState);
@@ -169,7 +184,7 @@ class ProperTable extends React.Component {
 					}, this.applySettings(nextState.colSettings, nextProps));
 
 				} else if ((colsChanged || this.props.data.length === 0) && dataChanged) {
-					cache.flush('formatted');
+					cache.flush(CACHE_NAME);
 
 					preparedData = this.prepareData(nextProps, nextState);
 					colData =  this.prepareColSettings(nextProps, preparedData.rawdata);
@@ -191,7 +206,7 @@ class ProperTable extends React.Component {
 					if (colsDeepCompare.hasChangedDeeply) {
 						let sortCache = [];
 
-						cache.flush('formatted');
+						cache.flush(CACHE_NAME);
 						colData =  this.prepareColSettings(nextProps, this.state.rawdata);
 
 						// Restart cache
@@ -378,7 +393,7 @@ class ProperTable extends React.Component {
 		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newDirection;
 		let updateSortAllowed = updateSort && props.colSortDirs && _.size(props.colSortDirs) > 0;
 		let updateFiltersAllowed = updateFilters && props.colFilters, hasSelectionFilter, hasCustomFilter, operations = {};
-		let sortedData = [], dateTypes = new Set(['between', 'after', 'before', 'on', 'noton']); // Date filters
+		let sortedData = [], dateTypes = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
 
 		// Update settings
 		colSettings = _.map(colSettings, col => {
@@ -489,7 +504,7 @@ class ProperTable extends React.Component {
 	applyFilters(columns, formatters, filters, fields, operations = []) {
 		let {initialData, indexed, selection} = this.state;
 		let filteredData = initialData, idField = this.props.idField, formatterAllowed, applyFormatter;
-		let notAllowed = new Set(['between', 'after', 'before', 'on', 'noton']); // Date filters
+		let notAllowed = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
 
 		// Get the data that match with the selection (of all column filters)
 		if (_.size(filters) > 0) {
@@ -568,14 +583,7 @@ class ProperTable extends React.Component {
 		let keyField = this.props.idField;
 
 		if (props.selected) {
-			if (!_.isArray(props.selected)) {
-				defSelection = [props.selected.toString()];
-			} else {
-				if (props.selectable == MULTIPLE_SELECTION) defSelection = props.selected.toString().split(',');
-				else defSelection = [props.selected[0].toString()];
-			}
-			defSelection = new Set(defSelection);
-
+			defSelection = this.parseSelected(props);
 		} else {
 			if (state && state.selection) {
 				defSelection = state.selection;
@@ -586,10 +594,8 @@ class ProperTable extends React.Component {
 		parsed = data.map(row => {
 			id = row.get(keyField, false);
 
-			if (!id) {
-				id = _.uniqueId();
-				row = row.set(keyField, id);
-			}
+			if (!id) id = _.uniqueId();
+			row = row.set(keyField, id.toString());
 
 			if (defSelection.has(id)) {
 				row = row.set(SELECTED_FIELD, true);
@@ -598,7 +604,6 @@ class ProperTable extends React.Component {
 			}
 
 			row = row.set(ROW_INDEX_FIELD, index++);
-
 			sortCache[id] = {};
 
 			return row;
@@ -625,21 +630,32 @@ class ProperTable extends React.Component {
  */
 	setDefaultSelection(props = this.props) {
 		if (props.selected) {
-			let selected = props.selected, selection;
-
-			if (selected.length == 0) {
-				selection = new Set();
-			} else {
-				if (!_.isArray(selected)) {
-					selection = new Set([selected.toString()]);
-				} else {
-					if (props.selectable == MULTIPLE_SELECTION) selection = new Set(selected.toString().split(','));
-					else selection = new Set([selected[0].toString()]);
-				}
-			}
-
+			let selection = this.parseSelected(props);
 			this.triggerSelection(selection, false); // false -> don't send the selection
 		}
+	}
+
+/**
+ * Parse the property selected that could be a string, number, array of strings / numbers or a Set into a Set.
+ *
+ * @param (array)	props 		Component props (or nextProps)
+ * @return (Set)	selection 	The default selected rows.
+ */
+	parseSelected(props = this.props) {
+		let selection, isArray = _.isArray(props.selected), isObject = typeof props.selected === 'object';
+
+		if (!isArray && isObject) return props.selected; // Is Set
+
+		if (!isArray) { // Is String or number
+			selection = [props.selected.toString()];
+		} else if (props.selected.length > 0) { // Is Array
+			selection = props.selectable === MULTIPLE_SELECTION ? props.selected.toString().split(',') : [props.selected[0].toString()];
+		} else {
+			selection = [];
+		}
+
+		selection = new Set(selection);
+		return selection;
 	}
 
 /**
@@ -715,7 +731,7 @@ class ProperTable extends React.Component {
          		sortable: sortable,
          		filterType: FILTERTYPE_SELECTION,
          		selection: [], // Selected values of this column (to filter when has a complex filter)
-         		operationFilterType: 'contains',
+         		operationFilterType: CONTAINS,
          		operationFilterValue: '',
          		indexedData: indexed, // Indexed by this column (just if has complex filter)
          		data: parsedData,
@@ -735,7 +751,7 @@ class ProperTable extends React.Component {
          		sortable: true,
          		filterType: FILTERTYPE_SELECTION,
          		selection: [],
-         		operationFilterType: 'contains',
+         		operationFilterType: CONTAINS,
          		operationFilterValue: '',
          		indexedData: [],
          		data: [],
@@ -1220,20 +1236,8 @@ class ProperTable extends React.Component {
 
 		if (this.props.selectable == MULTIPLE_SELECTION) {
 			let somethingSelected = this.state.selection.size > 0, allSelected = this.props.columnFilterComponent ? this.isAllSelected(this.state.data, this.state.selection) : this.state.allSelected;
-			let settings = null, sortDir = DEFAULT_SORT_DIRECTION, selectedSet = null;
-
-			if (this.props.selected) {
-				if (!_.isArray(this.props.selected)) {
-					selectedSet = new Set([this.props.selected]);
-				} else {
-					selectedSet = new Set(this.props.selected);
-				}
-			} else {
-				selectedSet = this.state.selection;
-			}
-
-			settings = _.findWhere(this.state.colSettings, {column: SELECTOR_COL_NAME})
-			sortDir = settings.direction;
+			let settings = _.findWhere(this.state.colSettings, {column: SELECTOR_COL_NAME}) || null;
+			let sortDir = settings ? settings.direction : DEFAULT_SORT_DIRECTION;
 
 			selColumn = <Column
 				columnKey={SELECTOR_COL_NAME}
@@ -1249,13 +1253,15 @@ class ProperTable extends React.Component {
 							onClick={this.handleSelectAll.bind(this)}
 							somethingSelected={somethingSelected}
 							allSelected={allSelected}
+							indexed={this.state.indexed}
 							isHeader={true}
 						/>
 					</HeaderCell>
 				}
 				cell={<Selector
+					indexed={this.state.indexed}
 					data={this.state.data}
-					selected={selectedSet}
+					selected={this.state.selection}
 					idField={this.props.idField}
 				/>}
 				allowCellsRecycling
@@ -1328,8 +1334,8 @@ class ProperTable extends React.Component {
  */
 	handleRowClick(e, rowIndex) {
 		e.preventDefault();
-
-		let clickedId = this.state.data.get(rowIndex).get(this.props.idField);
+		let clickedRow = this.state.data.get(rowIndex);
+		let clickedId = clickedRow.get(this.props.idField);
 
 		if (this.props.selectable) {
 			this.toggleSelected(clickedId.toString());
@@ -1450,11 +1456,12 @@ class ProperTable extends React.Component {
 				});
 			}
 
-			newIndexed[changedId]._selected = selected; // Update indexed data
-			rowIndex =  newIndexed[changedId]._rowIndex; // Get data index
-			rdata = newData.get(rowIndex).set(SELECTED_FIELD, selected); // Change the row in that index
-			newData = newData.set(rowIndex, rdata); // Set that row in the data object
-
+			if (changedId && newIndexed[changedId]) {
+				newIndexed[changedId]._selected = selected; // Update indexed data
+				rowIndex =  newIndexed[changedId]._rowIndex; // Get data index
+				rdata = newData.get(rowIndex).set(SELECTED_FIELD, selected); // Change the row in that index
+				newData = newData.set(rowIndex, rdata); // Set that row in the data object
+			}
 		} else { // Change all data
 			newData = newData.map((row) => {
 				rowid = row.get(this.props.idField);
@@ -1462,7 +1469,7 @@ class ProperTable extends React.Component {
 				rdata = row.set(SELECTED_FIELD, selected);
 				curIndex = newIndexed[rowid];
 
-				if (curIndex._selected != selected) { // update indexed data
+				if (curIndex && curIndex._selected != selected) { // update indexed data
 					curIndex._selected = selected;
 					newIndexed[rowid] = curIndex;
 				}
@@ -1641,7 +1648,8 @@ ProperTable.propTypes = {
 	selected: React.PropTypes.oneOfType([
       	React.PropTypes.string,
       	React.PropTypes.number,
-      	React.PropTypes.array
+      	React.PropTypes.array,
+      	React.PropTypes.object,
     ]),
     rowHeight: React.PropTypes.number,
     idField: React.PropTypes.string,
