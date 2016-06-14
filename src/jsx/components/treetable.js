@@ -46,20 +46,7 @@ class TreeTable extends React.Component {
 
 	setDefaultSelection(props = this.props) {
 		if (props.selected) {
-			let selected = props.selected, selection;
-
-			if (selected.length == 0) {
-				selection = new Set();
-			} else {
-				if (!isArray(selected)) {
-					selection = new Set([selected.toString()]);
-				} else {
-					if (props.selectable === 'multiple') selection = new Set(selected.toString().split(','));
-					else selection = new Set([selected[0].toString()]);
-				}
-			}
-
-			this.triggerSelection(selection, false); // false -> don't send the selection
+			this.triggerSelection(Table.prototype.parseSelected(props), false); // false -> don't send the selection
 		}
 	}
 
@@ -222,19 +209,18 @@ class TreeTable extends React.Component {
 
 	render() {
 		let {cols, data, afterSelect, afterSort, selected, uniqueId, ...props} = this.props;
-		let selection = [...this.state.selection];
 		cols = this.cols;
 		data = this.data;
 		uniqueId = this.uniqueId;
 
-		console.log('seleccion en tree', selection);
+		console.log('seleccion en tree', this.state.selection);
 
 		return <Table
 			afterSelect={(selection, selectionArray) => {
 				this.onSelect(afterSelect, selection, selectionArray);
 			}}
 			uniqueId={uniqueId}
-			selected={selection}
+			selected={this.state.selection}
 			cols={cols}
 			data={data}
 			{...props}
@@ -256,7 +242,8 @@ TreeTable.propTypes = {
 	selected: React.PropTypes.oneOfType([
       	React.PropTypes.string,
       	React.PropTypes.number,
-      	React.PropTypes.array
+      	React.PropTypes.array,
+      	React.PropTypes.object
     ]),
     rowHeight: React.PropTypes.number,
     idField: React.PropTypes.string,

@@ -583,15 +583,7 @@ class ProperTable extends React.Component {
 		let keyField = this.props.idField;
 
 		if (props.selected) {
-			if (!_.isArray(props.selected)) {
-				defSelection = [props.selected.toString()];
-			} else {
-				if (props.selectable == MULTIPLE_SELECTION) defSelection = props.selected.toString().split(',');
-				else defSelection = [props.selected[0].toString()];
-			}
-
-			defSelection = new Set(defSelection);
-
+			defSelection = this.parseSelected(props);
 		} else {
 			if (state && state.selection) {
 				defSelection = state.selection;
@@ -600,12 +592,10 @@ class ProperTable extends React.Component {
 
 		// Parsing data to add new fields (selected or not, properId, rowIndex)
 		parsed = data.map(row => {
-			id = row.get(keyField, false).toString();
+			id = row.get(keyField, false);
 
-			if (!id) {
-				id = _.uniqueId();
-				row = row.set(keyField, id);
-			}
+			if (!id) id = _.uniqueId();
+			row = row.set(keyField, id.toString());
 
 			if (defSelection.has(id)) {
 				row = row.set(SELECTED_FIELD, true);
@@ -640,21 +630,32 @@ class ProperTable extends React.Component {
  */
 	setDefaultSelection(props = this.props) {
 		if (props.selected) {
-			let selected = props.selected, selection;
-
-			if (selected.length == 0) {
-				selection = new Set();
-			} else {
-				if (!_.isArray(selected)) {
-					selection = new Set([selected.toString()]);
-				} else {
-					if (props.selectable == MULTIPLE_SELECTION) selection = new Set(selected.toString().split(','));
-					else selection = new Set([selected[0].toString()]);
-				}
-			}
-
+			let selection = this.parseSelected(props);
 			this.triggerSelection(selection, false); // false -> don't send the selection
 		}
+	}
+
+/**
+ * Parse the property selected that could be a string, number, array of strings / numbers or a Set into a Set.
+ *
+ * @param (array)	props 		Component props (or nextProps)
+ * @return (Set)	selection 	The default selected rows.
+ */
+	parseSelected(props = this.props) {
+		let selection, isArray = _.isArray(props.selected), isObject = typeof props.selected === 'object';
+
+		if (!isArray && isObject) return props.selected; // Is Set
+
+		if (!isArray) { // Is String or number
+			selection = [props.selected.toString()];
+		} else if (props.selected.length > 0) { // Is Array
+			selection = props.selectable === MULTIPLE_SELECTION ? props.selected.toString().split(',') : [props.selected[0].toString()];
+		} else {
+			selection = [];
+		}
+
+		selection = new Set(selection);
+		return selection;
 	}
 
 /**
@@ -1235,20 +1236,8 @@ class ProperTable extends React.Component {
 
 		if (this.props.selectable == MULTIPLE_SELECTION) {
 			let somethingSelected = this.state.selection.size > 0, allSelected = this.props.columnFilterComponent ? this.isAllSelected(this.state.data, this.state.selection) : this.state.allSelected;
-			let settings = null, sortDir = DEFAULT_SORT_DIRECTION, selectedSet = null;
-
-			if (this.props.selected) {
-				if (!_.isArray(this.props.selected)) {
-					selectedSet = new Set([this.props.selected]);
-				} else {
-					selectedSet = new Set(this.props.selected);
-				}
-			} else {
-				selectedSet = this.state.selection;
-			}
-
-			settings = _.findWhere(this.state.colSettings, {column: SELECTOR_COL_NAME})
-			sortDir = settings.direction;
+			let settings = _.findWhere(this.state.colSettings, {column: SELECTOR_COL_NAME}) || null;
+			let sortDir = settings ? settings.direction : DEFAULT_SORT_DIRECTION;
 
 			selColumn = <Column
 				columnKey={SELECTOR_COL_NAME}
@@ -1272,7 +1261,7 @@ class ProperTable extends React.Component {
 				cell={<Selector
 					indexed={this.state.indexed}
 					data={this.state.data}
-					selected={selectedSet}
+					selected={this.state.selection}
 					idField={this.props.idField}
 				/>}
 				allowCellsRecycling
@@ -1346,6 +1335,7 @@ class ProperTable extends React.Component {
 	handleRowClick(e, rowIndex) {
 		e.preventDefault();
 		let clickedRow = this.state.data.get(rowIndex);
+		console.log(clickedRow.toJS(), this.props.idField)
 		let clickedId = clickedRow.get(this.props.idField);
 
 		if (this.props.selectable) {
@@ -1659,7 +1649,8 @@ ProperTable.propTypes = {
 	selected: React.PropTypes.oneOfType([
       	React.PropTypes.string,
       	React.PropTypes.number,
-      	React.PropTypes.array
+      	React.PropTypes.array,
+      	React.PropTypes.object,
     ]),
     rowHeight: React.PropTypes.number,
     idField: React.PropTypes.string,
