@@ -679,7 +679,7 @@ class ProperTable extends React.Component {
         // the column is sortable or not and if the Table has multisort or just only single.
         for (let i = 0; i <= sortData.colSortDirs.length - 1; i++) {
         	colData = sortData.colSortDirs[i];
-        	sortable = colData.sortable !== null ? colData.sortable : true;
+        	sortable = !_.isNull(colData.sortable) ? colData.sortable : true;
 
          	// If has filter build a list without duplicates and it indexed
          	if (this.props.columnFilterComponent && sortable) {
@@ -696,7 +696,7 @@ class ProperTable extends React.Component {
 					if (valid && !_.isNull(val) && val !== '') {
 						if (colData.formatter) val = colData.formatter(val, null, null);
 
-						if (!idSet.has(val) && !_.isUndefined(val)){ // No repeat
+						if (!idSet.has(val) && !_.isNull(val) && !_.isUndefined(val)){ // No repeat
 							idSet.add(val);
 
 							row = row.set(colData.field, val.toString());
@@ -956,7 +956,7 @@ class ProperTable extends React.Component {
 		// Single sorting.
 		if (!this.props.multisort) {
 			for (let i = 0; i <= colSettings.length - 1; i++) {
-				if (colSettings[i].column == columnKey) {
+				if (colSettings[i].column === columnKey) {
 					colSettings[i].direction = sortDir;
 					colSettings[i].multisort = true;
 				} else {
@@ -974,14 +974,14 @@ class ProperTable extends React.Component {
 				// last column will be 3 and will change to 2 or 1 if the sorted columns back to default.
 				if (colSettings[i].sorted) initialPos++;
 
-				if (colSettings[i].column == columnKey) {
+				if (colSettings[i].column === columnKey) {
 					colSettings[i].direction = sortDir; // Set the new direction
 					position = colSettings[i].position; // Save the current position
 					index = i;
 
 					// If the sort direction is not default and the column isn't already sorted then add one to the initial position
 					// and set the column to sorted. Otherwise if the sort direction is default set it to unsorted.
-					if (sortDir != DEFAULT_SORT_DIRECTION && !colSettings[i].sorted) {
+					if (sortDir !== DEFAULT_SORT_DIRECTION && !colSettings[i].sorted) {
 						initialPos++;
 						colSettings[i].sorted = true;
 					} else if (sortDir == DEFAULT_SORT_DIRECTION) {
@@ -998,7 +998,7 @@ class ProperTable extends React.Component {
 				if (colSettings[i].position < position && colSettings[i].position >= initialPos) {
 					// Move element to the next position only if the new sort direction wasn't default, in that case keep the element in the same
 					// sorting priority position.
-					if (colSettings[i].direction == DEFAULT_SORT_DIRECTION) colSettings[i].position = colSettings[i].position + 1;
+					if (colSettings[i].direction === DEFAULT_SORT_DIRECTION) colSettings[i].position = colSettings[i].position + 1;
 				}
 			}
 
@@ -1056,12 +1056,11 @@ class ProperTable extends React.Component {
 
 		colSettings.forEach((element) => {
 			// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
-			if (element.direction != DEFAULT_SORT_DIRECTION && element.multisort && element.sortable) {
+			if (element.direction !== DEFAULT_SORT_DIRECTION && element.multisort && element.sortable) {
 				sortParser = colSortParsers[element.column];
 
 				sortedData = sortedData.sortBy((row, rowIndex, allData) => {
 					rowId = row.get(this.props.idField);
-
 					// sortCache [row-id] [column-id] = procesed value.
 					if (_.isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
 						val = sortParser(row.get(element.field));
@@ -1561,13 +1560,12 @@ class ProperTable extends React.Component {
  * @param (object)	data 			Component's data
  */
 	sendSortedData(data) {
-		if (typeof this.props.afterSort == 'function') {
+		if (typeof this.props.afterSort === 'function') {
 			let {initialIndexed, rawdata} = this.state;
 			let output = [];
 
 			output = data.map( row => {
 				let rowIndex = initialIndexed[row.get(this.props.idField)]._rowIndex;
-
 				return rawdata.get(rowIndex);
 			});
 

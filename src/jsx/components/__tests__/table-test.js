@@ -272,7 +272,7 @@ describe('ProperTable', () => {
 
 				props.afterSort = function(data) {
 					if (promise.done.calls.count() == 2) {
-						expect(data[0].id.toString()).toBe('10');
+						expect(data[0].id.toString()).toBe('9');
 
 						// Apply new selection
 						let node = TestUtils.scryRenderedDOMComponentsWithClass(component, 'public_fixedDataTable_bodyRow');
@@ -280,17 +280,17 @@ describe('ProperTable', () => {
 						TestUtils.Simulate.click(node[1]); // id 2
 					}
 				}
-				props.afterSelect= function(selection) {
+				props.afterSelect= function(data) {
 					if (promise.done.calls.count() == 1) {
-						expect(selection.length).toBe(1);
-						expect(selection[0].id.toString()).toBe('3')
+						expect(data.length).toBe(1);
+						expect(data[0].id.toString()).toBe('3')
 
 						// Apply sort
 						promise.done(); // 2
 						component.onSortChange('col1', 'DESC');
 
 					} else if (promise.done.calls.count() == 3) {
-						expect(selection.length).toBe(2);
+						expect(data.length).toBe(2);
 
 						// Apply new selection
 						let node = TestUtils.scryRenderedDOMComponentsWithClass(component, 'public_fixedDataTable_bodyRow');
@@ -298,7 +298,7 @@ describe('ProperTable', () => {
 						TestUtils.Simulate.click(node[3]); // id 4
 
 					} else if (promise.done.calls.count() == 4) {
-						expect(selection.length).toBe(3);
+						expect(data.length).toBe(3);
 						done();
 					}
 				}
