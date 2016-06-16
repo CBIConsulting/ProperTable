@@ -97,6 +97,8 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _CLEAR_OPTIONS;
@@ -185,7 +187,23 @@ var ProperTable =
 	var CLEAR_BOTH = 'clear_both';
 	var FILTERTYPE_SELECTION = 'selection';
 	var FILTERTYPE_CUSTOM = 'operation';
+	var NOTEQUALS = 'notequals';
+	var EQUALS = "equals";
+	var BIGGERTHAN = 'bigger';
+	var LOWERTHAN = 'lower';
+	var AFTERDATE = 'after';
+	var BEFOREDATE = 'before';
+	var BETWEENDATES = 'between';
+	var ONDATE = 'on';
+	var NOTONDATE = 'noton';
+	var STARTSWITH = 'start';
+	var FINISHWITH = 'finish';
+	var CONTAINS = 'contains';
+	var NOTCONTAINS = 'notcontains';
+	var EMPTY = 'empty';
+	var CACHE_NAME = 'formatted';
 	var Set = __webpack_require__(93);
+	var DATE_TYPES = new Set([AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]);
 	var CLEAR_OPTIONS = (_CLEAR_OPTIONS = {}, _defineProperty(_CLEAR_OPTIONS, CLEAR_BOTH, { sort: true, filters: true }), _defineProperty(_CLEAR_OPTIONS, CLEAR_FILTERS, { sort: false, filters: true }), _defineProperty(_CLEAR_OPTIONS, CLEAR_SORT, { sort: true, filters: false }), _CLEAR_OPTIONS);
 
 	/**
@@ -242,9 +260,11 @@ var ProperTable =
 			var initialData = _this.prepareData();
 			// Get initial columns sort
 			var initialColSettings = _this.prepareColSettings(_this.props, initialData.rawdata);
+			// Sort cols by position if exist
+			var cols = _this.sortTableCols(_immutable2['default'].fromJS(_this.props.cols));
 
 			_this.state = {
-				cols: _immutable2['default'].fromJS(_this.props.cols),
+				cols: cols,
 				colSettings: initialColSettings.colSettings,
 				colSortParsers: initialColSettings.colSortParsers,
 				data: initialData.data,
@@ -289,7 +309,7 @@ var ProperTable =
 		}, {
 			key: 'componentWillUnmount',
 			value: function componentWillUnmount() {
-				_rowcache2['default'].flush('formatted');
+				_rowcache2['default'].flush(CACHE_NAME);
 
 				// Remove listener if exist
 				if (this.props.restartOnClick) {
@@ -306,95 +326,112 @@ var ProperTable =
 				var somethingchanged = propschanged || statechanged;
 
 				if (propschanged) {
-					var colsDeepCompare = this.deepColsCompare(nextProps.cols, this.props.cols);
-					var colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges;
-					var dataChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.data, this.props.data);
-					var colSortDirsChanged = nextProps.colSortDirs ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colSortDirs, this.props.colSortDirs) : false;
-					var colFiltersChanged = nextProps.colFilters ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colFilters, this.props.colFilters) : false;
-					var colData = null,
-					    preparedData = null;
+					var _ret = function () {
+						var colsDeepCompare = _this2.deepColsCompare(nextProps.cols, _this2.props.cols);
+						var colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges || colsDeepCompare.hasChangedPosition;
+						var dataChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.data, _this2.props.data);
+						var colSortDirsChanged = nextProps.colSortDirs ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colSortDirs, _this2.props.colSortDirs) : false;
+						var colFiltersChanged = nextProps.colFilters ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colFilters, _this2.props.colFilters) : false;
+						var colData = null,
+						    preparedData = null,
+						    cols = null;
 
-					// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
-					// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
-					if (colsChanged || dataChanged) {
+						// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
+						// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
+						if (colsChanged || dataChanged) {
 
-						if (dataChanged && this.props.data.length > 0) {
-							// The most probably case
-							_rowcache2['default'].flush('formatted');
+							if (dataChanged && _this2.props.data.length > 0) {
+								// The most probably case
+								_rowcache2['default'].flush(CACHE_NAME);
 
-							var colSettings = nextState.colSettings;
-							preparedData = this.prepareData(nextProps, nextState);
+								var colSettings = nextState.colSettings;
+								preparedData = _this2.prepareData(nextProps, nextState);
 
-							this.setState({
-								data: preparedData.data,
-								initialData: preparedData.initialData,
-								indexed: preparedData.indexed,
-								initialIndexed: preparedData.initialIndexed,
-								rawdata: preparedData.rawdata,
-								sortCache: preparedData.defSortCache,
-								selection: preparedData.defSelection
-							}, this.applySettings(nextState.colSettings, nextProps));
-						} else if ((colsChanged || this.props.data.length === 0) && dataChanged) {
-							_rowcache2['default'].flush('formatted');
+								_this2.setState({
+									data: preparedData.data,
+									initialData: preparedData.initialData,
+									indexed: preparedData.indexed,
+									initialIndexed: preparedData.initialIndexed,
+									rawdata: preparedData.rawdata,
+									sortCache: preparedData.defSortCache,
+									selection: preparedData.defSelection
+								}, _this2.applySettings(nextState.colSettings, nextProps));
+							} else if ((colsChanged || _this2.props.data.length === 0) && dataChanged) {
+								_rowcache2['default'].flush(CACHE_NAME);
 
-							preparedData = this.prepareData(nextProps, nextState);
-							colData = this.prepareColSettings(nextProps, preparedData.rawdata);
+								preparedData = _this2.prepareData(nextProps, nextState);
+								colData = _this2.prepareColSettings(nextProps, preparedData.rawdata);
+								cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
 
-							this.setState({
-								colSettings: colData.colSettings,
-								colSortParsers: colData.colSortParsers,
-								cols: _immutable2['default'].fromJS(nextProps.cols),
-								data: preparedData.data,
-								initialData: preparedData.initialData,
-								indexed: preparedData.indexed,
-								initialIndexed: preparedData.initialIndexed,
-								rawdata: preparedData.rawdata,
-								sortCache: preparedData.defSortCache,
-								selection: preparedData.defSelection
-							}, this.applySettings(colData.colSettings, nextProps, true, true, true));
-						} else if (colsChanged) {
-							if (colsDeepCompare.hasChangedDeeply) {
-								(function () {
-									var sortCache = [];
-
-									_rowcache2['default'].flush('formatted');
-									colData = _this2.prepareColSettings(nextProps, _this2.state.rawdata);
-
-									// Restart cache
-									nextState.data.forEach(function (row) {
-										sortCache[row.get(_this2.props.idField)] = {};
-									});
-
-									_this2.setState({
-										colSettings: colData.colSettings,
-										colSortParsers: colData.colSortParsers,
-										cols: _immutable2['default'].fromJS(nextProps.cols),
-										sortCache: sortCache
-									}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
-								})();
-							} else {
+								_this2.setState({
+									colSettings: colData.colSettings,
+									colSortParsers: colData.colSortParsers,
+									cols: cols,
+									data: preparedData.data,
+									initialData: preparedData.initialData,
+									indexed: preparedData.indexed,
+									initialIndexed: preparedData.initialIndexed,
+									rawdata: preparedData.rawdata,
+									sortCache: preparedData.defSortCache,
+									selection: preparedData.defSelection
+								}, _this2.applySettings(colData.colSettings, nextProps, true, true, true));
+							} else if (colsChanged) {
+								if (colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition) {
 									(function () {
-										var cols = _this2.state.cols;
+										var sortCache = [];
 
-										_underscore2['default'].each(colsDeepCompare.changedCols, function (col, index) {
-											cols = cols.set(index, _immutable2['default'].fromJS(col));
+										_rowcache2['default'].flush(CACHE_NAME);
+										colData = _this2.prepareColSettings(nextProps, _this2.state.rawdata);
+										cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
+
+										// Restart cache
+										nextState.data.forEach(function (row) {
+											sortCache[row.get(_this2.props.idField)] = {};
 										});
+
+										_this2.setState({
+											colSettings: colData.colSettings,
+											colSortParsers: colData.colSortParsers,
+											cols: cols,
+											sortCache: sortCache
+										}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+									})();
+								} else if (colsDeepCompare.hasSmallChanges) {
+										cols = _this2.state.cols;
+
+										if (colsDeepCompare.hasSmallChanges) {
+											_underscore2['default'].each(colsDeepCompare.changedCols, function (col, index) {
+												cols = cols.set(index, _immutable2['default'].fromJS(col));
+											});
+										}
 
 										_this2.setState({
 											cols: cols
 										});
-									})();
-								}
+									} else {
+										cols = _this2.sortTableCols(Inmutable.fromJS(nextProps.cols));
+
+										_this2.setState({
+											cols: cols
+										});
+									}
+							}
+
+							return {
+								v: false
+							};
+						} else if (colSortDirsChanged || colFiltersChanged) {
+							_this2.applySettings(nextState.colSettings, nextProps, colSortDirsChanged, colFiltersChanged);
+						} else if (nextProps.selected) {
+							_this2.setDefaultSelection(nextProps);
+
+							return {
+								v: false
+							};
 						}
+					}();
 
-						return false;
-					} else if (colSortDirsChanged || colFiltersChanged) {
-						this.applySettings(nextState.colSettings, nextProps, colSortDirsChanged, colFiltersChanged);
-					} else if (nextProps.selected) {
-						this.setDefaultSelection(nextProps);
-
-						return false;
-					}
+					if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
 				}
 
 				return somethingchanged;
@@ -445,6 +482,7 @@ var ProperTable =
 	   * @return (object) result
 	   *						- (boolean) hasChangedDeeply  	If has changed deeply
 	   *						- (boolean) hasSmallChanges 	If the properties which could be updated in hot has changed. Class, fixed, isVisible...
+	   *						- (boolean) hasChangedPosition 	If the position of the cols has changed
 	   * 						- (object)  changedCols 		Object with the changed cols indexed by the index (when it has just small changes)
 	   */
 
@@ -461,7 +499,8 @@ var ProperTable =
 				    isVisibleChanged = void 0,
 				    labelChanged = void 0,
 				    somethingchanged = void 0,
-				    curCol = void 0;
+				    curCol = void 0,
+				    hasChangedPosition = false;
 
 				if (currentCols.length !== nextCols.length) {
 					hasChangedDeeply = true;
@@ -486,6 +525,10 @@ var ProperTable =
 							hasSmallChanges = true;
 						}
 
+						if (!hasChangedPosition) {
+							hasChangedPosition = col.position !== curCol.position;
+						}
+
 						return true; // Next
 					});
 				}
@@ -493,8 +536,34 @@ var ProperTable =
 				return {
 					hasChangedDeeply: hasChangedDeeply,
 					hasSmallChanges: hasSmallChanges,
+					hasChangedPosition: hasChangedPosition,
 					changedCols: changedCols
 				};
+			}
+
+			/**
+	   * Sort the columns by its position and return the cols sorted.
+	   *
+	   * @param (array) 	columns Property cols.
+	   * @return (object)	cols 	Sorted cols by its position as an Inmutable
+	   */
+
+		}, {
+			key: 'sortTableCols',
+			value: function sortTableCols(cols) {
+				if (cols.size > 0) {
+					cols = cols.sortBy(function (col, colIndex, allCols) {
+						return col.get('position', 1);
+					}, function (val1, val2) {
+						if (val1 === val2) {
+							return 0;
+						} else {
+							return val1 > val2 ? 1 : -1;
+						}
+					});
+				}
+
+				return cols;
 			}
 
 			/**
@@ -586,7 +655,7 @@ var ProperTable =
 				    hasCustomFilter = void 0,
 				    operations = {};
 				var sortedData = [],
-				    dateTypes = new Set(['between', 'after', 'before', 'on', 'noton']); // Date filters
+				    filterValue = void 0; // Date filters
 
 				// Update settings
 				colSettings = _underscore2['default'].map(colSettings, function (col) {
@@ -651,8 +720,9 @@ var ProperTable =
 						} else {
 							selectionSet[col.column] = null;
 							operations[col.column] = { type: col.operationFilterType, value: col.operationFilterValue };
-							if (dateTypes.has(col.operationFilterType) && col.operationFilterValue.length > 0) {
-								if (!(0, _moment2['default'])(col.operationFilterValue).isValid()) console.warn('Invalid date format: ' + operations[column].value);
+
+							if (DATE_TYPES.has(col.operationFilterType) && col.operationFilterValue.length > 0) {
+								if (!(0, _moment2['default'])(col.operationFilterValue).isValid()) console.warn('Invalid date format: ' + operations[col.column].value);
 							}
 						}
 					}
@@ -709,7 +779,7 @@ var ProperTable =
 				    idField = this.props.idField,
 				    formatterAllowed = void 0,
 				    applyFormatter = void 0;
-				var notAllowed = new Set(['between', 'after', 'before', 'on', 'noton']); // Date filters
+				var notAllowed = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
 
 				// Get the data that match with the selection (of all column filters)
 				if (_underscore2['default'].size(filters) > 0) {
@@ -805,12 +875,7 @@ var ProperTable =
 				var keyField = this.props.idField;
 
 				if (props.selected) {
-					if (!_underscore2['default'].isArray(props.selected)) {
-						defSelection = [props.selected.toString()];
-					} else {
-						if (props.selectable == MULTIPLE_SELECTION) defSelection = props.selected.toString().split(',');else defSelection = [props.selected[0].toString()];
-					}
-					defSelection = new Set(defSelection);
+					defSelection = this.parseSelected(props);
 				} else {
 					if (state && state.selection) {
 						defSelection = state.selection;
@@ -821,10 +886,8 @@ var ProperTable =
 				parsed = data.map(function (row) {
 					id = row.get(keyField, false);
 
-					if (!id) {
-						id = _underscore2['default'].uniqueId();
-						row = row.set(keyField, id);
-					}
+					if (!id) id = _underscore2['default'].uniqueId();
+					row = row.set(keyField, id.toString());
 
 					if (defSelection.has(id)) {
 						row = row.set(SELECTED_FIELD, true);
@@ -833,7 +896,6 @@ var ProperTable =
 					}
 
 					row = row.set(ROW_INDEX_FIELD, index++);
-
 					sortCache[id] = {};
 
 					return row;
@@ -865,21 +927,41 @@ var ProperTable =
 				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
 
 				if (props.selected) {
-					var selected = props.selected,
-					    selection = void 0;
-
-					if (selected.length == 0) {
-						selection = new Set();
-					} else {
-						if (!_underscore2['default'].isArray(selected)) {
-							selection = new Set([selected.toString()]);
-						} else {
-							if (props.selectable == MULTIPLE_SELECTION) selection = new Set(selected.toString().split(','));else selection = new Set([selected[0].toString()]);
-						}
-					}
-
+					var selection = this.parseSelected(props);
 					this.triggerSelection(selection, false); // false -> don't send the selection
 				}
+			}
+
+			/**
+	   * Parse the property selected that could be a string, number, array of strings / numbers or a Set into a Set.
+	   *
+	   * @param (array)	props 		Component props (or nextProps)
+	   * @return (Set)	selection 	The default selected rows.
+	   */
+
+		}, {
+			key: 'parseSelected',
+			value: function parseSelected() {
+				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+
+				var selection = void 0,
+				    isArray = _underscore2['default'].isArray(props.selected),
+				    isObject = _typeof(props.selected) === 'object';
+
+				if (!isArray && isObject) return props.selected; // Is Set
+
+				if (!isArray) {
+					// Is String or number
+					selection = [props.selected.toString()];
+				} else if (props.selected.length > 0) {
+					// Is Array
+					selection = props.selectable === MULTIPLE_SELECTION ? props.selected.toString().split(',') : [props.selected[0].toString()];
+				} else {
+					selection = [];
+				}
+
+				selection = new Set(selection);
+				return selection;
 			}
 
 			/**
@@ -915,7 +997,7 @@ var ProperTable =
 				// the column is sortable or not and if the Table has multisort or just only single.
 				for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
 					colData = sortData.colSortDirs[i];
-					sortable = colData.sortable !== null ? colData.sortable : true;
+					sortable = !_underscore2['default'].isNull(colData.sortable) ? colData.sortable : true;
 
 					// If has filter build a list without duplicates and it indexed
 					if (this.props.columnFilterComponent && sortable) {
@@ -938,7 +1020,7 @@ var ProperTable =
 								if (valid && !_underscore2['default'].isNull(val) && val !== '') {
 									if (colData.formatter) val = colData.formatter(val, null, null);
 
-									if (!idSet.has(val) && !_underscore2['default'].isUndefined(val)) {
+									if (!idSet.has(val) && !_underscore2['default'].isNull(val) && !_underscore2['default'].isUndefined(val)) {
 										// No repeat
 										idSet.add(val);
 
@@ -977,7 +1059,7 @@ var ProperTable =
 						sortable: sortable,
 						filterType: FILTERTYPE_SELECTION,
 						selection: [], // Selected values of this column (to filter when has a complex filter)
-						operationFilterType: 'contains',
+						operationFilterType: CONTAINS,
 						operationFilterValue: '',
 						indexedData: indexed, // Indexed by this column (just if has complex filter)
 						data: parsedData,
@@ -997,7 +1079,7 @@ var ProperTable =
 						sortable: true,
 						filterType: FILTERTYPE_SELECTION,
 						selection: [],
-						operationFilterType: 'contains',
+						operationFilterType: CONTAINS,
 						operationFilterValue: '',
 						indexedData: [],
 						data: [],
@@ -1075,7 +1157,7 @@ var ProperTable =
 		}, {
 			key: 'customFilter',
 			value: function customFilter(type, value, compareTo) {
-				return _comparators2['default'][type](_normalizer2['default'].normalize(value), _normalizer2['default'].normalize(compareTo));
+				return _comparators2['default'][type](value, compareTo);
 			}
 
 			/**
@@ -1094,8 +1176,14 @@ var ProperTable =
 				var clear = CLEAR_OPTIONS[this.props.restartOnClickType];
 
 				colSettings = _underscore2['default'].map(colSettings, function (element) {
-					if (clear.filters) element.selection = [];
-					if (clear.sort) element.direction = DEFAULT_SORT_DIRECTION;
+					if (clear.filters) {
+						element.selection = [];
+						element.operationFilterValue = '';
+					}
+
+					if (clear.sort) {
+						element.direction = DEFAULT_SORT_DIRECTION;
+					}
 
 					return element;
 				});
@@ -1249,7 +1337,7 @@ var ProperTable =
 				// Single sorting.
 				if (!this.props.multisort) {
 					for (var i = 0; i <= colSettings.length - 1; i++) {
-						if (colSettings[i].column == columnKey) {
+						if (colSettings[i].column === columnKey) {
 							colSettings[i].direction = sortDir;
 							colSettings[i].multisort = true;
 						} else {
@@ -1268,14 +1356,14 @@ var ProperTable =
 						// last column will be 3 and will change to 2 or 1 if the sorted columns back to default.
 						if (colSettings[_i].sorted) initialPos++;
 
-						if (colSettings[_i].column == columnKey) {
+						if (colSettings[_i].column === columnKey) {
 							colSettings[_i].direction = sortDir; // Set the new direction
 							position = colSettings[_i].position; // Save the current position
 							index = _i;
 
 							// If the sort direction is not default and the column isn't already sorted then add one to the initial position
 							// and set the column to sorted. Otherwise if the sort direction is default set it to unsorted.
-							if (sortDir != DEFAULT_SORT_DIRECTION && !colSettings[_i].sorted) {
+							if (sortDir !== DEFAULT_SORT_DIRECTION && !colSettings[_i].sorted) {
 								initialPos++;
 								colSettings[_i].sorted = true;
 							} else if (sortDir == DEFAULT_SORT_DIRECTION) {
@@ -1292,7 +1380,7 @@ var ProperTable =
 						if (colSettings[_i2].position < position && colSettings[_i2].position >= initialPos) {
 							// Move element to the next position only if the new sort direction wasn't default, in that case keep the element in the same
 							// sorting priority position.
-							if (colSettings[_i2].direction == DEFAULT_SORT_DIRECTION) colSettings[_i2].position = colSettings[_i2].position + 1;
+							if (colSettings[_i2].direction === DEFAULT_SORT_DIRECTION) colSettings[_i2].position = colSettings[_i2].position + 1;
 						}
 					}
 
@@ -1369,12 +1457,11 @@ var ProperTable =
 
 				colSettings.forEach(function (element) {
 					// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
-					if (element.direction != DEFAULT_SORT_DIRECTION && element.multisort && element.sortable) {
+					if (element.direction !== DEFAULT_SORT_DIRECTION && element.multisort && element.sortable) {
 						sortParser = colSortParsers[element.column];
 
 						sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
 							rowId = row.get(_this7.props.idField);
-
 							// sortCache [row-id] [column-id] = procesed value.
 							if (_underscore2['default'].isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
 								val = sortParser(row.get(element.field));
@@ -1579,24 +1666,10 @@ var ProperTable =
 				    selColumn = null;
 
 				if (this.props.selectable == MULTIPLE_SELECTION) {
-					var somethingSelected = this.state.selection.size > 0,
-					    allSelected = this.props.columnFilterComponent ? this.isAllSelected(this.state.data, this.state.selection) : this.state.allSelected;
-					var settings = null,
-					    sortDir = DEFAULT_SORT_DIRECTION,
-					    selectedSet = null;
-
-					if (this.props.selected) {
-						if (!_underscore2['default'].isArray(this.props.selected)) {
-							selectedSet = new Set([this.props.selected]);
-						} else {
-							selectedSet = new Set(this.props.selected);
-						}
-					} else {
-						selectedSet = this.state.selection;
-					}
-
-					settings = _underscore2['default'].findWhere(this.state.colSettings, { column: SELECTOR_COL_NAME });
-					sortDir = settings.direction;
+					var somethingSelected = this.state.selection.size > 0;
+					var allSelected = this.props.columnFilterComponent ? this.isAllSelected(this.state.data, this.state.selection) : this.state.allSelected;
+					var settings = _underscore2['default'].findWhere(this.state.colSettings, { column: SELECTOR_COL_NAME }) || null;
+					var sortDir = settings ? settings.direction : DEFAULT_SORT_DIRECTION;
 
 					selColumn = _react2['default'].createElement(_fixedDataTable.Column, {
 						columnKey: SELECTOR_COL_NAME,
@@ -1613,12 +1686,14 @@ var ProperTable =
 								onClick: this.handleSelectAll.bind(this),
 								somethingSelected: somethingSelected,
 								allSelected: allSelected,
+								indexed: this.state.indexed,
 								isHeader: true
 							})
 						),
 						cell: _react2['default'].createElement(_selector2['default'], {
+							indexed: this.state.indexed,
 							data: this.state.data,
-							selected: selectedSet,
+							selected: this.state.selection,
 							idField: this.props.idField
 						}),
 						allowCellsRecycling: true,
@@ -1713,8 +1788,8 @@ var ProperTable =
 			key: 'handleRowClick',
 			value: function handleRowClick(e, rowIndex) {
 				e.preventDefault();
-
-				var clickedId = this.state.data.get(rowIndex).get(this.props.idField);
+				var clickedRow = this.state.data.get(rowIndex);
+				var clickedId = clickedRow.get(this.props.idField);
 
 				if (this.props.selectable) {
 					this.toggleSelected(clickedId.toString());
@@ -1861,10 +1936,12 @@ var ProperTable =
 							});
 						}
 
-						newIndexed[changedId]._selected = _selected; // Update indexed data
-						rowIndex = newIndexed[changedId]._rowIndex; // Get data index
-						rdata = newData.get(rowIndex).set(SELECTED_FIELD, _selected); // Change the row in that index
-						newData = newData.set(rowIndex, rdata); // Set that row in the data object
+						if (changedId && newIndexed[changedId]) {
+							newIndexed[changedId]._selected = _selected; // Update indexed data
+							rowIndex = newIndexed[changedId]._rowIndex; // Get data index
+							rdata = newData.get(rowIndex).set(SELECTED_FIELD, _selected); // Change the row in that index
+							newData = newData.set(rowIndex, rdata); // Set that row in the data object
+						}
 					} else {
 							// Change all data
 							newData = newData.map(function (row) {
@@ -1873,7 +1950,7 @@ var ProperTable =
 								rdata = row.set(SELECTED_FIELD, selected);
 								curIndex = newIndexed[rowid];
 
-								if (curIndex._selected != selected) {
+								if (curIndex && curIndex._selected != selected) {
 									// update indexed data
 									curIndex._selected = selected;
 									newIndexed[rowid] = curIndex;
@@ -1993,7 +2070,7 @@ var ProperTable =
 			value: function sendSortedData(data) {
 				var _this14 = this;
 
-				if (typeof this.props.afterSort == 'function') {
+				if (typeof this.props.afterSort === 'function') {
 					(function () {
 						var _state4 = _this14.state;
 						var initialIndexed = _state4.initialIndexed;
@@ -2003,7 +2080,6 @@ var ProperTable =
 
 						output = data.map(function (row) {
 							var rowIndex = initialIndexed[row.get(_this14.props.idField)]._rowIndex;
-
 							return rawdata.get(rowIndex);
 						});
 
@@ -2102,7 +2178,7 @@ var ProperTable =
 		afterSort: _react2['default'].PropTypes.func,
 		afterSelect: _react2['default'].PropTypes.func,
 		selectable: _react2['default'].PropTypes.oneOf([true, MULTIPLE_SELECTION, false]),
-		selected: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.string, _react2['default'].PropTypes.number, _react2['default'].PropTypes.array]),
+		selected: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.string, _react2['default'].PropTypes.number, _react2['default'].PropTypes.array, _react2['default'].PropTypes.object]),
 		rowHeight: _react2['default'].PropTypes.number,
 		idField: _react2['default'].PropTypes.string,
 		msgs: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.object),
@@ -19493,7 +19569,7 @@ var ProperTable =
 		'c': /[çÇčČćĆ]/g,
 		's': /[śŚšŠ]/g,
 		'z': /[źŹżŻ]/g,
-		'': /[@#~$!º|"·%&¬()=?¿¡*+\^`´{};:[\]\\]/g
+		'': /[@#~$!º|"·&¬()=?¿¡*\^`´{};[\].\\]/g
 	};
 
 	exports['default'] = {
@@ -19565,8 +19641,9 @@ var ProperTable =
 	var STARTSWITH = 'start';
 	var FINISHWITH = 'finish';
 	var CONTAINS = 'contains';
-	var NOTCONTAINS = 'notContains';
+	var NOTCONTAINS = 'notcontains';
 	var EMPTY = 'empty';
+	var BETWEENDATES_SEPARATOR = '%-%';
 
 	exports["default"] = (_BIGGERTHAN$LOWERTHAN = {}, _defineProperty(_BIGGERTHAN$LOWERTHAN, BIGGERTHAN, function (value, compareTo) {
 		var n1 = _formatters2["default"].number(value) || 0,
@@ -19577,22 +19654,22 @@ var ProperTable =
 		    n2 = _formatters2["default"].number(compareTo) || 0;
 		return n1 < n2;
 	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, AFTERDATE, function (value, compareTo) {
-		return (0, _moment2["default"])(value).isAfter(compareTo);
+		return (0, _moment2["default"])(compareTo).isAfter(value);
 	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, BEFOREDATE, function (value, compareTo) {
-		return (0, _moment2["default"])(value).isBefore(compareTo);
+		return (0, _moment2["default"])(compareTo).isBefore(value);
 	}), _defineProperty(_BIGGERTHAN$LOWERTHAN, BETWEENDATES, function (value, compareTo) {
 		var separator = void 0,
 		    d1Start = void 0,
 		    d1End = void 0;
 
 		if (!value || !compareTo) return false;
-		separator = value.indexOf('%-%');
+		separator = value.indexOf(BETWEENDATES_SEPARATOR);
 
 		if (separator === -1) {
 			return false;
 		}
 
-		d1Start = value.substring(0, separator + 1);
+		d1Start = value.substring(0, separator);
 		d1End = value.substring(separator + 3);
 
 		return (0, _moment2["default"])(compareTo).isBetween(d1Start, d1End);

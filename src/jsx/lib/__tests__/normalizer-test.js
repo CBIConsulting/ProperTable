@@ -15,9 +15,9 @@ describe('normalizer', function() {
 	});
 
 	it('normalized scapeless', function() {
-		let result = normalizer.normalize('    Dd.--/&%$"$%%&*Ç*sdsaSd.sdASDç }SD');
+		let result = normalizer.normalize('    Dd:--/&%$"$%%&*Ç*sdsaSd:sdASDç }SD');
 
-		expect(result).toBe('dd.--/csdsasd.sdasdc sd');
+		expect(result).toBe('dd:--/%%%csdsasd:sdasdc sd');
 	});
 
 	it('normalized not scapeless', function() {

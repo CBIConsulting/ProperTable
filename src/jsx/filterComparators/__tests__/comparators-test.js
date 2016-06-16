@@ -10,7 +10,7 @@ const BETWEENDATES = 'between';
 const STARTSWITH = 'start';
 const FINISHWITH = 'finish';
 const CONTAINS = 'contains';
-const NOTCONTAINS = 'notContains';
+const NOTCONTAINS = 'notcontains';
 const EMPTY = 'empty';
 
 describe('Comparators', () => {
@@ -132,7 +132,7 @@ describe('Comparators', () => {
 		});
 
 		it('dates', () => {
-			let s1 = '2013-02-08 09:30:26', s2 = '2012-02-08 09:30:26';
+			let s1 = '2012-02-08 09:30:26', s2 = '2013-02-08 09:30:26';
 			let result = comparators[AFTERDATE](s1, s2);
 
 			expect(typeof result).toBe('boolean');
@@ -150,7 +150,7 @@ describe('Comparators', () => {
 		});
 
 		it('dates', () => {
-			let s1 = '2013-02-08 09:30:26', s2 = '2014-02-08 09:30:26';
+			let s1 = '2014-02-08 09:30:26', s2 = '2013-02-08 09:30:26';
 			let result = comparators[BEFOREDATE](s1, s2);
 
 			expect(typeof result).toBe('boolean');
@@ -168,7 +168,7 @@ describe('Comparators', () => {
 		});
 
 		it('dates', () => {
-			let s1 = '2013-02-08 09:30:2%-%2016-02-08 09:30:26', s2 = '2014-02-08 09:30:26';
+			let s1 = '2013-02-08 09:30:24%-%2016-02-08 09:30:26', s2 = '2014-02-08 09:30:26';
 			let result = comparators[BETWEENDATES](s1, s2);
 
 			expect(typeof result).toBe('boolean');

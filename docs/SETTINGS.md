@@ -19,7 +19,7 @@ By default the type will be selection, so you can set only the selection propert
 	// For Dates. Use moment.js
 	const AFTERDATE = 'after';
 	const BEFOREDATE = 'before';
-	const BETWEENDATES = 'between';
+	const BETWEENDATES = 'between'; // -> BETWEENDATES_SEPARATOR = '%-%' -> DateStart + '%-%' - DateEnd;
 	const ONDATE = 'on';
 	const NOTONDATE = 'noton';
 

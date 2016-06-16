@@ -13,8 +13,9 @@ const NOTONDATE = 'noton';
 const STARTSWITH = 'start';
 const FINISHWITH = 'finish';
 const CONTAINS = 'contains';
-const NOTCONTAINS = 'notContains';
+const NOTCONTAINS = 'notcontains';
 const EMPTY = 'empty';
+const BETWEENDATES_SEPARATOR = '%-%';
 
 export default {
 	// FOR NUMBER FIELDS
@@ -28,22 +29,22 @@ export default {
 	},
 	// FOR DATE FIELDS
 	[AFTERDATE]: (value, compareTo) => {
-		return  moment(value).isAfter(compareTo);
+		return  moment(compareTo).isAfter(value);
 	},
 	[BEFOREDATE]: (value, compareTo) => {
-		return moment(value).isBefore(compareTo);
+		return moment(compareTo).isBefore(value);
 	},
 	[BETWEENDATES]: (value, compareTo) => {
 		let separator, d1Start, d1End;
 
 		if (!value || !compareTo) return false;
-		separator = value.indexOf('%-%');
+		separator = value.indexOf(BETWEENDATES_SEPARATOR);
 
 		if (separator === -1) {
 			return false;
 		}
 
-		d1Start = value.substring(0, separator + 1);
+		d1Start = value.substring(0, separator);
 		d1End = value.substring(separator + 3);
 
 		return moment(compareTo).isBetween(d1Start, d1End);
