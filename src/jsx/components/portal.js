@@ -36,7 +36,7 @@ const KEYCODES = {
   ESCAPE: 27
 };
 
-export default class Portal extends React.Component {
+class Portal extends React.Component {
 
   constructor() {
     super();
@@ -289,3 +289,5 @@ Portal.defaultProps = {
   isSortedOrFiltered: false,
   repositioning: true
 };
+
+export default Portal;

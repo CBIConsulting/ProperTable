@@ -27,9 +27,9 @@ export default {
 			charMap[''] = /[@#~$!º|"·%&¬()=?¿¡*+\^`´{};:[\].\-/\\]/g;
 		}
 
-		for(let char in charMap){
+		for(let c in charMap){
 			try{
-				internalVal = internalVal.replace(charMap[char], char);
+				internalVal = internalVal.replace(charMap[c], c);
 			} catch(e) {
 				console.warn('Normalize error on ', value);
 			}
