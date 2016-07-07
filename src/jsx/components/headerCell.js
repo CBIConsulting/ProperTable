@@ -140,7 +140,7 @@ const HeaderCell = props => {
  * @return {object}           The filter to be rendered
  */
 const buildColumnFilter = (props, icon) => {
-    let filter, afterSelect, afterSort, afterClear, isSortedOrFiltered = false;
+    let filter, afterSelect, afterSort, afterClear;
     let portalWidth = props.filterWidth || 280;
 
     afterSelect = (selection) => {
@@ -161,8 +161,6 @@ const buildColumnFilter = (props, icon) => {
       }
     };
 
-    if (props.sortDir !== DEFAULT_SORT_DIRECTION || props.selection.length > 0) isSortedOrFiltered = true;
-
     filter = (
       <Portal
           key={props.uniqueId + '-column-header-component'}
@@ -174,7 +172,7 @@ const buildColumnFilter = (props, icon) => {
           openByClickOn={icon}
           iconColor={props.iconColor}
           iconDefColor={props.iconDefColor}
-          isSortedOrFiltered={isSortedOrFiltered}
+          isSortedOrFiltered={props.isSortedOrFiltered}
           width={portalWidth}
           style={{opacity: 0, position: 'fixed', width: portalWidth}}
         >

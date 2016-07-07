@@ -1152,7 +1152,7 @@ class ProperTable extends React.Component {
  */
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, sortDir = DEFAULT_SORT_DIRECTION, sortable = null, selection = null, columnFilter = null, hasComplexFilter = false;
-		let indexed = null, headerData = null, className = null, settings = null, extraProps = {
+		let indexed = null, headerData = null, className = null, settings = null, isSortedOrFiltered = false, extraProps = {
 			width: 100,
 			fixed: false,
 			isResizable: true
@@ -1200,6 +1200,16 @@ class ProperTable extends React.Component {
 			if (this.props.columnFilterComponent) { // react component
 				hasComplexFilter = true;
 				columnFilter = this.onColumnGetFiltered.bind(this);
+
+			  	if (settings.filterType === FILTERTYPE_SELECTION) {
+			    	isSortedOrFiltered = settings.selection.length > 0;
+			  	} else if (settings.filterType === FILTERTYPE_CUSTOM) {
+			    	isSortedOrFiltered = settings.operationFilterValue.length > 0;
+			  	}
+
+			  	if (!isSortedOrFiltered && settings.direction !== DEFAULT_SORT_DIRECTION) {
+			  		isSortedOrFiltered = true;
+			  	}
 			}
 
 			col = <Column
@@ -1227,6 +1237,7 @@ class ProperTable extends React.Component {
 						sortable={sortable}
 						userClassName={className}
 						columnFormater={null} // Formatter function that get the value to be render and return it parsed settings.formatter
+						isSortedOrFiltered={isSortedOrFiltered}
 					/>
 				}
 				cell={<CellRenderer tableId={this.uniqueId} idField={this.props.idField} indexed={this.state.indexed} data={this.state.data} colData={colData} col={colData.field}/>}
@@ -1387,7 +1398,9 @@ class ProperTable extends React.Component {
  */
 	isAllSelected(data, selection) {
 		let result = true;
-		if (data.size === this.state.rawdata.size) return selection.size >= this.state.data.size // Not filtered data
+
+		if (data.size === 0) return false;
+		else if (data.size === this.state.rawdata.size) return selection.size >= this.state.data.size // Not filtered data
 
 		// Filtered data
 		data.forEach(element => {

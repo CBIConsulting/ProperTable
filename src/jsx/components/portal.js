@@ -113,11 +113,12 @@ class Portal extends React.Component {
   	let propschanged = !shallowEqualImmutable(this.props, nextProps);
   	let statechanged = !shallowEqualImmutable(this.state, nextState);
   	let somethingchanged = propschanged || statechanged;
+    let mustUpdate = nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered;
 
     if (propschanged) {
-      if (nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered && !nextProps.isSortedOrFiltered) {
+      if (mustUpdate && !nextProps.isSortedOrFiltered) {
         nextState.element.style.color = this.props.iconDefColor; // back to default color
-      } else if (nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered && nextProps.isSortedOrFiltered) {
+      } else if (mustUpdate && nextProps.isSortedOrFiltered) {
         nextState.element.style.color = this.props.iconColor;
       }
     }

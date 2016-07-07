@@ -1488,6 +1488,7 @@ var ProperTable =
 			    headerData = null,
 			    className = null,
 			    settings = null,
+			    isSortedOrFiltered = false,
 			    extraProps = {
 				width: 100,
 				fixed: false,
@@ -1537,6 +1538,16 @@ var ProperTable =
 					// react component
 					hasComplexFilter = true;
 					columnFilter = this.onColumnGetFiltered.bind(this);
+
+					if (settings.filterType === FILTERTYPE_SELECTION) {
+						isSortedOrFiltered = settings.selection.length > 0;
+					} else if (settings.filterType === FILTERTYPE_CUSTOM) {
+						isSortedOrFiltered = settings.operationFilterValue.length > 0;
+					}
+
+					if (!isSortedOrFiltered && settings.direction !== DEFAULT_SORT_DIRECTION) {
+						isSortedOrFiltered = true;
+					}
 				}
 
 				col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
@@ -1563,6 +1574,7 @@ var ProperTable =
 						sortable: sortable,
 						userClassName: className,
 						columnFormater: null // Formatter function that get the value to be render and return it parsed settings.formatter
+						, isSortedOrFiltered: isSortedOrFiltered
 					}),
 					cell: _react2['default'].createElement(_cellRenderer2['default'], { tableId: this.uniqueId, idField: this.props.idField, indexed: this.state.indexed, data: this.state.data, colData: colData, col: colData.field }),
 					allowCellsRecycling: !hasComplexFilter,
@@ -1760,7 +1772,8 @@ var ProperTable =
 			var _this11 = this;
 
 			var result = true;
-			if (data.size === this.state.rawdata.size) return selection.size >= this.state.data.size; // Not filtered data
+
+			if (data.size === 0) return false;else if (data.size === this.state.rawdata.size) return selection.size >= this.state.data.size; // Not filtered data
 
 			// Filtered data
 			data.forEach(function (element) {
@@ -14967,8 +14980,7 @@ var ProperTable =
 	  var filter = void 0,
 	      afterSelect = void 0,
 	      afterSort = void 0,
-	      afterClear = void 0,
-	      isSortedOrFiltered = false;
+	      afterClear = void 0;
 	  var portalWidth = props.filterWidth || 280;
 
 	  afterSelect = function afterSelect(selection) {
@@ -14990,8 +15002,6 @@ var ProperTable =
 	    }
 	  };
 
-	  if (props.sortDir !== DEFAULT_SORT_DIRECTION || props.selection.length > 0) isSortedOrFiltered = true;
-
 	  filter = _react2['default'].createElement(
 	    _portal2['default'],
 	    {
@@ -15004,7 +15014,7 @@ var ProperTable =
 	      openByClickOn: icon,
 	      iconColor: props.iconColor,
 	      iconDefColor: props.iconDefColor,
-	      isSortedOrFiltered: isSortedOrFiltered,
+	      isSortedOrFiltered: props.isSortedOrFiltered,
 	      width: portalWidth,
 	      style: { opacity: 0, position: 'fixed', width: portalWidth }
 	    },
@@ -15236,11 +15246,12 @@ var ProperTable =
 	    var propschanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props, nextProps);
 	    var statechanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.state, nextState);
 	    var somethingchanged = propschanged || statechanged;
+	    var mustUpdate = nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered;
 
 	    if (propschanged) {
-	      if (nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered && !nextProps.isSortedOrFiltered) {
+	      if (mustUpdate && !nextProps.isSortedOrFiltered) {
 	        nextState.element.style.color = this.props.iconDefColor; // back to default color
-	      } else if (nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered && nextProps.isSortedOrFiltered) {
+	      } else if (mustUpdate && nextProps.isSortedOrFiltered) {
 	        nextState.element.style.color = this.props.iconColor;
 	      }
 	    }
