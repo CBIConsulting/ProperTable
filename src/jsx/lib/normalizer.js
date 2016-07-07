@@ -12,7 +12,7 @@ const charMap =  {
 }
 
 export default {
-	normalize: function (value, scapeLess = true, parseToLower = true, trim = true) {
+	normalize: function (value, escapeLess = true, parseToLower = true, trim = true) {
 		let internalVal = value.toString();
 
 		if (parseToLower && trim) {
@@ -23,7 +23,7 @@ export default {
 			internalVal = internalVal.trim();
 		}
 
-		if (!scapeLess) {
+		if (!escapeLess) {
 			charMap[''] = /[@#~$!º|"·%&¬()=?¿¡*+\^`´{};:[\].\-/\\]/g;
 		}
 

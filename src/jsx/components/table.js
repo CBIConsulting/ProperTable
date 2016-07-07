@@ -145,7 +145,7 @@ class ProperTable extends React.Component {
 	}
 
 	componentWillUnmount() {
-		cache.flush(CACHE_NAME);
+		cache.flush([CACHE_NAME, 'tb_' + this.uniqueId]);
 
 		// Remove listener if exist
 		if (this.props.restartOnClick) {
@@ -164,30 +164,13 @@ class ProperTable extends React.Component {
 			let dataChanged = !shallowEqualImmutable(nextProps.data, this.props.data);
 			let colSortDirsChanged = nextProps.colSortDirs ? !shallowEqualImmutable(nextProps.colSortDirs, this.props.colSortDirs) : false;
 			let colFiltersChanged = nextProps.colFilters ? !shallowEqualImmutable(nextProps.colFilters, this.props.colFilters) : false;
-			let colData = null, preparedData = null, cols = null;
+			let colData = null, preparedData = null, cols = null, newCol;
 
 			// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
 			// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
 			if (colsChanged || dataChanged) {
-
-				if (dataChanged && this.props.data.length > 0) { // The most probably case
-					cache.flush(CACHE_NAME);
-
-					let colSettings = nextState.colSettings;
-					preparedData = this.prepareData(nextProps, nextState);
-
-					this.setState({
-						data: preparedData.data,
-						initialData: preparedData.initialData,
-						indexed: preparedData.indexed,
-						initialIndexed: preparedData.initialIndexed,
-						rawdata: preparedData.rawdata,
-						sortCache: preparedData.defSortCache,
-						selection: preparedData.defSelection,
-					}, this.applySettings(nextState.colSettings, nextProps));
-
-				} else if ((colsChanged || this.props.data.length === 0) && dataChanged) {
-					cache.flush(CACHE_NAME);
+				if (dataChanged) {
+					cache.flush([CACHE_NAME, 'tb_' + this.uniqueId]);
 
 					preparedData = this.prepareData(nextProps, nextState);
 					colData =  this.prepareColSettings(nextProps, preparedData.rawdata);
@@ -210,7 +193,7 @@ class ProperTable extends React.Component {
 					if (colsDeepCompare.hasChangedDeeply || (colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition)) {
 						let sortCache = [];
 
-						cache.flush(CACHE_NAME);
+						cache.flush([CACHE_NAME, 'tb_' + this.uniqueId]);
 						colData =  this.prepareColSettings(nextProps, this.state.rawdata);
 						cols = this.sortTableCols(Immutable.fromJS(nextProps.cols));
 
@@ -227,19 +210,23 @@ class ProperTable extends React.Component {
 						}, this.applySettings(colData.colSettings, nextProps)); // apply selection and sort
 
 					} else if (colsDeepCompare.hasSmallChanges) {
-						cols = this.state.cols;
+						cols = this.state.cols.map(col => {
+							newCol = colsDeepCompare.changedCols[col.get('name')];
 
-						if (colsDeepCompare.hasSmallChanges) {
-							_.each(colsDeepCompare.changedCols, (col, index) => {
-								cols = cols.set(index, Immutable.fromJS(col));
-							});
-						}
+							if (newCol) {
+								_.each(newCol, (value, key) => {
+									col = col.set(key, value);
+								});
+							}
+
+							return col;
+						});
 
 						this.setState({
 							cols: cols
 						});
 					} else {
-						cols = this.sortTableCols(Inmutable.fromJS(nextProps.cols));
+						cols = this.sortTableCols(Immutable.fromJS(nextProps.cols));
 
 						this.setState({
 							cols: cols
@@ -332,7 +319,7 @@ class ProperTable extends React.Component {
 				somethingchanged = fixedChanged || classNameChanged || isVisibleChanged || labelChanged;
 
 				if (somethingchanged) {
-					changedCols[index] = _.clone(col);
+					changedCols[col.name] = _.clone(col);
 					hasSmallChanges = true;
 				}
 
@@ -356,7 +343,7 @@ class ProperTable extends React.Component {
  * Sort the columns by its position and return the cols sorted.
  *
  * @param (array) 	columns Property cols.
- * @return (object)	cols 	Sorted cols by its position as an Inmutable
+ * @return (object)	cols 	Sorted cols by its position as an Immutable
  */
 	sortTableCols(cols) {
 		if (cols.size > 0) {
@@ -547,7 +534,7 @@ class ProperTable extends React.Component {
 	applyFilters(columns, formatters, filters, fields, operations = []) {
 		let {initialData, indexed, selection} = this.state;
 		let filteredData = initialData, idField = this.props.idField, formatterAllowed, applyFormatter;
-		let notAllowed = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
+		let notAllowedTypes = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
 
 		// Get the data that match with the selection (of all column filters)
 		if (_.size(filters) > 0) {
@@ -570,7 +557,7 @@ class ProperTable extends React.Component {
 
 						if (formatter) {
 							if (operations[column] && operations[column].type) {
-							 	if (notAllowed.has(operations[column].type)) {
+							 	if (notAllowedTypes.has(operations[column].type)) {
 							 		applyFormatter = false;
 								}
 							}
@@ -584,7 +571,7 @@ class ProperTable extends React.Component {
 						if (filters[column]) {
 					 		result = filters[column].has(val.toString());
 					 	} else if (operations[column]) {
-					 		result = this.customFilter(operations[column].type, operations[column].value, val);
+					 		result = this.customFilter(operations[column].type, operations[column].value, val, notAllowedTypes.has(operations[column].type));
 					 	}
 					}
 
@@ -620,7 +607,7 @@ class ProperTable extends React.Component {
  *					-data: Parsed data to add some fields necesary to internal working.
  */
 	prepareData(props = this.props, state = this.state) {
-		// The data will be inmutable inside the component
+		// The data will be immutable inside the component
 		let data = Immutable.fromJS(props.data), index = 0, id, sortCache = [];
 		let indexed = {}, initialData = null, parsed = [], defSelection = new Set();
 		let keyField = this.props.idField;
@@ -705,7 +692,7 @@ class ProperTable extends React.Component {
  * Prepare the columns sort / filtering data to all columns and the array of functions to parse the data of each column before sorting.
  *
  * @param (array)	props 			Component props (or nextProps)
- * @param (object)	rawdata			Initial data to build the indexed and Inmutable data (no duplicates) for every column if the component has complex column filter
+ * @param (object)	rawdata			Initial data to build the indexed and Immutable data (no duplicates) for every column if the component has complex column filter
  *
  * @return (array)	-colSettings: 	Sort / filter settings of each column.
  *					-colSortParsers: 	Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
@@ -851,13 +838,14 @@ class ProperTable extends React.Component {
  * Return if the value is valid with the type in comparison with compareTo string.
  *
  * @param (string) 		type 		Type of the filter. Must be Equals, Starts With...
- * @param (string) 		value 		Value of the filter.
+ * @param (string) 		value 		Value of the filter
  * @param (string) 		compareTo 	Value of the field to be checked
+ * @param (boolean) 	escapeLess 	If it's a date type then use escape less to don't normalize some characters like -/.
  *
  * @return (boolean) 	result
  */
-	customFilter(type, value, compareTo) {
-		return comparators[type](value, compareTo);
+	customFilter(type, value, compareTo, escapeLess = false) {
+		return comparators[type](normalizer.normalize(value, escapeLess), normalizer.normalize(compareTo, escapeLess));
 	}
 
 /**

@@ -309,7 +309,7 @@ var ProperTable =
 		}, {
 			key: 'componentWillUnmount',
 			value: function componentWillUnmount() {
-				_rowcache2['default'].flush(CACHE_NAME);
+				_rowcache2['default'].flush([CACHE_NAME, 'tb_' + this.uniqueId]);
 
 				// Remove listener if exist
 				if (this.props.restartOnClick) {
@@ -334,30 +334,14 @@ var ProperTable =
 						var colFiltersChanged = nextProps.colFilters ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colFilters, _this2.props.colFilters) : false;
 						var colData = null,
 						    preparedData = null,
-						    cols = null;
+						    cols = null,
+						    newCol = void 0;
 
 						// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
 						// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
 						if (colsChanged || dataChanged) {
-
-							if (dataChanged && _this2.props.data.length > 0) {
-								// The most probably case
-								_rowcache2['default'].flush(CACHE_NAME);
-
-								var colSettings = nextState.colSettings;
-								preparedData = _this2.prepareData(nextProps, nextState);
-
-								_this2.setState({
-									data: preparedData.data,
-									initialData: preparedData.initialData,
-									indexed: preparedData.indexed,
-									initialIndexed: preparedData.initialIndexed,
-									rawdata: preparedData.rawdata,
-									sortCache: preparedData.defSortCache,
-									selection: preparedData.defSelection
-								}, _this2.applySettings(nextState.colSettings, nextProps));
-							} else if ((colsChanged || _this2.props.data.length === 0) && dataChanged) {
-								_rowcache2['default'].flush(CACHE_NAME);
+							if (dataChanged) {
+								_rowcache2['default'].flush([CACHE_NAME, 'tb_' + _this2.uniqueId]);
 
 								preparedData = _this2.prepareData(nextProps, nextState);
 								colData = _this2.prepareColSettings(nextProps, preparedData.rawdata);
@@ -380,7 +364,7 @@ var ProperTable =
 									(function () {
 										var sortCache = [];
 
-										_rowcache2['default'].flush(CACHE_NAME);
+										_rowcache2['default'].flush([CACHE_NAME, 'tb_' + _this2.uniqueId]);
 										colData = _this2.prepareColSettings(nextProps, _this2.state.rawdata);
 										cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
 
@@ -397,19 +381,23 @@ var ProperTable =
 										}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
 									})();
 								} else if (colsDeepCompare.hasSmallChanges) {
-										cols = _this2.state.cols;
+										cols = _this2.state.cols.map(function (col) {
+											newCol = colsDeepCompare.changedCols[col.get('name')];
 
-										if (colsDeepCompare.hasSmallChanges) {
-											_underscore2['default'].each(colsDeepCompare.changedCols, function (col, index) {
-												cols = cols.set(index, _immutable2['default'].fromJS(col));
-											});
-										}
+											if (newCol) {
+												_underscore2['default'].each(newCol, function (value, key) {
+													col = col.set(key, value);
+												});
+											}
+
+											return col;
+										});
 
 										_this2.setState({
 											cols: cols
 										});
 									} else {
-										cols = _this2.sortTableCols(Inmutable.fromJS(nextProps.cols));
+										cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
 
 										_this2.setState({
 											cols: cols
@@ -521,7 +509,7 @@ var ProperTable =
 						somethingchanged = fixedChanged || classNameChanged || isVisibleChanged || labelChanged;
 
 						if (somethingchanged) {
-							changedCols[index] = _underscore2['default'].clone(col);
+							changedCols[col.name] = _underscore2['default'].clone(col);
 							hasSmallChanges = true;
 						}
 
@@ -545,7 +533,7 @@ var ProperTable =
 	   * Sort the columns by its position and return the cols sorted.
 	   *
 	   * @param (array) 	columns Property cols.
-	   * @return (object)	cols 	Sorted cols by its position as an Inmutable
+	   * @return (object)	cols 	Sorted cols by its position as an Immutable
 	   */
 
 		}, {
@@ -779,7 +767,7 @@ var ProperTable =
 				    idField = this.props.idField,
 				    formatterAllowed = void 0,
 				    applyFormatter = void 0;
-				var notAllowed = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
+				var notAllowedTypes = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
 
 				// Get the data that match with the selection (of all column filters)
 				if (_underscore2['default'].size(filters) > 0) {
@@ -806,7 +794,7 @@ var ProperTable =
 
 									if (formatter) {
 										if (operations[column] && operations[column].type) {
-											if (notAllowed.has(operations[column].type)) {
+											if (notAllowedTypes.has(operations[column].type)) {
 												applyFormatter = false;
 											}
 										}
@@ -820,7 +808,7 @@ var ProperTable =
 									if (filters[column]) {
 										result = filters[column].has(val.toString());
 									} else if (operations[column]) {
-										result = _this4.customFilter(operations[column].type, operations[column].value, val);
+										result = _this4.customFilter(operations[column].type, operations[column].value, val, notAllowedTypes.has(operations[column].type));
 									}
 								}
 
@@ -863,7 +851,7 @@ var ProperTable =
 				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
 				var state = arguments.length <= 1 || arguments[1] === undefined ? this.state : arguments[1];
 
-				// The data will be inmutable inside the component
+				// The data will be immutable inside the component
 				var data = _immutable2['default'].fromJS(props.data),
 				    index = 0,
 				    id = void 0,
@@ -968,7 +956,7 @@ var ProperTable =
 	   * Prepare the columns sort / filtering data to all columns and the array of functions to parse the data of each column before sorting.
 	   *
 	   * @param (array)	props 			Component props (or nextProps)
-	   * @param (object)	rawdata			Initial data to build the indexed and Inmutable data (no duplicates) for every column if the component has complex column filter
+	   * @param (object)	rawdata			Initial data to build the indexed and Immutable data (no duplicates) for every column if the component has complex column filter
 	   *
 	   * @return (array)	-colSettings: 	Sort / filter settings of each column.
 	   *					-colSortParsers: 	Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
@@ -1148,8 +1136,9 @@ var ProperTable =
 	   * Return if the value is valid with the type in comparison with compareTo string.
 	   *
 	   * @param (string) 		type 		Type of the filter. Must be Equals, Starts With...
-	   * @param (string) 		value 		Value of the filter.
+	   * @param (string) 		value 		Value of the filter
 	   * @param (string) 		compareTo 	Value of the field to be checked
+	   * @param (boolean) 	escapeLess 	If it's a date type then use escape less to don't normalize some characters like -/.
 	   *
 	   * @return (boolean) 	result
 	   */
@@ -1157,7 +1146,9 @@ var ProperTable =
 		}, {
 			key: 'customFilter',
 			value: function customFilter(type, value, compareTo) {
-				return _comparators2['default'][type](value, compareTo);
+				var escapeLess = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
+
+				return _comparators2['default'][type](_normalizer2['default'].normalize(value, escapeLess), _normalizer2['default'].normalize(compareTo, escapeLess));
 			}
 
 			/**
@@ -19574,7 +19565,7 @@ var ProperTable =
 
 	exports['default'] = {
 		normalize: function normalize(value) {
-			var scapeLess = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+			var escapeLess = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
 			var parseToLower = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
 			var trim = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
 
@@ -19588,7 +19579,7 @@ var ProperTable =
 				internalVal = internalVal.trim();
 			}
 
-			if (!scapeLess) {
+			if (!escapeLess) {
 				charMap[''] = /[@#~$!º|"·%&¬()=?¿¡*+\^`´{};:[\].\-/\\]/g;
 			}
 
