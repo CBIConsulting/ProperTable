@@ -19,7 +19,7 @@ Used technologies:
 
 Features of ProperTable:
 
-* Fixed Column/s on scrolling 
+* Fixed Column/s on scrolling
 * Rows selection with callback (return selected rows data and the id's)
 * Sorting (single column, multiple column sorting)
 * Cell Formating
@@ -117,6 +117,8 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 			console.log('Selected row ids: ', selection);
 		}}
 	```
+* onScrollStart: Callback that is called when scrolling starts with current horizontal and vertical scroll values.
+* onScrollEnd: Callback that is called when scrolling ends or stops with new horizontal and vertical scroll values.
 * selectable: If the rows (all table) can be selected or not and if that selection is multiple. Values: True || 'Multiple' || False
 * rowHeight: Height of each row in numerical value. (Integer)
 * lang: Lang of the component. Default 'ENG'
@@ -178,11 +180,11 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		        sort={col.sortDir}
 		        uniqueId={props.uniqueId}
 		        rowFormater={props.formatter}
-	
+
 		        // Your component must have this functions, one that return the new column selection, other one that return the new sort direction
 		        // and last one if you want a button to clean this column filter. The last one applys a selection and then the sort direction of the
 		        // second parameter.
-	
+
 		        afterSelect={afterSelect} // function afterSelect(selectionArray);
 		        afterSort={afterSort} 	  // function afterSort(sortDirection);
 		        afterClear={afterClear}   // function afterSort(selection, sortDirection) -> afterClear([], 'DEF')
@@ -225,6 +227,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		}
 	```
 * restartOnClickType: This prop allows you to set if you want the restartOnClick element to clear both (filters and sort) or just one of them. Default both. The options are 'clear_filters', 'clear_sort' or 'clear_both'.
+* hasDisableRows: If this property is set to true (default false) then all the rows in the data that doesn't have a property Enabled or has Enabled = false will cause the row to has less opacity (disabled). Default false.
 
 ### Basic Example
 ------------

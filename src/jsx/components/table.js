@@ -417,8 +417,9 @@ class ProperTable extends React.Component {
  * @param (object) 	props 			Component props or new props on update
  * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
  * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
+ * @param (boolean) forceApply		If it's true then when when update sort or update Filters is not allowed it will apply the colSettings anyway.
  */
-	applySettings(colSettings = this.state.colSettings, props = this.props, updateSort = true, updateFilters = true, forceSendSettings = false) {
+	applySettings(colSettings = this.state.colSettings, props = this.props, updateSort = true, updateFilters = true, forceSendSettings = false, forceApply = false) {
 		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newDirection;
 		let updateSortAllowed = updateSort && props.colSortDirs && _.size(props.colSortDirs) > 0;
 		let updateFiltersAllowed = updateFilters && props.colFilters, hasSelectionFilter, hasCustomFilter, operations = {};
@@ -435,7 +436,7 @@ class ProperTable extends React.Component {
 					sortedData.push({name: col.column, direction: newDirection}); // To be applied after
 					hasSort = true;
 				}
-			} else if (col.direction !== DEFAULT_SORT_DIRECTION) {
+			} else if (forceApply && col.direction !== DEFAULT_SORT_DIRECTION) {
 				hasSort = true;
 			}
 
@@ -465,7 +466,8 @@ class ProperTable extends React.Component {
 						col.operationFilterValue = newFilter.operationValue;
 					}
 				}
-			} else if ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0) || (col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
+			} else if (forceApply && ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0)
+				|| (col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0))) {
 				hasFilter = true;
 			}
 
@@ -625,7 +627,9 @@ class ProperTable extends React.Component {
 			id = row.get(keyField, false);
 
 			if (!id) id = _.uniqueId();
-			row = row.set(keyField, id.toString());
+			else id = id.toString();
+
+			row = row.set(keyField, id);
 
 			if (defSelection.has(id)) {
 				row = row.set(SELECTED_FIELD, true);
@@ -1642,7 +1646,16 @@ class ProperTable extends React.Component {
  * @param {integer}	index	Index of the row which will get the new classes.
  */
 	getRowClassName(index) {
-		let addClass = 'propertable-row', selected = this.state.data.get(index).get(SELECTED_FIELD);
+		let addClass = 'propertable-row', row = this.state.data.get(index);
+		let selected = row.get(SELECTED_FIELD), enabled;
+
+		if (this.props.hasDisableRows) {
+			enabled = row.get('Enabled');
+
+			if (!enabled) {
+				addClass += ' disabled-row';
+			}
+		}
 
 		if (selected) addClass += ' selected';
 
@@ -1722,6 +1735,9 @@ ProperTable.propTypes = {
     colSortDirs: React.PropTypes.objectOf(React.PropTypes.string),
     colFilters: React.PropTypes.objectOf(React.PropTypes.object),
     filterWidth: React.PropTypes.number,
+    onScrollStart: React.PropTypes.func,
+    onScrollEnd: React.PropTypes.func,
+    hasDisableRows: React.PropTypes.bool
 }
 
 ProperTable.defaultProps = {
@@ -1748,7 +1764,10 @@ ProperTable.defaultProps = {
 	getColSettings: null,
 	colSortDirs: null,
 	colFilters: null,
-	filterWidth: null
+	filterWidth: null,
+	onScrollStart: null,
+	onScrollEnd: null,
+	hasDisableRows: false
 }
 
 export default ProperTable;

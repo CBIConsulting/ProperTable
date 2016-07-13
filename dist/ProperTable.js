@@ -69,6 +69,8 @@ var ProperTable =
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
+	var _reactImmutableRenderMixin = __webpack_require__(76);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	if (true) {
@@ -595,6 +597,7 @@ var ProperTable =
 	  * @param (object) 	props 			Component props or new props on update
 	  * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
 	  * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
+	  * @param (boolean) forceApply		If it's true then when when update sort or update Filters is not allowed it will apply the colSettings anyway.
 	  */
 
 
@@ -602,11 +605,12 @@ var ProperTable =
 			var colSettings = arguments.length <= 0 || arguments[0] === undefined ? this.state.colSettings : arguments[0];
 			var props = arguments.length <= 1 || arguments[1] === undefined ? this.props : arguments[1];
 			var updateSort = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+			var updateFilters = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
 
 			var _this3 = this;
 
-			var updateFilters = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
 			var forceSendSettings = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
+			var forceApply = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
 
 			var selectionSet = {},
 			    columnKeysFiltered = [],
@@ -635,7 +639,7 @@ var ProperTable =
 						sortedData.push({ name: col.column, direction: newDirection }); // To be applied after
 						hasSort = true;
 					}
-				} else if (col.direction !== DEFAULT_SORT_DIRECTION) {
+				} else if (forceApply && col.direction !== DEFAULT_SORT_DIRECTION) {
 					hasSort = true;
 				}
 
@@ -665,7 +669,7 @@ var ProperTable =
 							col.operationFilterValue = newFilter.operationValue;
 						}
 					}
-				} else if (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0) {
+				} else if (forceApply && (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
 					hasFilter = true;
 				}
 
@@ -851,8 +855,9 @@ var ProperTable =
 			parsed = data.map(function (row) {
 				id = row.get(keyField, false);
 
-				if (!id) id = _underscore2['default'].uniqueId();
-				row = row.set(keyField, id.toString());
+				if (!id) id = _underscore2['default'].uniqueId();else id = id.toString();
+
+				row = row.set(keyField, id);
 
 				if (defSelection.has(id)) {
 					row = row.set(SELECTED_FIELD, true);
@@ -2068,7 +2073,17 @@ var ProperTable =
 
 		ProperTable.prototype.getRowClassName = function getRowClassName(index) {
 			var addClass = 'propertable-row',
-			    selected = this.state.data.get(index).get(SELECTED_FIELD);
+			    row = this.state.data.get(index);
+			var selected = row.get(SELECTED_FIELD),
+			    enabled = void 0;
+
+			if (this.props.hasDisableRows) {
+				enabled = row.get('Enabled');
+
+				if (!enabled) {
+					addClass += ' disabled-row';
+				}
+			}
 
 			if (selected) addClass += ' selected';
 
@@ -2147,7 +2162,10 @@ var ProperTable =
 		getColSettings: _react2['default'].PropTypes.func,
 		colSortDirs: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.string),
 		colFilters: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.object),
-		filterWidth: _react2['default'].PropTypes.number
+		filterWidth: _react2['default'].PropTypes.number,
+		onScrollStart: _react2['default'].PropTypes.func,
+		onScrollEnd: _react2['default'].PropTypes.func,
+		hasDisableRows: _react2['default'].PropTypes.bool
 	};
 
 	ProperTable.defaultProps = {
@@ -2174,7 +2192,10 @@ var ProperTable =
 		getColSettings: null,
 		colSortDirs: null,
 		colFilters: null,
-		filterWidth: null
+		filterWidth: null,
+		onScrollStart: null,
+		onScrollEnd: null,
+		hasDisableRows: false
 	};
 
 	exports['default'] = ProperTable;

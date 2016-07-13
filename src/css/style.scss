@@ -2,21 +2,33 @@
 @import "fixed-data-table";
 
 .propertable {
-	.fa-square-o{
+	.fa-square-o {
 		&:hover {
 			cursor: pointer;
 		}
 	}
 
-	.fixedDataTableRowLayout_rowWrapper{
+	.fixedDataTableRowLayout_rowWrapper {
 		&:hover .public_fixedDataTableCell_main {
 		  background-color: #C7EBFF;
 		}
 
 		.public_fixedDataTableRow_main {
 			&.selected {
-				.public_fixedDataTableCell_main{
+				.public_fixedDataTableCell_main {
 					background-color: darken(#C7EBFF, 3%);
+				}
+			}
+
+			&.disabled-row {
+				.public_fixedDataTableCell_main {
+    				color: #999;
+				}
+			}
+
+			&.disabled-row.selected {
+				.public_fixedDataTableCell_main {
+					background-color: #DEF3FF;
 				}
 			}
 		}
@@ -52,7 +64,7 @@
 		}
 	}
 
-	&.not-sortable{
+	&.not-sortable {
 		cursor: not-allowed;
 	}
 }

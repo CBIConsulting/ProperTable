@@ -293,6 +293,12 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
 .propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.selected .public_fixedDataTableCell_main {
   background-color: #b8e6ff; }
 
+.propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.disabled-row .public_fixedDataTableCell_main {
+  color: #999; }
+
+.propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.disabled-row.selected .public_fixedDataTableCell_main {
+  background-color: #DEF3FF; }
+
 .propertable.column-complex-filter {
   min-width: 160px;
   min-height: 250px;
