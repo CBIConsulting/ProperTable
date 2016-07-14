@@ -114,6 +114,16 @@ const HeaderCell = props => {
     sortIcon = buildColumnFilter(props, sortIcon);
   }
 
+  // Change sort direction on click in label when using a complex filter
+  if (children && props.filterComponent && !isSelectorCol) {
+    children = (
+      <span onClick={(e) => {
+         onSortChange(e, props, sortable);
+      }}>
+      {children}
+     </span>);
+  }
+
   return (
     <div key={props.uniqueId + '-column-header'}>
       <Cell
@@ -126,7 +136,7 @@ const HeaderCell = props => {
         }}
         {...props}
       >
-        {children} &nbsp; {sortIcon}
+        {children}&nbsp;{sortIcon}
       </Cell>
     </div>
   );
