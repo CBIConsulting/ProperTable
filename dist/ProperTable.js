@@ -47,15 +47,17 @@ var ProperTable =
 
 	"use strict";
 
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
+	exports.__esModule = true;
 
 	var _table = __webpack_require__(1);
 
 	var _table2 = _interopRequireDefault(_table);
 
-	var _formatters = __webpack_require__(125);
+	var _portal = __webpack_require__(63);
+
+	var _portal2 = _interopRequireDefault(_portal);
+
+	var _formatters = __webpack_require__(91);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -63,18 +65,21 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(128);
+	var _reactDimensions = __webpack_require__(144);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
+
+	var _reactImmutableRenderMixin = __webpack_require__(76);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	if (true) {
-		__webpack_require__(129);
+		__webpack_require__(145);
 	}
 
 	exports["default"] = {
 		Table: (0, _reactDimensions2["default"])()(_table2["default"]),
+		Portal: _portal2["default"],
 		formatters: _formatters2["default"],
 		lang: _messages2["default"]
 	};
@@ -86,19 +91,23 @@ var ProperTable =
 
 	'use strict';
 
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
+	exports.__esModule = true;
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+	var _CLEAR_OPTIONS;
 
 	var _react = __webpack_require__(2);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _fixedDataTable = __webpack_require__(3);
+	var _reactDom = __webpack_require__(3);
+
+	var _reactDom2 = _interopRequireDefault(_reactDom);
+
+	var _fixedDataTable = __webpack_require__(4);
 
 	var _immutable = __webpack_require__(54);
 
@@ -120,23 +129,35 @@ var ProperTable =
 
 	var _cellRenderer2 = _interopRequireDefault(_cellRenderer);
 
-	var _sortHeaderCell = __webpack_require__(62);
+	var _headerCell = __webpack_require__(62);
 
-	var _sortHeaderCell2 = _interopRequireDefault(_sortHeaderCell);
+	var _headerCell2 = _interopRequireDefault(_headerCell);
 
-	var _binarysearch = __webpack_require__(63);
+	var _binarysearch = __webpack_require__(82);
 
 	var _binarysearch2 = _interopRequireDefault(_binarysearch);
 
-	var _clone = __webpack_require__(64);
+	var _clone = __webpack_require__(83);
 
 	var _clone2 = _interopRequireDefault(_clone);
 
-	var _reactImmutableRenderMixin = __webpack_require__(69);
+	var _reactImmutableRenderMixin = __webpack_require__(76);
 
 	var _rowcache = __webpack_require__(59);
 
 	var _rowcache2 = _interopRequireDefault(_rowcache);
+
+	var _moment = __webpack_require__(88);
+
+	var _moment2 = _interopRequireDefault(_moment);
+
+	var _normalizer = __webpack_require__(89);
+
+	var _normalizer2 = _interopRequireDefault(_normalizer);
+
+	var _comparators = __webpack_require__(90);
+
+	var _comparators2 = _interopRequireDefault(_comparators);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -146,64 +167,38 @@ var ProperTable =
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var Set = __webpack_require__(74);
-
-	/**
-	 * Component properties.
-	 *
-	 * cols: Describe columns data [name: colName, field: colField, formated: valFormater(), sortable: false ...]
-	 * data: Data of the table
-	 * afterSort: Function called after the data has been sorted. Return the rawdata sorted.
-	 * afterSelect: Function called after select a row. Return the seleted rows.
-	 * selectable: If the rows can be selected or not, and if that selection is multiple. Values: true || 'Multiple' || false
-	 * rowHeight: Height of each row in numerical value.
-	 * msgs: Get the translated messages of the current lang.
-	 * selectorWidth: Width of the selector column, checkboxes.
-	 * colSortDirs: To sort by default, direction (ASC, DESC, DEF(default)) of the columns. [{name: fieldName,  direction: 'DEF'},{},{}]
-	 * multisort: Multisort allowed or not. True || False
-	 * selected: Rows selected by default. Get an array of ids or an id
-	 * idField: Field that can be used as an id for the default selected rows.
-	 */
-	function defaultProps() {
-		return {
-			className: '',
-			cols: [],
-			data: [],
-			uniqueId: null,
-			afterSort: null,
-			afterSelect: null,
-			selectable: true,
-			selected: null,
-			rowHeight: 50,
-			idField: '_properId',
-			msgs: _messages2['default'],
-			selectorWidth: 27,
-			colSortDirs: null,
-			multisort: false
-		};
-	}
-
-	/**
-	 * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
-	 * column inside a ColumnGroup even if the column has not childrens.
-	 *
-	 * @param (array)		cols  	Describe columns
-	 * @return (boolean)	result	True if has nested columns or false otherwhise
-	 */
-	function hasNested(cols) {
-		var result = false;
-
-		if (cols.size) {
-			cols.forEach(function (c) {
-				if (c.get('children') && c.get('children').size) {
-					result = true;
-					return false;
-				}
-			});
-		}
-
-		return result;
-	}
+	//Const
+	var SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
+	var DEFAULT_SORT_DIRECTION = 'DEF';
+	var ASCENDING_SORT_DIRECTION = 'ASC';
+	var DESCENDING_SORT_DIRECTION = 'DESC';
+	var SELECTED_FIELD = '_selected';
+	var ROW_INDEX_FIELD = '_rowIndex';
+	var RAWDATA_INDEX_FIELD = '_rawDataIndex';
+	var MULTIPLE_SELECTION = 'multiple';
+	var CLEAR_FILTERS = 'clear_filters';
+	var CLEAR_SORT = 'clear_sort';
+	var CLEAR_BOTH = 'clear_both';
+	var FILTERTYPE_SELECTION = 'selection';
+	var FILTERTYPE_CUSTOM = 'operation';
+	var NOTEQUALS = 'notequals';
+	var EQUALS = "equals";
+	var BIGGERTHAN = 'bigger';
+	var LOWERTHAN = 'lower';
+	var AFTERDATE = 'after';
+	var BEFOREDATE = 'before';
+	var BETWEENDATES = 'between';
+	var ONDATE = 'on';
+	var NOTONDATE = 'noton';
+	var STARTSWITH = 'start';
+	var FINISHWITH = 'finish';
+	var CONTAINS = 'contains';
+	var NOTCONTAINS = 'notcontains';
+	var EMPTY = 'empty';
+	var CACHE_NAME = 'formatted';
+	var Set = __webpack_require__(93);
+	var DATE_TYPES = new Set([AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]);
+	var CLEAR_OPTIONS = (_CLEAR_OPTIONS = {}, _CLEAR_OPTIONS[CLEAR_BOTH] = { sort: true, filters: true }, _CLEAR_OPTIONS[CLEAR_FILTERS] = { sort: false, filters: true }, _CLEAR_OPTIONS[CLEAR_SORT] = { sort: true, filters: false }, _CLEAR_OPTIONS);
 
 	/**
 	 * A proper table component based on react Fixed-DataTables with an amount of new functionalities.
@@ -254,1138 +249,1954 @@ var ProperTable =
 
 			// Get initial data
 
-			var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ProperTable).call(this, props));
+			var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
 			var initialData = _this.prepareData();
 			// Get initial columns sort
-			var initialColSort = _this.prepareColSort();
+			var initialColSettings = _this.prepareColSettings(_this.props, initialData.rawdata);
+			// Sort cols by position if exist
+			var cols = _this.sortTableCols(_immutable2['default'].fromJS(_this.props.cols));
 
 			_this.state = {
-				cols: _immutable2['default'].fromJS(_this.props.cols),
-				colSortDirs: initialColSort.colSortDirs,
-				colSortVals: initialColSort.sortValues,
+				cols: cols,
+				colSettings: initialColSettings.colSettings,
+				colSortParsers: initialColSettings.colSortParsers,
 				data: initialData.data,
+				initialData: initialData.initialData,
 				indexed: initialData.indexed,
 				initialIndexed: initialData.initialIndexed,
 				rawdata: initialData.rawdata,
 				sizes: _immutable2['default'].fromJS({}),
+				selection: initialData.defSelection,
+				sortCache: initialData.defSortCache,
 				allSelected: false,
-				selection: new Set(),
-				sortCache: initialData.defSortCache
+				sendSorted: false
 			};
 			return _this;
 		}
 
-		_createClass(ProperTable, [{
-			key: 'componentWillMount',
-			value: function componentWillMount() {
-				// Sort the table if the sort direction of one or more columns are diferent than default and set the selection
-				this.applyDefault();
+		ProperTable.prototype.componentWillMount = function componentWillMount() {
+			this.uniqueId = this.props.uniqueId || _underscore2['default'].uniqueId('propertable-');
+
+			// Sort the table and apply filters if exist in props
+			this.applySettings();
+
+			// Add new click listener if exist
+			if (this.props.restartOnClick) {
+				this.addClickListener(this.props.restartOnClick);
 			}
-		}, {
-			key: 'shouldComponentUpdate',
-			value: function shouldComponentUpdate(nextProps, nextState) {
-				var _this2 = this;
+		};
 
-				var propschanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props, nextProps);
-				var statechanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.state, nextState);
-				var somethingchanged = propschanged || statechanged;
+		ProperTable.prototype.componentDidMount = function componentDidMount() {
+			// In some cases the callback of setState it's called before the new state is set up so we use a flag to prevent this.
+			if (this.state.sendSorted) {
+				this.setState({
+					sendSorted: false
+				}, this.sendSortedAndSettings(this.state.data, this.state.colSettings));
+			} else {
+				this.sendColSettings(this.state.colSettings);
+			}
+		};
 
-				if (propschanged) {
-					var colsChanged = nextProps.cols.length != this.props.cols.length || !_underscore2['default'].isEqual(nextProps.cols, this.props.cols);
-					var dataChanged = nextProps.data.length != this.props.data.length || !_underscore2['default'].isEqual(nextProps.data, this.props.data);
-					var colSortData = null,
-					    preparedData = null;
+		ProperTable.prototype.componentWillUnmount = function componentWillUnmount() {
+			_rowcache2['default'].flush([CACHE_NAME, 'tb_' + this.uniqueId]);
 
-					// If data and columns change the colSortDirs and all data states must be updated. Then apply default (sort table
+			// Remove listener if exist
+			if (this.props.restartOnClick) {
+				this.removeClickListener(this.props.restartOnClick);
+			}
+		};
+
+		ProperTable.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps, nextState) {
+			var _this2 = this;
+
+			var propschanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props, nextProps);
+			var statechanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.state, nextState);
+			var somethingchanged = propschanged || statechanged;
+
+			if (propschanged) {
+				var _ret = function () {
+					var colsDeepCompare = _this2.deepColsCompare(nextProps.cols, _this2.props.cols);
+					var colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges || colsDeepCompare.hasChangedPosition;
+					var dataChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.data, _this2.props.data);
+					var colSortDirsChanged = nextProps.colSortDirs ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colSortDirs, _this2.props.colSortDirs) : false;
+					var colFiltersChanged = nextProps.colFilters ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colFilters, _this2.props.colFilters) : false;
+					var colData = null,
+					    preparedData = null,
+					    cols = null,
+					    newCol = void 0;
+
+					// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
 					// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
 					if (colsChanged || dataChanged) {
-						_rowcache2['default'].flush('formatted');
-
 						if (dataChanged) {
-							// The most probably case
-							preparedData = this.prepareData(nextProps, nextState);
+							_rowcache2['default'].flush([CACHE_NAME, 'tb_' + _this2.uniqueId]);
 
-							this.setState({
+							preparedData = _this2.prepareData(nextProps, nextState);
+							colData = _this2.prepareColSettings(nextProps, preparedData.rawdata);
+							cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
+
+							_this2.setState({
+								colSettings: colData.colSettings,
+								colSortParsers: colData.colSortParsers,
+								cols: cols,
 								data: preparedData.data,
+								initialData: preparedData.initialData,
 								indexed: preparedData.indexed,
 								initialIndexed: preparedData.initialIndexed,
 								rawdata: preparedData.rawdata,
-								sortCache: preparedData.defSortCache
-							}, this.sortTable(nextState.colSortDirs, false));
-						} else if (colsChanged && dataChanged) {
-							preparedData = this.prepareData(nextProps, nextState);
-							colSortData = this.prepareColSort(nextProps);
-
-							this.setState({
-								colSortDirs: colSortData.colSortDirs,
-								colSortVals: colSortData.colSortVals,
-								cols: _immutable2['default'].fromJS(nextProps.cols),
-								data: preparedData.data,
-								indexed: preparedData.indexed,
-								initialIndexed: preparedData.initialIndexed,
-								rawdata: preparedData.rawdata,
-								sortCache: preparedData.defSortCache
-							}, this.sortTable(colSortData.colSortDirs, false));
+								sortCache: preparedData.defSortCache,
+								selection: preparedData.defSelection
+							}, _this2.applySettings(colData.colSettings, nextProps, true, true, true));
 						} else if (colsChanged) {
-							(function () {
-								var sortCache = [];
-								colSortData = _this2.prepareColSort(nextProps);
+							if (colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition) {
+								(function () {
+									var sortCache = [];
 
-								// Restart cache
-								nextState.data.forEach(function (row) {
-									sortCache[row.get(_this2.props.idField)] = {};
-								});
+									_rowcache2['default'].flush([CACHE_NAME, 'tb_' + _this2.uniqueId]);
+									colData = _this2.prepareColSettings(nextProps, _this2.state.rawdata);
+									cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
 
-								_this2.setState({
-									colSortDirs: colSortData.colSortDirs,
-									colSortVals: colSortData.colSortVals,
-									cols: _immutable2['default'].fromJS(nextProps.cols),
-									sortCache: sortCache
-								}, _this2.applyDefault(nextState.colSortDirs, nextProps)); // apply selection and sort
-							})();
+									// Restart cache
+									nextState.data.forEach(function (row) {
+										sortCache[row.get(_this2.props.idField)] = {};
+									});
+
+									_this2.setState({
+										colSettings: colData.colSettings,
+										colSortParsers: colData.colSortParsers,
+										cols: cols,
+										sortCache: sortCache
+									}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+								})();
+							} else if (colsDeepCompare.hasSmallChanges) {
+									cols = _this2.state.cols.map(function (col) {
+										newCol = colsDeepCompare.changedCols[col.get('name')];
+
+										if (newCol) {
+											_underscore2['default'].each(newCol, function (value, key) {
+												col = col.set(key, value);
+											});
+										}
+
+										return col;
+									});
+
+									_this2.setState({
+										cols: cols
+									});
+								} else {
+									cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
+
+									_this2.setState({
+										cols: cols
+									});
+								}
 						}
 
-						return false;
+						return {
+							v: false
+						};
+					} else if (colSortDirsChanged || colFiltersChanged) {
+						_this2.applySettings(nextState.colSettings, nextProps, colSortDirsChanged, colFiltersChanged);
 					} else if (nextProps.selected) {
-						this.setDefaultSelection(nextProps);
+						_this2.setDefaultSelection(nextProps);
 
-						return false;
+						return {
+							v: false
+						};
+					}
+				}();
+
+				if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+			}
+
+			return somethingchanged;
+		};
+
+		ProperTable.prototype.componentWillUpdate = function componentWillUpdate(nextProps, nextState) {
+			this.checkSelectionChange(nextProps, nextState);
+
+			if (nextState.sendSorted) {
+				this.sendSortedAndSettings(nextState.data, nextState.colSettings);
+			}
+		};
+
+		ProperTable.prototype.componentDidUpdate = function componentDidUpdate(prevProps, prevState) {
+			if (this.state.sendSorted) this.setState({ sendSorted: false });
+		};
+
+		ProperTable.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
+			if (newProps.restartOnClick || this.props.restartOnClick) {
+				var restartOnClickChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props.restartOnClick, newProps.restartOnClick);
+
+				if (restartOnClickChanged) {
+					// Remove old listener if exist
+					if (this.props.restartOnClick) {
+						this.removeClickListener(this.props.restartOnClick);
+					}
+
+					// Add new listener if exist
+					if (newProps.restartOnClick) {
+						this.addClickListener(newProps.restartOnClick);
 					}
 				}
-
-				return somethingchanged;
 			}
-		}, {
-			key: 'componentWillUpdate',
-			value: function componentWillUpdate(nextProps, nextState) {
-				this.checkSelectionChange(nextProps, nextState);
-			}
+		};
 
-			/**
-	   * Apply default selection and sort table.
-	   *
-	   * @param (array)	colSortDirs Sort settings of each column. From current or next state (case the props data/cols change)
-	   * @param (array)	props 		Component props (or nextProps)
-	   */
+		/**
+	  * Check if cols has changed deeply. This function is made to optimize shouldComponentUpdate when the visibility or something
+	  * like that has changed but it's not a big change, so colSettings still been the same. If has changed deeply then re-build the
+	  * colSettings and restart sortCache, if it's just a small change like in class, label, isVisible, etc, then update the changed
+	  * columns only.
+	  *
+	  * @param (array) 	nextCols		Next columns received by the table
+	  * @param (array)	currentCols		The current columns of the table
+	  *
+	  * @return (object) result
+	  *						- (boolean) hasChangedDeeply  	If has changed deeply
+	  *						- (boolean) hasSmallChanges 	If the properties which could be updated in hot has changed. Class, fixed, isVisible...
+	  *						- (boolean) hasChangedPosition 	If the position of the cols has changed
+	  * 						- (object)  changedCols 		Object with the changed cols indexed by the index (when it has just small changes)
+	  */
 
-		}, {
-			key: 'applyDefault',
-			value: function applyDefault() {
-				var colSortDirs = arguments.length <= 0 || arguments[0] === undefined ? this.state.colSortDirs : arguments[0];
-				var props = arguments.length <= 1 || arguments[1] === undefined ? this.props : arguments[1];
 
-				this.uniqueId = props.uniqueId || _underscore2['default'].uniqueId('propertable-');
-				this.sortTable(colSortDirs, false);
-				this.setDefaultSelection(props);
-			}
+		ProperTable.prototype.deepColsCompare = function deepColsCompare(nextCols, currentCols) {
+			var nextLength = nextCols.length,
+			    currentLength = currentCols.length,
+			    hasChangedDeeply = false,
+			    hasSmallChanges = false,
+			    changedCols = {};
+			var fixedChanged = void 0,
+			    classNameChanged = void 0,
+			    isVisibleChanged = void 0,
+			    labelChanged = void 0,
+			    somethingchanged = void 0,
+			    curCol = void 0,
+			    hasChangedPosition = false;
 
-			/**
-	   * Prepare the data received by the component for the internal working.
-	   * @param  (array)	props 	Component props (or nextProps)
-	   * @param  (array)	state 	Component state (or nextState)
-	   * @return (array)	-rawdata: The same data as the props.
-	   *					-indexed: Same as rawdata but indexed by the properId
-	   *					-data: Parsed data to add some fields necesary to internal working.
-	   */
+			if (currentCols.length !== nextCols.length) {
+				hasChangedDeeply = true;
+			} else {
+				_underscore2['default'].every(nextCols, function (col, index) {
+					curCol = currentCols[index];
 
-		}, {
-			key: 'prepareData',
-			value: function prepareData() {
-				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
-				var state = arguments.length <= 1 || arguments[1] === undefined ? this.state : arguments[1];
+					if (col.name !== curCol.name || col.field !== curCol.field || col.sortable !== curCol.sortable || col.uniqueId !== curCol.uniqueId || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.formatter, curCol.formatter) || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.sortVal, curCol.sortVal) || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.children, curCol.children)) {
 
-				// The data will be inmutable inside the component
-				var data = _immutable2['default'].fromJS(props.data),
-				    index = 0,
-				    id = void 0,
-				    sortCache = [];
-				var indexed = {},
-				    parsed = [],
-				    selectedarr = [];
-				var keyField = this.props.idField;
-
-				if (props.selected) {
-					if (!_underscore2['default'].isArray(props.selected)) {
-						selectedarr = [props.selected];
-					} else {
-						if (props.selectable == 'multiple') selectedarr = props.selected;else selectedarr = [props.selected[0]];
-					}
-				} else {
-					if (state && state.selection) {
-						state.selection.forEach(function (id) {
-							selectedarr.push(id);
-						});
-					}
-				}
-
-				selectedarr = new Set(selectedarr);
-
-				// Parsing data to add new fields (selected or not, properId, rowIndex)
-				parsed = data.map(function (row) {
-					id = row.get(keyField, false);
-
-					if (!id) {
-						id = _underscore2['default'].uniqueId();
-						row = row.set(keyField, id);
+						hasChangedDeeply = true;
+						return false; // Break
 					}
 
-					if (selectedarr.has(id)) {
-						row = row.set('_selected', true);
-					} else {
-						row = row.set('_selected', false);
+					fixedChanged = col.fixed !== curCol.fixed;
+					classNameChanged = col.className !== curCol.className;
+					isVisibleChanged = col.isVisible !== curCol.isVisible;
+					labelChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.label, curCol.label);
+					somethingchanged = fixedChanged || classNameChanged || isVisibleChanged || labelChanged;
+
+					if (somethingchanged) {
+						changedCols[col.name] = _underscore2['default'].clone(col);
+						hasSmallChanges = true;
 					}
 
-					row = row.set('_rowIndex', index++);
+					if (!hasChangedPosition) {
+						hasChangedPosition = col.position !== curCol.position;
+					}
 
-					sortCache[id] = {};
-
-					return row;
+					return true; // Next
 				});
-
-				// Prepare indexed data.
-				indexed = _underscore2['default'].indexBy(parsed.toJSON(), keyField);
-
-				return {
-					rawdata: data,
-					data: parsed,
-					indexed: indexed,
-					initialIndexed: (0, _clone2['default'])(indexed),
-					defSortCache: sortCache
-				};
 			}
 
-			/**
-	   *	Set the default selection if that exist in props
-	   *
-	   * @param (array)	props 	Component props (or nextProps)
-	   */
+			return {
+				hasChangedDeeply: hasChangedDeeply,
+				hasSmallChanges: hasSmallChanges,
+				hasChangedPosition: hasChangedPosition,
+				changedCols: changedCols
+			};
+		};
 
-		}, {
-			key: 'setDefaultSelection',
-			value: function setDefaultSelection() {
-				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+		/**
+	  * Sort the columns by its position and return the cols sorted.
+	  *
+	  * @param (array) 	columns Property cols.
+	  * @return (object)	cols 	Sorted cols by its position as an Immutable
+	  */
 
-				if (props.selected) {
-					var selected = props.selected,
-					    selection = void 0;
 
-					if (selected.length == 0) {
-						selection = new Set();
+		ProperTable.prototype.sortTableCols = function sortTableCols(cols) {
+			if (cols.size > 0) {
+				cols = cols.sortBy(function (col, colIndex, allCols) {
+					return col.get('position', 1);
+				}, function (val1, val2) {
+					if (val1 === val2) {
+						return 0;
 					} else {
-						if (!_underscore2['default'].isArray(selected)) {
-							selection = new Set([selected.toString()]);
-						} else {
-							if (props.selectable == 'multiple') selection = new Set(selected.toString().split(','));else selection = new Set([selected[0].toString()]);
-						}
-					}
-
-					this.triggerSelection(selection, false); // false -> don't send the selection
-				}
-			}
-
-			/**
-	   * Prepare the columns sort data to all columns and the array of functions to parse the data of each column before sorting.
-	   *
-	   * @return (array)	-colSortDirs: Sort settings of each column.
-	   *					-sortValues: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
-	   */
-
-		}, {
-			key: 'prepareColSort',
-			value: function prepareColSort() {
-				var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
-
-				var colSortDirs = props.colSortDirs,
-				    cols = props.cols;
-				var sort = [],
-				    multisort = props.multisort;
-				var direction = null,
-				    sortable = null,
-				    colData = null;
-				var sortData = this.buildColSortDirs(cols); // Build the initial colsortdirs using the cols array.
-
-				// If the component doesn't receive the colSortDirs array with a diferent direction than default then set to
-				// colSortDirs the default values.
-				if (_underscore2['default'].isNull(colSortDirs)) {
-					colSortDirs = sortData.colSortDirs;
-				}
-
-				// Through each element of the colSortDirs builded data build the colSortDirs with the default directions received,
-				// setting a position (position of priority to sort (it will be modified after click on the diferent columns)), if
-				// the column is sortable or not and if the Table has multisort or just only single.
-				for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
-					colData = sortData.colSortDirs[i];
-					direction = colData.direction;
-					sortable = colData.sortable !== null ? colData.sortable : true;
-
-					colSortDirs.forEach(function (element) {
-						if (element.column == colData.column) direction = element.direction;
-					});
-
-					sort.push({
-						column: colData.column, // Column name
-						field: colData.field,
-						direction: direction,
-						position: i + 1,
-						sorted: false,
-						multisort: multisort, // single (false) (in this case only one at a time can be sorted) or multisort (true - all true)
-						sortable: sortable
-					});
-				}
-
-				// Ordering by selected rows. Virtual column
-				if (props.selectable == 'multiple') {
-					sort.push({
-						column: 'selector-multiple-column', // Column name
-						field: '_selected',
-						direction: 'DEF',
-						position: sortData.colSortDirs.length + 1, // Last
-						sorted: false,
-						multisort: multisort,
-						sortable: true
-					});
-				}
-
-				return {
-					colSortDirs: sort,
-					sortValues: sortData.sortVals
-				};
-			}
-
-			/**
-	   * Build the structure of the colSortDirs array and the sortVals array with the functions received in cols or a default function to parse.
-	   * In fact this method look through all the columns in props.cols recursively and add all that aren't a ColumnGroup,
-	   * the columns that may be sorted.
-	   *
-	   * @param 	(array)	cols Describe each column data. (name, sortable, fixed...)
-	   *
-	   * @return 	(array)	-colSortDirs: Sort settings of each column.
-	   *					-sortValues: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
-	   */
-
-		}, {
-			key: 'buildColSortDirs',
-			value: function buildColSortDirs(cols) {
-				var _this3 = this;
-
-				var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
-				var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-				cols.forEach(function (element) {
-					if (!element.children) {
-						var sortable = _underscore2['default'].isUndefined(element.sortable) ? null : element.sortable;
-
-						sortVals[element.name] = element.sortVal || function (val) {
-							return val;
-						}; // Function to iterate
-
-						colSortDirs.push({
-							column: element.name,
-							field: element.field,
-							direction: 'DEF',
-							sortable: sortable
-						});
-					} else {
-						_this3.buildColSortDirs(element.children, colSortDirs, sortVals);
+						return val1 > val2 ? 1 : -1;
 					}
 				});
-
-				if (this.props.selectable == 'multiple') {
-					sortVals['selector-multiple-column'] = function (val) {
-						return val;
-					};
-				}
-
-				return {
-					colSortDirs: colSortDirs,
-					sortVals: sortVals
-				};
 			}
 
-			/**
-	   * Function called each time the user click on the header of a column, then apply a sortBy function in that column.
-	   * After that, update the state of the component
-	   *
-	   * @param {String} 		columnKey 	The name of the column which will be resort.
-	   * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
-	   */
+			return cols;
+		};
 
-		}, {
-			key: 'onSortChange',
-			value: function onSortChange(columnKey, sortDir) {
-				var newData = null;
-				var colSortDirs = this.updateSortDir(columnKey, sortDir);
+		/**
+	  * Add a click listener to the props.restartOnClick element. The function clearFilterAndSort will be called when this elemente get clicked.
+	  *
+	  * @param {Js Element || React Element} restartOnClick 	Element which will have a new on click listener
+	  */
 
-				this.sortTable(colSortDirs);
-			}
 
-			/**
-	   * Receive the column name and a sort direction and change the direction of that column, then set the proper position
-	   * of all the columns (just if the Table have multisorting allowed). The position will be used to set which columns
-	   * will be sorted first. If there are some columns with sortDir ASC or DESC the data will be sorted in function of
-	   * what element was clicked before.
-	   *
-	   * @param {String} 		columnKey 	The name of the column which will be resort.
-	   * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
-	   * @return {array}		colSortDirs Updated colSortDirs array.
-	   */
+		ProperTable.prototype.addClickListener = function addClickListener(restartOnClick) {
+			if (!_react2['default'].isValidElement(restartOnClick)) {
+				// Not React element
+				restartOnClick.addEventListener('click', this.clearFilterAndSort.bind(this));
+			} else {
+				var btn = null;
 
-		}, {
-			key: 'updateSortDir',
-			value: function updateSortDir(columnKey, sortDir) {
-				var colSortDirs = this.state.colSortDirs || [],
-				    position = 1;
-
-				// Single sorting.
-				if (!this.props.multisort) {
-					for (var i = 0; i <= colSortDirs.length - 1; i++) {
-						if (colSortDirs[i].column == columnKey) {
-							colSortDirs[i].direction = sortDir;
-							colSortDirs[i].multisort = true;
-						} else {
-							colSortDirs[i].direction = 'DEF';
-							colSortDirs[i].multisort = false;
-						}
+				if (restartOnClick.props.id) {
+					btn = document.getElementById(restartOnClick.props.id);
+					btn.addEventListener('click', this.clearFilterAndSort.bind(this));
+				} else if (this.props.restartOnClick.props.className) {
+					btn = document.getElementsByClassName(restartOnClick.props.className);
+					for (var i = btn.length - 1; i >= 0; i--) {
+						btn[i].addEventListener('click', this.clearFilterAndSort.bind(this));
 					}
-				} else {
-					// Multisort
-					var initialPos = 0,
-					    index = 0;
-
-					for (var _i = 0; _i <= colSortDirs.length - 1; _i++) {
-						// If some columns were sorted before then the position of the sorted columns wont be changed, so the initial
-						// position will be the next. If 2 columns are already sorted and we sort by a new one then the position of this
-						// last column will be 3 and will change to 2 or 1 if the sorted columns back to default.
-						if (colSortDirs[_i].sorted) initialPos++;
-
-						if (colSortDirs[_i].column == columnKey) {
-							colSortDirs[_i].direction = sortDir; // Set the new direction
-							position = colSortDirs[_i].position; // Save the current position
-							index = _i;
-
-							// If the sort direction is not default and the column isn't already sorted then add one to the initial position
-							// and set the column to sorted. Otherwise if the sort direction is default set it to unsorted.
-							if (sortDir != 'DEF' && !colSortDirs[_i].sorted) {
-								initialPos++;
-								colSortDirs[_i].sorted = true;
-							} else if (sortDir == 'DEF') {
-								colSortDirs[_i].sorted = false;
-							}
-						}
-					}
-
-					// Change the priority position to sort of the elements.
-					for (var _i2 = 0; _i2 <= colSortDirs.length - 1; _i2++) {
-
-						// When the position of the current element is lower than the position of the changed element and bigger or equals to the
-						// initial position to change.
-						if (colSortDirs[_i2].position < position && colSortDirs[_i2].position >= initialPos) {
-							// Move element to the next position only if the new sort direction wasn't default, in that case keep the element in the same
-							// sorting priority position.
-							if (colSortDirs[_i2].direction == 'DEF') colSortDirs[_i2].position = colSortDirs[_i2].position + 1;
-						}
-					}
-
-					// After change the sort position priority of the other elements if the new position is lower than the current position set new position.
-					if (initialPos < colSortDirs[index].position) colSortDirs[index].position = initialPos;
-				}
-				return colSortDirs;
-			}
-
-			/**
-	   * Receive the current colSortDirs state, sort it by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
-	   *
-	   * @param 	{array}		colSortDirs Sort settings of each column
-	   * @param 	{boolean}	sendSorted 	If the sorted data must be sent or not
-	   * @return 	{array}		-colSortDirs: Sorted colSortDirs
-	   *						-data: Sorted data to be updated in the component state.
-	   */
-
-		}, {
-			key: 'sortTable',
-			value: function sortTable(colSortDirs) {
-				var sendSorted = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
-
-				var data = this.state.data;
-
-				colSortDirs = _underscore2['default'].sortBy(colSortDirs, function (element) {
-					return element.position;
-				}).reverse();
-
-				data = this.sortColumns(data, colSortDirs);
-
-				if (sendSorted) {
-					this.setState({
-						data: data.data,
-						indexed: data.indexed,
-						colSortDirs: colSortDirs,
-						sortCache: data.sortCache
-					}, this.sendSortedData(data.data));
-				} else {
-					this.setState({
-						data: data.data,
-						indexed: data.indexed,
-						colSortDirs: colSortDirs,
-						sortCache: data.sortCache
-					});
 				}
 			}
+		};
 
-			/**
-	   * Receive the current colSortDirs state, sort it by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
-	   *
-	   * @param 	{array}		data 		Data to be render in the Table
-	   * @param 	{array}		colSortDirs Sort settings of each column. Sorted by its .position
-	   * @return 	{array}		sortedData 	Sorted data to be updated in the component state.
-	   */
+		/**
+	  * Remove listener to the props.restartOnClick element.
+	  *
+	  * @param {Js Element || React Element} restartOnClick 	Element which have the on click listener
+	  */
 
-		}, {
-			key: 'sortColumns',
-			value: function sortColumns(data, colSortDirs) {
-				var _this4 = this;
 
-				var sortedData = data,
-				    indexed = _underscore2['default'].clone(this.state.indexed);
-				var sortVals = this.state.colSortVals,
-				    sortVal = null,
-				    sortCache = this.state.sortCache;
-				var defaultSort = true,
-				    element = null,
-				    position = null,
-				    rowId = void 0;
+		ProperTable.prototype.removeClickListener = function removeClickListener(restartOnClick) {
+			if (!_react2['default'].isValidElement(restartOnClick)) {
+				// Not React element
+				this.props.restartOnClick.removeEventListener('click', this.clearFilterAndSort.bind(this));
+			} else {
+				var btn = null;
 
-				colSortDirs.forEach(function (element) {
-					// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
-					if (element.direction != 'DEF' && element.multisort && element.sortable) {
-						sortVal = sortVals[element.column];
+				if (restartOnClick.props.id) {
+					btn = document.getElementById(restartOnClick.props.id);
+					btn.removeEventListener('click', this.clearFilterAndSort.bind(this));
+				} else if (restartOnClick.props.className) {
+					btn = document.getElementsByClassName(restartOnClick.props.className);
+					for (var i = btn.length - 1; i >= 0; i--) {
+						btn[i].removeEventListener('click', this.clearFilterAndSort.bind(this));
+					}
+				}
+			}
+		};
 
-						sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
-							rowId = row.get(_this4.props.idField);
+		/**
+	  * Apply the columns sort and filters over table data and update state.
+	  *
+	  * @param (array)	colSettings 	Sort / Filter settings of each column. From current or next state (case the props data/cols change)
+	  * @param (object) 	props 			Component props or new props on update
+	  * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
+	  * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
+	  * @param (boolean) forceApply		If it's true then when when update sort or update Filters is not allowed it will apply the colSettings anyway.
+	  */
 
-							// sortCache [row-id] [column-id] = procesed value.
-							if (_underscore2['default'].isUndefined(sortCache[rowId][element.field])) {
-								sortCache[rowId][element.field] = sortVal(row.get(element.field));
+
+		ProperTable.prototype.applySettings = function applySettings() {
+			var colSettings = arguments.length <= 0 || arguments[0] === undefined ? this.state.colSettings : arguments[0];
+			var props = arguments.length <= 1 || arguments[1] === undefined ? this.props : arguments[1];
+			var updateSort = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+			var updateFilters = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
+
+			var _this3 = this;
+
+			var forceSendSettings = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
+			var forceApply = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
+
+			var selectionSet = {},
+			    columnKeysFiltered = [],
+			    fields = [],
+			    formatters = [],
+			    newData = null,
+			    hasFilter = false,
+			    hasSort = false,
+			    newDirection = void 0;
+			var updateSortAllowed = updateSort && props.colSortDirs && _underscore2['default'].size(props.colSortDirs) > 0;
+			var updateFiltersAllowed = updateFilters && props.colFilters,
+			    hasSelectionFilter = void 0,
+			    hasCustomFilter = void 0,
+			    operations = {};
+			var sortedData = [],
+			    filterValue = void 0; // Date filters
+
+			// Update settings
+			colSettings = _underscore2['default'].map(colSettings, function (col) {
+				hasSelectionFilter = false;
+				hasCustomFilter = false;
+
+				if (updateSortAllowed) {
+					newDirection = props.colSortDirs[col.column];
+					if (newDirection && col.direction !== newDirection) {
+						sortedData.push({ name: col.column, direction: newDirection }); // To be applied after
+						hasSort = true;
+					}
+				} else if (forceApply && col.direction !== DEFAULT_SORT_DIRECTION) {
+					hasSort = true;
+				}
+
+				if (updateFiltersAllowed) {
+					if (props.colFilters[col.column]) {
+						var newFilter = props.colFilters[col.column];
+
+						if (!newFilter.type || newFilter.type === FILTERTYPE_SELECTION) {
+							if (!hasFilter) {
+								if (col.filterType !== FILTERTYPE_SELECTION) {
+									// Has changed Type
+									hasFilter = true;
+								} else {
+									hasFilter = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.selection, newFilter.selection);
+								}
 							}
 
-							return sortCache[rowId][element.field];
-						}, function (val1, val2) {
-							if (val1 == val2) {
-								return 0;
-							} else if (element.direction == 'ASC') {
-								return val1 > val2 ? 1 : -1;
-							} else if (element.direction == 'DESC') {
-								return val1 > val2 ? -1 : 1;
+							col.filterType = FILTERTYPE_SELECTION;
+							col.selection = newFilter.selection;
+						} else if (newFilter.type === FILTERTYPE_CUSTOM) {
+							if (!hasFilter && (col.operationFilterType !== newFilter.operationType || col.operationFilterValue !== newFilter.operationValue)) {
+								hasFilter = true;
 							}
-						});
-						defaultSort = false;
+
+							col.filterType = FILTERTYPE_CUSTOM;
+							col.operationFilterType = newFilter.operationType;
+							col.operationFilterValue = newFilter.operationValue;
+						}
 					}
-				});
-
-				// If all the cols are default then sort the data by the rowIndex (virtual field added on componnent's create.)
-				if (defaultSort) {
-					//  Set to default
-					sortedData = data.sortBy(function (row, rowIndex, allData) {
-						return row.get('_rowIndex');
-					}, function (val1, val2) {
-						return val1 > val2 ? 1 : val1 == val2 ? 0 : -1;
-					});
+				} else if (forceApply && (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
+					hasFilter = true;
 				}
 
-				// Update index into indexed data.
-				sortedData.map(function (element, index) {
-					indexed[element.get(_this4.props.idField)]._rowIndex = index;
-				});
+				hasSelectionFilter = col.selection.length > 0 && col.filterType === FILTERTYPE_SELECTION;
+				if (!hasSelectionFilter) hasCustomFilter = col.operationFilterValue.length > 0 && col.filterType === FILTERTYPE_CUSTOM;
 
-				return {
-					data: sortedData,
-					indexed: indexed,
-					sortCache: sortCache
-				};
-			}
+				// Build all selection || operation filter in case it has filter
+				if (hasSelectionFilter || hasCustomFilter) {
+					formatters[col.column] = col.formatter;
+					columnKeysFiltered.push(col.column); // Columns filtered
 
-			/**
-	   * Recursive function that build the nested columns. If the column has childrens then call itself and put the column into
-	   * a ColumnGroup.
-	   *
-	   * @param 	{array}		colData 	Data to be parsed
-	   * @param 	{boolean}	isChildren	Is a children of another column or not
-	   * @param 	{boolean}	hasNested	The whole table has nested columns or not
-	   * @return 	{object}	col 		The builded column or tree of columns
-	   */
+					// You send a column and get the asociated field, needed because more than 1 col can use data from same field. Name is the id key of column but
+					// field refer to data field.
+					fields[col.column] = col.field;
 
-		}, {
-			key: 'parseColumn',
-			value: function parseColumn(colData) {
-				var _this5 = this;
+					if (hasSelectionFilter) {
+						selectionSet[col.column] = new Set(col.selection);
+						operations[col.column] = null;
+					} else {
+						selectionSet[col.column] = null;
+						operations[col.column] = { type: col.operationFilterType, value: col.operationFilterValue };
 
-				var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
-				var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
-
-				var col = null,
-				    colname = null,
-				    sortDir = 'DEF',
-				    sortable = null,
-				    className = null,
-				    extraProps = {
-					width: 100,
-					fixed: false,
-					isResizable: true
-				};
-
-				colname = colData.name || _underscore2['default'].uniqueId('col-');
-				className = colData.className || null;
-
-				if (this.state.sizes.get(colname)) {
-					colData.width = this.state.sizes.get(colname);
-					colData.flex = 0;
-				}
-
-				if (colData.width) {
-					extraProps.width = colData.width;
-				}
-
-				if (!colData.width && !colData.maxWidth) {
-					extraProps.flexGrow = 1;
-
-					if (typeof colData.flex != 'undefined') {
-						extraProps.flexGrow = colData.flex;
+						if (DATE_TYPES.has(col.operationFilterType) && col.operationFilterValue.length > 0) {
+							if (!(0, _moment2['default'])(col.operationFilterValue).isValid()) console.warn('Invalid date format: ' + operations[col.column].value);
+						}
 					}
-				}
-
-				if (typeof colData.fixed !== 'undefined') {
-					extraProps.fixed = colData.fixed;
-				}
-
-				if (typeof colData.isResizable !== 'undefined') {
-					extraProps.isResizable = colData.isResizable;
-				}
-
-				// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
-				// setting the result inside this columns group.
-				if (typeof colData.children == 'undefined' || !colData.children.length) {
-
-					// Get the initial dir of this column
-					this.state.colSortDirs.forEach(function (element) {
-						if (element.column === colname) sortDir = element.direction;
-					});
-
-					// If this column can be sort or not.
-					sortable = _underscore2['default'].isUndefined(colData.sortable) ? true : colData.sortable;
-
-					col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
-						columnKey: colname,
-						key: colname + '-column',
-						header: _react2['default'].createElement(_sortHeaderCell2['default'], {
-							onSortChange: this.onSortChange.bind(this),
-							sortDir: sortDir,
-							children: colData.label,
-							sortable: sortable,
-							userClassName: className
-						}),
-						cell: _react2['default'].createElement(_cellRenderer2['default'], { tableId: this.uniqueId, idField: this.props.idField, indexed: this.state.indexed, data: this.state.data, colData: colData, col: colData.field }),
-						allowCellsRecycling: true,
-						align: 'center'
-					}, extraProps));
-
-					// If isn't a children but the table has nested columns set the column into a group.
-					if (!isChildren && hasNested) {
-						col = _react2['default'].createElement(
-							_fixedDataTable.ColumnGroup,
-							{ key: colname + '-group', fixed: extraProps.fixed },
-							col
-						);
-					}
-				} else {
-					// Call the method recursively to all the childrens of this column.
-					var inner = colData.children.map(function (c) {
-						return _this5.parseColumn(c, true);
-					});
-
-					col = _react2['default'].createElement(
-						_fixedDataTable.ColumnGroup,
-						_extends({
-							columnKey: colname,
-							key: colname + '-group',
-							header: _react2['default'].createElement(
-								_fixedDataTable.Cell,
-								null,
-								colData.label
-							)
-						}, extraProps),
-						inner
-					);
 				}
 
 				return col;
+			});
+
+			// Update sort on settings
+			if (hasSort && sortedData.length > 0) {
+				sortedData.forEach(function (sortObj) {
+					colSettings = _this3.updateSortDir(sortObj.name, sortObj.direction, colSettings);
+				});
 			}
 
-			/**
-	   * Build the table calling the parsecolumn() method for each column in props.cols and saving it to an array to be render into
-	   * a react fixed-datatable Table. If multiple rows can be selected then build a column with checkboxes to show which rows are seleted.
-	   *
-	   * @return {array} 	columns 	Array with all the columns to be rendered.
-	   */
+			// In case has sort and filter the sortTable() function gets the filtered data.
+			newData = hasFilter ? this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields, operations) : null;
 
-		}, {
-			key: 'buildTable',
-			value: function buildTable() {
-				var _this6 = this;
+			if (hasSort) {
+				this.sortTable(colSettings, true, newData); // This method set state and send the cols settings
+			} else if (hasFilter) {
+					this.setState(newData, this.sendColSettings(colSettings));
+				} else if (forceSendSettings) {
+					this.sendColSettings(colSettings);
+				}
+		};
 
-				var columns = [],
-				    isNested = hasNested(this.state.cols),
-				    selColumn = null;
+		/**
+	  * Apply filters to the table data.
+	  *
+	  * @param (array) 	columns 	Names of the filtered columns
+	  * @param (array)	formatters	Formatters asociated with each column, by its name, to parse the data
+	  * @param (array)	filters 	Contains Set objects of selected values asociated with each column.
+	  * @param (array)	fields 		Fields asociated with each column name. More than 1 col can use data from same field. This array is key value, where the key is the col name and
+	  *								the value is the asociated field.
+	  * @param (array)	operations 	In case has some custom filters in a column or more. This parameter contains a object of objects indexed by column name, has the type of the
+	  *								filter and the value.
+	  *
+	  * @return (object)	-data 		Filtered data.
+	  *					-indexed 	Indexed data updated.
+	  */
 
-				if (this.props.selectable == 'multiple') {
-					var somethingSelected = this.state.selection.size > 0;
-					var sortDir = 'DEF';
-					var selectedSet = null;
 
-					if (this.props.selected) {
-						if (!_underscore2['default'].isArray(this.props.selected)) {
-							selectedSet = new Set([this.props.selected]);
-						} else {
-							selectedSet = new Set(this.props.selected);
+		ProperTable.prototype.applyFilters = function applyFilters(columns, formatters, filters, fields) {
+			var _this4 = this;
+
+			var operations = arguments.length <= 4 || arguments[4] === undefined ? [] : arguments[4];
+			var _state = this.state;
+			var initialData = _state.initialData;
+			var indexed = _state.indexed;
+			var selection = _state.selection;
+
+			var filteredData = initialData,
+			    idField = this.props.idField,
+			    formatterAllowed = void 0,
+			    applyFormatter = void 0;
+			var notAllowedTypes = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
+
+			// Get the data that match with the selection (of all column filters)
+			if (_underscore2['default'].size(filters) > 0) {
+				(function () {
+					var result = void 0,
+					    field = void 0,
+					    formatter = void 0,
+					    val = void 0;
+
+					filteredData = initialData.filter(function (element) {
+
+						// If value has been found (result = true) then leave loop and return true
+						columns.every(function (column) {
+							field = fields[column];
+							formatter = formatters[column];
+							val = element.get(field);
+							result = false;
+							applyFormatter = true;
+
+							// Skip unvalid values
+							if (_underscore2['default'].isNull(val)) val = '';
+
+							if (typeof val === 'string' || typeof val === 'number') {
+
+								if (formatter) {
+									if (operations[column] && operations[column].type) {
+										if (notAllowedTypes.has(operations[column].type)) {
+											applyFormatter = false;
+										}
+									}
+
+									if (applyFormatter) {
+										val = formatter(val, null, null);
+										if (_underscore2['default'].isNull(val) || _underscore2['default'].isUndefined(val)) val = '';
+									}
+								}
+
+								if (filters[column]) {
+									result = filters[column].has(val.toString());
+								} else if (operations[column]) {
+									result = _this4.customFilter(operations[column].type, operations[column].value, val, notAllowedTypes.has(operations[column].type));
+								}
+							}
+
+							return result;
+						});
+
+						return result;
+					});
+				})();
+			}
+
+			// Apply selection and update index of each element in indexed data
+			filteredData = filteredData.map(function (element, index) {
+				if (selection.has(element.get(idField))) {
+					element = element.set(SELECTED_FIELD, true);
+				}
+				indexed[element.get(idField)]._rowIndex = index; // Update index into indexed data.
+
+				return element;
+			});
+
+			return {
+				data: filteredData,
+				indexed: indexed
+			};
+		};
+
+		/**
+	  * Prepare the data received by the component for the internal working.
+	  * @param  (array)	props 	Component props (or nextProps)
+	  * @param  (array)	state 	Component state (or nextState)
+	  * @return (object)	-rawdata: The same data as the props.
+	  *					-indexed: Same as rawdata but indexed by the properId
+	  *					-data: Parsed data to add some fields necesary to internal working.
+	  */
+
+
+		ProperTable.prototype.prepareData = function prepareData() {
+			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+			var state = arguments.length <= 1 || arguments[1] === undefined ? this.state : arguments[1];
+
+			// The data will be immutable inside the component
+			var data = _immutable2['default'].fromJS(props.data),
+			    index = 0,
+			    id = void 0,
+			    sortCache = [];
+			var indexed = {},
+			    initialData = null,
+			    parsed = [],
+			    defSelection = new Set();
+			var keyField = this.props.idField;
+
+			if (props.selected) {
+				defSelection = this.parseSelected(props);
+			} else {
+				if (state && state.selection) {
+					defSelection = state.selection;
+				}
+			}
+
+			// Parsing data to add new fields (selected or not, properId, rowIndex)
+			parsed = data.map(function (row) {
+				id = row.get(keyField, false);
+
+				if (!id) id = _underscore2['default'].uniqueId();else id = id.toString();
+
+				row = row.set(keyField, id);
+
+				if (defSelection.has(id)) {
+					row = row.set(SELECTED_FIELD, true);
+				} else {
+					row = row.set(SELECTED_FIELD, false);
+				}
+
+				row = row.set(ROW_INDEX_FIELD, index++);
+				sortCache[id] = {};
+
+				return row;
+			});
+
+			// Prepare indexed data.
+			indexed = _underscore2['default'].indexBy(parsed.toJSON(), keyField);
+
+			return {
+				rawdata: data,
+				data: parsed,
+				initialData: parsed,
+				indexed: indexed,
+				initialIndexed: (0, _clone2['default'])(indexed),
+				defSortCache: sortCache,
+				defSelection: defSelection
+			};
+		};
+
+		/**
+	  *	Set the default selection if that exist in props
+	  *
+	  * @param (array)	props 	Component props (or nextProps)
+	  */
+
+
+		ProperTable.prototype.setDefaultSelection = function setDefaultSelection() {
+			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+
+			if (props.selected) {
+				var selection = this.parseSelected(props);
+				this.triggerSelection(selection, false); // false -> don't send the selection
+			}
+		};
+
+		/**
+	  * Parse the property selected that could be a string, number, array of strings / numbers or a Set into a Set.
+	  *
+	  * @param (array)	props 		Component props (or nextProps)
+	  * @return (Set)	selection 	The default selected rows.
+	  */
+
+
+		ProperTable.prototype.parseSelected = function parseSelected() {
+			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+
+			var selection = void 0,
+			    isArray = _underscore2['default'].isArray(props.selected),
+			    isObject = _typeof(props.selected) === 'object';
+
+			if (!isArray && isObject) return props.selected; // Is Set
+
+			if (!isArray) {
+				// Is String or number
+				selection = [props.selected.toString()];
+			} else if (props.selected.length > 0) {
+				// Is Array
+				selection = props.selectable === MULTIPLE_SELECTION ? props.selected.toString().split(',') : [props.selected[0].toString()];
+			} else {
+				selection = [];
+			}
+
+			selection = new Set(selection);
+			return selection;
+		};
+
+		/**
+	  * Prepare the columns sort / filtering data to all columns and the array of functions to parse the data of each column before sorting.
+	  *
+	  * @param (array)	props 			Component props (or nextProps)
+	  * @param (object)	rawdata			Initial data to build the indexed and Immutable data (no duplicates) for every column if the component has complex column filter
+	  *
+	  * @return (array)	-colSettings: 	Sort / filter settings of each column.
+	  *					-colSortParsers: 	Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
+	  */
+
+
+		ProperTable.prototype.prepareColSettings = function prepareColSettings() {
+			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+			var rawdata = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+
+			var cols = props.cols,
+			    colSettings = [];
+			var sortData = this.buildColSortDirs(cols); // Build the initial colsortdirs using the cols array.
+			var multisort = props.multisort,
+			    direction = null,
+			    sortable = null,
+			    colData = null,
+			    indexed = null,
+			    parsedData = null;
+
+			// The default sort dirs (in case that's exist) will be applied in applyColSettings
+
+			// Through each element, of the colSortDirs built data, build the colSortDirs with the default directions received,
+			// setting a position (position of priority to sort (it will be modified after click on the diferent columns)), if
+			// the column is sortable or not and if the Table has multisort or just only single.
+			for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
+				colData = sortData.colSortDirs[i];
+				sortable = !_underscore2['default'].isNull(colData.sortable) ? colData.sortable : true;
+
+				// If has filter build a list without duplicates and it indexed
+				if (this.props.columnFilterComponent && sortable) {
+					(function () {
+						var idSet = new Set(),
+						    index = 0,
+						    rawdataIndex = 0,
+						    hasNulls = false,
+						    val = void 0,
+						    valid = void 0;
+
+						// Parsing data for filter
+						parsedData = rawdata.map(function (row) {
+							val = row.get(colData.field);
+							valid = false;
+
+							// Only string or number values then formated (Dates, etc...) Not objects allowed
+							valid = typeof val === 'string' || typeof val === 'number' ? true : false;
+
+							if (valid && !_underscore2['default'].isNull(val) && val !== '') {
+								if (colData.formatter) val = colData.formatter(val, null, null);
+
+								if (!idSet.has(val) && !_underscore2['default'].isNull(val) && !_underscore2['default'].isUndefined(val)) {
+									// No repeat
+									idSet.add(val);
+
+									row = row.set(colData.field, val.toString());
+									row = row.set(SELECTED_FIELD, false);
+									row = row.set(ROW_INDEX_FIELD, index++); // data row index
+									row = row.set(RAWDATA_INDEX_FIELD, rawdataIndex++); // rawData row index
+									return row; // RETURN
+								}
+							}
+
+							rawdataIndex++; // add 1 to jump over duplicate values
+							hasNulls = true;
+							return null;
+						});
+
+						// Clear null values if exist
+						if (hasNulls) {
+							parsedData = parsedData.filter(function (element) {
+								return !_underscore2['default'].isNull(element);
+							});
 						}
-					} else {
-						selectedSet = this.state.selection;
+
+						// Prepare indexed data.
+						indexed = _underscore2['default'].indexBy(parsedData.toJSON(), colData.field);
+					})();
+				}
+
+				colSettings.push({
+					column: colData.column, // Column name
+					field: colData.field,
+					direction: colData.direction,
+					position: i + 1,
+					sorted: false,
+					multisort: multisort, // single (false) (in this case only one at a time can be sorted) or multisort (true - all true)
+					sortable: sortable,
+					filterType: FILTERTYPE_SELECTION,
+					selection: [], // Selected values of this column (to filter when has a complex filter)
+					operationFilterType: CONTAINS,
+					operationFilterValue: '',
+					indexedData: indexed, // Indexed by this column (just if has complex filter)
+					data: parsedData,
+					formatter: colData.formatter
+				});
+			}
+
+			// Ordering by selected rows. Virtual column
+			if (props.selectable == MULTIPLE_SELECTION) {
+				colSettings.push({
+					column: SELECTOR_COL_NAME, // Column name
+					field: SELECTED_FIELD,
+					direction: DEFAULT_SORT_DIRECTION,
+					position: sortData.colSortDirs.length + 1, // Last
+					sorted: false,
+					multisort: multisort,
+					sortable: true,
+					filterType: FILTERTYPE_SELECTION,
+					selection: [],
+					operationFilterType: CONTAINS,
+					operationFilterValue: '',
+					indexedData: [],
+					data: [],
+					formatter: null
+				});
+			}
+
+			return {
+				colSettings: colSettings,
+				colSortParsers: sortData.sortVals
+			};
+		};
+
+		/**
+	  * Build the structure of the colSortDirs array and the sortVals array with the functions received in cols or a default function to parse.
+	  * In fact this method look through all the columns in props.cols recursively and add all that aren't a ColumnGroup,
+	  * the columns that may be sorted.
+	  *
+	  * @param 	(array)	cols Describe each column data. (name, sortable, fixed...)
+	  *
+	  * @return 	(array)	-colSortDirs: Sort settings of each column.
+	  *					-sortValues: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
+	  */
+
+
+		ProperTable.prototype.buildColSortDirs = function buildColSortDirs(cols) {
+			var _this5 = this;
+
+			var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
+			var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
+			cols.forEach(function (element) {
+				if (!element.children) {
+					var sortable = _underscore2['default'].isUndefined(element.sortable) ? null : element.sortable;
+					var formatter = _underscore2['default'].isUndefined(element.formatter) ? null : element.formatter;
+					sortVals[element.name] = element.sortVal || function (val) {
+						return val;
+					}; // Function to iterate
+
+					colSortDirs.push({
+						column: element.name,
+						field: element.field,
+						direction: DEFAULT_SORT_DIRECTION,
+						sortable: sortable,
+						formatter: formatter
+					});
+				} else {
+					_this5.buildColSortDirs(element.children, colSortDirs, sortVals);
+				}
+			});
+
+			if (this.props.selectable == MULTIPLE_SELECTION) {
+				sortVals[SELECTOR_COL_NAME] = function (val) {
+					return val;
+				};
+			}
+
+			return {
+				colSortDirs: colSortDirs,
+				sortVals: sortVals
+			};
+		};
+
+		/**
+	  * Return if the value is valid with the type in comparison with compareTo string.
+	  *
+	  * @param (string) 		type 		Type of the filter. Must be Equals, Starts With...
+	  * @param (string) 		value 		Value of the filter
+	  * @param (string) 		compareTo 	Value of the field to be checked
+	  * @param (boolean) 	escapeLess 	If it's a date type then use escape less to don't normalize some characters like -/.
+	  *
+	  * @return (boolean) 	result
+	  */
+
+
+		ProperTable.prototype.customFilter = function customFilter(type, value, compareTo) {
+			var escapeLess = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
+
+			return _comparators2['default'][type](_normalizer2['default'].normalize(value, escapeLess), _normalizer2['default'].normalize(compareTo, escapeLess));
+		};
+
+		/**
+	  * Clear all column filters and sort directions
+	  */
+
+
+		ProperTable.prototype.clearFilterAndSort = function clearFilterAndSort(e) {
+			var _this6 = this;
+
+			e.preventDefault();
+			var colSettings = this.state.colSettings,
+			    data = void 0,
+			    indexed = this.state.indexed;
+			var clear = CLEAR_OPTIONS[this.props.restartOnClickType];
+
+			colSettings = _underscore2['default'].map(colSettings, function (element) {
+				if (clear.filters) {
+					element.selection = [];
+					element.operationFilterValue = '';
+				}
+
+				if (clear.sort) {
+					element.direction = DEFAULT_SORT_DIRECTION;
+				}
+
+				return element;
+			});
+
+			// Apply default
+			data = this.state.initialData.map(function (element, index) {
+				if (_this6.state.selection.has(element.get(_this6.props.idField))) {
+					element = element.set(SELECTED_FIELD, true);
+				}
+				indexed[element.get(_this6.props.idField)]._rowIndex = index; // Update index into indexed data.
+
+				return element;
+			});
+
+			this.setState({
+				data: data,
+				indexed: indexed,
+				colSettings: colSettings
+			}, this.sendSortedAndSettings(data, colSettings));
+		};
+
+		/**
+	  * Check if the table has nested columns. Columns inside other columns. In that case this component will render the single columns as a
+	  * column inside a ColumnGroup even if the column has not childrens.
+	  *
+	  * @param (array)		cols  	Describe columns
+	  * @return (boolean)	result	True if has nested columns or false otherwhise
+	  */
+
+
+		ProperTable.prototype.hasNested = function hasNested(cols) {
+			var result = false;
+
+			if (cols.size) {
+				cols.forEach(function (c) {
+					if (c.get('children') && c.get('children').size) {
+						result = true;
+						return false;
+					}
+				});
+			}
+
+			return result;
+		};
+
+		/**
+	  * Function called each time the user click on the header of a column, then apply a sortBy function in that column.
+	  * After that, update the state of the component
+	  *
+	  * @param {String} 		columnKey 	The name of the column which will be resort.
+	  * @param {String} 		sortDir 	The new direction of the sort. ASC || DESC || DEF(AULT)
+	  * @param {object}		newData 	In case this method is called after filtering data (don't update state twice for the same)
+	  */
+
+
+		ProperTable.prototype.onSortChange = function onSortChange(columnKey, sortDir) {
+			var newData = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+			var colSettings = newData ? newData.colSettings : this.state.colSettings;
+
+			colSettings = this.updateSortDir(columnKey, sortDir, colSettings);
+			this.sortTable(colSettings, true, newData);
+		};
+
+		/**
+	  * Function called (just when a component has been sent in props columnFilterComponent) each time the user click on the header of a column,
+	  * then apply's an filter over the initial data using the current selected values, also update the selection in the colSettings state
+	  *
+	  * @param {String} 		columnKey 	The name of the column which will get a new selection filter from the complex filter.
+	  * @param {object}		selection 	The values selected to filter this column (values from all the values of this column)
+	  * @param {String} 		sortDir 	(Just on clear filter) The direction of the sort. DEF
+	  */
+
+
+		ProperTable.prototype.onColumnGetFiltered = function onColumnGetFiltered(columnKey, selection) {
+			var sortDir = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+			var colSettings = arguments.length <= 3 || arguments[3] === undefined ? this.state.colSettings : arguments[3];
+
+			var selectionSet = {},
+			    columnKeysFiltered = [],
+			    fields = [],
+			    formatters = []; // new Set(selection)
+			var newData = [],
+			    hasSort = false;
+
+			// Update selection of this column in the colSettings and add this values to the selection set array if the selection has more than 0
+			// elements.
+			colSettings = _underscore2['default'].map(colSettings, function (col) {
+				if (col.column !== SELECTOR_COL_NAME) {
+					if (col.column === columnKey) {
+						// Update
+						col.selection = selection;
 					}
 
-					this.state.colSortDirs.forEach(function (element) {
-						if (element.column === 'selector-multiple-column') sortDir = element.direction;
-					});
+					if (!hasSort && col.direction !== DEFAULT_SORT_DIRECTION) hasSort = true;
 
-					selColumn = _react2['default'].createElement(_fixedDataTable.Column, {
-						columnKey: 'selector-multiple-column',
-						key: _underscore2['default'].uniqueId('selector-'),
+					if (col.selection.length > 0) {
+						// Build all selection
+						selectionSet[col.column] = new Set(col.selection);
+						formatters[col.column] = col.formatter;
+						columnKeysFiltered.push(col.column);
+
+						// You send a column and get the asociated field, needed because more than 1 col can use data from same field. Name is the id key of column but
+						// field refer to data field.
+						fields[col.column] = col.field;
+					}
+				}
+
+				return col;
+			});
+
+			// Apply selections
+			newData = this.applyFilters(columnKeysFiltered, formatters, selectionSet, fields);
+			newData.colSettings = colSettings;
+
+			// In case we didn't get a sort direction then only sort the filtered data (if sort different than default) applying colSettings and update state.
+			if (_underscore2['default'].isNull(sortDir)) {
+				if (hasSort) {
+					this.sortTable(colSettings, true, newData);
+				} else {
+					this.setState(newData, this.sendColSettings(colSettings)); // All columns have sort to default
+				}
+			} else {
+					// Update col Settings with new sort direction for this column, then sort the data and update the component's state.
+					this.onSortChange(columnKey, sortDir, newData);
+				}
+		};
+
+		/**
+	  * Receive the column name and a sort direction and change the direction of that column, then set the proper position
+	  * of all the columns (just if the Table have multisorting allowed). The position will be used to set which columns
+	  * will be sorted first. If there are some columns with sortDir ASC or DESC the data will be sorted in function of
+	  * what element was clicked before.
+	  *
+	  * @param {String} 		columnKey 	The name of the column which will be resort.
+	  * @param {String} 		sortDir 	The direction of the sort. ASC || DESC || DEF(AULT)
+	  * @param {array}		colSettings ColSettings to update
+	  * @return {array}		colSettings Updated colSettings array.
+	  */
+
+
+		ProperTable.prototype.updateSortDir = function updateSortDir(columnKey, sortDir) {
+			var colSettings = arguments.length <= 2 || arguments[2] === undefined ? this.state.colSettings : arguments[2];
+
+			var position = 1;
+
+			// Single sorting.
+			if (!this.props.multisort) {
+				for (var i = 0; i <= colSettings.length - 1; i++) {
+					if (colSettings[i].column === columnKey) {
+						colSettings[i].direction = sortDir;
+						colSettings[i].multisort = true;
+					} else {
+						colSettings[i].direction = DEFAULT_SORT_DIRECTION;
+						colSettings[i].multisort = false;
+					}
+				}
+			} else {
+				// Multisort
+				var initialPos = 0,
+				    index = 0;
+
+				for (var _i = 0; _i <= colSettings.length - 1; _i++) {
+					// If some columns were sorted before then the position of the sorted columns wont be changed, so the initial
+					// position will be the next. If 2 columns are already sorted and we sort by a new one then the position of this
+					// last column will be 3 and will change to 2 or 1 if the sorted columns back to default.
+					if (colSettings[_i].sorted) initialPos++;
+
+					if (colSettings[_i].column === columnKey) {
+						colSettings[_i].direction = sortDir; // Set the new direction
+						position = colSettings[_i].position; // Save the current position
+						index = _i;
+
+						// If the sort direction is not default and the column isn't already sorted then add one to the initial position
+						// and set the column to sorted. Otherwise if the sort direction is default set it to unsorted.
+						if (sortDir !== DEFAULT_SORT_DIRECTION && !colSettings[_i].sorted) {
+							initialPos++;
+							colSettings[_i].sorted = true;
+						} else if (sortDir == DEFAULT_SORT_DIRECTION) {
+							colSettings[_i].sorted = false;
+						}
+					}
+				}
+
+				// Change the priority position to sort of the elements.
+				for (var _i2 = 0; _i2 <= colSettings.length - 1; _i2++) {
+
+					// When the position of the current element is lower than the position of the changed element and bigger or equals to the
+					// initial position to change.
+					if (colSettings[_i2].position < position && colSettings[_i2].position >= initialPos) {
+						// Move element to the next position only if the new sort direction wasn't default, in that case keep the element in the same
+						// sorting priority position.
+						if (colSettings[_i2].direction === DEFAULT_SORT_DIRECTION) colSettings[_i2].position = colSettings[_i2].position + 1;
+					}
+				}
+
+				// After change the sort position priority of the other elements if the new position is lower than the current position set new position.
+				if (initialPos < colSettings[index].position) colSettings[index].position = initialPos;
+			}
+			return colSettings;
+		};
+
+		/**
+	  * Get the current colSettings state, sort by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
+	  *
+	  * @param 	{array}		colSettings Sort settings of each column
+	  * @param 	{boolean}	sendSorted 	If the sorted data must be sent or not
+	  * @param 	{object}	newData 	In case this method is called after filtering data (don't update state twice for the same)
+	 
+	  * @return 	{array}		-colSettings: Sorted column in colSettings
+	  *						-data: Sorted data to be updated in the component state.
+	  */
+
+
+		ProperTable.prototype.sortTable = function sortTable(colSettings) {
+			var sendSorted = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+			var newData = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+
+			var data = newData ? newData.data : this.state.data,
+			    indexedData = newData ? newData.indexed : this.state.indexed;
+			var sendSortedAllowed = sendSorted;
+
+			colSettings = _underscore2['default'].sortBy(colSettings, function (element) {
+				return element.position;
+			}).reverse();
+
+			data = this.sortColumns(data, indexedData, colSettings);
+
+			if (sendSortedAllowed && typeof this.props.afterSort !== 'function' && typeof this.props.getColSettings !== 'function') {
+				sendSortedAllowed = false;
+			}
+
+			this.setState({
+				data: data.data,
+				indexed: data.indexed,
+				colSettings: colSettings,
+				sortCache: data.sortCache,
+				sendSorted: sendSortedAllowed
+			});
+		};
+
+		/**
+	  * Get the current colSettings state, sort it by its position from lower to bigger and then apply a sort to the Table data using that column sort data.
+	  *
+	  * @param 	{array}		data 		Data to be render in the Table
+	  * @param 	{array}		indexed 	Indexed data to be updated (its row index)
+	  * @param 	{array}		colSettings Sort / filter settings of each column. Sorted by its .position
+	  * @return 	{array}		sortedData 	Sorted data to be updated in the component state.
+	  */
+
+
+		ProperTable.prototype.sortColumns = function sortColumns(data, indexed, colSettings) {
+			var _this7 = this;
+
+			var sortedData = data,
+			    indexedData = indexed;
+			var colSortParsers = this.state.colSortParsers,
+			    sortParser = null,
+			    sortCache = this.state.sortCache;
+			var defaultSort = true,
+			    element = null,
+			    position = null,
+			    rowId = void 0,
+			    val = void 0;
+
+			colSettings.forEach(function (element) {
+				// The colums could be all true (multisort) or just one of them at a time (all false but the column that must be sorted)
+				if (element.direction !== DEFAULT_SORT_DIRECTION && element.multisort && element.sortable) {
+					sortParser = colSortParsers[element.column];
+
+					sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
+						rowId = row.get(_this7.props.idField);
+						// sortCache [row-id] [column-id] = procesed value.
+						if (_underscore2['default'].isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
+							val = sortParser(row.get(element.field));
+							sortCache[rowId][element.field] = val || ''; // Turn null's into empty values
+						}
+
+						return sortCache[rowId][element.field];
+					}, function (val1, val2) {
+						if (val1 == val2) {
+							return 0;
+						} else if (element.direction == ASCENDING_SORT_DIRECTION) {
+							return val1 > val2 ? 1 : -1;
+						} else if (element.direction == DESCENDING_SORT_DIRECTION) {
+							return val1 > val2 ? -1 : 1;
+						}
+					});
+					defaultSort = false;
+				}
+			});
+
+			// If all the cols are default then sort the data by the rowIndex (virtual field added on componnent's create.)
+			if (defaultSort) {
+				//  Set to default
+				sortedData = data.sortBy(function (row, rowIndex, allData) {
+					return row.get(ROW_INDEX_FIELD);
+				}, function (val1, val2) {
+					return val1 > val2 ? 1 : val1 == val2 ? 0 : -1;
+				});
+			}
+
+			// Update index into indexed data.
+			sortedData.map(function (element, index) {
+				indexedData[element.get(_this7.props.idField)]._rowIndex = index;
+			});
+
+			return {
+				data: sortedData,
+				indexed: indexedData,
+				sortCache: sortCache
+			};
+		};
+
+		/**
+	  * Recursive function that build the nested columns. If the column has childrens then call itself and put the column into
+	  * a ColumnGroup.
+	  *
+	  * @param 	{array}		colData 	Data to be parsed
+	  * @param 	{boolean}	isChildren	Is a children of another column or not
+	  * @param 	{boolean}	hasNested	The whole table has nested columns or not
+	  * @return 	{object}	col 		The builded column or tree of columns
+	  */
+
+
+		ProperTable.prototype.parseColumn = function parseColumn(colData) {
+			var _this8 = this;
+
+			var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+			var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+
+			var col = null,
+			    colname = null,
+			    sortDir = DEFAULT_SORT_DIRECTION,
+			    sortable = null,
+			    selection = null,
+			    columnFilter = null,
+			    hasComplexFilter = false;
+			var indexed = null,
+			    headerData = null,
+			    className = null,
+			    settings = null,
+			    isSortedOrFiltered = false,
+			    extraProps = {
+				width: 100,
+				fixed: false,
+				isResizable: true
+			};
+
+			colname = colData.name || _underscore2['default'].uniqueId('col-');
+			className = colData.className || null;
+
+			if (this.state.sizes.get(colname)) {
+				colData.width = this.state.sizes.get(colname);
+				colData.flex = 0;
+			}
+
+			if (colData.width) {
+				extraProps.width = colData.width;
+			}
+
+			if (!colData.width && !colData.maxWidth) {
+				extraProps.flexGrow = 1;
+
+				if (colData.flex !== undefined) {
+					extraProps.flexGrow = colData.flex;
+				}
+			}
+
+			if (colData.fixed !== undefined) {
+				extraProps.fixed = colData.fixed;
+			}
+
+			if (colData.isResizable !== undefined) {
+				extraProps.isResizable = colData.isResizable;
+			}
+
+			// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
+			// setting the result inside this columns group.
+			if (colData.children === undefined || !colData.children.length) {
+				// Get column settings
+				settings = _underscore2['default'].findWhere(this.state.colSettings, { column: colname }) || {};
+
+				// If this column can be sort or not.
+				sortable = _underscore2['default'].isUndefined(colData.sortable) ? true : colData.sortable;
+
+				// Check for a complex filter component. In that case use onColumnFilter instead of onSortChange. That method render the received component
+				// just beside the icon of the column header
+				if (this.props.columnFilterComponent) {
+					// react component
+					hasComplexFilter = true;
+					columnFilter = this.onColumnGetFiltered.bind(this);
+
+					if (settings.filterType === FILTERTYPE_SELECTION) {
+						isSortedOrFiltered = settings.selection.length > 0;
+					} else if (settings.filterType === FILTERTYPE_CUSTOM) {
+						isSortedOrFiltered = settings.operationFilterValue.length > 0;
+					}
+
+					if (!isSortedOrFiltered && settings.direction !== DEFAULT_SORT_DIRECTION) {
+						isSortedOrFiltered = true;
+					}
+				}
+
+				col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
+					columnKey: colname,
+					key: colname + '-column',
+					header: _react2['default'].createElement(_headerCell2['default'], {
+						key: this.uniqueId + '-sort-header',
+						uniqueId: this.uniqueId,
+						onSortChange: this.onSortChange.bind(this),
+						columnFilter: columnFilter // function || null
+						, filterComponent: this.props.columnFilterComponent // react component
+						, data: settings.data // data for columnFilter
+						, rawdata: this.state.rawdata // data for columnFilter
+						, indexed: settings.indexedData,
+						selection: settings.selection // selection for complex filter
+						, iconColor: this.props.iconColor // icon color when column filter displayed
+						, iconDefColor: this.props.iconDefColor // icon color when column filter closed
+						, col: colData.field,
+						lang: this.props.lang,
+						sortDir: settings.direction,
+						children: colData.label,
+						colName: colData.name,
+						filterWidth: this.props.filterWidth,
+						sortable: sortable,
+						userClassName: className,
+						columnFormater: null // Formatter function that get the value to be render and return it parsed settings.formatter
+						, isSortedOrFiltered: isSortedOrFiltered
+					}),
+					cell: _react2['default'].createElement(_cellRenderer2['default'], { tableId: this.uniqueId, idField: this.props.idField, indexed: this.state.indexed, data: this.state.data, colData: colData, col: colData.field }),
+					allowCellsRecycling: !hasComplexFilter,
+					align: 'center'
+				}, extraProps));
+
+				// If isn't a children but the table has nested columns set the column into a group.
+				if (!isChildren && hasNested) {
+					col = _react2['default'].createElement(
+						_fixedDataTable.ColumnGroup,
+						{ key: colname + '-group', fixed: extraProps.fixed },
+						col
+					);
+				}
+			} else {
+				// Call the method recursively to all the childrens of this column.
+				var hasFalsy = false,
+				    inner = colData.children.map(function (c) {
+					if (c.isVisible === undefined || c.isVisible) return _this8.parseColumn(c, true);else hasFalsy = true;
+				});
+
+				if (hasFalsy) inner = _underscore2['default'].compact(inner);
+
+				col = _react2['default'].createElement(
+					_fixedDataTable.ColumnGroup,
+					_extends({
+						columnKey: colname,
+						key: colname + '-group',
 						header: _react2['default'].createElement(
-							_sortHeaderCell2['default'],
-							{
-								className: '',
-								onSortChange: this.onSortChange.bind(this),
-								sortDir: sortDir,
-								sortable: true
-							},
-							_react2['default'].createElement(_selector2['default'], {
-								onClick: this.handleSelectAll.bind(this),
-								somethingSelected: somethingSelected,
-								allSelected: this.state.allSelected,
-								isHeader: true
-							})
-						),
-						cell: _react2['default'].createElement(_selector2['default'], {
-							data: this.state.data,
-							selected: selectedSet,
-							idField: this.props.idField
-						}),
-						allowCellsRecycling: true,
-						width: this.props.selectorWidth,
-						fixed: true
-					});
-
-					if (isNested) {
-						selColumn = _react2['default'].createElement(
-							_fixedDataTable.ColumnGroup,
-							{ fixed: true, key: _underscore2['default'].uniqueId('selector-group-') },
-							selColumn
-						);
-					}
-
-					columns.push(selColumn);
-				}
-
-				this.state.cols.forEach(function (col) {
-					columns.push(_this6.parseColumn(col.toJSON(), false, isNested));
-				});
-
-				return columns;
-			}
-
-			/**
-	   * Set all columns to selected or to not selected. Callback for the onclick of the Selector component, in the top of the table, in
-	   * the case that the Table allows multiple selection.
-	   *
-	   * @param {object}	e  	Event which call the function.
-	   */
-
-		}, {
-			key: 'handleSelectAll',
-			value: function handleSelectAll(e) {
-				e.preventDefault();
-
-				if (this.props.selectable) {
-					var allSelected = this.state.allSelected;
-					var newSelection = [];
-					var selection = null;
-
-					if (!allSelected) {
-						newSelection = _underscore2['default'].keys(this.state.indexed);
-					}
-
-					selection = new Set(newSelection);
-
-					this.triggerSelection(selection);
-				}
-			}
-
-			/**
-	   * Toogle the selected state of a column. Callback for the onRowClick of the react fixed-dataTable.
-	   *
-	   * @param {object}	e  			Event which call the function
-	   * @param {integer}	rowIndex  	Index of the clicked row.
-	   */
-
-		}, {
-			key: 'handleRowClick',
-			value: function handleRowClick(e, rowIndex) {
-				e.preventDefault();
-
-				var clickedId = this.state.data.get(rowIndex).get(this.props.idField);
-
-				if (this.props.selectable) {
-					this.toggleSelected(clickedId.toString());
-				}
-			}
-
-			/**
-	   * Toogle the selected state of the column that has the same properId as in the parameters.
-	   *
-	   * @param {integet}	id  	Virtual field added to each row data on componnent's create
-	   */
-
-		}, {
-			key: 'toggleSelected',
-			value: function toggleSelected(id) {
-				var selection = new Set(this.state.selection);
-
-				if (selection.has(id)) {
-					selection['delete'](id); // Returns a copy of the array with the instance with that properId deleted.
-				} else {
-						if (this.props.selectable == 'multiple') {
-							selection.add(id);
-						} else {
-							selection = new Set([id]);
-						}
-					}
-
-				this.triggerSelection(selection); // Set the new selection to the components state.
-			}
-
-			/**
-	   * Before the components update set the updated selection data to the components state.
-	   *
-	   * @param {object}	nextProps	The props that will be set for the updated component
-	   * @param {object}	nextState	The state that will be set for the updated component
-	   */
-
-		}, {
-			key: 'checkSelectionChange',
-			value: function checkSelectionChange(nextProps, nextState) {
-				if (nextProps.selectable == 'multiple') {
-					if (nextState.selection.size !== this.state.selection.size) {
-						this.updateSelectionData(nextState.selection, nextState.allSelected);
-					}
-				} else if (nextProps.selectable == true) {
-					var next = nextState.selection.values().next().value || null;
-					var old = this.state.selection.values().next().value || null;
-
-					if (next !== old) {
-						this.updateSelectionData(next);
-					}
-				}
-			}
-
-			/**
-	   * Method called before the components update to set the new selection to states component and update the data
-	   *
-	   * @param {array}	newSelection	The new selected rows (Set object)
-	   * @param {array}	newAllSelected	If the new state has all the rows selected
-	   */
-
-		}, {
-			key: 'updateSelectionData',
-			value: function updateSelectionData(newSelection) {
-				var _this7 = this;
-
-				var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
-
-				var newIndexed = _underscore2['default'].clone(this.state.indexed);
-				var oldSelection = this.state.selection;
-				var rowid = null,
-				    selected = null,
-				    rdata = null,
-				    curIndex = null,
-				    newData = this.state.data,
-				    rowIndex = null;
-
-				if (this.props.selectable != 'multiple') {
-					var oldId = oldSelection.values().next().value || null;
-
-					if (!_underscore2['default'].isNull(oldId)) {
-						newIndexed[oldId]._selected = false; // Update indexed data
-						rowIndex = newIndexed[oldId]._rowIndex; // Get data index
-						rdata = newData.get(rowIndex).set('_selected', false); // Change the row in that index
-						newData = newData.set(rowIndex, rdata); // Set that row in the data object
-					}
-
-					if (!_underscore2['default'].isNull(newSelection)) {
-						newIndexed[newSelection]._selected = true; // Update indexed data
-						rowIndex = newIndexed[newSelection]._rowIndex; // Get data index
-						rdata = newData.get(rowIndex).set('_selected', true); // Change the row in that index
-						newData = newData.set(rowIndex, rdata); // Set that row in the data object
-					}
-				} else if (!newAllSelected && newSelection.size > 0) {
-						// Change one row data at a time
-						var changedId = null,
-						    _selected = null;
-
-						// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
-						oldSelection.forEach(function (id) {
-							if (!newSelection.has(id)) {
-								// has not id
-								changedId = id;
-								_selected = false;
-								return false;
-							}
-						});
-
-						// Otherwise a new row has been selected. Look through the new selection for the new element.
-						if (!changedId) {
-							newSelection.forEach(function (id) {
-								if (!oldSelection.has(id)) {
-									changedId = id;
-									_selected = true;
-									return false;
-								}
-							});
-						}
-
-						newIndexed[changedId]._selected = _selected; // Update indexed data
-						rowIndex = newIndexed[changedId]._rowIndex; // Get data index
-						rdata = newData.get(rowIndex).set('_selected', _selected); // Change the row in that index
-						newData = newData.set(rowIndex, rdata); // Set that row in the data object
-					} else {
-							// Change all data
-							newData = newData.map(function (row) {
-								rowid = row.get(_this7.props.idField);
-								selected = newSelection.has(rowid.toString());
-								rdata = row.set('_selected', selected);
-								curIndex = newIndexed[rowid];
-
-								if (curIndex._selected != selected) {
-									// update indexed data
-									curIndex._selected = selected;
-									newIndexed[rowid] = curIndex;
-								}
-
-								return rdata;
-							});
-						}
-
-				this.setState({
-					data: newData,
-					indexed: newIndexed
-				});
-			}
-
-			/**
-	   * In case that the new selection array be different than the selection array in the components state, then update
-	   * the components state with the new data.
-	   *
-	   * @param {array}	newSelection	The selected rows
-	   * @param {boolean}	sendSelection 	If the selection must be sent or not
-	   */
-
-		}, {
-			key: 'triggerSelection',
-			value: function triggerSelection() {
-				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? new Set() : arguments[0];
-				var sendSelection = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
-
-				if (sendSelection) {
-					this.setState({
-						selection: newSelection,
-						allSelected: newSelection.size >= this.state.data.size
-					}, this.sendSelection);
-				} else {
-					this.setState({
-						selection: newSelection,
-						allSelected: newSelection.size >= this.state.data.size
-					});
-				}
-			}
-
-			/**
-	   * If the method afterSelect in the components props has a function then call it sending the selected rows in rawdata.
-	   */
-
-		}, {
-			key: 'sendSelection',
-			value: function sendSelection() {
-				var _this8 = this;
-
-				var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
-
-				if (typeof this.props.afterSelect == 'function') {
-					(function () {
-						var _state = _this8.state;
-						var selection = _state.selection;
-						var initialIndexed = _state.initialIndexed;
-						var rawdata = _state.rawdata;
-
-						var output = [];
-						var selectionArray = [];
-
-						if (newSelection) {
-							newSelection.forEach(function (element) {
-								selectionArray.push(element);
-							});
-						} else {
-							selection.forEach(function (element) {
-								selectionArray.push(element);
-							});
-						}
-
-						output = _underscore2['default'].map(selectionArray, function (pId) {
-							if (typeof initialIndexed[pId] == 'undefined') {
-								return null;
-							}
-
-							var rowIndex = initialIndexed[pId]._rowIndex;
-
-							return rawdata.get(rowIndex).toJSON();
-						});
-
-						output = _underscore2['default'].compact(output);
-
-						if (_this8.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
-							output = output[0];
-						}
-
-						_this8.props.afterSelect(output, selectionArray);
-					})();
-				}
-			}
-
-			/**
-	   * If the method afterSort in the components props has a function then call it sending the sorted data in the rawdata.
-	   */
-
-		}, {
-			key: 'sendSortedData',
-			value: function sendSortedData(data) {
-				var _this9 = this;
-
-				if (typeof this.props.afterSort == 'function') {
-					(function () {
-						var _state2 = _this9.state;
-						var initialIndexed = _state2.initialIndexed;
-						var rawdata = _state2.rawdata;
-
-						var output = [];
-
-						output = data.map(function (row) {
-							var rowIndex = initialIndexed[row.get(_this9.props.idField)]._rowIndex;
-
-							return rawdata.get(rowIndex);
-						});
-
-						_this9.props.afterSort(output.toJSON());
-					})();
-				}
-			}
-
-			/**
-	   * Add a custom class to each row of the table. If that row is selected then add one more class to apply different css to seleted
-	   * rows.
-	   *
-	   * @param {integer}	index	Index of the row which will get the new classes.
-	   */
-
-		}, {
-			key: 'getRowClassName',
-			value: function getRowClassName(index) {
-				var addClass = 'propertable-row';
-				var selected = this.state.data.get(index).get('_selected');
-				var id = this.state.data.get(index).get(this.props.idField);
-				var selectedSet = null;
-
-				if (!selected) {
-					if (this.props.selected) {
-						if (!_underscore2['default'].isArray(this.props.selected)) {
-							selectedSet = new Set([this.props.selected]);
-						} else {
-							selectedSet = new Set(this.props.selected);
-						}
-					} else {
-						if (this.state.selection) {
-							selectedSet = this.state.selection;
-						}
-					}
-
-					selected = selectedSet && selectedSet.has(id.toString());
-				}
-
-				if (selected) {
-					addClass += ' selected';
-				}
-
-				return addClass;
-			}
-		}, {
-			key: 'onResize',
-			value: function onResize(width, column) {
-				var sizes = this.state.sizes;
-				var newsizes = sizes.set(column, width);
-
-				this.setState({ sizes: newsizes });
-			}
-		}, {
-			key: 'render',
-			value: function render() {
-				var content = _react2['default'].createElement(
-					'div',
-					{ className: 'propertable-empty' },
-					this.props.msgs.empty
+							_fixedDataTable.Cell,
+							null,
+							colData.label
+						)
+					}, extraProps),
+					inner
 				);
-				var tableContent = null;
+			}
 
-				if (this.state.data && this.state.data.size) {
-					tableContent = this.buildTable();
+			return col;
+		};
 
-					content = _react2['default'].createElement(
-						_fixedDataTable.Table,
-						_extends({
-							ref: 'fixeddatatable',
-							key: this.uniqueId + '-table',
-							width: this.props.containerWidth || 100,
-							height: this.props.containerHeight || 100,
-							headerHeight: this.props.rowHeight,
-							groupHeaderHeight: this.props.rowHeight,
-							rowHeight: this.props.rowHeight,
-							rowsCount: this.state.data.size,
-							isColumnResizing: false,
-							onRowClick: this.handleRowClick.bind(this),
-							rowClassNameGetter: this.getRowClassName.bind(this),
-							onColumnResizeEndCallback: this.onResize.bind(this),
-							className: 'propertable-table'
-						}, this.props),
-						tableContent
+		/**
+	  * Build the table calling the parsecolumn() method for each column in props.cols and saving it to an array to be render into
+	  * a react fixed-datatable Table. If multiple rows can be selected then build a column with checkboxes to show which rows are seleted.
+	  *
+	  * @return {array} 	columns 	Array with all the columns to be rendered.
+	  */
+
+
+		ProperTable.prototype.buildTable = function buildTable() {
+			var _this9 = this;
+
+			var columns = [],
+			    isNested = this.hasNested(this.state.cols),
+			    selColumn = null;
+
+			if (this.props.selectable == MULTIPLE_SELECTION) {
+				var somethingSelected = this.state.selection.size > 0;
+				var allSelected = this.props.columnFilterComponent ? this.isAllSelected(this.state.data, this.state.selection) : this.state.allSelected;
+				var settings = _underscore2['default'].findWhere(this.state.colSettings, { column: SELECTOR_COL_NAME }) || null;
+				var sortDir = settings ? settings.direction : DEFAULT_SORT_DIRECTION;
+
+				selColumn = _react2['default'].createElement(_fixedDataTable.Column, {
+					columnKey: SELECTOR_COL_NAME,
+					key: _underscore2['default'].uniqueId('selector-'),
+					header: _react2['default'].createElement(
+						_headerCell2['default'],
+						{
+							className: 'selector-column-header',
+							onSortChange: this.onSortChange.bind(this),
+							sortDir: sortDir,
+							sortable: true
+						},
+						_react2['default'].createElement(_selector2['default'], {
+							onClick: this.handleSelectAll.bind(this),
+							somethingSelected: somethingSelected,
+							allSelected: allSelected,
+							indexed: this.state.indexed,
+							isHeader: true
+						})
+					),
+					cell: _react2['default'].createElement(_selector2['default'], {
+						indexed: this.state.indexed,
+						data: this.state.data,
+						selected: this.state.selection,
+						idField: this.props.idField
+					}),
+					allowCellsRecycling: true,
+					width: this.props.selectorWidth,
+					fixed: true
+				});
+
+				if (isNested) {
+					selColumn = _react2['default'].createElement(
+						_fixedDataTable.ColumnGroup,
+						{ fixed: true, key: _underscore2['default'].uniqueId('selector-group-') },
+						selColumn
 					);
 				}
 
-				return _react2['default'].createElement(
-					'div',
-					{ id: this.uniqueId, className: 'propertable ' + this.props.className },
-					content
-				);
+				columns.push(selColumn);
 			}
-		}]);
+
+			this.state.cols.forEach(function (col) {
+				if (col.get('isVisible', true)) {
+					columns.push(_this9.parseColumn(col.toJSON(), false, isNested));
+				}
+			});
+
+			return columns;
+		};
+
+		/**
+	  * Set all columns to selected or to not selected. Callback for the onclick of the Selector component, in the top of the table, in
+	  * the case that the Table allows multiple selection.
+	  *
+	  * @param {object}	e  	Event which call the function.
+	  */
+
+
+		ProperTable.prototype.handleSelectAll = function handleSelectAll(e) {
+			var _this10 = this;
+
+			e.preventDefault();
+
+			if (this.props.selectable) {
+				(function () {
+					var idField = _this10.props.idField,
+					    value = void 0,
+					    selection = new Set(_this10.state.selection);
+					var _state2 = _this10.state;
+					var allSelected = _state2.allSelected;
+					var data = _state2.data;
+					var indexed = _state2.indexed;
+					var rawdata = _state2.rawdata;
+
+					// Select all
+
+					if (!allSelected) {
+						if (data.size < rawdata.size) {
+							// Filtered
+							data.forEach(function (element) {
+								value = element.get(idField);
+								if (!selection.has(value.toString())) selection.add(value.toString());
+							});
+						} else {
+							selection = new Set(_underscore2['default'].keys(indexed));
+						}
+					} else if (selection.size > 0) {
+						// Unselect all
+						// Filtered data
+						if (data.size < rawdata.size) {
+							// Remove elements from selection
+							data.forEach(function (element) {
+								value = element.get(idField);
+								if (selection.has(value.toString())) selection['delete'](value.toString());
+							});
+						} else {
+							selection = new Set();
+						}
+					}
+
+					_this10.triggerSelection(selection);
+				})();
+			}
+		};
+
+		/**
+	  * Toogle the selected state of a column. Callback for the onRowClick of the react fixed-dataTable.
+	  *
+	  * @param {object}	e  			Event which call the function
+	  * @param {integer}	rowIndex  	Index of the clicked row.
+	  */
+
+
+		ProperTable.prototype.handleRowClick = function handleRowClick(e, rowIndex) {
+			e.preventDefault();
+			var clickedRow = this.state.data.get(rowIndex);
+			var clickedId = clickedRow.get(this.props.idField);
+
+			if (this.props.selectable) {
+				this.toggleSelected(clickedId.toString());
+			}
+		};
+
+		/**
+	  * Check if all the current data are selected.
+	  *
+	  * @param {array}	data		The data to compare with selection
+	  * @param {object}	selection	The current selection Set of values (idField)
+	  */
+
+
+		ProperTable.prototype.isAllSelected = function isAllSelected(data, selection) {
+			var _this11 = this;
+
+			var result = true;
+
+			if (data.size === 0) return false;else if (data.size === this.state.rawdata.size) return selection.size >= this.state.data.size; // Not filtered data
+
+			// Filtered data
+			data.forEach(function (element) {
+				if (!selection.has(element.get(_this11.props.idField).toString())) {
+					// Some data not in selection
+					result = false;
+					return false;
+				}
+			});
+
+			return result;
+		};
+
+		/**
+	  * Toogle the selected state of the column that has the same properId as in the parameters.
+	  *
+	  * @param {integet}	id  	Virtual field added to each row data on componnent's create
+	  */
+
+
+		ProperTable.prototype.toggleSelected = function toggleSelected(id) {
+			var selection = new Set(this.state.selection);
+
+			if (selection.has(id)) {
+				selection['delete'](id); // Returns a copy of the array with the instance with that properId deleted.
+			} else {
+					if (this.props.selectable == MULTIPLE_SELECTION) {
+						selection.add(id);
+					} else {
+						selection = new Set([id]);
+					}
+				}
+
+			this.triggerSelection(selection); // Set the new selection to the components state.
+		};
+
+		/**
+	  * Before the components update set the updated selection data to the components state.
+	  *
+	  * @param {object}	nextProps	The props that will be set for the updated component
+	  * @param {object}	nextState	The state that will be set for the updated component
+	  */
+
+
+		ProperTable.prototype.checkSelectionChange = function checkSelectionChange(nextProps, nextState) {
+			if (nextProps.selectable == MULTIPLE_SELECTION) {
+				if (nextState.selection.size !== this.state.selection.size) {
+					this.updateSelectionData(nextState.selection, nextState.allSelected);
+				}
+			} else if (nextProps.selectable == true) {
+				var next = nextState.selection.values().next().value || null;
+				var old = this.state.selection.values().next().value || null;
+
+				if (next !== old) {
+					this.updateSelectionData(next);
+				}
+			}
+		};
+
+		/**
+	  * Method called before the components update to set the new selection to states component and update the data
+	  *
+	  * @param {array}	newSelection	The new selected rows (Set object)
+	  * @param {array}	newAllSelected	If the new state has all the rows selected
+	  */
+
+
+		ProperTable.prototype.updateSelectionData = function updateSelectionData(newSelection) {
+			var _this12 = this;
+
+			var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+
+			var newIndexed = this.state.indexed;
+			var oldSelection = this.state.selection;
+			var rowid = null,
+			    selected = null,
+			    rdata = null,
+			    curIndex = null,
+			    newData = this.state.data,
+			    rowIndex = null;
+
+			if (this.props.selectable != MULTIPLE_SELECTION) {
+				var oldId = oldSelection.values().next().value || null;
+
+				if (!_underscore2['default'].isNull(oldId)) {
+					newIndexed[oldId]._selected = false; // Update indexed data
+					rowIndex = newIndexed[oldId]._rowIndex; // Get data index
+					rdata = newData.get(rowIndex).set(SELECTED_FIELD, false); // Change the row in that index
+					newData = newData.set(rowIndex, rdata); // Set that row in the data object
+				}
+
+				if (!_underscore2['default'].isNull(newSelection)) {
+					newIndexed[newSelection]._selected = true; // Update indexed data
+					rowIndex = newIndexed[newSelection]._rowIndex; // Get data index
+					rdata = newData.get(rowIndex).set(SELECTED_FIELD, true); // Change the row in that index
+					newData = newData.set(rowIndex, rdata); // Set that row in the data object
+				}
+			} else if (!newAllSelected && newSelection.size > 0 && newData.size === this.state.rawdata.size) {
+					// Change one row data at a time
+					var changedId = null,
+					    _selected = null;
+
+					// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
+					oldSelection.forEach(function (id) {
+						if (!newSelection.has(id)) {
+							// has not id
+							changedId = id;
+							_selected = false;
+							return false;
+						}
+					});
+
+					// Otherwise a new row has been selected. Look through the new selection for the new element.
+					if (!changedId) {
+						newSelection.forEach(function (id) {
+							if (!oldSelection.has(id)) {
+								changedId = id;
+								_selected = true;
+								return false;
+							}
+						});
+					}
+
+					if (changedId && newIndexed[changedId]) {
+						newIndexed[changedId]._selected = _selected; // Update indexed data
+						rowIndex = newIndexed[changedId]._rowIndex; // Get data index
+						rdata = newData.get(rowIndex).set(SELECTED_FIELD, _selected); // Change the row in that index
+						newData = newData.set(rowIndex, rdata); // Set that row in the data object
+					}
+				} else {
+						// Change all data
+						newData = newData.map(function (row) {
+							rowid = row.get(_this12.props.idField);
+							selected = newSelection.has(rowid.toString());
+							rdata = row.set(SELECTED_FIELD, selected);
+							curIndex = newIndexed[rowid];
+
+							if (curIndex && curIndex._selected != selected) {
+								// update indexed data
+								curIndex._selected = selected;
+								newIndexed[rowid] = curIndex;
+							}
+
+							return rdata;
+						});
+					}
+
+			this.setState({
+				data: newData,
+				indexed: newIndexed
+			});
+		};
+
+		/**
+	  * In case that the new selection array be different than the selection array in the components state, then update
+	  * the components state with the new data.
+	  *
+	  * @param {array}	newSelection	The selected rows
+	  * @param {boolean}	sendSelection 	If the selection must be sent or not
+	  */
+
+
+		ProperTable.prototype.triggerSelection = function triggerSelection() {
+			var newSelection = arguments.length <= 0 || arguments[0] === undefined ? new Set() : arguments[0];
+			var sendSelection = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+
+			if (sendSelection) {
+				this.setState({
+					selection: newSelection,
+					allSelected: this.isAllSelected(this.state.data, newSelection)
+				}, this.sendSelection);
+			} else {
+				this.setState({
+					selection: newSelection,
+					allSelected: this.isAllSelected(this.state.data, newSelection)
+				});
+			}
+		};
+
+		/**
+	  * If the method afterSelect in the components props has a function then call it sending the selected rows in rawdata.
+	  */
+
+
+		ProperTable.prototype.sendSelection = function sendSelection() {
+			var _this13 = this;
+
+			var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+			if (typeof this.props.afterSelect == 'function') {
+				(function () {
+					var _state3 = _this13.state;
+					var selection = _state3.selection;
+					var initialIndexed = _state3.initialIndexed;
+					var rawdata = _state3.rawdata;
+
+					var output = [];
+					var selectionArray = [];
+
+					if (newSelection) {
+						newSelection.forEach(function (element) {
+							selectionArray.push(element);
+						});
+					} else {
+						selection.forEach(function (element) {
+							selectionArray.push(element);
+						});
+					}
+
+					output = _underscore2['default'].map(selectionArray, function (pId) {
+						if (typeof initialIndexed[pId] == 'undefined') {
+							return null;
+						}
+
+						var rowIndex = initialIndexed[pId]._rowIndex;
+
+						return rawdata.get(rowIndex).toJSON();
+					});
+
+					output = _underscore2['default'].compact(output);
+
+					if (_this13.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
+						output = output[0];
+					}
+
+					_this13.props.afterSelect(output, selectionArray);
+				})();
+			}
+		};
+
+		/**
+	  * Send sorted data and column settings to the props getColSettings and afterSort
+	  *
+	  * @param (object)	data 			Component's data
+	  * @param (array)	colSettings 	Column settings of the table
+	  */
+
+
+		ProperTable.prototype.sendSortedAndSettings = function sendSortedAndSettings(data, colSettings) {
+			this.sendSortedData(data);
+			this.sendColSettings(colSettings);
+		};
+
+		/**
+	  * If the method afterSort in the components props has a function then call it sending the sorted data in the rawdata.
+	  *
+	  * @param (object)	data 			Component's data
+	  */
+
+
+		ProperTable.prototype.sendSortedData = function sendSortedData(data) {
+			var _this14 = this;
+
+			if (typeof this.props.afterSort === 'function') {
+				(function () {
+					var _state4 = _this14.state;
+					var initialIndexed = _state4.initialIndexed;
+					var rawdata = _state4.rawdata;
+
+					var output = [];
+
+					output = data.map(function (row) {
+						var rowIndex = initialIndexed[row.get(_this14.props.idField)]._rowIndex;
+						return rawdata.get(rowIndex);
+					});
+
+					_this14.props.afterSort(output.toJSON());
+				})();
+			}
+		};
+
+		/**
+	  * Send the colSettings if the prop getColSettings is a function.
+	  *
+	  * @param (array)	colSettings 	Column settings of the table
+	  */
+
+
+		ProperTable.prototype.sendColSettings = function sendColSettings(colSettings) {
+			if (typeof this.props.getColSettings === 'function' && colSettings) {
+				this.props.getColSettings(colSettings);
+			}
+		};
+
+		/**
+	  * Add a custom class to each row of the table. If that row is selected then add one more class to apply different css to seleted
+	  * rows.
+	  *
+	  * @param {integer}	index	Index of the row which will get the new classes.
+	  */
+
+
+		ProperTable.prototype.getRowClassName = function getRowClassName(index) {
+			var addClass = 'propertable-row',
+			    row = this.state.data.get(index);
+			var selected = row.get(SELECTED_FIELD),
+			    enabled = void 0;
+
+			if (this.props.hasDisableRows) {
+				enabled = row.get('Enabled');
+
+				if (!enabled) {
+					addClass += ' disabled-row';
+				}
+			}
+
+			if (selected) addClass += ' selected';
+
+			return addClass;
+		};
+
+		ProperTable.prototype.onResize = function onResize(width, column) {
+			var sizes = this.state.sizes;
+			var newsizes = sizes.set(column, width);
+
+			this.setState({ sizes: newsizes });
+		};
+
+		ProperTable.prototype.render = function render() {
+			var content = _react2['default'].createElement(
+				'div',
+				{ className: 'propertable-empty' },
+				this.props.msgs[this.props.lang].empty
+			);
+			var tableContent = this.buildTable();
+
+			content = _react2['default'].createElement(
+				_fixedDataTable.Table,
+				_extends({
+					ref: 'fixeddatatable',
+					key: this.uniqueId + '-table',
+					width: this.props.containerWidth || 100,
+					height: this.props.containerHeight || 100,
+					headerHeight: this.props.headerHeight || this.props.rowHeight,
+					groupHeaderHeight: this.props.rowHeight,
+					rowHeight: this.props.rowHeight,
+					rowsCount: this.state.data.size,
+					isColumnResizing: false,
+					onRowClick: this.handleRowClick.bind(this),
+					rowClassNameGetter: this.getRowClassName.bind(this),
+					onColumnResizeEndCallback: this.onResize.bind(this),
+					className: 'propertable-table'
+				}, this.props),
+				tableContent
+			);
+
+			return _react2['default'].createElement(
+				'div',
+				{ key: this.uniqueId, id: this.uniqueId, className: 'propertable ' + this.props.className },
+				' ',
+				content,
+				' '
+			);
+		};
 
 		return ProperTable;
 	}(_react2['default'].Component);
 
-	ProperTable.defaultProps = defaultProps();
+	ProperTable.propTypes = {
+		className: _react2['default'].PropTypes.string,
+		data: _react2['default'].PropTypes.array,
+		cols: _react2['default'].PropTypes.array.isRequired,
+		uniqueId: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.string, _react2['default'].PropTypes.number]),
+		afterSort: _react2['default'].PropTypes.func,
+		afterSelect: _react2['default'].PropTypes.func,
+		selectable: _react2['default'].PropTypes.oneOf([true, MULTIPLE_SELECTION, false]),
+		selected: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.string, _react2['default'].PropTypes.number, _react2['default'].PropTypes.array, _react2['default'].PropTypes.object]),
+		rowHeight: _react2['default'].PropTypes.number,
+		idField: _react2['default'].PropTypes.string,
+		msgs: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.object),
+		lang: _react2['default'].PropTypes.string,
+		selectorWidth: _react2['default'].PropTypes.number,
+		multisort: _react2['default'].PropTypes.bool,
+		sortIcons: _react2['default'].PropTypes.object,
+		iconColor: _react2['default'].PropTypes.string,
+		iconDefColor: _react2['default'].PropTypes.string,
+		columnFilterComponent: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.object, _react2['default'].PropTypes.func]),
+		restartOnClick: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.element, _react2['default'].PropTypes.object // Js element but not React element
+		]),
+		restartOnClickType: _react2['default'].PropTypes.oneOf([CLEAR_FILTERS, CLEAR_SORT, CLEAR_BOTH]),
+		getColSettings: _react2['default'].PropTypes.func,
+		colSortDirs: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.string),
+		colFilters: _react2['default'].PropTypes.objectOf(_react2['default'].PropTypes.object),
+		filterWidth: _react2['default'].PropTypes.number,
+		onScrollStart: _react2['default'].PropTypes.func,
+		onScrollEnd: _react2['default'].PropTypes.func,
+		hasDisableRows: _react2['default'].PropTypes.bool
+	};
+
+	ProperTable.defaultProps = {
+		className: '',
+		cols: [],
+		data: [],
+		uniqueId: null,
+		afterSort: null,
+		afterSelect: null,
+		selectable: true,
+		selected: null,
+		rowHeight: 50,
+		idField: '_properId',
+		msgs: _messages2['default'],
+		lang: 'ENG',
+		selectorWidth: 27,
+		multisort: false,
+		columnFilterComponent: null,
+		sortIcons: null,
+		iconColor: '#5E78D3',
+		iconDefColor: '#D6D6D6',
+		restartOnClick: null,
+		restartOnClickType: CLEAR_BOTH,
+		getColSettings: null,
+		colSortDirs: null,
+		colFilters: null,
+		filterWidth: null,
+		onScrollStart: null,
+		onScrollEnd: null,
+		hasDisableRows: false
+	};
 
 	exports['default'] = ProperTable;
 	module.exports = exports['default'];
@@ -1398,13 +2209,19 @@ var ProperTable =
 
 /***/ },
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
-	module.exports = __webpack_require__(4);
-
+	module.exports = ReactDOM;
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	module.exports = __webpack_require__(5);
+
+
+/***/ },
+/* 5 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1420,7 +2237,7 @@ var ProperTable =
 
 	'use strict';
 
-	var FixedDataTable = __webpack_require__(5);
+	var FixedDataTable = __webpack_require__(6);
 	var FixedDataTableCellDefault = __webpack_require__(43);
 	var FixedDataTableColumn = __webpack_require__(41);
 	var FixedDataTableColumnGroup = __webpack_require__(40);
@@ -1435,7 +2252,7 @@ var ProperTable =
 	module.exports = FixedDataTableRoot;
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1461,14 +2278,14 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 
 	var ReactChildren = React.Children;
 
 	var PropTypes = React.PropTypes;
 
 	// New Table API
-	var Table = __webpack_require__(7);
+	var Table = __webpack_require__(8);
 	var Column = __webpack_require__(51);
 	var ColumnGroup = __webpack_require__(52);
 
@@ -1957,7 +2774,7 @@ var ProperTable =
 	module.exports = TransitionTable;
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1976,7 +2793,7 @@ var ProperTable =
 	module.exports = __webpack_require__(2);
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -1998,10 +2815,10 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var React = __webpack_require__(6);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(8);
-	var ReactWheelHandler = __webpack_require__(9);
-	var Scrollbar = __webpack_require__(17);
+	var React = __webpack_require__(7);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(9);
+	var ReactWheelHandler = __webpack_require__(10);
+	var Scrollbar = __webpack_require__(18);
 	var FixedDataTableBufferedRows = __webpack_require__(31);
 	var FixedDataTableColumnResizeHandle = __webpack_require__(45);
 	var FixedDataTableRow = __webpack_require__(36);
@@ -2010,7 +2827,7 @@ var ProperTable =
 
 	var cx = __webpack_require__(25);
 	var debounceCore = __webpack_require__(49);
-	var emptyFunction = __webpack_require__(10);
+	var emptyFunction = __webpack_require__(11);
 	var invariant = __webpack_require__(30);
 	var joinClasses = __webpack_require__(44);
 	var shallowEqual = __webpack_require__(50);
@@ -2936,7 +3753,7 @@ var ProperTable =
 	// avaialble
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	/**
@@ -3012,7 +3829,7 @@ var ProperTable =
 	module.exports = ReactComponentWithPureRenderMixin;
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3036,9 +3853,9 @@ var ProperTable =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var emptyFunction = __webpack_require__(10);
-	var normalizeWheel = __webpack_require__(11);
-	var requestAnimationFramePolyfill = __webpack_require__(15);
+	var emptyFunction = __webpack_require__(11);
+	var normalizeWheel = __webpack_require__(12);
+	var requestAnimationFramePolyfill = __webpack_require__(16);
 
 	var ReactWheelHandler = (function () {
 	  /**
@@ -3122,7 +3939,7 @@ var ProperTable =
 	module.exports = ReactWheelHandler;
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports) {
 
 	/**
@@ -3165,7 +3982,7 @@ var ProperTable =
 	module.exports = emptyFunction;
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3182,9 +3999,9 @@ var ProperTable =
 
 	'use strict';
 
-	var UserAgent_DEPRECATED = __webpack_require__(12);
+	var UserAgent_DEPRECATED = __webpack_require__(13);
 
-	var isEventSupported = __webpack_require__(13);
+	var isEventSupported = __webpack_require__(14);
 
 	// Reasonable defaults
 	var PIXEL_STEP = 10;
@@ -3366,7 +4183,7 @@ var ProperTable =
 	module.exports = normalizeWheel;
 
 /***/ },
-/* 12 */
+/* 13 */
 /***/ function(module, exports) {
 
 	/**
@@ -3649,7 +4466,7 @@ var ProperTable =
 	module.exports = UserAgent_DEPRECATED;
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3665,7 +4482,7 @@ var ProperTable =
 
 	'use strict';
 
-	var ExecutionEnvironment = __webpack_require__(14);
+	var ExecutionEnvironment = __webpack_require__(15);
 
 	var useHasFeature;
 	if (ExecutionEnvironment.canUseDOM) {
@@ -3714,7 +4531,7 @@ var ProperTable =
 	module.exports = isEventSupported;
 
 /***/ },
-/* 14 */
+/* 15 */
 /***/ function(module, exports) {
 
 	/**
@@ -3757,7 +4574,7 @@ var ProperTable =
 	module.exports = ExecutionEnvironment;
 
 /***/ },
-/* 15 */
+/* 16 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -3773,8 +4590,8 @@ var ProperTable =
 
 	'use strict';
 
-	var emptyFunction = __webpack_require__(10);
-	var nativeRequestAnimationFrame = __webpack_require__(16);
+	var emptyFunction = __webpack_require__(11);
+	var nativeRequestAnimationFrame = __webpack_require__(17);
 
 	var lastTime = 0;
 
@@ -3798,7 +4615,7 @@ var ProperTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 16 */
+/* 17 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -3820,7 +4637,7 @@ var ProperTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 17 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -3837,16 +4654,16 @@ var ProperTable =
 
 	'use strict';
 
-	var DOMMouseMoveTracker = __webpack_require__(18);
-	var Keys = __webpack_require__(21);
-	var React = __webpack_require__(6);
-	var ReactDOM = __webpack_require__(22);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(8);
-	var ReactWheelHandler = __webpack_require__(9);
+	var DOMMouseMoveTracker = __webpack_require__(19);
+	var Keys = __webpack_require__(22);
+	var React = __webpack_require__(7);
+	var ReactDOM = __webpack_require__(23);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(9);
+	var ReactWheelHandler = __webpack_require__(10);
 
 	var cssVar = __webpack_require__(24);
 	var cx = __webpack_require__(25);
-	var emptyFunction = __webpack_require__(10);
+	var emptyFunction = __webpack_require__(11);
 	var translateDOMPositionXY = __webpack_require__(26);
 
 	var PropTypes = React.PropTypes;
@@ -4261,7 +5078,7 @@ var ProperTable =
 	// pass
 
 /***/ },
-/* 18 */
+/* 19 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4289,10 +5106,10 @@ var ProperTable =
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
-	var EventListener = __webpack_require__(19);
+	var EventListener = __webpack_require__(20);
 
-	var cancelAnimationFramePolyfill = __webpack_require__(20);
-	var requestAnimationFramePolyfill = __webpack_require__(15);
+	var cancelAnimationFramePolyfill = __webpack_require__(21);
+	var requestAnimationFramePolyfill = __webpack_require__(16);
 
 	var DOMMouseMoveTracker = (function () {
 	  /**
@@ -4425,7 +5242,7 @@ var ProperTable =
 	module.exports = DOMMouseMoveTracker;
 
 /***/ },
-/* 19 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4442,7 +5259,7 @@ var ProperTable =
 
 	'use strict';
 
-	var emptyFunction = __webpack_require__(10);
+	var emptyFunction = __webpack_require__(11);
 
 	/**
 	 * Upstream version of event listener. Does not take into account specific
@@ -4507,7 +5324,7 @@ var ProperTable =
 	module.exports = EventListener;
 
 /***/ },
-/* 20 */
+/* 21 */
 /***/ function(module, exports) {
 
 	/* WEBPACK VAR INJECTION */(function(global) {/**
@@ -4533,7 +5350,7 @@ var ProperTable =
 	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
-/* 21 */
+/* 22 */
 /***/ function(module, exports) {
 
 	/**
@@ -4575,7 +5392,7 @@ var ProperTable =
 	};
 
 /***/ },
-/* 22 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/**
@@ -4591,13 +5408,7 @@ var ProperTable =
 
 	'use strict';
 
-	module.exports = __webpack_require__(23);
-
-/***/ },
-/* 23 */
-/***/ function(module, exports) {
-
-	module.exports = ReactDOM;
+	module.exports = __webpack_require__(3);
 
 /***/ },
 /* 24 */
@@ -4824,7 +5635,7 @@ var ProperTable =
 
 	'use strict';
 
-	var ExecutionEnvironment = __webpack_require__(14);
+	var ExecutionEnvironment = __webpack_require__(15);
 
 	var camelize = __webpack_require__(29);
 	var invariant = __webpack_require__(30);
@@ -4972,12 +5783,12 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 	var FixedDataTableRowBuffer = __webpack_require__(32);
 	var FixedDataTableRow = __webpack_require__(36);
 
 	var cx = __webpack_require__(25);
-	var emptyFunction = __webpack_require__(10);
+	var emptyFunction = __webpack_require__(11);
 	var joinClasses = __webpack_require__(44);
 	var translateDOMPositionXY = __webpack_require__(26);
 
@@ -5659,7 +6470,7 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 	var FixedDataTableCellGroup = __webpack_require__(37);
 
 	var cx = __webpack_require__(25);
@@ -5908,7 +6719,7 @@ var ProperTable =
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
 	var FixedDataTableHelper = __webpack_require__(38);
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 	var FixedDataTableCell = __webpack_require__(42);
 
 	var cx = __webpack_require__(25);
@@ -6109,7 +6920,7 @@ var ProperTable =
 	'use strict';
 
 	var Locale = __webpack_require__(39);
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 	var FixedDataTableColumnGroup = __webpack_require__(40);
 	var FixedDataTableColumn = __webpack_require__(41);
 
@@ -6251,7 +7062,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 
 	var TransitionColumnGroup = React.createClass({
 	  displayName: 'TransitionColumnGroup',
@@ -6294,7 +7105,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 
 	var TransitionColumn = React.createClass({
 	  displayName: 'TransitionColumn',
@@ -6335,7 +7146,7 @@ var ProperTable =
 
 	var FixedDataTableCellDefault = __webpack_require__(43);
 	var FixedDataTableHelper = __webpack_require__(38);
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 	var cx = __webpack_require__(25);
 	var joinClasses = __webpack_require__(44);
 
@@ -6505,7 +7316,7 @@ var ProperTable =
 
 	function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 
 	var cx = __webpack_require__(25);
 	var joinClasses = __webpack_require__(44);
@@ -6661,10 +7472,10 @@ var ProperTable =
 
 	'use strict';
 
-	var DOMMouseMoveTracker = __webpack_require__(18);
+	var DOMMouseMoveTracker = __webpack_require__(19);
 	var Locale = __webpack_require__(39);
-	var React = __webpack_require__(6);
-	var ReactComponentWithPureRenderMixin = __webpack_require__(8);
+	var React = __webpack_require__(7);
+	var ReactComponentWithPureRenderMixin = __webpack_require__(9);
 
 	var clamp = __webpack_require__(35);
 	var cx = __webpack_require__(25);
@@ -7383,7 +8194,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 
 	function getTotalWidth( /*array*/columns) /*number*/{
 	  var totalWidth = 0;
@@ -7644,7 +8455,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 
 	var PropTypes = React.PropTypes;
 
@@ -7825,7 +8636,7 @@ var ProperTable =
 
 	'use strict';
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 
 	var PropTypes = React.PropTypes;
 
@@ -7911,7 +8722,7 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var React = __webpack_require__(6);
+	var React = __webpack_require__(7);
 	var PropTypes = React.PropTypes;
 
 	var cx = __webpack_require__(25);
@@ -13081,12 +13892,16 @@ var ProperTable =
 
 	'use strict';
 
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
+	exports.__esModule = true;
 	exports['default'] = {
-		loading: 'loading...',
-		empty: 'No data found'
+		'SPA': {
+			loading: 'cargando...',
+			empty: 'No se encontró ningún elemento'
+		},
+		'ENG': {
+			loading: 'loading...',
+			empty: 'No data found'
+		}
 	};
 	module.exports = exports['default'];
 
@@ -13096,15 +13911,13 @@ var ProperTable =
 
 	'use strict';
 
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
+	exports.__esModule = true;
 
 	var _react = __webpack_require__(2);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _fixedDataTable = __webpack_require__(3);
+	var _fixedDataTable = __webpack_require__(4);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
@@ -13228,15 +14041,13 @@ var ProperTable =
 
 	'use strict';
 
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
+	exports.__esModule = true;
 
 	var _react = __webpack_require__(2);
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _fixedDataTable = __webpack_require__(3);
+	var _fixedDataTable = __webpack_require__(4);
 
 	var _rowcache = __webpack_require__(59);
 
@@ -13307,11 +14118,7 @@ var ProperTable =
 
 	'use strict';
 
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+	exports.__esModule = true;
 
 	var _dotObject = __webpack_require__(60);
 
@@ -13344,49 +14151,43 @@ var ProperTable =
 			this.init(base);
 		}
 
-		_createClass(RowCache, [{
-			key: 'init',
-			value: function init() {
-				var base = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+		RowCache.prototype.init = function init() {
+			var base = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
-				cache = base;
+			cache = base;
 
-				return this;
-			}
-		}, {
-			key: 'read',
-			value: function read(key) {
+			return this;
+		};
+
+		RowCache.prototype.read = function read(key) {
+			var k = parseKey(key);
+			return _dotObject2['default'].pick(k, cache);
+		};
+
+		RowCache.prototype.write = function write(key, value) {
+			var k = parseKey(key);
+			var writable = {};
+
+			writable[k] = value;
+			writable = _dotObject2['default'].object(writable);
+
+			cache = (0, _deepmerge2['default'])(cache, writable);
+
+			return this;
+		};
+
+		RowCache.prototype.flush = function flush() {
+			var key = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+
+			if (key) {
 				var k = parseKey(key);
-				return _dotObject2['default'].pick(k, cache);
+				_dotObject2['default'].remove(k, cache);
+			} else {
+				this.init();
 			}
-		}, {
-			key: 'write',
-			value: function write(key, value) {
-				var k = parseKey(key);
-				var writable = {};
 
-				writable[k] = value;
-				writable = _dotObject2['default'].object(writable);
-
-				cache = (0, _deepmerge2['default'])(cache, writable);
-
-				return this;
-			}
-		}, {
-			key: 'flush',
-			value: function flush() {
-				var key = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
-
-				if (key) {
-					var k = parseKey(key);
-					_dotObject2['default'].remove(k, cache);
-				} else {
-					this.init();
-				}
-
-				return this;
-			}
-		}]);
+			return this;
+		};
 
 		return RowCache;
 	}();
@@ -13949,9 +14750,7 @@ var ProperTable =
 
 	'use strict';
 
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
+	exports.__esModule = true;
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
@@ -13959,74 +14758,231 @@ var ProperTable =
 
 	var _react2 = _interopRequireDefault(_react);
 
-	var _fixedDataTable = __webpack_require__(3);
+	var _fixedDataTable = __webpack_require__(4);
+
+	var _underscore = __webpack_require__(55);
+
+	var _underscore2 = _interopRequireDefault(_underscore);
+
+	var _portal = __webpack_require__(63);
+
+	var _portal2 = _interopRequireDefault(_portal);
+
+	var _tween = __webpack_require__(81);
+
+	var _tween2 = _interopRequireDefault(_tween);
 
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-	/**
-	 * Stateless component which render the header cell of a column.
-	 *
-	 * Example usage via from a `Column`:
-	 * ```
-	 * const MyColumn = (
-	 *     <Column
-	 *        header={
-	 *            <SortHeaderCell
-	 *              sortDir={ASC || DESC || DEF}
-	 *              sortable={true || false}
-	 *            />
-	 *              {children (label || Component)}
-	 *            </SortHeaderCell>
-	 *        }
-	 *        ...
-	 *     />
-	 * );
-	 * ```
-	 */
-	var SortHeaderCell = function SortHeaderCell(props) {
-	  var sortDir = props.sortDir || null,
-	      sortable = props.sortable;
-	  var children = props.children || null;
-	  var sortIcon = sortDir && sortable ? SortIcons[sortDir] : SortIcons['DEF'];
-	  var userClass = props.userClassName || '';
-	  var className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
-
-	  return _react2['default'].createElement(
-	    _fixedDataTable.Cell,
-	    _extends({
-	      className: className + '_header',
-	      onClick: function onClick(e) {
-	        onSortChange(e, props, sortable);
-	      }
-	    }, props),
-	    children,
-	    '   ',
-	    sortIcon
-	  );
-	};
+	//Const
+	var SELECTOR_COL_NAME = 'selector-multiple-column'; // Name of the selector column
+	var DEFAULT_SORT_DIRECTION = 'DEF';
+	var ASCENDING_SORT_DIRECTION = 'ASC';
+	var DESCENDING_SORT_DIRECTION = 'DESC';
 
 	/**
 	 *  Possible Sort Types Default || ASC || DESC
 	 */
 	var SortTypes = {
-	  ASC: 'ASC',
-	  DESC: 'DESC',
-	  DEF: 'DEF'
+	  ASC: ASCENDING_SORT_DIRECTION,
+	  DESC: DESCENDING_SORT_DIRECTION,
+	  DEF: DEFAULT_SORT_DIRECTION
 	};
 
 	/**
 	 *  Asociated Icons when it's sorting
 	 */
 	var SortIcons = {
-	  ASC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-up' }),
-	  DESC: _react2['default'].createElement('i', { className: 'fa fa-long-arrow-down' }),
-	  DEF: null // Default
+	  ASC: _react2['default'].createElement('i', { key: 'asc-icon', className: 'fa fa-long-arrow-up' }),
+	  DESC: _react2['default'].createElement('i', { key: 'desc-icon', className: 'fa fa-long-arrow-down' }),
+	  DEF: null
+	};
+
+	/**
+	 *  Icons for column filter
+	 */
+	var ColumnFilterIcons = {
+	  DEF: _react2['default'].createElement('i', { key: 'def-icon', className: 'fa fa-caret-square-o-down' }),
+	  NONE: null
+	};
+
+	//REQUEST ANIMATION FRAME POLYFILL
+	;(function () {
+	  'use strict';
+
+	  var lastTime = 0;
+	  var vendors = ['webkit', 'moz'];
+	  for (var x = 0; x < vendors.length && !window.requestAnimationFrame; ++x) {
+	    window.requestAnimationFrame = window[vendors[x] + 'RequestAnimationFrame'];
+	    window.cancelAnimationFrame = window[vendors[x] + 'CancelAnimationFrame'] || window[vendors[x] + 'CancelRequestAnimationFrame'];
+	  }
+
+	  if (!window.requestAnimationFrame) {
+	    window.requestAnimationFrame = function (callback, element) {
+	      var currTime = new Date().getTime();
+	      var timeToCall = Math.max(0, 16 - (currTime - lastTime));
+	      var id = window.setTimeout(function () {
+	        callback(currTime + timeToCall);
+	      }, timeToCall);
+	      lastTime = currTime + timeToCall;
+	      return id;
+	    };
+	  }
+
+	  if (!window.cancelAnimationFrame) {
+	    window.cancelAnimationFrame = function (id) {
+	      clearTimeout(id);
+	    };
+	  }
+	})();
+
+	/**
+	 * Stateless component which render the header cell of a column. Also if you send a react component in the props.filterComponent
+	 * that will be rendered under the column header (when user click). That component must have a function called afterSelect (that
+	 * get the selection (selected values)) and another one called afterSort that get the new sort direction if that changes, also
+	 * data (column data, {value: column-values-to-filter, label: column-values-to-display}) and the current selection.
+	 *
+	 * Example usage via from a `Column`:
+	 * ```
+	 * const MyColumn = (
+	 *     <Column
+	 *        header={
+	 *            <HeaderCell
+	 *              sortDir={ASC || DESC || DEF}
+	 *              sortable={true || false}
+	 *            />
+	 *              {children (label || Component)}
+	 *            </HeaderCell>
+	 *        }
+	 *        ...
+	 *     />
+	 * );
+	 * ```
+	 */
+	var HeaderCell = function HeaderCell(props) {
+	  var sortDir = props.sortDir || null,
+	      sortable = props.sortable;
+	  var children = props.children || null;
+	  var sortIcon = null,
+	      columnFilter = null,
+	      isSelectorCol = props.columnKey === SELECTOR_COL_NAME ? true : false;
+	  var userClass = props.userClassName || '';
+	  var className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
+
+	  // Check for custom icons array and if the column is sortable
+	  if (!_underscore2['default'].isNull(sortDir) && sortable) {
+	    if (_underscore2['default'].isNull(props.sortIcons) || _underscore2['default'].isUndefined(props.sortIcons)) {
+	      //default sort icons
+	      sortIcon = _underscore2['default'].isNull(props.filterComponent) || isSelectorCol ? SortIcons[sortDir] : ColumnFilterIcons[DEFAULT_SORT_DIRECTION];
+	    } else {
+	      // custom sort icons
+	      sortIcon = props.sortIcons[sortDir];
+	    }
+	  } else {
+	    sortIcon = _underscore2['default'].isNull(props.filterComponent) ? SortIcons[DEFAULT_SORT_DIRECTION] : ColumnFilterIcons['NONE'];
+	  }
+
+	  // Check if the columns have complex filter to be rendered behind the column
+	  if (props.filterComponent && sortable && !isSelectorCol) {
+	    sortIcon = buildColumnFilter(props, sortIcon);
+	  }
+
+	  return _react2['default'].createElement(
+	    'div',
+	    { key: props.uniqueId + '-column-header' },
+	    _react2['default'].createElement(
+	      _fixedDataTable.Cell,
+	      _extends({
+	        key: props.uniqueId + '-column-header-cell',
+	        className: className + '_header',
+	        onClick: function onClick(e) {
+	          if (!props.filterComponent || isSelectorCol) {
+	            onSortChange(e, props, sortable);
+	          }
+	        }
+	      }, props),
+	      children,
+	      '   ',
+	      sortIcon
+	    )
+	  );
+	};
+
+	/**
+	 * Build and return the complex filter received in params
+	 *
+	 * @param {object} props      The props of the component
+	 * @param {object} sortIcon   Icon to open / close
+	 * @return {object}           The filter to be rendered
+	 */
+	var buildColumnFilter = function buildColumnFilter(props, icon) {
+	  var filter = void 0,
+	      afterSelect = void 0,
+	      afterSort = void 0,
+	      afterClear = void 0;
+	  var portalWidth = props.filterWidth || 280;
+
+	  afterSelect = function afterSelect(selection) {
+	    if (typeof props.columnFilter === 'function') {
+	      props.columnFilter(props.columnKey, selection);
+	    }
+	  };
+
+	  afterSort = function afterSort(direction) {
+	    if (typeof props.onSortChange === 'function') {
+	      props.onSortChange(props.columnKey, direction);
+	    }
+	  };
+
+	  afterClear = function afterClear(selection, direction) {
+	    // must be ([], 'DEF')
+	    if (typeof props.columnFilter === 'function') {
+	      props.columnFilter(props.columnKey, selection, direction);
+	    }
+	  };
+
+	  filter = _react2['default'].createElement(
+	    _portal2['default'],
+	    {
+	      key: props.uniqueId + '-column-header-component',
+	      className: 'propertable column-complex-filter',
+	      beforeClose: beforeClose,
+	      closeOnEsc: true,
+	      closeOnOutsideClick: true,
+	      onOpen: onOpen,
+	      openByClickOn: icon,
+	      iconColor: props.iconColor,
+	      iconDefColor: props.iconDefColor,
+	      isSortedOrFiltered: props.isSortedOrFiltered,
+	      width: portalWidth,
+	      style: { opacity: 0, position: 'fixed', width: portalWidth }
+	    },
+	    _react2['default'].createElement(props.filterComponent, {
+	      key: props.uniqueId + '-column-header-component-filter',
+	      data: props.data // Initial data Inmutable
+	      , rawdata: props.rawdata // Raw data Inmutable
+	      , indexed: props.indexed // initial Indexed Obj
+	      , selection: props.selection,
+	      idField: props.col,
+	      displayField: props.col,
+	      lang: props.lang,
+	      sort: props.sortDir,
+	      rowFormater: props.columnFormater,
+	      uniqueId: props.uniqueId,
+	      afterSelect: afterSelect,
+	      afterSort: afterSort,
+	      afterClear: afterClear
+	    })
+	  );
+
+	  return filter;
 	};
 
 	/**
 	 * Get the next sort direction to sort the current column.
 	 *
 	 * @param {string}  sortDir  Current sort direction.
+	 * @return {string}  nextSortDir  Next sort direction.
 	 */
 	var nextSortDirection = function nextSortDirection(sortDir) {
 	  if (sortDir) {
@@ -14047,6 +15003,7 @@ var ProperTable =
 	 */
 	var onSortChange = function onSortChange(e, props, sortable) {
 	  e.preventDefault();
+	  // If you use a complex filter by column then it will be rendered under the header and has it's own methods
 	  if (sortable) {
 	    if (typeof props.onSortChange === 'function') {
 	      props.onSortChange(props.columnKey, nextSortDirection(props.sortDir));
@@ -14054,11 +15011,2299 @@ var ProperTable =
 	  }
 	};
 
-	exports['default'] = SortHeaderCell;
+	function animate(time) {
+	  requestAnimationFrame(animate);
+	  _tween2['default'].update(time);
+	}
+
+	/**
+	 * On open Portal. Animation
+	 */
+	function onOpen(node) {
+	  requestAnimationFrame(animate);
+
+	  new _tween2['default'].Tween({ opacity: 0 }).to({ opacity: 1 }, 300).onUpdate(function () {
+	    node.style.opacity = this.opacity;
+	  }).start();
+	}
+
+	/**
+	 * Before close Portal. Animation
+	 */
+	function beforeClose(node, removeFromDom) {
+	  new _tween2['default'].Tween({ opacity: 1 }).to({ opacity: 0 }, 500).easing(_tween2['default'].Easing.Cubic.Out).onUpdate(function () {
+	    node.style.opacity = this.opacity;
+	  }).onComplete(removeFromDom).start();
+	}
+
+	exports['default'] = HeaderCell;
 	module.exports = exports['default'];
 
 /***/ },
 /* 63 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	exports.__esModule = true;
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _reactDom = __webpack_require__(3);
+
+	var _reactDom2 = _interopRequireDefault(_reactDom);
+
+	var _CSSPropertyOperations = __webpack_require__(64);
+
+	var _CSSPropertyOperations2 = _interopRequireDefault(_CSSPropertyOperations);
+
+	var _reactImmutableRenderMixin = __webpack_require__(76);
+
+	var _tween = __webpack_require__(81);
+
+	var _tween2 = _interopRequireDefault(_tween);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               Portal vs 2.1.1 All rights to Vojtech Miksu. This is a copy with some modifications to fill the needs of this project.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               https://github.com/tajo/react-portal
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               The MIT License (MIT)
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               Copyright (c) 2016 Vojtech Miksu
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               Permission is hereby granted, free of charge, to any person obtaining a copy
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               of this software and associated documentation files (the "Software"), to deal
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               in the Software without restriction, including without limitation the rights
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               copies of the Software, and to permit persons to whom the Software is
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               furnished to do so, subject to the following conditions:
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               The above copyright notice and this permission notice shall be included in all
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               copies or substantial portions of the Software.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               SOFTWARE.
+	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               */
+
+	var KEYCODES = {
+	  ESCAPE: 27
+	};
+
+	var Portal = function (_React$Component) {
+	  _inherits(Portal, _React$Component);
+
+	  function Portal() {
+	    _classCallCheck(this, Portal);
+
+	    var _this = _possibleConstructorReturn(this, _React$Component.call(this));
+
+	    _this.state = {
+	      active: false,
+	      x: 0,
+	      y: 0,
+	      width: null,
+	      height: null,
+	      element: null // element clicked to open the portal
+	    };
+	    _this.handleWrapperClick = _this.handleWrapperClick.bind(_this);
+	    _this.closePortal = _this.closePortal.bind(_this);
+	    _this.handleOutsideMouseClick = _this.handleOutsideMouseClick.bind(_this);
+	    _this.handleKeydown = _this.handleKeydown.bind(_this);
+	    _this.portal = null;
+	    _this.node = null;
+	    return _this;
+	  }
+
+	  Portal.prototype.componentDidMount = function componentDidMount() {
+	    if (this.props.closeOnEsc) {
+	      document.addEventListener('keydown', this.handleKeydown);
+	    }
+
+	    if (this.props.closeOnOutsideClick) {
+	      document.addEventListener('mouseup', this.handleOutsideMouseClick);
+	      document.addEventListener('touchstart', this.handleOutsideMouseClick);
+	      window.addEventListener('resize', this.handleResize.bind(this));
+	      window.addEventListener("scroll", this.handleScroll.bind(this));
+	    }
+
+	    if (this.props.isOpened) {
+	      this.openPortal();
+	    }
+	  };
+
+	  Portal.prototype.componentWillReceiveProps = function componentWillReceiveProps(newProps) {
+	    // portal's 'is open' state is handled through the prop isOpened
+	    if (typeof newProps.isOpened !== 'undefined') {
+	      if (newProps.isOpened) {
+	        if (this.state.active) {
+	          this.renderPortal(newProps);
+	        } else {
+	          this.openPortal(newProps);
+	        }
+	      }
+	      if (!newProps.isOpened && this.state.active) {
+	        this.closePortal();
+	      }
+	    }
+
+	    // portal handles its own 'is open' state
+	    if (typeof newProps.isOpened === 'undefined' && this.state.active) {
+	      this.renderPortal(newProps);
+	    }
+	  };
+
+	  Portal.prototype.componentWillUnmount = function componentWillUnmount() {
+	    if (this.props.closeOnEsc) {
+	      document.removeEventListener('keydown', this.handleKeydown);
+	    }
+
+	    if (this.props.closeOnOutsideClick) {
+	      document.removeEventListener('mouseup', this.handleOutsideMouseClick);
+	      document.removeEventListener('touchstart', this.handleOutsideMouseClick);
+	      window.removeEventListener('resize', this.handleResize.bind(this));
+	      window.removeEventListener("scroll", this.handleScroll.bind(this));
+	    }
+
+	    this.closePortal(true);
+	  };
+
+	  Portal.prototype.shouldComponentUpdate = function shouldComponentUpdate(nextProps, nextState) {
+	    var propschanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.props, nextProps);
+	    var statechanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(this.state, nextState);
+	    var somethingchanged = propschanged || statechanged;
+	    var mustUpdate = nextState.element && this.props.isSortedOrFiltered !== nextProps.isSortedOrFiltered;
+
+	    if (propschanged) {
+	      if (mustUpdate && !nextProps.isSortedOrFiltered) {
+	        nextState.element.style.color = this.props.iconDefColor; // back to default color
+	      } else if (mustUpdate && nextProps.isSortedOrFiltered) {
+	          nextState.element.style.color = this.props.iconColor;
+	        }
+	    }
+	    return somethingchanged;
+	  };
+
+	  Portal.prototype.handleResize = function handleResize(e) {
+	    // Close portal if rendered
+	    if (this.node) {
+	      this.closePortal();
+	    }
+	  };
+
+	  Portal.prototype.handleScroll = function handleScroll(e) {
+	    // Move portal if rendered
+	    if (this.node) {
+	      var rect = this.state.element.getBoundingClientRect(),
+	          top = void 0,
+	          y = this.state.y,
+	          node = this.node;
+
+	      top = rect.top + 5;
+
+	      // Move node to new position
+	      _CSSPropertyOperations2['default'].setValueForStyles(node, { top: top });
+	      this.setState({ y: top });
+	    }
+	  };
+
+	  Portal.prototype.renderPortal = function renderPortal(props) {
+	    var x = arguments.length <= 1 || arguments[1] === undefined ? this.state.x : arguments[1];
+	    var y = arguments.length <= 2 || arguments[2] === undefined ? this.state.y : arguments[2];
+
+	    var style = props.style || {},
+	        width = this.props.width || 280;
+
+	    if (!this.node) {
+	      this.node = document.createElement('div');
+
+	      if (props.className) {
+	        this.node.className = props.className;
+	      }
+
+	      if (this.props.repositioning) {
+	        style.position = 'fixed';
+	        style.top = y + 5;
+	        style.left = x + 5;
+	        if (this.props.width) style.width = this.props.width;
+	        if (this.props.height) style.height = this.props.height;
+	        if (style.left >= window.innerWidth - width) style.left = x - width;
+	      }
+
+	      _CSSPropertyOperations2['default'].setValueForStyles(this.node, style);
+
+	      document.body.appendChild(this.node);
+	    }
+
+	    this.portal = _reactDom2['default'].unstable_renderSubtreeIntoContainer(this, _react2['default'].cloneElement(props.children, { closePortal: this.closePortal }), this.node, this.props.onUpdate);
+	  };
+
+	  Portal.prototype.render = function render() {
+	    if (this.props.openByClickOn) {
+	      return _react2['default'].cloneElement(this.props.openByClickOn, { onClick: this.handleWrapperClick });
+	    } else {
+	      return null;
+	    }
+	  };
+
+	  Portal.prototype.handleWrapperClick = function handleWrapperClick(e) {
+	    e.preventDefault();
+	    e.stopPropagation();
+
+	    if (this.state.active) {
+	      return;
+	    }
+
+	    var element = this.state.element;
+
+	    // element which call
+	    if (!element) {
+	      element = _reactDom2['default'].findDOMNode(e.target);
+	      element.style.color = this.props.iconColor;
+	    } else {
+	      if (this.rgb2hex(element.style.color) == this.props.iconColor && !this.props.isSortedOrFiltered) {
+	        element.style.color = this.props.iconDefColor;
+	      } else {
+	        element.style.color = this.props.iconColor;
+	      }
+	    }
+
+	    this.openPortal(this.props, e.clientX, e.clientY, element);
+	  };
+
+	  Portal.prototype.openPortal = function openPortal() {
+	    var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+	    var x = arguments.length <= 1 || arguments[1] === undefined ? this.state.x : arguments[1];
+	    var y = arguments.length <= 2 || arguments[2] === undefined ? this.state.y : arguments[2];
+	    var element = arguments.length <= 3 || arguments[3] === undefined ? this.state.element : arguments[3];
+
+	    this.setState({ active: true, x: x, y: y, element: element });
+	    this.renderPortal(props, x, y);
+
+	    this.props.onOpen(this.node);
+	  };
+
+	  Portal.prototype.closePortal = function closePortal() {
+	    var _this2 = this;
+
+	    var isUnmounted = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
+	    var resetPortalState = function resetPortalState() {
+	      if (_this2.node) {
+	        _reactDom2['default'].unmountComponentAtNode(_this2.node);
+	        document.body.removeChild(_this2.node);
+	      }
+	      _this2.portal = null;
+	      _this2.node = null;
+	      if (!isUnmounted) {
+	        _this2.setState({ active: false });
+	      }
+	    };
+
+	    if (this.state.element && !this.props.isSortedOrFiltered) {
+	      this.state.element.style.color = this.props.iconDefColor; // back to default color
+	    }
+
+	    if (this.state.active) {
+	      if (this.props.beforeClose) {
+	        this.props.beforeClose(this.node, resetPortalState);
+	      } else {
+	        resetPortalState();
+	      }
+
+	      this.props.onClose();
+	    }
+	  };
+
+	  //Function to convert hex format to a rgb color
+
+
+	  Portal.prototype.rgb2hex = function rgb2hex(rgb) {
+	    rgb = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
+	    return "#" + this.hex(rgb[1]) + this.hex(rgb[2]) + this.hex(rgb[3]);
+	  };
+
+	  Portal.prototype.hex = function hex(x) {
+	    var hexDigits = new Array("0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "A", "B", "C", "D", "E", "F");
+	    return isNaN(x) ? "00" : hexDigits[(x - x % 16) / 16] + hexDigits[x % 16];
+	  };
+
+	  Portal.prototype.handleOutsideMouseClick = function handleOutsideMouseClick(e) {
+	    if (!this.state.active) {
+	      return;
+	    }
+
+	    var root = (0, _reactDom.findDOMNode)(this.portal);
+	    if (root.contains(e.target) || e.button && e.button !== 0) {
+	      return;
+	    }
+
+	    e.stopPropagation();
+	    this.closePortal();
+	  };
+
+	  Portal.prototype.handleKeydown = function handleKeydown(e) {
+	    if (e.keyCode === KEYCODES.ESCAPE && this.state.active) {
+	      this.closePortal();
+	    }
+	  };
+
+	  return Portal;
+	}(_react2['default'].Component);
+
+	Portal.propTypes = {
+	  className: _react2['default'].PropTypes.string,
+	  style: _react2['default'].PropTypes.object,
+	  children: _react2['default'].PropTypes.element.isRequired,
+	  openByClickOn: _react2['default'].PropTypes.element,
+	  closeOnEsc: _react2['default'].PropTypes.bool,
+	  closeOnOutsideClick: _react2['default'].PropTypes.bool,
+	  isOpened: _react2['default'].PropTypes.bool,
+	  onOpen: _react2['default'].PropTypes.func,
+	  onClose: _react2['default'].PropTypes.func,
+	  beforeClose: _react2['default'].PropTypes.func,
+	  onUpdate: _react2['default'].PropTypes.func,
+	  isSortedOrFiltered: _react2['default'].PropTypes.bool,
+	  repositioning: _react2['default'].PropTypes.bool
+	};
+
+	Portal.defaultProps = {
+	  onOpen: function onOpen() {},
+	  onClose: function onClose() {},
+	  onUpdate: function onUpdate() {},
+	  isSortedOrFiltered: false,
+	  repositioning: true
+	};
+
+	exports['default'] = Portal;
+	module.exports = exports['default'];
+
+/***/ },
+/* 64 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule CSSPropertyOperations
+	 * @typechecks static-only
+	 */
+
+	'use strict';
+
+	var CSSProperty = __webpack_require__(65);
+	var ExecutionEnvironment = __webpack_require__(66);
+	var ReactPerf = __webpack_require__(67);
+
+	var camelizeStyleName = __webpack_require__(68);
+	var dangerousStyleValue = __webpack_require__(70);
+	var hyphenateStyleName = __webpack_require__(71);
+	var memoizeStringOnly = __webpack_require__(73);
+	var warning = __webpack_require__(74);
+
+	var processStyleName = memoizeStringOnly(function (styleName) {
+	  return hyphenateStyleName(styleName);
+	});
+
+	var hasShorthandPropertyBug = false;
+	var styleFloatAccessor = 'cssFloat';
+	if (ExecutionEnvironment.canUseDOM) {
+	  var tempStyle = document.createElement('div').style;
+	  try {
+	    // IE8 throws "Invalid argument." if resetting shorthand style properties.
+	    tempStyle.font = '';
+	  } catch (e) {
+	    hasShorthandPropertyBug = true;
+	  }
+	  // IE8 only supports accessing cssFloat (standard) as styleFloat
+	  if (document.documentElement.style.cssFloat === undefined) {
+	    styleFloatAccessor = 'styleFloat';
+	  }
+	}
+
+	if (false) {
+	  // 'msTransform' is correct, but the other prefixes should be capitalized
+	  var badVendoredStyleNamePattern = /^(?:webkit|moz|o)[A-Z]/;
+
+	  // style values shouldn't contain a semicolon
+	  var badStyleValueWithSemicolonPattern = /;\s*$/;
+
+	  var warnedStyleNames = {};
+	  var warnedStyleValues = {};
+
+	  var warnHyphenatedStyleName = function (name) {
+	    if (warnedStyleNames.hasOwnProperty(name) && warnedStyleNames[name]) {
+	      return;
+	    }
+
+	    warnedStyleNames[name] = true;
+	    process.env.NODE_ENV !== 'production' ? warning(false, 'Unsupported style property %s. Did you mean %s?', name, camelizeStyleName(name)) : undefined;
+	  };
+
+	  var warnBadVendoredStyleName = function (name) {
+	    if (warnedStyleNames.hasOwnProperty(name) && warnedStyleNames[name]) {
+	      return;
+	    }
+
+	    warnedStyleNames[name] = true;
+	    process.env.NODE_ENV !== 'production' ? warning(false, 'Unsupported vendor-prefixed style property %s. Did you mean %s?', name, name.charAt(0).toUpperCase() + name.slice(1)) : undefined;
+	  };
+
+	  var warnStyleValueWithSemicolon = function (name, value) {
+	    if (warnedStyleValues.hasOwnProperty(value) && warnedStyleValues[value]) {
+	      return;
+	    }
+
+	    warnedStyleValues[value] = true;
+	    process.env.NODE_ENV !== 'production' ? warning(false, 'Style property values shouldn\'t contain a semicolon. ' + 'Try "%s: %s" instead.', name, value.replace(badStyleValueWithSemicolonPattern, '')) : undefined;
+	  };
+
+	  /**
+	   * @param {string} name
+	   * @param {*} value
+	   */
+	  var warnValidStyle = function (name, value) {
+	    if (name.indexOf('-') > -1) {
+	      warnHyphenatedStyleName(name);
+	    } else if (badVendoredStyleNamePattern.test(name)) {
+	      warnBadVendoredStyleName(name);
+	    } else if (badStyleValueWithSemicolonPattern.test(value)) {
+	      warnStyleValueWithSemicolon(name, value);
+	    }
+	  };
+	}
+
+	/**
+	 * Operations for dealing with CSS properties.
+	 */
+	var CSSPropertyOperations = {
+
+	  /**
+	   * Serializes a mapping of style properties for use as inline styles:
+	   *
+	   *   > createMarkupForStyles({width: '200px', height: 0})
+	   *   "width:200px;height:0;"
+	   *
+	   * Undefined values are ignored so that declarative programming is easier.
+	   * The result should be HTML-escaped before insertion into the DOM.
+	   *
+	   * @param {object} styles
+	   * @return {?string}
+	   */
+	  createMarkupForStyles: function (styles) {
+	    var serialized = '';
+	    for (var styleName in styles) {
+	      if (!styles.hasOwnProperty(styleName)) {
+	        continue;
+	      }
+	      var styleValue = styles[styleName];
+	      if (false) {
+	        warnValidStyle(styleName, styleValue);
+	      }
+	      if (styleValue != null) {
+	        serialized += processStyleName(styleName) + ':';
+	        serialized += dangerousStyleValue(styleName, styleValue) + ';';
+	      }
+	    }
+	    return serialized || null;
+	  },
+
+	  /**
+	   * Sets the value for multiple styles on a node.  If a value is specified as
+	   * '' (empty string), the corresponding style property will be unset.
+	   *
+	   * @param {DOMElement} node
+	   * @param {object} styles
+	   */
+	  setValueForStyles: function (node, styles) {
+	    var style = node.style;
+	    for (var styleName in styles) {
+	      if (!styles.hasOwnProperty(styleName)) {
+	        continue;
+	      }
+	      if (false) {
+	        warnValidStyle(styleName, styles[styleName]);
+	      }
+	      var styleValue = dangerousStyleValue(styleName, styles[styleName]);
+	      if (styleName === 'float') {
+	        styleName = styleFloatAccessor;
+	      }
+	      if (styleValue) {
+	        style[styleName] = styleValue;
+	      } else {
+	        var expansion = hasShorthandPropertyBug && CSSProperty.shorthandPropertyExpansions[styleName];
+	        if (expansion) {
+	          // Shorthand property that IE8 won't like unsetting, so unset each
+	          // component to placate it
+	          for (var individualStyleName in expansion) {
+	            style[individualStyleName] = '';
+	          }
+	        } else {
+	          style[styleName] = '';
+	        }
+	      }
+	    }
+	  }
+
+	};
+
+	ReactPerf.measureMethods(CSSPropertyOperations, 'CSSPropertyOperations', {
+	  setValueForStyles: 'setValueForStyles'
+	});
+
+	module.exports = CSSPropertyOperations;
+
+/***/ },
+/* 65 */
+/***/ function(module, exports) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule CSSProperty
+	 */
+
+	'use strict';
+
+	/**
+	 * CSS properties which accept numbers but are not in units of "px".
+	 */
+	var isUnitlessNumber = {
+	  animationIterationCount: true,
+	  boxFlex: true,
+	  boxFlexGroup: true,
+	  boxOrdinalGroup: true,
+	  columnCount: true,
+	  flex: true,
+	  flexGrow: true,
+	  flexPositive: true,
+	  flexShrink: true,
+	  flexNegative: true,
+	  flexOrder: true,
+	  fontWeight: true,
+	  lineClamp: true,
+	  lineHeight: true,
+	  opacity: true,
+	  order: true,
+	  orphans: true,
+	  tabSize: true,
+	  widows: true,
+	  zIndex: true,
+	  zoom: true,
+
+	  // SVG-related properties
+	  fillOpacity: true,
+	  stopOpacity: true,
+	  strokeDashoffset: true,
+	  strokeOpacity: true,
+	  strokeWidth: true
+	};
+
+	/**
+	 * @param {string} prefix vendor-specific prefix, eg: Webkit
+	 * @param {string} key style name, eg: transitionDuration
+	 * @return {string} style name prefixed with `prefix`, properly camelCased, eg:
+	 * WebkitTransitionDuration
+	 */
+	function prefixKey(prefix, key) {
+	  return prefix + key.charAt(0).toUpperCase() + key.substring(1);
+	}
+
+	/**
+	 * Support style names that may come passed in prefixed by adding permutations
+	 * of vendor prefixes.
+	 */
+	var prefixes = ['Webkit', 'ms', 'Moz', 'O'];
+
+	// Using Object.keys here, or else the vanilla for-in loop makes IE8 go into an
+	// infinite loop, because it iterates over the newly added props too.
+	Object.keys(isUnitlessNumber).forEach(function (prop) {
+	  prefixes.forEach(function (prefix) {
+	    isUnitlessNumber[prefixKey(prefix, prop)] = isUnitlessNumber[prop];
+	  });
+	});
+
+	/**
+	 * Most style properties can be unset by doing .style[prop] = '' but IE8
+	 * doesn't like doing that with shorthand properties so for the properties that
+	 * IE8 breaks on, which are listed here, we instead unset each of the
+	 * individual properties. See http://bugs.jquery.com/ticket/12385.
+	 * The 4-value 'clock' properties like margin, padding, border-width seem to
+	 * behave without any problems. Curiously, list-style works too without any
+	 * special prodding.
+	 */
+	var shorthandPropertyExpansions = {
+	  background: {
+	    backgroundAttachment: true,
+	    backgroundColor: true,
+	    backgroundImage: true,
+	    backgroundPositionX: true,
+	    backgroundPositionY: true,
+	    backgroundRepeat: true
+	  },
+	  backgroundPosition: {
+	    backgroundPositionX: true,
+	    backgroundPositionY: true
+	  },
+	  border: {
+	    borderWidth: true,
+	    borderStyle: true,
+	    borderColor: true
+	  },
+	  borderBottom: {
+	    borderBottomWidth: true,
+	    borderBottomStyle: true,
+	    borderBottomColor: true
+	  },
+	  borderLeft: {
+	    borderLeftWidth: true,
+	    borderLeftStyle: true,
+	    borderLeftColor: true
+	  },
+	  borderRight: {
+	    borderRightWidth: true,
+	    borderRightStyle: true,
+	    borderRightColor: true
+	  },
+	  borderTop: {
+	    borderTopWidth: true,
+	    borderTopStyle: true,
+	    borderTopColor: true
+	  },
+	  font: {
+	    fontStyle: true,
+	    fontVariant: true,
+	    fontWeight: true,
+	    fontSize: true,
+	    lineHeight: true,
+	    fontFamily: true
+	  },
+	  outline: {
+	    outlineWidth: true,
+	    outlineStyle: true,
+	    outlineColor: true
+	  }
+	};
+
+	var CSSProperty = {
+	  isUnitlessNumber: isUnitlessNumber,
+	  shorthandPropertyExpansions: shorthandPropertyExpansions
+	};
+
+	module.exports = CSSProperty;
+
+/***/ },
+/* 66 */
+/***/ function(module, exports) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule ExecutionEnvironment
+	 */
+
+	'use strict';
+
+	var canUseDOM = !!(typeof window !== 'undefined' && window.document && window.document.createElement);
+
+	/**
+	 * Simple, lightweight module assisting with the detection and context of
+	 * Worker. Helps avoid circular dependencies and allows code to reason about
+	 * whether or not they are in a Worker, even if they never include the main
+	 * `ReactWorker` dependency.
+	 */
+	var ExecutionEnvironment = {
+
+	  canUseDOM: canUseDOM,
+
+	  canUseWorkers: typeof Worker !== 'undefined',
+
+	  canUseEventListeners: canUseDOM && !!(window.addEventListener || window.attachEvent),
+
+	  canUseViewport: canUseDOM && !!window.screen,
+
+	  isInWorker: !canUseDOM // For now, this is true - might change in the future.
+
+	};
+
+	module.exports = ExecutionEnvironment;
+
+/***/ },
+/* 67 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule ReactPerf
+	 * @typechecks static-only
+	 */
+
+	'use strict';
+
+	/**
+	 * ReactPerf is a general AOP system designed to measure performance. This
+	 * module only has the hooks: see ReactDefaultPerf for the analysis tool.
+	 */
+	var ReactPerf = {
+	  /**
+	   * Boolean to enable/disable measurement. Set to false by default to prevent
+	   * accidental logging and perf loss.
+	   */
+	  enableMeasure: false,
+
+	  /**
+	   * Holds onto the measure function in use. By default, don't measure
+	   * anything, but we'll override this if we inject a measure function.
+	   */
+	  storedMeasure: _noMeasure,
+
+	  /**
+	   * @param {object} object
+	   * @param {string} objectName
+	   * @param {object<string>} methodNames
+	   */
+	  measureMethods: function (object, objectName, methodNames) {
+	    if (false) {
+	      for (var key in methodNames) {
+	        if (!methodNames.hasOwnProperty(key)) {
+	          continue;
+	        }
+	        object[key] = ReactPerf.measure(objectName, methodNames[key], object[key]);
+	      }
+	    }
+	  },
+
+	  /**
+	   * Use this to wrap methods you want to measure. Zero overhead in production.
+	   *
+	   * @param {string} objName
+	   * @param {string} fnName
+	   * @param {function} func
+	   * @return {function}
+	   */
+	  measure: function (objName, fnName, func) {
+	    if (false) {
+	      var measuredFunc = null;
+	      var wrapper = function () {
+	        if (ReactPerf.enableMeasure) {
+	          if (!measuredFunc) {
+	            measuredFunc = ReactPerf.storedMeasure(objName, fnName, func);
+	          }
+	          return measuredFunc.apply(this, arguments);
+	        }
+	        return func.apply(this, arguments);
+	      };
+	      wrapper.displayName = objName + '_' + fnName;
+	      return wrapper;
+	    }
+	    return func;
+	  },
+
+	  injection: {
+	    /**
+	     * @param {function} measure
+	     */
+	    injectMeasure: function (measure) {
+	      ReactPerf.storedMeasure = measure;
+	    }
+	  }
+	};
+
+	/**
+	 * Simply passes through the measured function, without measuring it.
+	 *
+	 * @param {string} objName
+	 * @param {string} fnName
+	 * @param {function} func
+	 * @return {function}
+	 */
+	function _noMeasure(objName, fnName, func) {
+	  return func;
+	}
+
+	module.exports = ReactPerf;
+
+/***/ },
+/* 68 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule camelizeStyleName
+	 * @typechecks
+	 */
+
+	'use strict';
+
+	var camelize = __webpack_require__(69);
+
+	var msPattern = /^-ms-/;
+
+	/**
+	 * Camelcases a hyphenated CSS property name, for example:
+	 *
+	 *   > camelizeStyleName('background-color')
+	 *   < "backgroundColor"
+	 *   > camelizeStyleName('-moz-transition')
+	 *   < "MozTransition"
+	 *   > camelizeStyleName('-ms-transition')
+	 *   < "msTransition"
+	 *
+	 * As Andi Smith suggests
+	 * (http://www.andismith.com/blog/2012/02/modernizr-prefixed/), an `-ms` prefix
+	 * is converted to lowercase `ms`.
+	 *
+	 * @param {string} string
+	 * @return {string}
+	 */
+	function camelizeStyleName(string) {
+	  return camelize(string.replace(msPattern, 'ms-'));
+	}
+
+	module.exports = camelizeStyleName;
+
+/***/ },
+/* 69 */
+/***/ function(module, exports) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule camelize
+	 * @typechecks
+	 */
+
+	"use strict";
+
+	var _hyphenPattern = /-(.)/g;
+
+	/**
+	 * Camelcases a hyphenated string, for example:
+	 *
+	 *   > camelize('background-color')
+	 *   < "backgroundColor"
+	 *
+	 * @param {string} string
+	 * @return {string}
+	 */
+	function camelize(string) {
+	  return string.replace(_hyphenPattern, function (_, character) {
+	    return character.toUpperCase();
+	  });
+	}
+
+	module.exports = camelize;
+
+/***/ },
+/* 70 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule dangerousStyleValue
+	 * @typechecks static-only
+	 */
+
+	'use strict';
+
+	var CSSProperty = __webpack_require__(65);
+
+	var isUnitlessNumber = CSSProperty.isUnitlessNumber;
+
+	/**
+	 * Convert a value into the proper css writable value. The style name `name`
+	 * should be logical (no hyphens), as specified
+	 * in `CSSProperty.isUnitlessNumber`.
+	 *
+	 * @param {string} name CSS property name such as `topMargin`.
+	 * @param {*} value CSS property value such as `10px`.
+	 * @return {string} Normalized style value with dimensions applied.
+	 */
+	function dangerousStyleValue(name, value) {
+	  // Note that we've removed escapeTextForBrowser() calls here since the
+	  // whole string will be escaped when the attribute is injected into
+	  // the markup. If you provide unsafe user data here they can inject
+	  // arbitrary CSS which may be problematic (I couldn't repro this):
+	  // https://www.owasp.org/index.php/XSS_Filter_Evasion_Cheat_Sheet
+	  // http://www.thespanner.co.uk/2007/11/26/ultimate-xss-css-injection/
+	  // This is not an XSS hole but instead a potential CSS injection issue
+	  // which has lead to a greater discussion about how we're going to
+	  // trust URLs moving forward. See #2115901
+
+	  var isEmpty = value == null || typeof value === 'boolean' || value === '';
+	  if (isEmpty) {
+	    return '';
+	  }
+
+	  var isNonNumeric = isNaN(value);
+	  if (isNonNumeric || value === 0 || isUnitlessNumber.hasOwnProperty(name) && isUnitlessNumber[name]) {
+	    return '' + value; // cast to string
+	  }
+
+	  if (typeof value === 'string') {
+	    value = value.trim();
+	  }
+	  return value + 'px';
+	}
+
+	module.exports = dangerousStyleValue;
+
+/***/ },
+/* 71 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule hyphenateStyleName
+	 * @typechecks
+	 */
+
+	'use strict';
+
+	var hyphenate = __webpack_require__(72);
+
+	var msPattern = /^ms-/;
+
+	/**
+	 * Hyphenates a camelcased CSS property name, for example:
+	 *
+	 *   > hyphenateStyleName('backgroundColor')
+	 *   < "background-color"
+	 *   > hyphenateStyleName('MozTransition')
+	 *   < "-moz-transition"
+	 *   > hyphenateStyleName('msTransition')
+	 *   < "-ms-transition"
+	 *
+	 * As Modernizr suggests (http://modernizr.com/docs/#prefixed), an `ms` prefix
+	 * is converted to `-ms-`.
+	 *
+	 * @param {string} string
+	 * @return {string}
+	 */
+	function hyphenateStyleName(string) {
+	  return hyphenate(string).replace(msPattern, '-ms-');
+	}
+
+	module.exports = hyphenateStyleName;
+
+/***/ },
+/* 72 */
+/***/ function(module, exports) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule hyphenate
+	 * @typechecks
+	 */
+
+	'use strict';
+
+	var _uppercasePattern = /([A-Z])/g;
+
+	/**
+	 * Hyphenates a camelcased string, for example:
+	 *
+	 *   > hyphenate('backgroundColor')
+	 *   < "background-color"
+	 *
+	 * For CSS style names, use `hyphenateStyleName` instead which works properly
+	 * with all vendor prefixes, including `ms`.
+	 *
+	 * @param {string} string
+	 * @return {string}
+	 */
+	function hyphenate(string) {
+	  return string.replace(_uppercasePattern, '-$1').toLowerCase();
+	}
+
+	module.exports = hyphenate;
+
+/***/ },
+/* 73 */
+/***/ function(module, exports) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule memoizeStringOnly
+	 * @typechecks static-only
+	 */
+
+	'use strict';
+
+	/**
+	 * Memoizes the return value of a function that accepts one string argument.
+	 *
+	 * @param {function} callback
+	 * @return {function}
+	 */
+	function memoizeStringOnly(callback) {
+	  var cache = {};
+	  return function (string) {
+	    if (!cache.hasOwnProperty(string)) {
+	      cache[string] = callback.call(this, string);
+	    }
+	    return cache[string];
+	  };
+	}
+
+	module.exports = memoizeStringOnly;
+
+/***/ },
+/* 74 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/**
+	 * Copyright 2014-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule warning
+	 */
+
+	'use strict';
+
+	var emptyFunction = __webpack_require__(75);
+
+	/**
+	 * Similar to invariant but only logs a warning if the condition is not met.
+	 * This can be used to log issues in development environments in critical
+	 * paths. Removing the logging code for production environments will keep the
+	 * same logic and follow the same code paths.
+	 */
+
+	var warning = emptyFunction;
+
+	if (false) {
+	  warning = function (condition, format) {
+	    for (var _len = arguments.length, args = Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+	      args[_key - 2] = arguments[_key];
+	    }
+
+	    if (format === undefined) {
+	      throw new Error('`warning(condition, format, ...args)` requires a warning ' + 'message argument');
+	    }
+
+	    if (format.indexOf('Failed Composite propType: ') === 0) {
+	      return; // Ignore CompositeComponent proptype check.
+	    }
+
+	    if (!condition) {
+	      var argIndex = 0;
+	      var message = 'Warning: ' + format.replace(/%s/g, function () {
+	        return args[argIndex++];
+	      });
+	      if (typeof console !== 'undefined') {
+	        console.error(message);
+	      }
+	      try {
+	        // --- Welcome to debugging React ---
+	        // This error was thrown as a convenience so that you can use this stack
+	        // to find the callsite that caused this warning to fire.
+	        throw new Error(message);
+	      } catch (x) {}
+	    }
+	  };
+	}
+
+	module.exports = warning;
+
+/***/ },
+/* 75 */
+/***/ function(module, exports) {
+
+	/**
+	 * Copyright 2013-2015, Facebook, Inc.
+	 * All rights reserved.
+	 *
+	 * This source code is licensed under the BSD-style license found in the
+	 * LICENSE file in the root directory of this source tree. An additional grant
+	 * of patent rights can be found in the PATENTS file in the same directory.
+	 *
+	 * @providesModule emptyFunction
+	 */
+
+	"use strict";
+
+	function makeEmptyFunction(arg) {
+	  return function () {
+	    return arg;
+	  };
+	}
+
+	/**
+	 * This function accepts and discards inputs; it has no side effects. This is
+	 * primarily useful idiomatically for overridable function endpoints which
+	 * always need to be callable, since JS lacks a null-call idiom ala Cocoa.
+	 */
+	function emptyFunction() {}
+
+	emptyFunction.thatReturns = makeEmptyFunction;
+	emptyFunction.thatReturnsFalse = makeEmptyFunction(false);
+	emptyFunction.thatReturnsTrue = makeEmptyFunction(true);
+	emptyFunction.thatReturnsNull = makeEmptyFunction(null);
+	emptyFunction.thatReturnsThis = function () {
+	  return this;
+	};
+	emptyFunction.thatReturnsArgument = function (arg) {
+	  return arg;
+	};
+
+	module.exports = emptyFunction;
+
+/***/ },
+/* 76 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports.default = undefined;
+
+	var _shouldComponentUpdate = __webpack_require__(77);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	var _shallowEqualImmutable = __webpack_require__(78);
+
+	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
+
+	var _immutableRenderMixin = __webpack_require__(79);
+
+	var _immutableRenderMixin2 = _interopRequireDefault(_immutableRenderMixin);
+
+	var _immutableRenderDecorator = __webpack_require__(80);
+
+	var _immutableRenderDecorator2 = _interopRequireDefault(_immutableRenderDecorator);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = _immutableRenderMixin2.default;
+	exports.immutableRenderDecorator = _immutableRenderDecorator2.default;
+	exports.shouldComponentUpdate = _shouldComponentUpdate2.default;
+	exports.shallowEqualImmutable = _shallowEqualImmutable2.default;
+
+/***/ },
+/* 77 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.default = shouldComponentUpdate;
+
+	var _shallowEqualImmutable = __webpack_require__(78);
+
+	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function shouldComponentUpdate(nextProps, nextState) {
+	  return !(0, _shallowEqualImmutable2.default)(this.props, nextProps) || !(0, _shallowEqualImmutable2.default)(this.state, nextState);
+	}
+
+/***/ },
+/* 78 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+	exports.default = shallowEqualImmutable;
+
+	var _immutable = __webpack_require__(54);
+
+	var _immutable2 = _interopRequireDefault(_immutable);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	var is = _immutable2.default.is.bind(_immutable2.default);
+
+	function shallowEqualImmutable(objA, objB) {
+	  if (objA === objB || is(objA, objB)) {
+	    return true;
+	  }
+
+	  if ((typeof objA === 'undefined' ? 'undefined' : _typeof(objA)) !== 'object' || objA === null || (typeof objB === 'undefined' ? 'undefined' : _typeof(objB)) !== 'object' || objB === null) {
+	    return false;
+	  }
+
+	  var keysA = Object.keys(objA);
+	  var keysB = Object.keys(objB);
+
+	  if (keysA.length !== keysB.length) {
+	    return false;
+	  }
+
+	  // Test for A's keys different from B.
+	  var bHasOwnProperty = Object.prototype.hasOwnProperty.bind(objB);
+	  for (var i = 0; i < keysA.length; i++) {
+	    if (!bHasOwnProperty(keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
+	      return false;
+	    }
+	  }
+
+	  return true;
+	}
+
+/***/ },
+/* 79 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _shouldComponentUpdate = __webpack_require__(77);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	exports.default = {
+	  shouldComponentUpdate: _shouldComponentUpdate2.default
+	};
+
+/***/ },
+/* 80 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+	exports.default = immutableRenderDecorator;
+
+	var _react = __webpack_require__(2);
+
+	var _react2 = _interopRequireDefault(_react);
+
+	var _shouldComponentUpdate = __webpack_require__(77);
+
+	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+	/**
+	 * Makes the given component "pure".
+	 *
+	 * @param object Target Component.
+	 */
+	function immutableRenderDecorator(Target) {
+	  var Wrapper = function (_Component) {
+	    _inherits(Wrapper, _Component);
+
+	    function Wrapper() {
+	      _classCallCheck(this, Wrapper);
+
+	      return _possibleConstructorReturn(this, Object.getPrototypeOf(Wrapper).apply(this, arguments));
+	    }
+
+	    _createClass(Wrapper, [{
+	      key: 'render',
+	      value: function render() {
+	        return _react2.default.createElement(Target, this.props, this.props.children);
+	      }
+	    }]);
+
+	    return Wrapper;
+	  }(_react.Component);
+
+	  Wrapper.prototype.shouldComponentUpdate = _shouldComponentUpdate2.default;
+
+	  return Wrapper;
+	}
+
+/***/ },
+/* 81 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
+	 * Tween.js - Licensed under the MIT license
+	 * https://github.com/tweenjs/tween.js
+	 * ----------------------------------------------
+	 *
+	 * See https://github.com/tweenjs/tween.js/graphs/contributors for the full list of contributors.
+	 * Thank you all, you're awesome!
+	 */
+
+	// Include a performance.now polyfill
+	(function () {
+
+		if ('performance' in window === false) {
+			window.performance = {};
+		}
+
+		// IE 8
+		Date.now = (Date.now || function () {
+			return new Date().getTime();
+		});
+
+		if ('now' in window.performance === false) {
+			var offset = window.performance.timing && window.performance.timing.navigationStart ? window.performance.timing.navigationStart
+			                                                                                    : Date.now();
+
+			window.performance.now = function () {
+				return Date.now() - offset;
+			};
+		}
+
+	})();
+
+	var TWEEN = TWEEN || (function () {
+
+		var _tweens = [];
+
+		return {
+
+			getAll: function () {
+
+				return _tweens;
+
+			},
+
+			removeAll: function () {
+
+				_tweens = [];
+
+			},
+
+			add: function (tween) {
+
+				_tweens.push(tween);
+
+			},
+
+			remove: function (tween) {
+
+				var i = _tweens.indexOf(tween);
+
+				if (i !== -1) {
+					_tweens.splice(i, 1);
+				}
+
+			},
+
+			update: function (time) {
+
+				if (_tweens.length === 0) {
+					return false;
+				}
+
+				var i = 0;
+
+				time = time !== undefined ? time : window.performance.now();
+
+				while (i < _tweens.length) {
+
+					if (_tweens[i].update(time)) {
+						i++;
+					} else {
+						_tweens.splice(i, 1);
+					}
+
+				}
+
+				return true;
+
+			}
+		};
+
+	})();
+
+	TWEEN.Tween = function (object) {
+
+		var _object = object;
+		var _valuesStart = {};
+		var _valuesEnd = {};
+		var _valuesStartRepeat = {};
+		var _duration = 1000;
+		var _repeat = 0;
+		var _yoyo = false;
+		var _isPlaying = false;
+		var _reversed = false;
+		var _delayTime = 0;
+		var _startTime = null;
+		var _easingFunction = TWEEN.Easing.Linear.None;
+		var _interpolationFunction = TWEEN.Interpolation.Linear;
+		var _chainedTweens = [];
+		var _onStartCallback = null;
+		var _onStartCallbackFired = false;
+		var _onUpdateCallback = null;
+		var _onCompleteCallback = null;
+		var _onStopCallback = null;
+
+		// Set all starting values present on the target object
+		for (var field in object) {
+			_valuesStart[field] = parseFloat(object[field], 10);
+		}
+
+		this.to = function (properties, duration) {
+
+			if (duration !== undefined) {
+				_duration = duration;
+			}
+
+			_valuesEnd = properties;
+
+			return this;
+
+		};
+
+		this.start = function (time) {
+
+			TWEEN.add(this);
+
+			_isPlaying = true;
+
+			_onStartCallbackFired = false;
+
+			_startTime = time !== undefined ? time : window.performance.now();
+			_startTime += _delayTime;
+
+			for (var property in _valuesEnd) {
+
+				// Check if an Array was provided as property value
+				if (_valuesEnd[property] instanceof Array) {
+
+					if (_valuesEnd[property].length === 0) {
+						continue;
+					}
+
+					// Create a local copy of the Array with the start value at the front
+					_valuesEnd[property] = [_object[property]].concat(_valuesEnd[property]);
+
+				}
+
+				// If `to()` specifies a property that doesn't exist in the source object,
+				// we should not set that property in the object
+				if (_valuesStart[property] === undefined) {
+					continue;
+				}
+
+				_valuesStart[property] = _object[property];
+
+				if ((_valuesStart[property] instanceof Array) === false) {
+					_valuesStart[property] *= 1.0; // Ensures we're using numbers, not strings
+				}
+
+				_valuesStartRepeat[property] = _valuesStart[property] || 0;
+
+			}
+
+			return this;
+
+		};
+
+		this.stop = function () {
+
+			if (!_isPlaying) {
+				return this;
+			}
+
+			TWEEN.remove(this);
+			_isPlaying = false;
+
+			if (_onStopCallback !== null) {
+				_onStopCallback.call(_object);
+			}
+
+			this.stopChainedTweens();
+			return this;
+
+		};
+
+		this.stopChainedTweens = function () {
+
+			for (var i = 0, numChainedTweens = _chainedTweens.length; i < numChainedTweens; i++) {
+				_chainedTweens[i].stop();
+			}
+
+		};
+
+		this.delay = function (amount) {
+
+			_delayTime = amount;
+			return this;
+
+		};
+
+		this.repeat = function (times) {
+
+			_repeat = times;
+			return this;
+
+		};
+
+		this.yoyo = function (yoyo) {
+
+			_yoyo = yoyo;
+			return this;
+
+		};
+
+
+		this.easing = function (easing) {
+
+			_easingFunction = easing;
+			return this;
+
+		};
+
+		this.interpolation = function (interpolation) {
+
+			_interpolationFunction = interpolation;
+			return this;
+
+		};
+
+		this.chain = function () {
+
+			_chainedTweens = arguments;
+			return this;
+
+		};
+
+		this.onStart = function (callback) {
+
+			_onStartCallback = callback;
+			return this;
+
+		};
+
+		this.onUpdate = function (callback) {
+
+			_onUpdateCallback = callback;
+			return this;
+
+		};
+
+		this.onComplete = function (callback) {
+
+			_onCompleteCallback = callback;
+			return this;
+
+		};
+
+		this.onStop = function (callback) {
+
+			_onStopCallback = callback;
+			return this;
+
+		};
+
+		this.update = function (time) {
+
+			var property;
+			var elapsed;
+			var value;
+
+			if (time < _startTime) {
+				return true;
+			}
+
+			if (_onStartCallbackFired === false) {
+
+				if (_onStartCallback !== null) {
+					_onStartCallback.call(_object);
+				}
+
+				_onStartCallbackFired = true;
+
+			}
+
+			elapsed = (time - _startTime) / _duration;
+			elapsed = elapsed > 1 ? 1 : elapsed;
+
+			value = _easingFunction(elapsed);
+
+			for (property in _valuesEnd) {
+
+				// Don't update properties that do not exist in the source object
+				if (_valuesStart[property] === undefined) {
+					continue;
+				}
+
+				var start = _valuesStart[property] || 0;
+				var end = _valuesEnd[property];
+
+				if (end instanceof Array) {
+
+					_object[property] = _interpolationFunction(end, value);
+
+				} else {
+
+					// Parses relative end values with start as base (e.g.: +10, -3)
+					if (typeof (end) === 'string') {
+
+						if (end.startsWith('+') || end.startsWith('-')) {
+							end = start + parseFloat(end, 10);
+						} else {
+							end = parseFloat(end, 10);
+						}
+					}
+
+					// Protect against non numeric properties.
+					if (typeof (end) === 'number') {
+						_object[property] = start + (end - start) * value;
+					}
+
+				}
+
+			}
+
+			if (_onUpdateCallback !== null) {
+				_onUpdateCallback.call(_object, value);
+			}
+
+			if (elapsed === 1) {
+
+				if (_repeat > 0) {
+
+					if (isFinite(_repeat)) {
+						_repeat--;
+					}
+
+					// Reassign starting values, restart by making startTime = now
+					for (property in _valuesStartRepeat) {
+
+						if (typeof (_valuesEnd[property]) === 'string') {
+							_valuesStartRepeat[property] = _valuesStartRepeat[property] + parseFloat(_valuesEnd[property], 10);
+						}
+
+						if (_yoyo) {
+							var tmp = _valuesStartRepeat[property];
+
+							_valuesStartRepeat[property] = _valuesEnd[property];
+							_valuesEnd[property] = tmp;
+						}
+
+						_valuesStart[property] = _valuesStartRepeat[property];
+
+					}
+
+					if (_yoyo) {
+						_reversed = !_reversed;
+					}
+
+					_startTime = time + _delayTime;
+
+					return true;
+
+				} else {
+
+					if (_onCompleteCallback !== null) {
+						_onCompleteCallback.call(_object);
+					}
+
+					for (var i = 0, numChainedTweens = _chainedTweens.length; i < numChainedTweens; i++) {
+						// Make the chained tweens start exactly at the time they should,
+						// even if the `update()` method was called way past the duration of the tween
+						_chainedTweens[i].start(_startTime + _duration);
+					}
+
+					return false;
+
+				}
+
+			}
+
+			return true;
+
+		};
+
+	};
+
+
+	TWEEN.Easing = {
+
+		Linear: {
+
+			None: function (k) {
+
+				return k;
+
+			}
+
+		},
+
+		Quadratic: {
+
+			In: function (k) {
+
+				return k * k;
+
+			},
+
+			Out: function (k) {
+
+				return k * (2 - k);
+
+			},
+
+			InOut: function (k) {
+
+				if ((k *= 2) < 1) {
+					return 0.5 * k * k;
+				}
+
+				return - 0.5 * (--k * (k - 2) - 1);
+
+			}
+
+		},
+
+		Cubic: {
+
+			In: function (k) {
+
+				return k * k * k;
+
+			},
+
+			Out: function (k) {
+
+				return --k * k * k + 1;
+
+			},
+
+			InOut: function (k) {
+
+				if ((k *= 2) < 1) {
+					return 0.5 * k * k * k;
+				}
+
+				return 0.5 * ((k -= 2) * k * k + 2);
+
+			}
+
+		},
+
+		Quartic: {
+
+			In: function (k) {
+
+				return k * k * k * k;
+
+			},
+
+			Out: function (k) {
+
+				return 1 - (--k * k * k * k);
+
+			},
+
+			InOut: function (k) {
+
+				if ((k *= 2) < 1) {
+					return 0.5 * k * k * k * k;
+				}
+
+				return - 0.5 * ((k -= 2) * k * k * k - 2);
+
+			}
+
+		},
+
+		Quintic: {
+
+			In: function (k) {
+
+				return k * k * k * k * k;
+
+			},
+
+			Out: function (k) {
+
+				return --k * k * k * k * k + 1;
+
+			},
+
+			InOut: function (k) {
+
+				if ((k *= 2) < 1) {
+					return 0.5 * k * k * k * k * k;
+				}
+
+				return 0.5 * ((k -= 2) * k * k * k * k + 2);
+
+			}
+
+		},
+
+		Sinusoidal: {
+
+			In: function (k) {
+
+				return 1 - Math.cos(k * Math.PI / 2);
+
+			},
+
+			Out: function (k) {
+
+				return Math.sin(k * Math.PI / 2);
+
+			},
+
+			InOut: function (k) {
+
+				return 0.5 * (1 - Math.cos(Math.PI * k));
+
+			}
+
+		},
+
+		Exponential: {
+
+			In: function (k) {
+
+				return k === 0 ? 0 : Math.pow(1024, k - 1);
+
+			},
+
+			Out: function (k) {
+
+				return k === 1 ? 1 : 1 - Math.pow(2, - 10 * k);
+
+			},
+
+			InOut: function (k) {
+
+				if (k === 0) {
+					return 0;
+				}
+
+				if (k === 1) {
+					return 1;
+				}
+
+				if ((k *= 2) < 1) {
+					return 0.5 * Math.pow(1024, k - 1);
+				}
+
+				return 0.5 * (- Math.pow(2, - 10 * (k - 1)) + 2);
+
+			}
+
+		},
+
+		Circular: {
+
+			In: function (k) {
+
+				return 1 - Math.sqrt(1 - k * k);
+
+			},
+
+			Out: function (k) {
+
+				return Math.sqrt(1 - (--k * k));
+
+			},
+
+			InOut: function (k) {
+
+				if ((k *= 2) < 1) {
+					return - 0.5 * (Math.sqrt(1 - k * k) - 1);
+				}
+
+				return 0.5 * (Math.sqrt(1 - (k -= 2) * k) + 1);
+
+			}
+
+		},
+
+		Elastic: {
+
+			In: function (k) {
+
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+
+				if (k === 0) {
+					return 0;
+				}
+
+				if (k === 1) {
+					return 1;
+				}
+
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				}
+
+				return - (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+
+			},
+
+			Out: function (k) {
+
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+
+				if (k === 0) {
+					return 0;
+				}
+
+				if (k === 1) {
+					return 1;
+				}
+
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				}
+
+				return (a * Math.pow(2, - 10 * k) * Math.sin((k - s) * (2 * Math.PI) / p) + 1);
+
+			},
+
+			InOut: function (k) {
+
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+
+				if (k === 0) {
+					return 0;
+				}
+
+				if (k === 1) {
+					return 1;
+				}
+
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				}
+
+				if ((k *= 2) < 1) {
+					return - 0.5 * (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+				}
+
+				return a * Math.pow(2, -10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p) * 0.5 + 1;
+
+			}
+
+		},
+
+		Back: {
+
+			In: function (k) {
+
+				var s = 1.70158;
+
+				return k * k * ((s + 1) * k - s);
+
+			},
+
+			Out: function (k) {
+
+				var s = 1.70158;
+
+				return --k * k * ((s + 1) * k + s) + 1;
+
+			},
+
+			InOut: function (k) {
+
+				var s = 1.70158 * 1.525;
+
+				if ((k *= 2) < 1) {
+					return 0.5 * (k * k * ((s + 1) * k - s));
+				}
+
+				return 0.5 * ((k -= 2) * k * ((s + 1) * k + s) + 2);
+
+			}
+
+		},
+
+		Bounce: {
+
+			In: function (k) {
+
+				return 1 - TWEEN.Easing.Bounce.Out(1 - k);
+
+			},
+
+			Out: function (k) {
+
+				if (k < (1 / 2.75)) {
+					return 7.5625 * k * k;
+				} else if (k < (2 / 2.75)) {
+					return 7.5625 * (k -= (1.5 / 2.75)) * k + 0.75;
+				} else if (k < (2.5 / 2.75)) {
+					return 7.5625 * (k -= (2.25 / 2.75)) * k + 0.9375;
+				} else {
+					return 7.5625 * (k -= (2.625 / 2.75)) * k + 0.984375;
+				}
+
+			},
+
+			InOut: function (k) {
+
+				if (k < 0.5) {
+					return TWEEN.Easing.Bounce.In(k * 2) * 0.5;
+				}
+
+				return TWEEN.Easing.Bounce.Out(k * 2 - 1) * 0.5 + 0.5;
+
+			}
+
+		}
+
+	};
+
+	TWEEN.Interpolation = {
+
+		Linear: function (v, k) {
+
+			var m = v.length - 1;
+			var f = m * k;
+			var i = Math.floor(f);
+			var fn = TWEEN.Interpolation.Utils.Linear;
+
+			if (k < 0) {
+				return fn(v[0], v[1], f);
+			}
+
+			if (k > 1) {
+				return fn(v[m], v[m - 1], m - f);
+			}
+
+			return fn(v[i], v[i + 1 > m ? m : i + 1], f - i);
+
+		},
+
+		Bezier: function (v, k) {
+
+			var b = 0;
+			var n = v.length - 1;
+			var pw = Math.pow;
+			var bn = TWEEN.Interpolation.Utils.Bernstein;
+
+			for (var i = 0; i <= n; i++) {
+				b += pw(1 - k, n - i) * pw(k, i) * v[i] * bn(n, i);
+			}
+
+			return b;
+
+		},
+
+		CatmullRom: function (v, k) {
+
+			var m = v.length - 1;
+			var f = m * k;
+			var i = Math.floor(f);
+			var fn = TWEEN.Interpolation.Utils.CatmullRom;
+
+			if (v[0] === v[m]) {
+
+				if (k < 0) {
+					i = Math.floor(f = m * (1 + k));
+				}
+
+				return fn(v[(i - 1 + m) % m], v[i], v[(i + 1) % m], v[(i + 2) % m], f - i);
+
+			} else {
+
+				if (k < 0) {
+					return v[0] - (fn(v[0], v[0], v[1], v[1], -f) - v[0]);
+				}
+
+				if (k > 1) {
+					return v[m] - (fn(v[m], v[m], v[m - 1], v[m - 1], f - m) - v[m]);
+				}
+
+				return fn(v[i ? i - 1 : 0], v[i], v[m < i + 1 ? m : i + 1], v[m < i + 2 ? m : i + 2], f - i);
+
+			}
+
+		},
+
+		Utils: {
+
+			Linear: function (p0, p1, t) {
+
+				return (p1 - p0) * t + p0;
+
+			},
+
+			Bernstein: function (n, i) {
+
+				var fc = TWEEN.Interpolation.Utils.Factorial;
+
+				return fc(n) / fc(i) / fc(n - i);
+
+			},
+
+			Factorial: (function () {
+
+				var a = [1];
+
+				return function (n) {
+
+					var s = 1;
+
+					if (a[n]) {
+						return a[n];
+					}
+
+					for (var i = n; i > 1; i--) {
+						s *= i;
+					}
+
+					a[n] = s;
+					return s;
+
+				};
+
+			})(),
+
+			CatmullRom: function (p0, p1, p2, p3, t) {
+
+				var v0 = (p2 - p0) * 0.5;
+				var v1 = (p3 - p1) * 0.5;
+				var t2 = t * t;
+				var t3 = t * t2;
+
+				return (2 * p1 - 2 * p2 + v0 + v1) * t3 + (- 3 * p1 + 3 * p2 - 2 * v0 - v1) * t2 + v0 * t + p1;
+
+			}
+
+		}
+
+	};
+
+	// UMD (Universal Module Definition)
+	(function (root) {
+
+		if (true) {
+
+			// AMD
+			!(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
+				return TWEEN;
+			}.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
+
+		} else if (typeof module !== 'undefined' && typeof exports === 'object') {
+
+			// Node.js
+			module.exports = TWEEN;
+
+		} else if (root !== undefined) {
+
+			// Global variable
+			root.TWEEN = TWEEN;
+
+		}
+
+	})(this);
+
+
+/***/ },
+/* 82 */
 /***/ function(module, exports) {
 
 	
@@ -14281,7 +17526,7 @@ var ProperTable =
 
 
 /***/ },
-/* 64 */
+/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {var clone = (function() {
@@ -14445,10 +17690,10 @@ var ProperTable =
 	  module.exports = clone;
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(65).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(84).Buffer))
 
 /***/ },
-/* 65 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -14461,9 +17706,9 @@ var ProperTable =
 
 	'use strict'
 
-	var base64 = __webpack_require__(66)
-	var ieee754 = __webpack_require__(67)
-	var isArray = __webpack_require__(68)
+	var base64 = __webpack_require__(85)
+	var ieee754 = __webpack_require__(86)
+	var isArray = __webpack_require__(87)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -16000,10 +19245,10 @@ var ProperTable =
 	  return i
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(65).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(84).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 66 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
@@ -16133,7 +19378,7 @@ var ProperTable =
 
 
 /***/ },
-/* 67 */
+/* 86 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -16223,7 +19468,7 @@ var ProperTable =
 
 
 /***/ },
-/* 68 */
+/* 87 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -16234,1659 +19479,187 @@ var ProperTable =
 
 
 /***/ },
-/* 69 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports.default = undefined;
-
-	var _shouldComponentUpdate = __webpack_require__(70);
-
-	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
-
-	var _shallowEqualImmutable = __webpack_require__(71);
-
-	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
-
-	var _immutableRenderMixin = __webpack_require__(72);
-
-	var _immutableRenderMixin2 = _interopRequireDefault(_immutableRenderMixin);
-
-	var _immutableRenderDecorator = __webpack_require__(73);
-
-	var _immutableRenderDecorator2 = _interopRequireDefault(_immutableRenderDecorator);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	exports.default = _immutableRenderMixin2.default;
-	exports.immutableRenderDecorator = _immutableRenderDecorator2.default;
-	exports.shouldComponentUpdate = _shouldComponentUpdate2.default;
-	exports.shallowEqualImmutable = _shallowEqualImmutable2.default;
-
-/***/ },
-/* 70 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	exports.default = shouldComponentUpdate;
-
-	var _shallowEqualImmutable = __webpack_require__(71);
-
-	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function shouldComponentUpdate(nextProps, nextState) {
-	  return !(0, _shallowEqualImmutable2.default)(this.props, nextProps) || !(0, _shallowEqualImmutable2.default)(this.state, nextState);
-	}
-
-/***/ },
-/* 71 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
-
-	exports.default = shallowEqualImmutable;
-
-	var _immutable = __webpack_require__(54);
-
-	var _immutable2 = _interopRequireDefault(_immutable);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	var is = _immutable2.default.is.bind(_immutable2.default);
-
-	function shallowEqualImmutable(objA, objB) {
-	  if (objA === objB || is(objA, objB)) {
-	    return true;
-	  }
-
-	  if ((typeof objA === 'undefined' ? 'undefined' : _typeof(objA)) !== 'object' || objA === null || (typeof objB === 'undefined' ? 'undefined' : _typeof(objB)) !== 'object' || objB === null) {
-	    return false;
-	  }
-
-	  var keysA = Object.keys(objA);
-	  var keysB = Object.keys(objB);
-
-	  if (keysA.length !== keysB.length) {
-	    return false;
-	  }
-
-	  // Test for A's keys different from B.
-	  var bHasOwnProperty = Object.prototype.hasOwnProperty.bind(objB);
-	  for (var i = 0; i < keysA.length; i++) {
-	    if (!bHasOwnProperty(keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
-	      return false;
-	    }
-	  }
-
-	  return true;
-	}
-
-/***/ },
-/* 72 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _shouldComponentUpdate = __webpack_require__(70);
-
-	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	exports.default = {
-	  shouldComponentUpdate: _shouldComponentUpdate2.default
-	};
-
-/***/ },
-/* 73 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-	exports.default = immutableRenderDecorator;
-
-	var _react = __webpack_require__(2);
-
-	var _react2 = _interopRequireDefault(_react);
-
-	var _shouldComponentUpdate = __webpack_require__(70);
-
-	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
-
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-	/**
-	 * Makes the given component "pure".
-	 *
-	 * @param object Target Component.
-	 */
-	function immutableRenderDecorator(Target) {
-	  var Wrapper = function (_Component) {
-	    _inherits(Wrapper, _Component);
-
-	    function Wrapper() {
-	      _classCallCheck(this, Wrapper);
-
-	      return _possibleConstructorReturn(this, Object.getPrototypeOf(Wrapper).apply(this, arguments));
-	    }
-
-	    _createClass(Wrapper, [{
-	      key: 'render',
-	      value: function render() {
-	        return _react2.default.createElement(Target, this.props, this.props.children);
-	      }
-	    }]);
-
-	    return Wrapper;
-	  }(_react.Component);
-
-	  Wrapper.prototype.shouldComponentUpdate = _shouldComponentUpdate2.default;
-
-	  return Wrapper;
-	}
-
-/***/ },
-/* 74 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(75)() ? Set : __webpack_require__(76);
-
-
-/***/ },
-/* 75 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		var set, iterator, result;
-		if (typeof Set !== 'function') return false;
-		set = new Set(['raz', 'dwa', 'trzy']);
-		if (String(set) !== '[object Set]') return false;
-		if (set.size !== 3) return false;
-		if (typeof set.add !== 'function') return false;
-		if (typeof set.clear !== 'function') return false;
-		if (typeof set.delete !== 'function') return false;
-		if (typeof set.entries !== 'function') return false;
-		if (typeof set.forEach !== 'function') return false;
-		if (typeof set.has !== 'function') return false;
-		if (typeof set.keys !== 'function') return false;
-		if (typeof set.values !== 'function') return false;
-
-		iterator = set.values();
-		result = iterator.next();
-		if (result.done !== false) return false;
-		if (result.value !== 'raz') return false;
-
-		return true;
-	};
-
-
-/***/ },
-/* 76 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var clear          = __webpack_require__(77)
-	  , eIndexOf       = __webpack_require__(79)
-	  , setPrototypeOf = __webpack_require__(85)
-	  , callable       = __webpack_require__(90)
-	  , d              = __webpack_require__(91)
-	  , ee             = __webpack_require__(103)
-	  , Symbol         = __webpack_require__(104)
-	  , iterator       = __webpack_require__(109)
-	  , forOf          = __webpack_require__(113)
-	  , Iterator       = __webpack_require__(123)
-	  , isNative       = __webpack_require__(124)
-
-	  , call = Function.prototype.call
-	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
-	  , SetPoly, getValues, NativeSet;
-
-	if (isNative) NativeSet = Set;
-
-	module.exports = SetPoly = function Set(/*iterable*/) {
-		var iterable = arguments[0], self;
-		if (!(this instanceof SetPoly)) throw new TypeError('Constructor requires \'new\'');
-		if (isNative && setPrototypeOf) self = setPrototypeOf(new NativeSet(), getPrototypeOf(this));
-		else self = this;
-		if (iterable != null) iterator(iterable);
-		defineProperty(self, '__setData__', d('c', []));
-		if (!iterable) return self;
-		forOf(iterable, function (value) {
-			if (eIndexOf.call(this, value) !== -1) return;
-			this.push(value);
-		}, self.__setData__);
-		return self;
-	};
-
-	if (isNative) {
-		if (setPrototypeOf) setPrototypeOf(SetPoly, NativeSet);
-		SetPoly.prototype = Object.create(NativeSet.prototype, { constructor: d(SetPoly) });
-	}
-
-	ee(Object.defineProperties(SetPoly.prototype, {
-		add: d(function (value) {
-			if (this.has(value)) return this;
-			this.emit('_add', this.__setData__.push(value) - 1, value);
-			return this;
-		}),
-		clear: d(function () {
-			if (!this.__setData__.length) return;
-			clear.call(this.__setData__);
-			this.emit('_clear');
-		}),
-		delete: d(function (value) {
-			var index = eIndexOf.call(this.__setData__, value);
-			if (index === -1) return false;
-			this.__setData__.splice(index, 1);
-			this.emit('_delete', index, value);
-			return true;
-		}),
-		entries: d(function () { return new Iterator(this, 'key+value'); }),
-		forEach: d(function (cb/*, thisArg*/) {
-			var thisArg = arguments[1], iterator, result, value;
-			callable(cb);
-			iterator = this.values();
-			result = iterator._next();
-			while (result !== undefined) {
-				value = iterator._resolve(result);
-				call.call(cb, thisArg, value, value, this);
-				result = iterator._next();
-			}
-		}),
-		has: d(function (value) {
-			return (eIndexOf.call(this.__setData__, value) !== -1);
-		}),
-		keys: d(getValues = function () { return this.values(); }),
-		size: d.gs(function () { return this.__setData__.length; }),
-		values: d(function () { return new Iterator(this); }),
-		toString: d(function () { return '[object Set]'; })
-	}));
-	defineProperty(SetPoly.prototype, Symbol.iterator, d(getValues));
-	defineProperty(SetPoly.prototype, Symbol.toStringTag, d('c', 'Set'));
-
-
-/***/ },
-/* 77 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Inspired by Google Closure:
-	// http://closure-library.googlecode.com/svn/docs/
-	// closure_goog_array_array.js.html#goog.array.clear
-
-	'use strict';
-
-	var value = __webpack_require__(78);
-
-	module.exports = function () {
-		value(this).length = 0;
-		return this;
-	};
-
-
-/***/ },
-/* 78 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function (value) {
-		if (value == null) throw new TypeError("Cannot use null or undefined");
-		return value;
-	};
-
-
-/***/ },
-/* 79 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var toPosInt = __webpack_require__(80)
-	  , value    = __webpack_require__(78)
-
-	  , indexOf = Array.prototype.indexOf
-	  , hasOwnProperty = Object.prototype.hasOwnProperty
-	  , abs = Math.abs, floor = Math.floor;
-
-	module.exports = function (searchElement/*, fromIndex*/) {
-		var i, l, fromIndex, val;
-		if (searchElement === searchElement) { //jslint: ignore
-			return indexOf.apply(this, arguments);
-		}
-
-		l = toPosInt(value(this).length);
-		fromIndex = arguments[1];
-		if (isNaN(fromIndex)) fromIndex = 0;
-		else if (fromIndex >= 0) fromIndex = floor(fromIndex);
-		else fromIndex = toPosInt(this.length) - floor(abs(fromIndex));
-
-		for (i = fromIndex; i < l; ++i) {
-			if (hasOwnProperty.call(this, i)) {
-				val = this[i];
-				if (val !== val) return i; //jslint: ignore
-			}
-		}
-		return -1;
-	};
-
-
-/***/ },
-/* 80 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var toInteger = __webpack_require__(81)
-
-	  , max = Math.max;
-
-	module.exports = function (value) { return max(0, toInteger(value)); };
-
-
-/***/ },
-/* 81 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var sign = __webpack_require__(82)
-
-	  , abs = Math.abs, floor = Math.floor;
-
-	module.exports = function (value) {
-		if (isNaN(value)) return 0;
-		value = Number(value);
-		if ((value === 0) || !isFinite(value)) return value;
-		return sign(value) * floor(abs(value));
-	};
-
-
-/***/ },
-/* 82 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(83)()
-		? Math.sign
-		: __webpack_require__(84);
-
-
-/***/ },
-/* 83 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		var sign = Math.sign;
-		if (typeof sign !== 'function') return false;
-		return ((sign(10) === 1) && (sign(-20) === -1));
-	};
-
-
-/***/ },
-/* 84 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function (value) {
-		value = Number(value);
-		if (isNaN(value) || (value === 0)) return value;
-		return (value > 0) ? 1 : -1;
-	};
-
-
-/***/ },
-/* 85 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(86)()
-		? Object.setPrototypeOf
-		: __webpack_require__(87);
-
-
-/***/ },
-/* 86 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var create = Object.create, getPrototypeOf = Object.getPrototypeOf
-	  , x = {};
-
-	module.exports = function (/*customCreate*/) {
-		var setPrototypeOf = Object.setPrototypeOf
-		  , customCreate = arguments[0] || create;
-		if (typeof setPrototypeOf !== 'function') return false;
-		return getPrototypeOf(setPrototypeOf(customCreate(null), x)) === x;
-	};
-
-
-/***/ },
-/* 87 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Big thanks to @WebReflection for sorting this out
-	// https://gist.github.com/WebReflection/5593554
-
-	'use strict';
-
-	var isObject      = __webpack_require__(88)
-	  , value         = __webpack_require__(78)
-
-	  , isPrototypeOf = Object.prototype.isPrototypeOf
-	  , defineProperty = Object.defineProperty
-	  , nullDesc = { configurable: true, enumerable: false, writable: true,
-			value: undefined }
-	  , validate;
-
-	validate = function (obj, prototype) {
-		value(obj);
-		if ((prototype === null) || isObject(prototype)) return obj;
-		throw new TypeError('Prototype must be null or an object');
-	};
-
-	module.exports = (function (status) {
-		var fn, set;
-		if (!status) return null;
-		if (status.level === 2) {
-			if (status.set) {
-				set = status.set;
-				fn = function (obj, prototype) {
-					set.call(validate(obj, prototype), prototype);
-					return obj;
-				};
-			} else {
-				fn = function (obj, prototype) {
-					validate(obj, prototype).__proto__ = prototype;
-					return obj;
-				};
-			}
-		} else {
-			fn = function self(obj, prototype) {
-				var isNullBase;
-				validate(obj, prototype);
-				isNullBase = isPrototypeOf.call(self.nullPolyfill, obj);
-				if (isNullBase) delete self.nullPolyfill.__proto__;
-				if (prototype === null) prototype = self.nullPolyfill;
-				obj.__proto__ = prototype;
-				if (isNullBase) defineProperty(self.nullPolyfill, '__proto__', nullDesc);
-				return obj;
-			};
-		}
-		return Object.defineProperty(fn, 'level', { configurable: false,
-			enumerable: false, writable: false, value: status.level });
-	}((function () {
-		var x = Object.create(null), y = {}, set
-		  , desc = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__');
-
-		if (desc) {
-			try {
-				set = desc.set; // Opera crashes at this point
-				set.call(x, y);
-			} catch (ignore) { }
-			if (Object.getPrototypeOf(x) === y) return { set: set, level: 2 };
-		}
-
-		x.__proto__ = y;
-		if (Object.getPrototypeOf(x) === y) return { level: 2 };
-
-		x = {};
-		x.__proto__ = y;
-		if (Object.getPrototypeOf(x) === y) return { level: 1 };
-
-		return false;
-	}())));
-
-	__webpack_require__(89);
-
-
-/***/ },
 /* 88 */
 /***/ function(module, exports) {
 
-	'use strict';
-
-	var map = { function: true, object: true };
-
-	module.exports = function (x) {
-		return ((x != null) && map[typeof x]) || false;
-	};
-
+	module.exports = moment;
 
 /***/ },
 /* 89 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
-
-	'use strict';
-
-	var create = Object.create, shim;
-
-	if (!__webpack_require__(86)()) {
-		shim = __webpack_require__(87);
-	}
-
-	module.exports = (function () {
-		var nullObject, props, desc;
-		if (!shim) return create;
-		if (shim.level !== 1) return create;
-
-		nullObject = {};
-		props = {};
-		desc = { configurable: false, enumerable: false, writable: true,
-			value: undefined };
-		Object.getOwnPropertyNames(Object.prototype).forEach(function (name) {
-			if (name === '__proto__') {
-				props[name] = { configurable: true, enumerable: false, writable: true,
-					value: undefined };
-				return;
-			}
-			props[name] = desc;
-		});
-		Object.defineProperties(nullObject, props);
-
-		Object.defineProperty(shim, 'nullPolyfill', { configurable: false,
-			enumerable: false, writable: false, value: nullObject });
-
-		return function (prototype, props) {
-			return create((prototype === null) ? nullObject : prototype, props);
-		};
-	}());
-
-
-/***/ },
-/* 90 */
 /***/ function(module, exports) {
 
 	'use strict';
 
-	module.exports = function (fn) {
-		if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
-		return fn;
+	exports.__esModule = true;
+	var charMap = {
+		'a': /[áÁàÀãÃâÂäÄåÅāĀąĄ]/g,
+		'e': /[éÉèÈêÊëËēĒėĖęĘ]/g,
+		'i': /[îÎíÍìÌïÏīĪįĮ]/g,
+		'l': /[łŁ]/g,
+		'o': /[ôÔòÒøØōŌóÓõÕöÖ]/g,
+		'u': /[ûÛúÚùÙüÜūŪ]/g,
+		'c': /[çÇčČćĆ]/g,
+		's': /[śŚšŠ]/g,
+		'z': /[źŹżŻ]/g,
+		'': /[@#~$!º|"·&¬()=?¿¡*\^`´{};[\].\\]/g
 	};
 
+	exports['default'] = {
+		normalize: function normalize(value) {
+			var escapeLess = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+			var parseToLower = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+			var trim = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
+
+			var internalVal = value.toString();
+
+			if (parseToLower && trim) {
+				internalVal = internalVal.trim().toLowerCase();
+			} else if (parseToLower) {
+				internalVal = internalVal.toLowerCase();
+			} else if (trim) {
+				internalVal = internalVal.trim();
+			}
+
+			if (!escapeLess) {
+				charMap[''] = /[@#~$!º|"·%&¬()=?¿¡*+\^`´{};:[\].\-/\\]/g;
+			}
+
+			for (var c in charMap) {
+				try {
+					internalVal = internalVal.replace(charMap[c], c);
+				} catch (e) {
+					console.warn('Normalize error on ', value);
+				}
+			}
+
+			return internalVal;
+		}
+	};
+	module.exports = exports['default'];
+
+/***/ },
+/* 90 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	exports.__esModule = true;
+
+	var _BIGGERTHAN$LOWERTHAN;
+
+	var _formatters = __webpack_require__(91);
+
+	var _formatters2 = _interopRequireDefault(_formatters);
+
+	var _moment = __webpack_require__(88);
+
+	var _moment2 = _interopRequireDefault(_moment);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+
+	var NOTEQUALS = 'notequals';
+	var EQUALS = "equals";
+	var BIGGERTHAN = 'bigger';
+	var LOWERTHAN = 'lower';
+	var AFTERDATE = 'after';
+	var BEFOREDATE = 'before';
+	var BETWEENDATES = 'between';
+	var ONDATE = 'on';
+	var NOTONDATE = 'noton';
+	var STARTSWITH = 'start';
+	var FINISHWITH = 'finish';
+	var CONTAINS = 'contains';
+	var NOTCONTAINS = 'notcontains';
+	var EMPTY = 'empty';
+	var BETWEENDATES_SEPARATOR = '%-%';
+
+	exports["default"] = (_BIGGERTHAN$LOWERTHAN = {}, _BIGGERTHAN$LOWERTHAN[BIGGERTHAN] = function (value, compareTo) {
+		var n1 = _formatters2["default"].number(value) || 0,
+		    n2 = _formatters2["default"].number(compareTo) || 0;
+		return n1 > n2;
+	}, _BIGGERTHAN$LOWERTHAN[LOWERTHAN] = function (value, compareTo) {
+		var n1 = _formatters2["default"].number(value) || 0,
+		    n2 = _formatters2["default"].number(compareTo) || 0;
+		return n1 < n2;
+	}, _BIGGERTHAN$LOWERTHAN[AFTERDATE] = function (value, compareTo) {
+		return (0, _moment2["default"])(compareTo).isAfter(value);
+	}, _BIGGERTHAN$LOWERTHAN[BEFOREDATE] = function (value, compareTo) {
+		return (0, _moment2["default"])(compareTo).isBefore(value);
+	}, _BIGGERTHAN$LOWERTHAN[BETWEENDATES] = function (value, compareTo) {
+		var separator = void 0,
+		    d1Start = void 0,
+		    d1End = void 0;
+
+		if (!value || !compareTo) return false;
+		separator = value.indexOf(BETWEENDATES_SEPARATOR);
+
+		if (separator === -1) {
+			return false;
+		}
+
+		d1Start = value.substring(0, separator);
+		d1End = value.substring(separator + 3);
+
+		return (0, _moment2["default"])(compareTo).isBetween(d1Start, d1End);
+	}, _BIGGERTHAN$LOWERTHAN[ONDATE] = function (value, compareTo) {
+		return (0, _moment2["default"])(value).isSame(compareTo, 'day');
+	}, _BIGGERTHAN$LOWERTHAN[NOTONDATE] = function (value, compareTo) {
+		return !(0, _moment2["default"])(value).isSame(compareTo, 'day');
+	}, _BIGGERTHAN$LOWERTHAN[NOTEQUALS] = function (value, compareTo) {
+		return value !== compareTo;
+	}, _BIGGERTHAN$LOWERTHAN[EQUALS] = function (value, compareTo) {
+		return value === compareTo;
+	}, _BIGGERTHAN$LOWERTHAN[STARTSWITH] = function (value, compareTo) {
+		if (!value || !compareTo || !value.length || !compareTo.length) return false;
+
+		var valLength = value.length;
+		return compareTo.length >= valLength ? value === compareTo.substring(0, valLength) : false;
+	}, _BIGGERTHAN$LOWERTHAN[FINISHWITH] = function (value, compareTo) {
+		if (!value || !compareTo || !value.length || !compareTo.length) return false;
+
+		var valLength = value.length,
+		    compareLength = compareTo.length;
+		return compareTo.length >= value.length ? value === compareTo.substring(compareLength - valLength) : false;
+	}, _BIGGERTHAN$LOWERTHAN[CONTAINS] = function (value, compareTo) {
+		var result = void 0;
+
+		if (!value || !compareTo) result = false;else result = compareTo.indexOf(value) !== -1;
+
+		return result;
+	}, _BIGGERTHAN$LOWERTHAN[NOTCONTAINS] = function (value, compareTo) {
+		var result = void 0;
+
+		if (!value || !compareTo) result = false;else result = compareTo.indexOf(value) === -1;
+
+		return result;
+	}, _BIGGERTHAN$LOWERTHAN[EMPTY] = function (value, compareTo) {
+		var result = void 0;
+
+		if (value !== 'yes' && value !== 'no' || compareTo === null || compareTo.length === undefined) return false;
+
+		if (value === 'yes') {
+			result = compareTo.length === 0;
+		} else {
+			result = compareTo.length > 0;
+		}
+
+		return result;
+	}, _BIGGERTHAN$LOWERTHAN);
+	module.exports = exports['default'];
 
 /***/ },
 /* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-
-	var assign        = __webpack_require__(92)
-	  , normalizeOpts = __webpack_require__(98)
-	  , isCallable    = __webpack_require__(99)
-	  , contains      = __webpack_require__(100)
-
-	  , d;
-
-	d = module.exports = function (dscr, value/*, options*/) {
-		var c, e, w, options, desc;
-		if ((arguments.length < 2) || (typeof dscr !== 'string')) {
-			options = value;
-			value = dscr;
-			dscr = null;
-		} else {
-			options = arguments[2];
-		}
-		if (dscr == null) {
-			c = w = true;
-			e = false;
-		} else {
-			c = contains.call(dscr, 'c');
-			e = contains.call(dscr, 'e');
-			w = contains.call(dscr, 'w');
-		}
-
-		desc = { value: value, configurable: c, enumerable: e, writable: w };
-		return !options ? desc : assign(normalizeOpts(options), desc);
-	};
-
-	d.gs = function (dscr, get, set/*, options*/) {
-		var c, e, options, desc;
-		if (typeof dscr !== 'string') {
-			options = set;
-			set = get;
-			get = dscr;
-			dscr = null;
-		} else {
-			options = arguments[3];
-		}
-		if (get == null) {
-			get = undefined;
-		} else if (!isCallable(get)) {
-			options = get;
-			get = set = undefined;
-		} else if (set == null) {
-			set = undefined;
-		} else if (!isCallable(set)) {
-			options = set;
-			set = undefined;
-		}
-		if (dscr == null) {
-			c = true;
-			e = false;
-		} else {
-			c = contains.call(dscr, 'c');
-			e = contains.call(dscr, 'e');
-		}
-
-		desc = { get: get, set: set, configurable: c, enumerable: e };
-		return !options ? desc : assign(normalizeOpts(options), desc);
-	};
-
-
-/***/ },
-/* 92 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(93)()
-		? Object.assign
-		: __webpack_require__(94);
-
-
-/***/ },
-/* 93 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		var assign = Object.assign, obj;
-		if (typeof assign !== 'function') return false;
-		obj = { foo: 'raz' };
-		assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
-		return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
-	};
-
-
-/***/ },
-/* 94 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var keys  = __webpack_require__(95)
-	  , value = __webpack_require__(78)
-
-	  , max = Math.max;
-
-	module.exports = function (dest, src/*, …srcn*/) {
-		var error, i, l = max(arguments.length, 2), assign;
-		dest = Object(value(dest));
-		assign = function (key) {
-			try { dest[key] = src[key]; } catch (e) {
-				if (!error) error = e;
-			}
-		};
-		for (i = 1; i < l; ++i) {
-			src = arguments[i];
-			keys(src).forEach(assign);
-		}
-		if (error !== undefined) throw error;
-		return dest;
-	};
-
-
-/***/ },
-/* 95 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(96)()
-		? Object.keys
-		: __webpack_require__(97);
-
-
-/***/ },
-/* 96 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		try {
-			Object.keys('primitive');
-			return true;
-		} catch (e) { return false; }
-	};
-
-
-/***/ },
-/* 97 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var keys = Object.keys;
-
-	module.exports = function (object) {
-		return keys(object == null ? object : Object(object));
-	};
-
-
-/***/ },
-/* 98 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var forEach = Array.prototype.forEach, create = Object.create;
-
-	var process = function (src, obj) {
-		var key;
-		for (key in src) obj[key] = src[key];
-	};
-
-	module.exports = function (options/*, …options*/) {
-		var result = create(null);
-		forEach.call(arguments, function (options) {
-			if (options == null) return;
-			process(Object(options), result);
-		});
-		return result;
-	};
-
-
-/***/ },
-/* 99 */
-/***/ function(module, exports) {
-
-	// Deprecated
-
-	'use strict';
-
-	module.exports = function (obj) { return typeof obj === 'function'; };
-
-
-/***/ },
-/* 100 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(101)()
-		? String.prototype.contains
-		: __webpack_require__(102);
-
-
-/***/ },
-/* 101 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var str = 'razdwatrzy';
-
-	module.exports = function () {
-		if (typeof str.contains !== 'function') return false;
-		return ((str.contains('dwa') === true) && (str.contains('foo') === false));
-	};
-
-
-/***/ },
-/* 102 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var indexOf = String.prototype.indexOf;
-
-	module.exports = function (searchString/*, position*/) {
-		return indexOf.call(this, searchString, arguments[1]) > -1;
-	};
-
-
-/***/ },
-/* 103 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var d        = __webpack_require__(91)
-	  , callable = __webpack_require__(90)
-
-	  , apply = Function.prototype.apply, call = Function.prototype.call
-	  , create = Object.create, defineProperty = Object.defineProperty
-	  , defineProperties = Object.defineProperties
-	  , hasOwnProperty = Object.prototype.hasOwnProperty
-	  , descriptor = { configurable: true, enumerable: false, writable: true }
-
-	  , on, once, off, emit, methods, descriptors, base;
-
-	on = function (type, listener) {
-		var data;
-
-		callable(listener);
-
-		if (!hasOwnProperty.call(this, '__ee__')) {
-			data = descriptor.value = create(null);
-			defineProperty(this, '__ee__', descriptor);
-			descriptor.value = null;
-		} else {
-			data = this.__ee__;
-		}
-		if (!data[type]) data[type] = listener;
-		else if (typeof data[type] === 'object') data[type].push(listener);
-		else data[type] = [data[type], listener];
-
-		return this;
-	};
-
-	once = function (type, listener) {
-		var once, self;
-
-		callable(listener);
-		self = this;
-		on.call(this, type, once = function () {
-			off.call(self, type, once);
-			apply.call(listener, this, arguments);
-		});
-
-		once.__eeOnceListener__ = listener;
-		return this;
-	};
-
-	off = function (type, listener) {
-		var data, listeners, candidate, i;
-
-		callable(listener);
-
-		if (!hasOwnProperty.call(this, '__ee__')) return this;
-		data = this.__ee__;
-		if (!data[type]) return this;
-		listeners = data[type];
-
-		if (typeof listeners === 'object') {
-			for (i = 0; (candidate = listeners[i]); ++i) {
-				if ((candidate === listener) ||
-						(candidate.__eeOnceListener__ === listener)) {
-					if (listeners.length === 2) data[type] = listeners[i ? 0 : 1];
-					else listeners.splice(i, 1);
-				}
-			}
-		} else {
-			if ((listeners === listener) ||
-					(listeners.__eeOnceListener__ === listener)) {
-				delete data[type];
-			}
-		}
-
-		return this;
-	};
-
-	emit = function (type) {
-		var i, l, listener, listeners, args;
-
-		if (!hasOwnProperty.call(this, '__ee__')) return;
-		listeners = this.__ee__[type];
-		if (!listeners) return;
-
-		if (typeof listeners === 'object') {
-			l = arguments.length;
-			args = new Array(l - 1);
-			for (i = 1; i < l; ++i) args[i - 1] = arguments[i];
-
-			listeners = listeners.slice();
-			for (i = 0; (listener = listeners[i]); ++i) {
-				apply.call(listener, this, args);
-			}
-		} else {
-			switch (arguments.length) {
-			case 1:
-				call.call(listeners, this);
-				break;
-			case 2:
-				call.call(listeners, this, arguments[1]);
-				break;
-			case 3:
-				call.call(listeners, this, arguments[1], arguments[2]);
-				break;
-			default:
-				l = arguments.length;
-				args = new Array(l - 1);
-				for (i = 1; i < l; ++i) {
-					args[i - 1] = arguments[i];
-				}
-				apply.call(listeners, this, args);
-			}
-		}
-	};
-
-	methods = {
-		on: on,
-		once: once,
-		off: off,
-		emit: emit
-	};
-
-	descriptors = {
-		on: d(on),
-		once: d(once),
-		off: d(off),
-		emit: d(emit)
-	};
-
-	base = defineProperties({}, descriptors);
-
-	module.exports = exports = function (o) {
-		return (o == null) ? create(base) : defineProperties(Object(o), descriptors);
-	};
-	exports.methods = methods;
-
-
-/***/ },
-/* 104 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(105)() ? Symbol : __webpack_require__(106);
-
-
-/***/ },
-/* 105 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		var symbol;
-		if (typeof Symbol !== 'function') return false;
-		symbol = Symbol('test symbol');
-		try { String(symbol); } catch (e) { return false; }
-		if (typeof Symbol.iterator === 'symbol') return true;
-
-		// Return 'true' for polyfills
-		if (typeof Symbol.isConcatSpreadable !== 'object') return false;
-		if (typeof Symbol.iterator !== 'object') return false;
-		if (typeof Symbol.toPrimitive !== 'object') return false;
-		if (typeof Symbol.toStringTag !== 'object') return false;
-		if (typeof Symbol.unscopables !== 'object') return false;
-
-		return true;
-	};
-
-
-/***/ },
-/* 106 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
-
-	'use strict';
-
-	var d              = __webpack_require__(91)
-	  , validateSymbol = __webpack_require__(107)
-
-	  , create = Object.create, defineProperties = Object.defineProperties
-	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
-	  , NativeSymbol, SymbolPolyfill, HiddenSymbol, globalSymbols = create(null);
-
-	if (typeof Symbol === 'function') NativeSymbol = Symbol;
-
-	var generateName = (function () {
-		var created = create(null);
-		return function (desc) {
-			var postfix = 0, name, ie11BugWorkaround;
-			while (created[desc + (postfix || '')]) ++postfix;
-			desc += (postfix || '');
-			created[desc] = true;
-			name = '@@' + desc;
-			defineProperty(objPrototype, name, d.gs(null, function (value) {
-				// For IE11 issue see:
-				// https://connect.microsoft.com/IE/feedbackdetail/view/1928508/
-				//    ie11-broken-getters-on-dom-objects
-				// https://github.com/medikoo/es6-symbol/issues/12
-				if (ie11BugWorkaround) return;
-				ie11BugWorkaround = true;
-				defineProperty(this, name, d(value));
-				ie11BugWorkaround = false;
-			}));
-			return name;
-		};
-	}());
-
-	// Internal constructor (not one exposed) for creating Symbol instances.
-	// This one is used to ensure that `someSymbol instanceof Symbol` always return false
-	HiddenSymbol = function Symbol(description) {
-		if (this instanceof HiddenSymbol) throw new TypeError('TypeError: Symbol is not a constructor');
-		return SymbolPolyfill(description);
-	};
-
-	// Exposed `Symbol` constructor
-	// (returns instances of HiddenSymbol)
-	module.exports = SymbolPolyfill = function Symbol(description) {
-		var symbol;
-		if (this instanceof Symbol) throw new TypeError('TypeError: Symbol is not a constructor');
-		symbol = create(HiddenSymbol.prototype);
-		description = (description === undefined ? '' : String(description));
-		return defineProperties(symbol, {
-			__description__: d('', description),
-			__name__: d('', generateName(description))
-		});
-	};
-	defineProperties(SymbolPolyfill, {
-		for: d(function (key) {
-			if (globalSymbols[key]) return globalSymbols[key];
-			return (globalSymbols[key] = SymbolPolyfill(String(key)));
-		}),
-		keyFor: d(function (s) {
-			var key;
-			validateSymbol(s);
-			for (key in globalSymbols) if (globalSymbols[key] === s) return key;
-		}),
-
-		// If there's native implementation of given symbol, let's fallback to it
-		// to ensure proper interoperability with other native functions e.g. Array.from
-		hasInstance: d('', (NativeSymbol && NativeSymbol.hasInstance) || SymbolPolyfill('hasInstance')),
-		isConcatSpreadable: d('', (NativeSymbol && NativeSymbol.isConcatSpreadable) ||
-			SymbolPolyfill('isConcatSpreadable')),
-		iterator: d('', (NativeSymbol && NativeSymbol.iterator) || SymbolPolyfill('iterator')),
-		match: d('', (NativeSymbol && NativeSymbol.match) || SymbolPolyfill('match')),
-		replace: d('', (NativeSymbol && NativeSymbol.replace) || SymbolPolyfill('replace')),
-		search: d('', (NativeSymbol && NativeSymbol.search) || SymbolPolyfill('search')),
-		species: d('', (NativeSymbol && NativeSymbol.species) || SymbolPolyfill('species')),
-		split: d('', (NativeSymbol && NativeSymbol.split) || SymbolPolyfill('split')),
-		toPrimitive: d('', (NativeSymbol && NativeSymbol.toPrimitive) || SymbolPolyfill('toPrimitive')),
-		toStringTag: d('', (NativeSymbol && NativeSymbol.toStringTag) || SymbolPolyfill('toStringTag')),
-		unscopables: d('', (NativeSymbol && NativeSymbol.unscopables) || SymbolPolyfill('unscopables'))
-	});
-
-	// Internal tweaks for real symbol producer
-	defineProperties(HiddenSymbol.prototype, {
-		constructor: d(SymbolPolyfill),
-		toString: d('', function () { return this.__name__; })
-	});
-
-	// Proper implementation of methods exposed on Symbol.prototype
-	// They won't be accessible on produced symbol instances as they derive from HiddenSymbol.prototype
-	defineProperties(SymbolPolyfill.prototype, {
-		toString: d(function () { return 'Symbol (' + validateSymbol(this).__description__ + ')'; }),
-		valueOf: d(function () { return validateSymbol(this); })
-	});
-	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toPrimitive, d('',
-		function () { return validateSymbol(this); }));
-	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toStringTag, d('c', 'Symbol'));
-
-	// Proper implementaton of toPrimitive and toStringTag for returned symbol instances
-	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toStringTag,
-		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toStringTag]));
-
-	// Note: It's important to define `toPrimitive` as last one, as some implementations
-	// implement `toPrimitive` natively without implementing `toStringTag` (or other specified symbols)
-	// And that may invoke error in definition flow:
-	// See: https://github.com/medikoo/es6-symbol/issues/13#issuecomment-164146149
-	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toPrimitive,
-		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toPrimitive]));
-
-
-/***/ },
-/* 107 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isSymbol = __webpack_require__(108);
-
-	module.exports = function (value) {
-		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
-		return value;
-	};
-
-
-/***/ },
-/* 108 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function (x) {
-		return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
-	};
-
-
-/***/ },
-/* 109 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isIterable = __webpack_require__(110);
-
-	module.exports = function (value) {
-		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
-		return value;
-	};
-
-
-/***/ },
-/* 110 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isArguments    = __webpack_require__(111)
-	  , isString       = __webpack_require__(112)
-	  , iteratorSymbol = __webpack_require__(104).iterator
-
-	  , isArray = Array.isArray;
-
-	module.exports = function (value) {
-		if (value == null) return false;
-		if (isArray(value)) return true;
-		if (isString(value)) return true;
-		if (isArguments(value)) return true;
-		return (typeof value[iteratorSymbol] === 'function');
-	};
-
-
-/***/ },
-/* 111 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var toString = Object.prototype.toString
-
-	  , id = toString.call((function () { return arguments; }()));
-
-	module.exports = function (x) { return (toString.call(x) === id); };
-
-
-/***/ },
-/* 112 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var toString = Object.prototype.toString
-
-	  , id = toString.call('');
-
-	module.exports = function (x) {
-		return (typeof x === 'string') || (x && (typeof x === 'object') &&
-			((x instanceof String) || (toString.call(x) === id))) || false;
-	};
-
-
-/***/ },
-/* 113 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isArguments = __webpack_require__(111)
-	  , callable    = __webpack_require__(90)
-	  , isString    = __webpack_require__(112)
-	  , get         = __webpack_require__(114)
-
-	  , isArray = Array.isArray, call = Function.prototype.call
-	  , some = Array.prototype.some;
-
-	module.exports = function (iterable, cb/*, thisArg*/) {
-		var mode, thisArg = arguments[2], result, doBreak, broken, i, l, char, code;
-		if (isArray(iterable) || isArguments(iterable)) mode = 'array';
-		else if (isString(iterable)) mode = 'string';
-		else iterable = get(iterable);
-
-		callable(cb);
-		doBreak = function () { broken = true; };
-		if (mode === 'array') {
-			some.call(iterable, function (value) {
-				call.call(cb, thisArg, value, doBreak);
-				if (broken) return true;
-			});
-			return;
-		}
-		if (mode === 'string') {
-			l = iterable.length;
-			for (i = 0; i < l; ++i) {
-				char = iterable[i];
-				if ((i + 1) < l) {
-					code = char.charCodeAt(0);
-					if ((code >= 0xD800) && (code <= 0xDBFF)) char += iterable[++i];
-				}
-				call.call(cb, thisArg, char, doBreak);
-				if (broken) break;
-			}
-			return;
-		}
-		result = iterable.next();
-
-		while (!result.done) {
-			call.call(cb, thisArg, result.value, doBreak);
-			if (broken) return;
-			result = iterable.next();
-		}
-	};
-
-
-/***/ },
-/* 114 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var isArguments    = __webpack_require__(111)
-	  , isString       = __webpack_require__(112)
-	  , ArrayIterator  = __webpack_require__(115)
-	  , StringIterator = __webpack_require__(122)
-	  , iterable       = __webpack_require__(109)
-	  , iteratorSymbol = __webpack_require__(104).iterator;
-
-	module.exports = function (obj) {
-		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
-		if (isArguments(obj)) return new ArrayIterator(obj);
-		if (isString(obj)) return new StringIterator(obj);
-		return new ArrayIterator(obj);
-	};
-
-
-/***/ },
-/* 115 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var setPrototypeOf = __webpack_require__(85)
-	  , contains       = __webpack_require__(100)
-	  , d              = __webpack_require__(91)
-	  , Iterator       = __webpack_require__(116)
-
-	  , defineProperty = Object.defineProperty
-	  , ArrayIterator;
-
-	ArrayIterator = module.exports = function (arr, kind) {
-		if (!(this instanceof ArrayIterator)) return new ArrayIterator(arr, kind);
-		Iterator.call(this, arr);
-		if (!kind) kind = 'value';
-		else if (contains.call(kind, 'key+value')) kind = 'key+value';
-		else if (contains.call(kind, 'key')) kind = 'key';
-		else kind = 'value';
-		defineProperty(this, '__kind__', d('', kind));
-	};
-	if (setPrototypeOf) setPrototypeOf(ArrayIterator, Iterator);
-
-	ArrayIterator.prototype = Object.create(Iterator.prototype, {
-		constructor: d(ArrayIterator),
-		_resolve: d(function (i) {
-			if (this.__kind__ === 'value') return this.__list__[i];
-			if (this.__kind__ === 'key+value') return [i, this.__list__[i]];
-			return i;
-		}),
-		toString: d(function () { return '[object Array Iterator]'; })
-	});
-
-
-/***/ },
-/* 116 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var clear    = __webpack_require__(77)
-	  , assign   = __webpack_require__(92)
-	  , callable = __webpack_require__(90)
-	  , value    = __webpack_require__(78)
-	  , d        = __webpack_require__(91)
-	  , autoBind = __webpack_require__(117)
-	  , Symbol   = __webpack_require__(104)
-
-	  , defineProperty = Object.defineProperty
-	  , defineProperties = Object.defineProperties
-	  , Iterator;
-
-	module.exports = Iterator = function (list, context) {
-		if (!(this instanceof Iterator)) return new Iterator(list, context);
-		defineProperties(this, {
-			__list__: d('w', value(list)),
-			__context__: d('w', context),
-			__nextIndex__: d('w', 0)
-		});
-		if (!context) return;
-		callable(context.on);
-		context.on('_add', this._onAdd);
-		context.on('_delete', this._onDelete);
-		context.on('_clear', this._onClear);
-	};
-
-	defineProperties(Iterator.prototype, assign({
-		constructor: d(Iterator),
-		_next: d(function () {
-			var i;
-			if (!this.__list__) return;
-			if (this.__redo__) {
-				i = this.__redo__.shift();
-				if (i !== undefined) return i;
-			}
-			if (this.__nextIndex__ < this.__list__.length) return this.__nextIndex__++;
-			this._unBind();
-		}),
-		next: d(function () { return this._createResult(this._next()); }),
-		_createResult: d(function (i) {
-			if (i === undefined) return { done: true, value: undefined };
-			return { done: false, value: this._resolve(i) };
-		}),
-		_resolve: d(function (i) { return this.__list__[i]; }),
-		_unBind: d(function () {
-			this.__list__ = null;
-			delete this.__redo__;
-			if (!this.__context__) return;
-			this.__context__.off('_add', this._onAdd);
-			this.__context__.off('_delete', this._onDelete);
-			this.__context__.off('_clear', this._onClear);
-			this.__context__ = null;
-		}),
-		toString: d(function () { return '[object Iterator]'; })
-	}, autoBind({
-		_onAdd: d(function (index) {
-			if (index >= this.__nextIndex__) return;
-			++this.__nextIndex__;
-			if (!this.__redo__) {
-				defineProperty(this, '__redo__', d('c', [index]));
-				return;
-			}
-			this.__redo__.forEach(function (redo, i) {
-				if (redo >= index) this.__redo__[i] = ++redo;
-			}, this);
-			this.__redo__.push(index);
-		}),
-		_onDelete: d(function (index) {
-			var i;
-			if (index >= this.__nextIndex__) return;
-			--this.__nextIndex__;
-			if (!this.__redo__) return;
-			i = this.__redo__.indexOf(index);
-			if (i !== -1) this.__redo__.splice(i, 1);
-			this.__redo__.forEach(function (redo, i) {
-				if (redo > index) this.__redo__[i] = --redo;
-			}, this);
-		}),
-		_onClear: d(function () {
-			if (this.__redo__) clear.call(this.__redo__);
-			this.__nextIndex__ = 0;
-		})
-	})));
-
-	defineProperty(Iterator.prototype, Symbol.iterator, d(function () {
-		return this;
-	}));
-	defineProperty(Iterator.prototype, Symbol.toStringTag, d('', 'Iterator'));
-
-
-/***/ },
-/* 117 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var copy       = __webpack_require__(118)
-	  , map        = __webpack_require__(119)
-	  , callable   = __webpack_require__(90)
-	  , validValue = __webpack_require__(78)
-
-	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
-	  , hasOwnProperty = Object.prototype.hasOwnProperty
-	  , define;
-
-	define = function (name, desc, bindTo) {
-		var value = validValue(desc) && callable(desc.value), dgs;
-		dgs = copy(desc);
-		delete dgs.writable;
-		delete dgs.value;
-		dgs.get = function () {
-			if (hasOwnProperty.call(this, name)) return value;
-			desc.value = bind.call(value, (bindTo == null) ? this : this[bindTo]);
-			defineProperty(this, name, desc);
-			return this[name];
-		};
-		return dgs;
-	};
-
-	module.exports = function (props/*, bindTo*/) {
-		var bindTo = arguments[1];
-		return map(props, function (desc, name) {
-			return define(name, desc, bindTo);
-		});
-	};
-
-
-/***/ },
-/* 118 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var assign = __webpack_require__(92)
-	  , value  = __webpack_require__(78);
-
-	module.exports = function (obj) {
-		var copy = Object(value(obj));
-		if (copy !== obj) return copy;
-		return assign({}, obj);
-	};
-
-
-/***/ },
-/* 119 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var callable = __webpack_require__(90)
-	  , forEach  = __webpack_require__(120)
-
-	  , call = Function.prototype.call;
-
-	module.exports = function (obj, cb/*, thisArg*/) {
-		var o = {}, thisArg = arguments[2];
-		callable(cb);
-		forEach(obj, function (value, key, obj, index) {
-			o[key] = call.call(cb, thisArg, value, key, obj, index);
-		});
-		return o;
-	};
-
-
-/***/ },
-/* 120 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(121)('forEach');
-
-
-/***/ },
-/* 121 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Internal method, used by iteration functions.
-	// Calls a function for each key-value pair found in object
-	// Optionally takes compareFn to iterate object in specific order
-
-	'use strict';
-
-	var callable = __webpack_require__(90)
-	  , value    = __webpack_require__(78)
-
-	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
-	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
-
-	module.exports = function (method, defVal) {
-		return function (obj, cb/*, thisArg, compareFn*/) {
-			var list, thisArg = arguments[2], compareFn = arguments[3];
-			obj = Object(value(obj));
-			callable(cb);
-
-			list = keys(obj);
-			if (compareFn) {
-				list.sort((typeof compareFn === 'function') ? bind.call(compareFn, obj) : undefined);
-			}
-			if (typeof method !== 'function') method = list[method];
-			return call.call(method, list, function (key, index) {
-				if (!propertyIsEnumerable.call(obj, key)) return defVal;
-				return call.call(cb, thisArg, obj[key], key, obj, index);
-			});
-		};
-	};
-
-
-/***/ },
-/* 122 */
-/***/ function(module, exports, __webpack_require__) {
-
-	// Thanks @mathiasbynens
-	// http://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
-
-	'use strict';
-
-	var setPrototypeOf = __webpack_require__(85)
-	  , d              = __webpack_require__(91)
-	  , Iterator       = __webpack_require__(116)
-
-	  , defineProperty = Object.defineProperty
-	  , StringIterator;
-
-	StringIterator = module.exports = function (str) {
-		if (!(this instanceof StringIterator)) return new StringIterator(str);
-		str = String(str);
-		Iterator.call(this, str);
-		defineProperty(this, '__length__', d('', str.length));
-
-	};
-	if (setPrototypeOf) setPrototypeOf(StringIterator, Iterator);
-
-	StringIterator.prototype = Object.create(Iterator.prototype, {
-		constructor: d(StringIterator),
-		_next: d(function () {
-			if (!this.__list__) return;
-			if (this.__nextIndex__ < this.__length__) return this.__nextIndex__++;
-			this._unBind();
-		}),
-		_resolve: d(function (i) {
-			var char = this.__list__[i], code;
-			if (this.__nextIndex__ === this.__length__) return char;
-			code = char.charCodeAt(0);
-			if ((code >= 0xD800) && (code <= 0xDBFF)) return char + this.__list__[this.__nextIndex__++];
-			return char;
-		}),
-		toString: d(function () { return '[object String Iterator]'; })
-	});
-
-
-/***/ },
-/* 123 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var setPrototypeOf    = __webpack_require__(85)
-	  , contains          = __webpack_require__(100)
-	  , d                 = __webpack_require__(91)
-	  , Iterator          = __webpack_require__(116)
-	  , toStringTagSymbol = __webpack_require__(104).toStringTag
-
-	  , defineProperty = Object.defineProperty
-	  , SetIterator;
-
-	SetIterator = module.exports = function (set, kind) {
-		if (!(this instanceof SetIterator)) return new SetIterator(set, kind);
-		Iterator.call(this, set.__setData__, set);
-		if (!kind) kind = 'value';
-		else if (contains.call(kind, 'key+value')) kind = 'key+value';
-		else kind = 'value';
-		defineProperty(this, '__kind__', d('', kind));
-	};
-	if (setPrototypeOf) setPrototypeOf(SetIterator, Iterator);
-
-	SetIterator.prototype = Object.create(Iterator.prototype, {
-		constructor: d(SetIterator),
-		_resolve: d(function (i) {
-			if (this.__kind__ === 'value') return this.__list__[i];
-			return [this.__list__[i], this.__list__[i]];
-		}),
-		toString: d(function () { return '[object Set Iterator]'; })
-	});
-	defineProperty(SetIterator.prototype, toStringTagSymbol, d('c', 'Set Iterator'));
-
-
-/***/ },
-/* 124 */
-/***/ function(module, exports) {
-
-	// Exports true if environment provides native `Set` implementation,
-	// whatever that is.
-
-	'use strict';
-
-	module.exports = (function () {
-		if (typeof Set === 'undefined') return false;
-		return (Object.prototype.toString.call(Set.prototype) === '[object Set]');
-	}());
-
-
-/***/ },
-/* 125 */
-/***/ function(module, exports, __webpack_require__) {
-
 	"use strict";
 
-	Object.defineProperty(exports, "__esModule", {
-		value: true
-	});
+	exports.__esModule = true;
 
-	var _moment = __webpack_require__(126);
+	var _moment = __webpack_require__(88);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(127);
+	var _numeral = __webpack_require__(92);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -17953,13 +19726,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 126 */
-/***/ function(module, exports) {
-
-	module.exports = moment;
-
-/***/ },
-/* 127 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -18644,7 +20411,1462 @@ var ProperTable =
 
 
 /***/ },
+/* 93 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(94)() ? Set : __webpack_require__(95);
+
+
+/***/ },
+/* 94 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var set, iterator, result;
+		if (typeof Set !== 'function') return false;
+		set = new Set(['raz', 'dwa', 'trzy']);
+		if (String(set) !== '[object Set]') return false;
+		if (set.size !== 3) return false;
+		if (typeof set.add !== 'function') return false;
+		if (typeof set.clear !== 'function') return false;
+		if (typeof set.delete !== 'function') return false;
+		if (typeof set.entries !== 'function') return false;
+		if (typeof set.forEach !== 'function') return false;
+		if (typeof set.has !== 'function') return false;
+		if (typeof set.keys !== 'function') return false;
+		if (typeof set.values !== 'function') return false;
+
+		iterator = set.values();
+		result = iterator.next();
+		if (result.done !== false) return false;
+		if (result.value !== 'raz') return false;
+
+		return true;
+	};
+
+
+/***/ },
+/* 95 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var clear          = __webpack_require__(96)
+	  , eIndexOf       = __webpack_require__(98)
+	  , setPrototypeOf = __webpack_require__(104)
+	  , callable       = __webpack_require__(109)
+	  , d              = __webpack_require__(110)
+	  , ee             = __webpack_require__(122)
+	  , Symbol         = __webpack_require__(123)
+	  , iterator       = __webpack_require__(128)
+	  , forOf          = __webpack_require__(132)
+	  , Iterator       = __webpack_require__(142)
+	  , isNative       = __webpack_require__(143)
+
+	  , call = Function.prototype.call
+	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
+	  , SetPoly, getValues, NativeSet;
+
+	if (isNative) NativeSet = Set;
+
+	module.exports = SetPoly = function Set(/*iterable*/) {
+		var iterable = arguments[0], self;
+		if (!(this instanceof SetPoly)) throw new TypeError('Constructor requires \'new\'');
+		if (isNative && setPrototypeOf) self = setPrototypeOf(new NativeSet(), getPrototypeOf(this));
+		else self = this;
+		if (iterable != null) iterator(iterable);
+		defineProperty(self, '__setData__', d('c', []));
+		if (!iterable) return self;
+		forOf(iterable, function (value) {
+			if (eIndexOf.call(this, value) !== -1) return;
+			this.push(value);
+		}, self.__setData__);
+		return self;
+	};
+
+	if (isNative) {
+		if (setPrototypeOf) setPrototypeOf(SetPoly, NativeSet);
+		SetPoly.prototype = Object.create(NativeSet.prototype, { constructor: d(SetPoly) });
+	}
+
+	ee(Object.defineProperties(SetPoly.prototype, {
+		add: d(function (value) {
+			if (this.has(value)) return this;
+			this.emit('_add', this.__setData__.push(value) - 1, value);
+			return this;
+		}),
+		clear: d(function () {
+			if (!this.__setData__.length) return;
+			clear.call(this.__setData__);
+			this.emit('_clear');
+		}),
+		delete: d(function (value) {
+			var index = eIndexOf.call(this.__setData__, value);
+			if (index === -1) return false;
+			this.__setData__.splice(index, 1);
+			this.emit('_delete', index, value);
+			return true;
+		}),
+		entries: d(function () { return new Iterator(this, 'key+value'); }),
+		forEach: d(function (cb/*, thisArg*/) {
+			var thisArg = arguments[1], iterator, result, value;
+			callable(cb);
+			iterator = this.values();
+			result = iterator._next();
+			while (result !== undefined) {
+				value = iterator._resolve(result);
+				call.call(cb, thisArg, value, value, this);
+				result = iterator._next();
+			}
+		}),
+		has: d(function (value) {
+			return (eIndexOf.call(this.__setData__, value) !== -1);
+		}),
+		keys: d(getValues = function () { return this.values(); }),
+		size: d.gs(function () { return this.__setData__.length; }),
+		values: d(function () { return new Iterator(this); }),
+		toString: d(function () { return '[object Set]'; })
+	}));
+	defineProperty(SetPoly.prototype, Symbol.iterator, d(getValues));
+	defineProperty(SetPoly.prototype, Symbol.toStringTag, d('c', 'Set'));
+
+
+/***/ },
+/* 96 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Inspired by Google Closure:
+	// http://closure-library.googlecode.com/svn/docs/
+	// closure_goog_array_array.js.html#goog.array.clear
+
+	'use strict';
+
+	var value = __webpack_require__(97);
+
+	module.exports = function () {
+		value(this).length = 0;
+		return this;
+	};
+
+
+/***/ },
+/* 97 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (value) {
+		if (value == null) throw new TypeError("Cannot use null or undefined");
+		return value;
+	};
+
+
+/***/ },
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toPosInt = __webpack_require__(99)
+	  , value    = __webpack_require__(97)
+
+	  , indexOf = Array.prototype.indexOf
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , abs = Math.abs, floor = Math.floor;
+
+	module.exports = function (searchElement/*, fromIndex*/) {
+		var i, l, fromIndex, val;
+		if (searchElement === searchElement) { //jslint: ignore
+			return indexOf.apply(this, arguments);
+		}
+
+		l = toPosInt(value(this).length);
+		fromIndex = arguments[1];
+		if (isNaN(fromIndex)) fromIndex = 0;
+		else if (fromIndex >= 0) fromIndex = floor(fromIndex);
+		else fromIndex = toPosInt(this.length) - floor(abs(fromIndex));
+
+		for (i = fromIndex; i < l; ++i) {
+			if (hasOwnProperty.call(this, i)) {
+				val = this[i];
+				if (val !== val) return i; //jslint: ignore
+			}
+		}
+		return -1;
+	};
+
+
+/***/ },
+/* 99 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var toInteger = __webpack_require__(100)
+
+	  , max = Math.max;
+
+	module.exports = function (value) { return max(0, toInteger(value)); };
+
+
+/***/ },
+/* 100 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var sign = __webpack_require__(101)
+
+	  , abs = Math.abs, floor = Math.floor;
+
+	module.exports = function (value) {
+		if (isNaN(value)) return 0;
+		value = Number(value);
+		if ((value === 0) || !isFinite(value)) return value;
+		return sign(value) * floor(abs(value));
+	};
+
+
+/***/ },
+/* 101 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(102)()
+		? Math.sign
+		: __webpack_require__(103);
+
+
+/***/ },
+/* 102 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var sign = Math.sign;
+		if (typeof sign !== 'function') return false;
+		return ((sign(10) === 1) && (sign(-20) === -1));
+	};
+
+
+/***/ },
+/* 103 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (value) {
+		value = Number(value);
+		if (isNaN(value) || (value === 0)) return value;
+		return (value > 0) ? 1 : -1;
+	};
+
+
+/***/ },
+/* 104 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(105)()
+		? Object.setPrototypeOf
+		: __webpack_require__(106);
+
+
+/***/ },
+/* 105 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var create = Object.create, getPrototypeOf = Object.getPrototypeOf
+	  , x = {};
+
+	module.exports = function (/*customCreate*/) {
+		var setPrototypeOf = Object.setPrototypeOf
+		  , customCreate = arguments[0] || create;
+		if (typeof setPrototypeOf !== 'function') return false;
+		return getPrototypeOf(setPrototypeOf(customCreate(null), x)) === x;
+	};
+
+
+/***/ },
+/* 106 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Big thanks to @WebReflection for sorting this out
+	// https://gist.github.com/WebReflection/5593554
+
+	'use strict';
+
+	var isObject      = __webpack_require__(107)
+	  , value         = __webpack_require__(97)
+
+	  , isPrototypeOf = Object.prototype.isPrototypeOf
+	  , defineProperty = Object.defineProperty
+	  , nullDesc = { configurable: true, enumerable: false, writable: true,
+			value: undefined }
+	  , validate;
+
+	validate = function (obj, prototype) {
+		value(obj);
+		if ((prototype === null) || isObject(prototype)) return obj;
+		throw new TypeError('Prototype must be null or an object');
+	};
+
+	module.exports = (function (status) {
+		var fn, set;
+		if (!status) return null;
+		if (status.level === 2) {
+			if (status.set) {
+				set = status.set;
+				fn = function (obj, prototype) {
+					set.call(validate(obj, prototype), prototype);
+					return obj;
+				};
+			} else {
+				fn = function (obj, prototype) {
+					validate(obj, prototype).__proto__ = prototype;
+					return obj;
+				};
+			}
+		} else {
+			fn = function self(obj, prototype) {
+				var isNullBase;
+				validate(obj, prototype);
+				isNullBase = isPrototypeOf.call(self.nullPolyfill, obj);
+				if (isNullBase) delete self.nullPolyfill.__proto__;
+				if (prototype === null) prototype = self.nullPolyfill;
+				obj.__proto__ = prototype;
+				if (isNullBase) defineProperty(self.nullPolyfill, '__proto__', nullDesc);
+				return obj;
+			};
+		}
+		return Object.defineProperty(fn, 'level', { configurable: false,
+			enumerable: false, writable: false, value: status.level });
+	}((function () {
+		var x = Object.create(null), y = {}, set
+		  , desc = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__');
+
+		if (desc) {
+			try {
+				set = desc.set; // Opera crashes at this point
+				set.call(x, y);
+			} catch (ignore) { }
+			if (Object.getPrototypeOf(x) === y) return { set: set, level: 2 };
+		}
+
+		x.__proto__ = y;
+		if (Object.getPrototypeOf(x) === y) return { level: 2 };
+
+		x = {};
+		x.__proto__ = y;
+		if (Object.getPrototypeOf(x) === y) return { level: 1 };
+
+		return false;
+	}())));
+
+	__webpack_require__(108);
+
+
+/***/ },
+/* 107 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var map = { function: true, object: true };
+
+	module.exports = function (x) {
+		return ((x != null) && map[typeof x]) || false;
+	};
+
+
+/***/ },
+/* 108 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
+
+	'use strict';
+
+	var create = Object.create, shim;
+
+	if (!__webpack_require__(105)()) {
+		shim = __webpack_require__(106);
+	}
+
+	module.exports = (function () {
+		var nullObject, props, desc;
+		if (!shim) return create;
+		if (shim.level !== 1) return create;
+
+		nullObject = {};
+		props = {};
+		desc = { configurable: false, enumerable: false, writable: true,
+			value: undefined };
+		Object.getOwnPropertyNames(Object.prototype).forEach(function (name) {
+			if (name === '__proto__') {
+				props[name] = { configurable: true, enumerable: false, writable: true,
+					value: undefined };
+				return;
+			}
+			props[name] = desc;
+		});
+		Object.defineProperties(nullObject, props);
+
+		Object.defineProperty(shim, 'nullPolyfill', { configurable: false,
+			enumerable: false, writable: false, value: nullObject });
+
+		return function (prototype, props) {
+			return create((prototype === null) ? nullObject : prototype, props);
+		};
+	}());
+
+
+/***/ },
+/* 109 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (fn) {
+		if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+		return fn;
+	};
+
+
+/***/ },
+/* 110 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var assign        = __webpack_require__(111)
+	  , normalizeOpts = __webpack_require__(117)
+	  , isCallable    = __webpack_require__(118)
+	  , contains      = __webpack_require__(119)
+
+	  , d;
+
+	d = module.exports = function (dscr, value/*, options*/) {
+		var c, e, w, options, desc;
+		if ((arguments.length < 2) || (typeof dscr !== 'string')) {
+			options = value;
+			value = dscr;
+			dscr = null;
+		} else {
+			options = arguments[2];
+		}
+		if (dscr == null) {
+			c = w = true;
+			e = false;
+		} else {
+			c = contains.call(dscr, 'c');
+			e = contains.call(dscr, 'e');
+			w = contains.call(dscr, 'w');
+		}
+
+		desc = { value: value, configurable: c, enumerable: e, writable: w };
+		return !options ? desc : assign(normalizeOpts(options), desc);
+	};
+
+	d.gs = function (dscr, get, set/*, options*/) {
+		var c, e, options, desc;
+		if (typeof dscr !== 'string') {
+			options = set;
+			set = get;
+			get = dscr;
+			dscr = null;
+		} else {
+			options = arguments[3];
+		}
+		if (get == null) {
+			get = undefined;
+		} else if (!isCallable(get)) {
+			options = get;
+			get = set = undefined;
+		} else if (set == null) {
+			set = undefined;
+		} else if (!isCallable(set)) {
+			options = set;
+			set = undefined;
+		}
+		if (dscr == null) {
+			c = true;
+			e = false;
+		} else {
+			c = contains.call(dscr, 'c');
+			e = contains.call(dscr, 'e');
+		}
+
+		desc = { get: get, set: set, configurable: c, enumerable: e };
+		return !options ? desc : assign(normalizeOpts(options), desc);
+	};
+
+
+/***/ },
+/* 111 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(112)()
+		? Object.assign
+		: __webpack_require__(113);
+
+
+/***/ },
+/* 112 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var assign = Object.assign, obj;
+		if (typeof assign !== 'function') return false;
+		obj = { foo: 'raz' };
+		assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
+		return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+	};
+
+
+/***/ },
+/* 113 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var keys  = __webpack_require__(114)
+	  , value = __webpack_require__(97)
+
+	  , max = Math.max;
+
+	module.exports = function (dest, src/*, …srcn*/) {
+		var error, i, l = max(arguments.length, 2), assign;
+		dest = Object(value(dest));
+		assign = function (key) {
+			try { dest[key] = src[key]; } catch (e) {
+				if (!error) error = e;
+			}
+		};
+		for (i = 1; i < l; ++i) {
+			src = arguments[i];
+			keys(src).forEach(assign);
+		}
+		if (error !== undefined) throw error;
+		return dest;
+	};
+
+
+/***/ },
+/* 114 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(115)()
+		? Object.keys
+		: __webpack_require__(116);
+
+
+/***/ },
+/* 115 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		try {
+			Object.keys('primitive');
+			return true;
+		} catch (e) { return false; }
+	};
+
+
+/***/ },
+/* 116 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var keys = Object.keys;
+
+	module.exports = function (object) {
+		return keys(object == null ? object : Object(object));
+	};
+
+
+/***/ },
+/* 117 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var forEach = Array.prototype.forEach, create = Object.create;
+
+	var process = function (src, obj) {
+		var key;
+		for (key in src) obj[key] = src[key];
+	};
+
+	module.exports = function (options/*, …options*/) {
+		var result = create(null);
+		forEach.call(arguments, function (options) {
+			if (options == null) return;
+			process(Object(options), result);
+		});
+		return result;
+	};
+
+
+/***/ },
+/* 118 */
+/***/ function(module, exports) {
+
+	// Deprecated
+
+	'use strict';
+
+	module.exports = function (obj) { return typeof obj === 'function'; };
+
+
+/***/ },
+/* 119 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(120)()
+		? String.prototype.contains
+		: __webpack_require__(121);
+
+
+/***/ },
+/* 120 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var str = 'razdwatrzy';
+
+	module.exports = function () {
+		if (typeof str.contains !== 'function') return false;
+		return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+	};
+
+
+/***/ },
+/* 121 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var indexOf = String.prototype.indexOf;
+
+	module.exports = function (searchString/*, position*/) {
+		return indexOf.call(this, searchString, arguments[1]) > -1;
+	};
+
+
+/***/ },
+/* 122 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var d        = __webpack_require__(110)
+	  , callable = __webpack_require__(109)
+
+	  , apply = Function.prototype.apply, call = Function.prototype.call
+	  , create = Object.create, defineProperty = Object.defineProperty
+	  , defineProperties = Object.defineProperties
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , descriptor = { configurable: true, enumerable: false, writable: true }
+
+	  , on, once, off, emit, methods, descriptors, base;
+
+	on = function (type, listener) {
+		var data;
+
+		callable(listener);
+
+		if (!hasOwnProperty.call(this, '__ee__')) {
+			data = descriptor.value = create(null);
+			defineProperty(this, '__ee__', descriptor);
+			descriptor.value = null;
+		} else {
+			data = this.__ee__;
+		}
+		if (!data[type]) data[type] = listener;
+		else if (typeof data[type] === 'object') data[type].push(listener);
+		else data[type] = [data[type], listener];
+
+		return this;
+	};
+
+	once = function (type, listener) {
+		var once, self;
+
+		callable(listener);
+		self = this;
+		on.call(this, type, once = function () {
+			off.call(self, type, once);
+			apply.call(listener, this, arguments);
+		});
+
+		once.__eeOnceListener__ = listener;
+		return this;
+	};
+
+	off = function (type, listener) {
+		var data, listeners, candidate, i;
+
+		callable(listener);
+
+		if (!hasOwnProperty.call(this, '__ee__')) return this;
+		data = this.__ee__;
+		if (!data[type]) return this;
+		listeners = data[type];
+
+		if (typeof listeners === 'object') {
+			for (i = 0; (candidate = listeners[i]); ++i) {
+				if ((candidate === listener) ||
+						(candidate.__eeOnceListener__ === listener)) {
+					if (listeners.length === 2) data[type] = listeners[i ? 0 : 1];
+					else listeners.splice(i, 1);
+				}
+			}
+		} else {
+			if ((listeners === listener) ||
+					(listeners.__eeOnceListener__ === listener)) {
+				delete data[type];
+			}
+		}
+
+		return this;
+	};
+
+	emit = function (type) {
+		var i, l, listener, listeners, args;
+
+		if (!hasOwnProperty.call(this, '__ee__')) return;
+		listeners = this.__ee__[type];
+		if (!listeners) return;
+
+		if (typeof listeners === 'object') {
+			l = arguments.length;
+			args = new Array(l - 1);
+			for (i = 1; i < l; ++i) args[i - 1] = arguments[i];
+
+			listeners = listeners.slice();
+			for (i = 0; (listener = listeners[i]); ++i) {
+				apply.call(listener, this, args);
+			}
+		} else {
+			switch (arguments.length) {
+			case 1:
+				call.call(listeners, this);
+				break;
+			case 2:
+				call.call(listeners, this, arguments[1]);
+				break;
+			case 3:
+				call.call(listeners, this, arguments[1], arguments[2]);
+				break;
+			default:
+				l = arguments.length;
+				args = new Array(l - 1);
+				for (i = 1; i < l; ++i) {
+					args[i - 1] = arguments[i];
+				}
+				apply.call(listeners, this, args);
+			}
+		}
+	};
+
+	methods = {
+		on: on,
+		once: once,
+		off: off,
+		emit: emit
+	};
+
+	descriptors = {
+		on: d(on),
+		once: d(once),
+		off: d(off),
+		emit: d(emit)
+	};
+
+	base = defineProperties({}, descriptors);
+
+	module.exports = exports = function (o) {
+		return (o == null) ? create(base) : defineProperties(Object(o), descriptors);
+	};
+	exports.methods = methods;
+
+
+/***/ },
+/* 123 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(124)() ? Symbol : __webpack_require__(125);
+
+
+/***/ },
+/* 124 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function () {
+		var symbol;
+		if (typeof Symbol !== 'function') return false;
+		symbol = Symbol('test symbol');
+		try { String(symbol); } catch (e) { return false; }
+		if (typeof Symbol.iterator === 'symbol') return true;
+
+		// Return 'true' for polyfills
+		if (typeof Symbol.isConcatSpreadable !== 'object') return false;
+		if (typeof Symbol.iterator !== 'object') return false;
+		if (typeof Symbol.toPrimitive !== 'object') return false;
+		if (typeof Symbol.toStringTag !== 'object') return false;
+		if (typeof Symbol.unscopables !== 'object') return false;
+
+		return true;
+	};
+
+
+/***/ },
+/* 125 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
+
+	'use strict';
+
+	var d              = __webpack_require__(110)
+	  , validateSymbol = __webpack_require__(126)
+
+	  , create = Object.create, defineProperties = Object.defineProperties
+	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
+	  , NativeSymbol, SymbolPolyfill, HiddenSymbol, globalSymbols = create(null);
+
+	if (typeof Symbol === 'function') NativeSymbol = Symbol;
+
+	var generateName = (function () {
+		var created = create(null);
+		return function (desc) {
+			var postfix = 0, name, ie11BugWorkaround;
+			while (created[desc + (postfix || '')]) ++postfix;
+			desc += (postfix || '');
+			created[desc] = true;
+			name = '@@' + desc;
+			defineProperty(objPrototype, name, d.gs(null, function (value) {
+				// For IE11 issue see:
+				// https://connect.microsoft.com/IE/feedbackdetail/view/1928508/
+				//    ie11-broken-getters-on-dom-objects
+				// https://github.com/medikoo/es6-symbol/issues/12
+				if (ie11BugWorkaround) return;
+				ie11BugWorkaround = true;
+				defineProperty(this, name, d(value));
+				ie11BugWorkaround = false;
+			}));
+			return name;
+		};
+	}());
+
+	// Internal constructor (not one exposed) for creating Symbol instances.
+	// This one is used to ensure that `someSymbol instanceof Symbol` always return false
+	HiddenSymbol = function Symbol(description) {
+		if (this instanceof HiddenSymbol) throw new TypeError('TypeError: Symbol is not a constructor');
+		return SymbolPolyfill(description);
+	};
+
+	// Exposed `Symbol` constructor
+	// (returns instances of HiddenSymbol)
+	module.exports = SymbolPolyfill = function Symbol(description) {
+		var symbol;
+		if (this instanceof Symbol) throw new TypeError('TypeError: Symbol is not a constructor');
+		symbol = create(HiddenSymbol.prototype);
+		description = (description === undefined ? '' : String(description));
+		return defineProperties(symbol, {
+			__description__: d('', description),
+			__name__: d('', generateName(description))
+		});
+	};
+	defineProperties(SymbolPolyfill, {
+		for: d(function (key) {
+			if (globalSymbols[key]) return globalSymbols[key];
+			return (globalSymbols[key] = SymbolPolyfill(String(key)));
+		}),
+		keyFor: d(function (s) {
+			var key;
+			validateSymbol(s);
+			for (key in globalSymbols) if (globalSymbols[key] === s) return key;
+		}),
+
+		// If there's native implementation of given symbol, let's fallback to it
+		// to ensure proper interoperability with other native functions e.g. Array.from
+		hasInstance: d('', (NativeSymbol && NativeSymbol.hasInstance) || SymbolPolyfill('hasInstance')),
+		isConcatSpreadable: d('', (NativeSymbol && NativeSymbol.isConcatSpreadable) ||
+			SymbolPolyfill('isConcatSpreadable')),
+		iterator: d('', (NativeSymbol && NativeSymbol.iterator) || SymbolPolyfill('iterator')),
+		match: d('', (NativeSymbol && NativeSymbol.match) || SymbolPolyfill('match')),
+		replace: d('', (NativeSymbol && NativeSymbol.replace) || SymbolPolyfill('replace')),
+		search: d('', (NativeSymbol && NativeSymbol.search) || SymbolPolyfill('search')),
+		species: d('', (NativeSymbol && NativeSymbol.species) || SymbolPolyfill('species')),
+		split: d('', (NativeSymbol && NativeSymbol.split) || SymbolPolyfill('split')),
+		toPrimitive: d('', (NativeSymbol && NativeSymbol.toPrimitive) || SymbolPolyfill('toPrimitive')),
+		toStringTag: d('', (NativeSymbol && NativeSymbol.toStringTag) || SymbolPolyfill('toStringTag')),
+		unscopables: d('', (NativeSymbol && NativeSymbol.unscopables) || SymbolPolyfill('unscopables'))
+	});
+
+	// Internal tweaks for real symbol producer
+	defineProperties(HiddenSymbol.prototype, {
+		constructor: d(SymbolPolyfill),
+		toString: d('', function () { return this.__name__; })
+	});
+
+	// Proper implementation of methods exposed on Symbol.prototype
+	// They won't be accessible on produced symbol instances as they derive from HiddenSymbol.prototype
+	defineProperties(SymbolPolyfill.prototype, {
+		toString: d(function () { return 'Symbol (' + validateSymbol(this).__description__ + ')'; }),
+		valueOf: d(function () { return validateSymbol(this); })
+	});
+	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toPrimitive, d('',
+		function () { return validateSymbol(this); }));
+	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toStringTag, d('c', 'Symbol'));
+
+	// Proper implementaton of toPrimitive and toStringTag for returned symbol instances
+	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toStringTag,
+		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toStringTag]));
+
+	// Note: It's important to define `toPrimitive` as last one, as some implementations
+	// implement `toPrimitive` natively without implementing `toStringTag` (or other specified symbols)
+	// And that may invoke error in definition flow:
+	// See: https://github.com/medikoo/es6-symbol/issues/13#issuecomment-164146149
+	defineProperty(HiddenSymbol.prototype, SymbolPolyfill.toPrimitive,
+		d('c', SymbolPolyfill.prototype[SymbolPolyfill.toPrimitive]));
+
+
+/***/ },
+/* 126 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isSymbol = __webpack_require__(127);
+
+	module.exports = function (value) {
+		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
+		return value;
+	};
+
+
+/***/ },
+/* 127 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	module.exports = function (x) {
+		return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
+	};
+
+
+/***/ },
 /* 128 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isIterable = __webpack_require__(129);
+
+	module.exports = function (value) {
+		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
+		return value;
+	};
+
+
+/***/ },
+/* 129 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments    = __webpack_require__(130)
+	  , isString       = __webpack_require__(131)
+	  , iteratorSymbol = __webpack_require__(123).iterator
+
+	  , isArray = Array.isArray;
+
+	module.exports = function (value) {
+		if (value == null) return false;
+		if (isArray(value)) return true;
+		if (isString(value)) return true;
+		if (isArguments(value)) return true;
+		return (typeof value[iteratorSymbol] === 'function');
+	};
+
+
+/***/ },
+/* 130 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var toString = Object.prototype.toString
+
+	  , id = toString.call((function () { return arguments; }()));
+
+	module.exports = function (x) { return (toString.call(x) === id); };
+
+
+/***/ },
+/* 131 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	var toString = Object.prototype.toString
+
+	  , id = toString.call('');
+
+	module.exports = function (x) {
+		return (typeof x === 'string') || (x && (typeof x === 'object') &&
+			((x instanceof String) || (toString.call(x) === id))) || false;
+	};
+
+
+/***/ },
+/* 132 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments = __webpack_require__(130)
+	  , callable    = __webpack_require__(109)
+	  , isString    = __webpack_require__(131)
+	  , get         = __webpack_require__(133)
+
+	  , isArray = Array.isArray, call = Function.prototype.call
+	  , some = Array.prototype.some;
+
+	module.exports = function (iterable, cb/*, thisArg*/) {
+		var mode, thisArg = arguments[2], result, doBreak, broken, i, l, char, code;
+		if (isArray(iterable) || isArguments(iterable)) mode = 'array';
+		else if (isString(iterable)) mode = 'string';
+		else iterable = get(iterable);
+
+		callable(cb);
+		doBreak = function () { broken = true; };
+		if (mode === 'array') {
+			some.call(iterable, function (value) {
+				call.call(cb, thisArg, value, doBreak);
+				if (broken) return true;
+			});
+			return;
+		}
+		if (mode === 'string') {
+			l = iterable.length;
+			for (i = 0; i < l; ++i) {
+				char = iterable[i];
+				if ((i + 1) < l) {
+					code = char.charCodeAt(0);
+					if ((code >= 0xD800) && (code <= 0xDBFF)) char += iterable[++i];
+				}
+				call.call(cb, thisArg, char, doBreak);
+				if (broken) break;
+			}
+			return;
+		}
+		result = iterable.next();
+
+		while (!result.done) {
+			call.call(cb, thisArg, result.value, doBreak);
+			if (broken) return;
+			result = iterable.next();
+		}
+	};
+
+
+/***/ },
+/* 133 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var isArguments    = __webpack_require__(130)
+	  , isString       = __webpack_require__(131)
+	  , ArrayIterator  = __webpack_require__(134)
+	  , StringIterator = __webpack_require__(141)
+	  , iterable       = __webpack_require__(128)
+	  , iteratorSymbol = __webpack_require__(123).iterator;
+
+	module.exports = function (obj) {
+		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
+		if (isArguments(obj)) return new ArrayIterator(obj);
+		if (isString(obj)) return new StringIterator(obj);
+		return new ArrayIterator(obj);
+	};
+
+
+/***/ },
+/* 134 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var setPrototypeOf = __webpack_require__(104)
+	  , contains       = __webpack_require__(119)
+	  , d              = __webpack_require__(110)
+	  , Iterator       = __webpack_require__(135)
+
+	  , defineProperty = Object.defineProperty
+	  , ArrayIterator;
+
+	ArrayIterator = module.exports = function (arr, kind) {
+		if (!(this instanceof ArrayIterator)) return new ArrayIterator(arr, kind);
+		Iterator.call(this, arr);
+		if (!kind) kind = 'value';
+		else if (contains.call(kind, 'key+value')) kind = 'key+value';
+		else if (contains.call(kind, 'key')) kind = 'key';
+		else kind = 'value';
+		defineProperty(this, '__kind__', d('', kind));
+	};
+	if (setPrototypeOf) setPrototypeOf(ArrayIterator, Iterator);
+
+	ArrayIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(ArrayIterator),
+		_resolve: d(function (i) {
+			if (this.__kind__ === 'value') return this.__list__[i];
+			if (this.__kind__ === 'key+value') return [i, this.__list__[i]];
+			return i;
+		}),
+		toString: d(function () { return '[object Array Iterator]'; })
+	});
+
+
+/***/ },
+/* 135 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var clear    = __webpack_require__(96)
+	  , assign   = __webpack_require__(111)
+	  , callable = __webpack_require__(109)
+	  , value    = __webpack_require__(97)
+	  , d        = __webpack_require__(110)
+	  , autoBind = __webpack_require__(136)
+	  , Symbol   = __webpack_require__(123)
+
+	  , defineProperty = Object.defineProperty
+	  , defineProperties = Object.defineProperties
+	  , Iterator;
+
+	module.exports = Iterator = function (list, context) {
+		if (!(this instanceof Iterator)) return new Iterator(list, context);
+		defineProperties(this, {
+			__list__: d('w', value(list)),
+			__context__: d('w', context),
+			__nextIndex__: d('w', 0)
+		});
+		if (!context) return;
+		callable(context.on);
+		context.on('_add', this._onAdd);
+		context.on('_delete', this._onDelete);
+		context.on('_clear', this._onClear);
+	};
+
+	defineProperties(Iterator.prototype, assign({
+		constructor: d(Iterator),
+		_next: d(function () {
+			var i;
+			if (!this.__list__) return;
+			if (this.__redo__) {
+				i = this.__redo__.shift();
+				if (i !== undefined) return i;
+			}
+			if (this.__nextIndex__ < this.__list__.length) return this.__nextIndex__++;
+			this._unBind();
+		}),
+		next: d(function () { return this._createResult(this._next()); }),
+		_createResult: d(function (i) {
+			if (i === undefined) return { done: true, value: undefined };
+			return { done: false, value: this._resolve(i) };
+		}),
+		_resolve: d(function (i) { return this.__list__[i]; }),
+		_unBind: d(function () {
+			this.__list__ = null;
+			delete this.__redo__;
+			if (!this.__context__) return;
+			this.__context__.off('_add', this._onAdd);
+			this.__context__.off('_delete', this._onDelete);
+			this.__context__.off('_clear', this._onClear);
+			this.__context__ = null;
+		}),
+		toString: d(function () { return '[object Iterator]'; })
+	}, autoBind({
+		_onAdd: d(function (index) {
+			if (index >= this.__nextIndex__) return;
+			++this.__nextIndex__;
+			if (!this.__redo__) {
+				defineProperty(this, '__redo__', d('c', [index]));
+				return;
+			}
+			this.__redo__.forEach(function (redo, i) {
+				if (redo >= index) this.__redo__[i] = ++redo;
+			}, this);
+			this.__redo__.push(index);
+		}),
+		_onDelete: d(function (index) {
+			var i;
+			if (index >= this.__nextIndex__) return;
+			--this.__nextIndex__;
+			if (!this.__redo__) return;
+			i = this.__redo__.indexOf(index);
+			if (i !== -1) this.__redo__.splice(i, 1);
+			this.__redo__.forEach(function (redo, i) {
+				if (redo > index) this.__redo__[i] = --redo;
+			}, this);
+		}),
+		_onClear: d(function () {
+			if (this.__redo__) clear.call(this.__redo__);
+			this.__nextIndex__ = 0;
+		})
+	})));
+
+	defineProperty(Iterator.prototype, Symbol.iterator, d(function () {
+		return this;
+	}));
+	defineProperty(Iterator.prototype, Symbol.toStringTag, d('', 'Iterator'));
+
+
+/***/ },
+/* 136 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var copy       = __webpack_require__(137)
+	  , map        = __webpack_require__(138)
+	  , callable   = __webpack_require__(109)
+	  , validValue = __webpack_require__(97)
+
+	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
+	  , hasOwnProperty = Object.prototype.hasOwnProperty
+	  , define;
+
+	define = function (name, desc, bindTo) {
+		var value = validValue(desc) && callable(desc.value), dgs;
+		dgs = copy(desc);
+		delete dgs.writable;
+		delete dgs.value;
+		dgs.get = function () {
+			if (hasOwnProperty.call(this, name)) return value;
+			desc.value = bind.call(value, (bindTo == null) ? this : this[bindTo]);
+			defineProperty(this, name, desc);
+			return this[name];
+		};
+		return dgs;
+	};
+
+	module.exports = function (props/*, bindTo*/) {
+		var bindTo = arguments[1];
+		return map(props, function (desc, name) {
+			return define(name, desc, bindTo);
+		});
+	};
+
+
+/***/ },
+/* 137 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var assign = __webpack_require__(111)
+	  , value  = __webpack_require__(97);
+
+	module.exports = function (obj) {
+		var copy = Object(value(obj));
+		if (copy !== obj) return copy;
+		return assign({}, obj);
+	};
+
+
+/***/ },
+/* 138 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var callable = __webpack_require__(109)
+	  , forEach  = __webpack_require__(139)
+
+	  , call = Function.prototype.call;
+
+	module.exports = function (obj, cb/*, thisArg*/) {
+		var o = {}, thisArg = arguments[2];
+		callable(cb);
+		forEach(obj, function (value, key, obj, index) {
+			o[key] = call.call(cb, thisArg, value, key, obj, index);
+		});
+		return o;
+	};
+
+
+/***/ },
+/* 139 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(140)('forEach');
+
+
+/***/ },
+/* 140 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Internal method, used by iteration functions.
+	// Calls a function for each key-value pair found in object
+	// Optionally takes compareFn to iterate object in specific order
+
+	'use strict';
+
+	var callable = __webpack_require__(109)
+	  , value    = __webpack_require__(97)
+
+	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
+	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
+
+	module.exports = function (method, defVal) {
+		return function (obj, cb/*, thisArg, compareFn*/) {
+			var list, thisArg = arguments[2], compareFn = arguments[3];
+			obj = Object(value(obj));
+			callable(cb);
+
+			list = keys(obj);
+			if (compareFn) {
+				list.sort((typeof compareFn === 'function') ? bind.call(compareFn, obj) : undefined);
+			}
+			if (typeof method !== 'function') method = list[method];
+			return call.call(method, list, function (key, index) {
+				if (!propertyIsEnumerable.call(obj, key)) return defVal;
+				return call.call(cb, thisArg, obj[key], key, obj, index);
+			});
+		};
+	};
+
+
+/***/ },
+/* 141 */
+/***/ function(module, exports, __webpack_require__) {
+
+	// Thanks @mathiasbynens
+	// http://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
+
+	'use strict';
+
+	var setPrototypeOf = __webpack_require__(104)
+	  , d              = __webpack_require__(110)
+	  , Iterator       = __webpack_require__(135)
+
+	  , defineProperty = Object.defineProperty
+	  , StringIterator;
+
+	StringIterator = module.exports = function (str) {
+		if (!(this instanceof StringIterator)) return new StringIterator(str);
+		str = String(str);
+		Iterator.call(this, str);
+		defineProperty(this, '__length__', d('', str.length));
+
+	};
+	if (setPrototypeOf) setPrototypeOf(StringIterator, Iterator);
+
+	StringIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(StringIterator),
+		_next: d(function () {
+			if (!this.__list__) return;
+			if (this.__nextIndex__ < this.__length__) return this.__nextIndex__++;
+			this._unBind();
+		}),
+		_resolve: d(function (i) {
+			var char = this.__list__[i], code;
+			if (this.__nextIndex__ === this.__length__) return char;
+			code = char.charCodeAt(0);
+			if ((code >= 0xD800) && (code <= 0xDBFF)) return char + this.__list__[this.__nextIndex__++];
+			return char;
+		}),
+		toString: d(function () { return '[object String Iterator]'; })
+	});
+
+
+/***/ },
+/* 142 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	var setPrototypeOf    = __webpack_require__(104)
+	  , contains          = __webpack_require__(119)
+	  , d                 = __webpack_require__(110)
+	  , Iterator          = __webpack_require__(135)
+	  , toStringTagSymbol = __webpack_require__(123).toStringTag
+
+	  , defineProperty = Object.defineProperty
+	  , SetIterator;
+
+	SetIterator = module.exports = function (set, kind) {
+		if (!(this instanceof SetIterator)) return new SetIterator(set, kind);
+		Iterator.call(this, set.__setData__, set);
+		if (!kind) kind = 'value';
+		else if (contains.call(kind, 'key+value')) kind = 'key+value';
+		else kind = 'value';
+		defineProperty(this, '__kind__', d('', kind));
+	};
+	if (setPrototypeOf) setPrototypeOf(SetIterator, Iterator);
+
+	SetIterator.prototype = Object.create(Iterator.prototype, {
+		constructor: d(SetIterator),
+		_resolve: d(function (i) {
+			if (this.__kind__ === 'value') return this.__list__[i];
+			return [this.__list__[i], this.__list__[i]];
+		}),
+		toString: d(function () { return '[object Set Iterator]'; })
+	});
+	defineProperty(SetIterator.prototype, toStringTagSymbol, d('c', 'Set Iterator'));
+
+
+/***/ },
+/* 143 */
+/***/ function(module, exports) {
+
+	// Exports true if environment provides native `Set` implementation,
+	// whatever that is.
+
+	'use strict';
+
+	module.exports = (function () {
+		if (typeof Set === 'undefined') return false;
+		return (Object.prototype.toString.call(Set.prototype) === '[object Set]');
+	}());
+
+
+/***/ },
+/* 144 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -18816,7 +22038,7 @@ var ProperTable =
 
 
 /***/ },
-/* 129 */
+/* 145 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin

@@ -2,28 +2,59 @@
 @import "fixed-data-table";
 
 .propertable {
-	.fa-square-o{
+	.fa-square-o {
 		&:hover {
 			cursor: pointer;
 		}
 	}
 
-	.fixedDataTableRowLayout_rowWrapper{
+	.fixedDataTableRowLayout_rowWrapper {
 		&:hover .public_fixedDataTableCell_main {
 		  background-color: #C7EBFF;
 		}
 
 		.public_fixedDataTableRow_main {
 			&.selected {
-				.public_fixedDataTableCell_main{
+				.public_fixedDataTableCell_main {
 					background-color: darken(#C7EBFF, 3%);
+				}
+			}
+
+			&.disabled-row {
+				.public_fixedDataTableCell_main {
+    				color: #999;
+				}
+			}
+
+			&.disabled-row.selected {
+				.public_fixedDataTableCell_main {
+					background-color: #DEF3FF;
 				}
 			}
 		}
 	}
+
+	&.column-complex-filter {
+		min-width: 160px;
+		min-height: 250px;
+		width: 280px;
+		height: 22em;
+		background: #fff;
+		z-index: 100;
+		position: absolute;
+	}
 }
 
 .propertable-header-cell {
+	i {
+		position: absolute;
+	    right: 6px;
+	    top: 35%;
+	}
+
+	i.fa-caret-square-o-down {
+		color: #D6D6D6;
+	}
 
 	&.sortable {
 		cursor: pointer;
@@ -33,7 +64,7 @@
 		}
 	}
 
-	&.not-sortable{
+	&.not-sortable {
 		cursor: not-allowed;
 	}
 }
