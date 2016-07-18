@@ -38,7 +38,6 @@
 	}
 
 	.propertable-footer-info {
-	    height: 30px;
 	    background-color: #fff;
 	    border: 1px solid rgb(211,211,211);
 	    color: #777;
@@ -49,20 +48,28 @@
 	    padding-right: 15px;
 	    padding-left: 10px;
 	    padding-top: 7px;
-	    z-index: 99999;
+	    z-index: 100;
 	    box-sizing: border-box;
-	    font-weight: bold;
+	    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	    overflow: hidden;
+
+	    > div {
+	    	display: inline;
+	    	white-space: nowrap;
+		    overflow: hidden;
+		    text-overflow: ellipsis;
+	    }
 
 	    > .footer-left-info {
-	    	display: inline-block;
-	    	float: left;
-	    	text-align: left;
+		    float: left;
+		    text-align: left;
+		    max-width: 60%;
 	    }
 
 	    > .footer-right-info {
-	    	display: inline-block;
-	    	float: right;
-	    	text-align: right;
+		    float: right;
+		    text-align: right;
+		    max-width: 39%;
 	    }
 	}
 
