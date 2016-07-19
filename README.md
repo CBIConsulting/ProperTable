@@ -230,7 +230,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * restartOnClickType: This prop allows you to set if you want the restartOnClick element to clear both (filters and sort) or just one of them. Default both. The options are 'clear_filters', 'clear_sort' or 'clear_both'.
 * hasDisableRows: If this property is set to true (default false) then all the rows in the data that doesn't have a property Enabled or has Enabled = false will cause the row to has less opacity (disabled). Default false.
 * displayFooter: If the footer must be displayed or not. The footer contains info about sort and filters. Default false.
-* footerHeight: If display footer then set the footer height to this value. Default 30px
+* footerInfoHeight: If display footer then set the footer height to this value. Default 30px
 
 ### Basic Example
 ------------

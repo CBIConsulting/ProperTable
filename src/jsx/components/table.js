@@ -1410,7 +1410,7 @@ class ProperTable extends React.Component {
 			}
 
 			footer = (
-				<div className="propertable-footer-info" style={{height: this.props.footerHeight}}>
+				<div className="propertable-footer-info" style={{height: this.props.footerInfoHeight}}>
 					<div className="footer-left-info">{msgSort}</div>
 					<div className="footer-right-info">{msgFilters}</div>
 				</div>
@@ -1759,7 +1759,7 @@ class ProperTable extends React.Component {
 		let footer = this.buildFooter();
 
 		if (this.props.containerHeight && this.props.displayFooter) {
-			tableHeight -= this.props.footerHeight;
+			tableHeight -= this.props.footerInfoHeight;
 		}
 
 		content = <Table
@@ -1833,7 +1833,7 @@ ProperTable.propTypes = {
     onScrollEnd: React.PropTypes.func,
     hasDisableRows: React.PropTypes.bool,
     displayFooter: React.PropTypes.bool,
-    footerHeight: React.PropTypes.oneOfType([
+    footerInfoHeight: React.PropTypes.oneOfType([
     	React.PropTypes.number,
     	React.PropTypes.string
     ])
@@ -1868,7 +1868,7 @@ ProperTable.defaultProps = {
 	onScrollEnd: null,
 	hasDisableRows: false,
 	displayFooter: false,
-	footerHeight: 30
+	footerInfoHeight: 30
 }
 
 export default ProperTable;
