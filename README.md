@@ -86,6 +86,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 	 	* uniqueId: An unique id for the Column. (Integer)
 	 	* isResizable: If the column is resizable. (Boolean) Default true
 	 	* isVisible: If the column must be rendered. (Boolean) Default true
+	 	* filterProps: Custom props for your custom column filter in case that exist. (object)
 	 	* formatter: Parser for the cell data before render. WARNING! When you are using a complex filter component for cell header (read down), you must be carefull of the formatter because the data for filter sometimes has to be formated then it should be a string or number. The solution is that you ill get just only the first parameter and the other's will be null, so you can return a string (for filtering, show in filter, etc) when you get a null in the second and third parameter (Function)
 	 		* Ex:
 	 		```javascript

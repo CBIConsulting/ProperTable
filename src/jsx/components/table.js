@@ -1169,7 +1169,8 @@ class ProperTable extends React.Component {
  */
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, sortDir = DEFAULT_SORT_DIRECTION, sortable = null, selection = [], columnFilter = null, hasComplexFilter = false;
-		let indexed = null, headerData = null, className = null, settings = null, isSortedOrFiltered = false, align = 'center', extraProps = {
+		let indexed = null, headerData = null, className = null, settings = null, isSortedOrFiltered = false, align = 'center', filterExtraProps = {};
+		let extraProps = {
 			width: 100,
 			fixed: false,
 			isResizable: true
@@ -1232,6 +1233,10 @@ class ProperTable extends React.Component {
 			  	if (!isSortedOrFiltered && settings.direction !== DEFAULT_SORT_DIRECTION) {
 			  		isSortedOrFiltered = true;
 			  	}
+
+			  	if (_.isObject(colData.filterProps) && !_.isArray(colData.filterProps)) {
+			  		filterExtraProps = colData.filterProps;
+			  	}
 			}
 
 			col = <Column
@@ -1260,6 +1265,7 @@ class ProperTable extends React.Component {
 						userClassName={className}
 						columnFormater={null} // Formatter function that get the value to be render and return it parsed settings.formatter
 						isSortedOrFiltered={isSortedOrFiltered}
+						extraProps={filterExtraProps}
 					/>
 				}
 				cell={<CellRenderer tableId={this.uniqueId} idField={this.props.idField} indexed={this.state.indexed} data={this.state.data} colData={colData} col={colData.field}/>}

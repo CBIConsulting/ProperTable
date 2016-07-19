@@ -201,6 +201,7 @@ const buildColumnFilter = (props, icon) => {
           afterSelect={afterSelect}
           afterSort={afterSort}
           afterClear={afterClear}
+          {...props.extaProps}
         />
       </Portal>
     );
