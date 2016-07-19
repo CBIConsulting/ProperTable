@@ -284,29 +284,55 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
   position: absolute;
   top: 0; }
 
-.propertable .fa-square-o:hover {
-  cursor: pointer; }
-
-.propertable .fixedDataTableRowLayout_rowWrapper:hover .public_fixedDataTableCell_main {
-  background-color: #C7EBFF; }
-
-.propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.selected .public_fixedDataTableCell_main {
-  background-color: #b8e6ff; }
-
-.propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.disabled-row .public_fixedDataTableCell_main {
-  color: #999; }
-
-.propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.disabled-row.selected .public_fixedDataTableCell_main {
-  background-color: #DEF3FF; }
-
-.propertable.column-complex-filter {
-  min-width: 160px;
-  min-height: 250px;
-  width: 280px;
-  height: 22em;
-  background: #fff;
-  z-index: 100;
-  position: absolute; }
+.propertable {
+  position: relative;
+  background-color: #fff; }
+  .propertable .fa-square-o:hover {
+    cursor: pointer; }
+  .propertable .fixedDataTableRowLayout_rowWrapper:hover .public_fixedDataTableCell_main {
+    background-color: #C7EBFF; }
+  .propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.selected .public_fixedDataTableCell_main {
+    background-color: #b8e6ff; }
+  .propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.disabled-row .public_fixedDataTableCell_main {
+    color: #999; }
+  .propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.disabled-row.selected .public_fixedDataTableCell_main {
+    background-color: #DEF3FF; }
+  .propertable .propertable-footer-info {
+    background-color: #fff;
+    border: 1px solid lightgray;
+    color: #777;
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding-right: 15px;
+    padding-left: 10px;
+    padding-top: 7px;
+    z-index: 100;
+    box-sizing: border-box;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    overflow: hidden; }
+    .propertable .propertable-footer-info > div {
+      display: inline;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis; }
+    .propertable .propertable-footer-info > .footer-left-info {
+      float: left;
+      text-align: left;
+      max-width: 60%; }
+    .propertable .propertable-footer-info > .footer-right-info {
+      float: right;
+      text-align: right;
+      max-width: 39%; }
+  .propertable.column-complex-filter {
+    min-width: 160px;
+    min-height: 250px;
+    width: 280px;
+    height: 22em;
+    background: #fff;
+    z-index: 100;
+    position: absolute; }
 
 .propertable-header-cell i {
   position: absolute;

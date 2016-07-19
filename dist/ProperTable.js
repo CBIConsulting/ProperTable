@@ -74,7 +74,7 @@ var ProperTable =
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	if (true) {
-		__webpack_require__(145);
+		__webpack_require__(146);
 	}
 
 	exports["default"] = {
@@ -117,9 +117,9 @@ var ProperTable =
 
 	var _underscore2 = _interopRequireDefault(_underscore);
 
-	var _messages = __webpack_require__(56);
+	var _messages2 = __webpack_require__(56);
 
-	var _messages2 = _interopRequireDefault(_messages);
+	var _messages3 = _interopRequireDefault(_messages2);
 
 	var _selector = __webpack_require__(57);
 
@@ -270,7 +270,8 @@ var ProperTable =
 				selection: initialData.defSelection,
 				sortCache: initialData.defSortCache,
 				allSelected: false,
-				sendSorted: false
+				sendSorted: false,
+				hasSortedColumns: false
 			};
 			return _this;
 		}
@@ -370,28 +371,28 @@ var ProperTable =
 									}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
 								})();
 							} else if (colsDeepCompare.hasSmallChanges) {
-									cols = _this2.state.cols.map(function (col) {
-										newCol = colsDeepCompare.changedCols[col.get('name')];
+								cols = _this2.state.cols.map(function (col) {
+									newCol = colsDeepCompare.changedCols[col.get('name')];
 
-										if (newCol) {
-											_underscore2['default'].each(newCol, function (value, key) {
-												col = col.set(key, value);
-											});
-										}
+									if (newCol) {
+										_underscore2['default'].each(newCol, function (value, key) {
+											col = col.set(key, value);
+										});
+									}
 
-										return col;
-									});
+									return col;
+								});
 
-									_this2.setState({
-										cols: cols
-									});
-								} else {
-									cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
+								_this2.setState({
+									cols: cols
+								});
+							} else {
+								cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
 
-									_this2.setState({
-										cols: cols
-									});
-								}
+								_this2.setState({
+									cols: cols
+								});
+							}
 						}
 
 						return {
@@ -597,7 +598,7 @@ var ProperTable =
 	  * @param (object) 	props 			Component props or new props on update
 	  * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
 	  * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
-	  * @param (boolean) forceApply		If it's true then when when update sort or update Filters is not allowed it will apply the colSettings anyway.
+	  * @param (boolean) forceApply		If it's true then when update sort or update Filters is not allowed it will apply the colSettings anyway.
 	  */
 
 
@@ -626,7 +627,8 @@ var ProperTable =
 			    hasCustomFilter = void 0,
 			    operations = {};
 			var sortedData = [],
-			    filterValue = void 0; // Date filters
+			    filterValue = void 0,
+			    newFilter = void 0; // Date filters
 
 			// Update settings
 			colSettings = _underscore2['default'].map(colSettings, function (col) {
@@ -644,9 +646,9 @@ var ProperTable =
 				}
 
 				if (updateFiltersAllowed) {
-					if (props.colFilters[col.column]) {
-						var newFilter = props.colFilters[col.column];
+					newFilter = props.colFilters[col.column];
 
+					if (newFilter) {
 						if (!newFilter.type || newFilter.type === FILTERTYPE_SELECTION) {
 							if (!hasFilter) {
 								if (col.filterType !== FILTERTYPE_SELECTION) {
@@ -660,7 +662,7 @@ var ProperTable =
 							col.filterType = FILTERTYPE_SELECTION;
 							col.selection = newFilter.selection;
 						} else if (newFilter.type === FILTERTYPE_CUSTOM) {
-							if (!hasFilter && (col.operationFilterType !== newFilter.operationType || col.operationFilterValue !== newFilter.operationValue)) {
+							if (!hasFilter && (col.filterType !== FILTERTYPE_CUSTOM || col.operationFilterType !== newFilter.operationType || col.operationFilterValue !== newFilter.operationValue)) {
 								hasFilter = true;
 							}
 
@@ -714,10 +716,10 @@ var ProperTable =
 			if (hasSort) {
 				this.sortTable(colSettings, true, newData); // This method set state and send the cols settings
 			} else if (hasFilter) {
-					this.setState(newData, this.sendColSettings(colSettings));
-				} else if (forceSendSettings) {
-					this.sendColSettings(colSettings);
-				}
+				this.setState(newData, this.sendColSettings(colSettings));
+			} else if (forceSendSettings) {
+				this.sendColSettings(colSettings);
+			}
 		};
 
 		/**
@@ -760,7 +762,6 @@ var ProperTable =
 					    val = void 0;
 
 					filteredData = initialData.filter(function (element) {
-
 						// If value has been found (result = true) then leave loop and return true
 						columns.every(function (column) {
 							field = fields[column];
@@ -773,7 +774,6 @@ var ProperTable =
 							if (_underscore2['default'].isNull(val)) val = '';
 
 							if (typeof val === 'string' || typeof val === 'number') {
-
 								if (formatter) {
 									if (operations[column] && operations[column].type) {
 										if (notAllowedTypes.has(operations[column].type)) {
@@ -985,9 +985,12 @@ var ProperTable =
 							valid = typeof val === 'string' || typeof val === 'number' ? true : false;
 
 							if (valid && !_underscore2['default'].isNull(val) && val !== '') {
-								if (colData.formatter) val = colData.formatter(val, null, null);
+								if (colData.formatter) {
+									val = colData.formatter(val, null, null);
+									valid = typeof val === 'string' || typeof val === 'number' ? true : false;
+								}
 
-								if (!idSet.has(val) && !_underscore2['default'].isNull(val) && !_underscore2['default'].isUndefined(val)) {
+								if (valid && !idSet.has(val) && !_underscore2['default'].isNull(val) && !_underscore2['default'].isUndefined(val)) {
 									// No repeat
 									idSet.add(val);
 
@@ -1140,7 +1143,8 @@ var ProperTable =
 			var colSettings = this.state.colSettings,
 			    data = void 0,
 			    indexed = this.state.indexed;
-			var clear = CLEAR_OPTIONS[this.props.restartOnClickType];
+			var clear = CLEAR_OPTIONS[this.props.restartOnClickType],
+			    hasSortedColumns = this.state.hasSortedColumns;
 
 			colSettings = _underscore2['default'].map(colSettings, function (element) {
 				if (clear.filters) {
@@ -1165,10 +1169,13 @@ var ProperTable =
 				return element;
 			});
 
+			if (clear.sort) hasSortedColumns = false;
+
 			this.setState({
 				data: data,
 				indexed: indexed,
-				colSettings: colSettings
+				colSettings: colSettings,
+				hasSortedColumns: hasSortedColumns
 			}, this.sendSortedAndSettings(data, colSettings));
 		};
 
@@ -1243,6 +1250,7 @@ var ProperTable =
 					if (col.column === columnKey) {
 						// Update
 						col.selection = selection;
+						col.filterType = FILTERTYPE_SELECTION;
 					}
 
 					if (!hasSort && col.direction !== DEFAULT_SORT_DIRECTION) hasSort = true;
@@ -1274,9 +1282,9 @@ var ProperTable =
 					this.setState(newData, this.sendColSettings(colSettings)); // All columns have sort to default
 				}
 			} else {
-					// Update col Settings with new sort direction for this column, then sort the data and update the component's state.
-					this.onSortChange(columnKey, sortDir, newData);
-				}
+				// Update col Settings with new sort direction for this column, then sort the data and update the component's state.
+				this.onSortChange(columnKey, sortDir, newData);
+			}
 		};
 
 		/**
@@ -1350,6 +1358,7 @@ var ProperTable =
 				// After change the sort position priority of the other elements if the new position is lower than the current position set new position.
 				if (initialPos < colSettings[index].position) colSettings[index].position = initialPos;
 			}
+
 			return colSettings;
 		};
 
@@ -1371,9 +1380,14 @@ var ProperTable =
 
 			var data = newData ? newData.data : this.state.data,
 			    indexedData = newData ? newData.indexed : this.state.indexed;
-			var sendSortedAllowed = sendSorted;
+			var sendSortedAllowed = sendSorted,
+			    hasSortedColumns = false;
 
 			colSettings = _underscore2['default'].sortBy(colSettings, function (element) {
+				if (!hasSortedColumns && element.direction !== DEFAULT_SORT_DIRECTION) {
+					hasSortedColumns = true;
+				}
+
 				return element.position;
 			}).reverse();
 
@@ -1388,7 +1402,8 @@ var ProperTable =
 				indexed: data.indexed,
 				colSettings: colSettings,
 				sortCache: data.sortCache,
-				sendSorted: sendSortedAllowed
+				sendSorted: sendSortedAllowed,
+				hasSortedColumns: hasSortedColumns
 			});
 		};
 
@@ -1486,7 +1501,7 @@ var ProperTable =
 			    colname = null,
 			    sortDir = DEFAULT_SORT_DIRECTION,
 			    sortable = null,
-			    selection = null,
+			    selection = [],
 			    columnFilter = null,
 			    hasComplexFilter = false;
 			var indexed = null,
@@ -1494,6 +1509,7 @@ var ProperTable =
 			    className = null,
 			    settings = null,
 			    isSortedOrFiltered = false,
+			    align = 'center',
 			    extraProps = {
 				width: 100,
 				fixed: false,
@@ -1528,6 +1544,10 @@ var ProperTable =
 				extraProps.isResizable = colData.isResizable;
 			}
 
+			if (colData.align !== undefined) {
+				align = colData.align;
+			}
+
 			// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
 			// setting the result inside this columns group.
 			if (colData.children === undefined || !colData.children.length) {
@@ -1538,7 +1558,7 @@ var ProperTable =
 				sortable = _underscore2['default'].isUndefined(colData.sortable) ? true : colData.sortable;
 
 				// Check for a complex filter component. In that case use onColumnFilter instead of onSortChange. That method render the received component
-				// just beside the icon of the column header
+				// just beside the icon of the column header. If the filter type isn't selection then selection must be an empty array
 				if (this.props.columnFilterComponent) {
 					// react component
 					hasComplexFilter = true;
@@ -1546,6 +1566,7 @@ var ProperTable =
 
 					if (settings.filterType === FILTERTYPE_SELECTION) {
 						isSortedOrFiltered = settings.selection.length > 0;
+						selection = settings.selection;
 					} else if (settings.filterType === FILTERTYPE_CUSTOM) {
 						isSortedOrFiltered = settings.operationFilterValue.length > 0;
 					}
@@ -1567,7 +1588,7 @@ var ProperTable =
 						, data: settings.data // data for columnFilter
 						, rawdata: this.state.rawdata // data for columnFilter
 						, indexed: settings.indexedData,
-						selection: settings.selection // selection for complex filter
+						selection: selection // selection for complex filter
 						, iconColor: this.props.iconColor // icon color when column filter displayed
 						, iconDefColor: this.props.iconDefColor // icon color when column filter closed
 						, col: colData.field,
@@ -1583,7 +1604,7 @@ var ProperTable =
 					}),
 					cell: _react2['default'].createElement(_cellRenderer2['default'], { tableId: this.uniqueId, idField: this.props.idField, indexed: this.state.indexed, data: this.state.data, colData: colData, col: colData.field }),
 					allowCellsRecycling: !hasComplexFilter,
-					align: 'center'
+					align: align
 				}, extraProps));
 
 				// If isn't a children but the table has nested columns set the column into a group.
@@ -1690,6 +1711,83 @@ var ProperTable =
 			});
 
 			return columns;
+		};
+
+		/*
+	  * Build the table footer with info about sort and filters.
+	  */
+
+
+		ProperTable.prototype.buildFooter = function buildFooter() {
+			var footer = null;
+
+			if (this.props.displayFooter) {
+				var _messages = this.props.msgs[this.props.lang];
+				var msgFilters = void 0,
+				    msgSort = null,
+				    isFirstFilter = true,
+				    isFirstColumn = true,
+				    column = void 0;
+				var hasSort = this.state.hasSortedColumns;
+
+				if (this.state.data.size < this.state.initialData.size) {
+					msgFilters = _messages.filtered;
+					if (hasSort) msgSort = _messages.sorted + ' ';
+
+					for (var i = this.state.colSettings.length - 1; i >= 0; i--) {
+						column = this.state.colSettings[i];
+
+						if (column.selection.length > 0 && column.filterType === FILTERTYPE_SELECTION || column.operationFilterValue.length > 0 && column.filterType === FILTERTYPE_CUSTOM) {
+							if (!isFirstFilter) msgFilters += ' > ';
+							msgFilters += ' ' + column.column;
+							isFirstFilter = false;
+						}
+
+						if (hasSort) {
+							if (column.direction !== DEFAULT_SORT_DIRECTION) {
+								if (!isFirstColumn) msgSort += ' > ';
+								msgSort += ' ' + column.column + ' - ' + column.direction;
+								isFirstColumn = false;
+							}
+						}
+					}
+					msgFilters += '. ' + _messages.there + ' ' + this.state.data.size + ' ' + _messages.filtering + ' ' + this.state.initialData.size;
+					if (hasSort) hasSort = false; // It's already parsed.
+				} else {
+					msgFilters = _messages.allData + ' ' + this.state.data.size + ' ' + _messages.rows;
+				}
+
+				if (hasSort) {
+					msgSort = _messages.sorted + ' ';
+
+					for (var _i3 = this.state.colSettings.length - 1; _i3 >= 0; _i3--) {
+						column = this.state.colSettings[_i3];
+
+						if (column.direction !== DEFAULT_SORT_DIRECTION) {
+							if (!isFirstColumn) msgSort += ' > ';
+							msgSort += ' ' + column.column + ' - ' + column.direction;
+							isFirstColumn = false;
+						}
+					}
+				}
+
+				footer = _react2['default'].createElement(
+					'div',
+					{ className: 'propertable-footer-info', style: { height: this.props.footerInfoHeight } },
+					_react2['default'].createElement(
+						'div',
+						{ className: 'footer-left-info' },
+						msgSort
+					),
+					_react2['default'].createElement(
+						'div',
+						{ className: 'footer-right-info' },
+						msgFilters
+					)
+				);
+			}
+
+			return footer;
 		};
 
 		/**
@@ -1805,12 +1903,12 @@ var ProperTable =
 			if (selection.has(id)) {
 				selection['delete'](id); // Returns a copy of the array with the instance with that properId deleted.
 			} else {
-					if (this.props.selectable == MULTIPLE_SELECTION) {
-						selection.add(id);
-					} else {
-						selection = new Set([id]);
-					}
+				if (this.props.selectable == MULTIPLE_SELECTION) {
+					selection.add(id);
+				} else {
+					selection = new Set([id]);
 				}
+			}
 
 			this.triggerSelection(selection); // Set the new selection to the components state.
 		};
@@ -1877,54 +1975,54 @@ var ProperTable =
 					newData = newData.set(rowIndex, rdata); // Set that row in the data object
 				}
 			} else if (!newAllSelected && newSelection.size > 0 && newData.size === this.state.rawdata.size) {
-					// Change one row data at a time
-					var changedId = null,
-					    _selected = null;
+				// Change one row data at a time
+				var changedId = null,
+				    _selected = null;
 
-					// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
-					oldSelection.forEach(function (id) {
-						if (!newSelection.has(id)) {
-							// has not id
+				// If the new selection hasn't an id of the old selection that means an selected element has been unselected.
+				oldSelection.forEach(function (id) {
+					if (!newSelection.has(id)) {
+						// has not id
+						changedId = id;
+						_selected = false;
+						return false;
+					}
+				});
+
+				// Otherwise a new row has been selected. Look through the new selection for the new element.
+				if (!changedId) {
+					newSelection.forEach(function (id) {
+						if (!oldSelection.has(id)) {
 							changedId = id;
-							_selected = false;
+							_selected = true;
 							return false;
 						}
 					});
+				}
 
-					// Otherwise a new row has been selected. Look through the new selection for the new element.
-					if (!changedId) {
-						newSelection.forEach(function (id) {
-							if (!oldSelection.has(id)) {
-								changedId = id;
-								_selected = true;
-								return false;
-							}
-						});
+				if (changedId && newIndexed[changedId]) {
+					newIndexed[changedId]._selected = _selected; // Update indexed data
+					rowIndex = newIndexed[changedId]._rowIndex; // Get data index
+					rdata = newData.get(rowIndex).set(SELECTED_FIELD, _selected); // Change the row in that index
+					newData = newData.set(rowIndex, rdata); // Set that row in the data object
+				}
+			} else {
+				// Change all data
+				newData = newData.map(function (row) {
+					rowid = row.get(_this12.props.idField);
+					selected = newSelection.has(rowid.toString());
+					rdata = row.set(SELECTED_FIELD, selected);
+					curIndex = newIndexed[rowid];
+
+					if (curIndex && curIndex._selected != selected) {
+						// update indexed data
+						curIndex._selected = selected;
+						newIndexed[rowid] = curIndex;
 					}
 
-					if (changedId && newIndexed[changedId]) {
-						newIndexed[changedId]._selected = _selected; // Update indexed data
-						rowIndex = newIndexed[changedId]._rowIndex; // Get data index
-						rdata = newData.get(rowIndex).set(SELECTED_FIELD, _selected); // Change the row in that index
-						newData = newData.set(rowIndex, rdata); // Set that row in the data object
-					}
-				} else {
-						// Change all data
-						newData = newData.map(function (row) {
-							rowid = row.get(_this12.props.idField);
-							selected = newSelection.has(rowid.toString());
-							rdata = row.set(SELECTED_FIELD, selected);
-							curIndex = newIndexed[rowid];
-
-							if (curIndex && curIndex._selected != selected) {
-								// update indexed data
-								curIndex._selected = selected;
-								newIndexed[rowid] = curIndex;
-							}
-
-							return rdata;
-						});
-					}
+					return rdata;
+				});
+			}
 
 			this.setState({
 				data: newData,
@@ -2098,20 +2196,23 @@ var ProperTable =
 		};
 
 		ProperTable.prototype.render = function render() {
-			var content = _react2['default'].createElement(
-				'div',
-				{ className: 'propertable-empty' },
-				this.props.msgs[this.props.lang].empty
-			);
+			// let content = <div className="propertable-empty">{this.props.msgs[this.props.lang].empty}</div>;
+			var content = null,
+			    tableHeight = this.props.containerHeight || 400;
 			var tableContent = this.buildTable();
+			var footer = this.buildFooter();
+
+			if (this.props.containerHeight && this.props.displayFooter) {
+				tableHeight -= this.props.footerInfoHeight;
+			}
 
 			content = _react2['default'].createElement(
 				_fixedDataTable.Table,
 				_extends({
 					ref: 'fixeddatatable',
 					key: this.uniqueId + '-table',
-					width: this.props.containerWidth || 100,
-					height: this.props.containerHeight || 100,
+					width: this.props.containerWidth || 400,
+					height: tableHeight,
 					headerHeight: this.props.headerHeight || this.props.rowHeight,
 					groupHeaderHeight: this.props.rowHeight,
 					rowHeight: this.props.rowHeight,
@@ -2128,9 +2229,8 @@ var ProperTable =
 			return _react2['default'].createElement(
 				'div',
 				{ key: this.uniqueId, id: this.uniqueId, className: 'propertable ' + this.props.className },
-				' ',
 				content,
-				' '
+				footer
 			);
 		};
 
@@ -2165,7 +2265,9 @@ var ProperTable =
 		filterWidth: _react2['default'].PropTypes.number,
 		onScrollStart: _react2['default'].PropTypes.func,
 		onScrollEnd: _react2['default'].PropTypes.func,
-		hasDisableRows: _react2['default'].PropTypes.bool
+		hasDisableRows: _react2['default'].PropTypes.bool,
+		displayFooter: _react2['default'].PropTypes.bool,
+		footerInfoHeight: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.number, _react2['default'].PropTypes.string])
 	};
 
 	ProperTable.defaultProps = {
@@ -2179,7 +2281,7 @@ var ProperTable =
 		selected: null,
 		rowHeight: 50,
 		idField: '_properId',
-		msgs: _messages2['default'],
+		msgs: _messages3['default'],
 		lang: 'ENG',
 		selectorWidth: 27,
 		multisort: false,
@@ -2195,7 +2297,9 @@ var ProperTable =
 		filterWidth: null,
 		onScrollStart: null,
 		onScrollEnd: null,
-		hasDisableRows: false
+		hasDisableRows: false,
+		displayFooter: false,
+		footerInfoHeight: 30
 	};
 
 	exports['default'] = ProperTable;
@@ -2246,9 +2350,10 @@ var ProperTable =
 	  Cell: FixedDataTableCellDefault,
 	  Column: FixedDataTableColumn,
 	  ColumnGroup: FixedDataTableColumnGroup,
-	  Table: FixedDataTable };
+	  Table: FixedDataTable
+	};
 
-	FixedDataTableRoot.version = '0.6.0';
+	FixedDataTableRoot.version = '0.6.1';
 	module.exports = FixedDataTableRoot;
 
 /***/ },
@@ -2555,7 +2660,8 @@ var ProperTable =
 	    /**
 	     * Whether a column is currently being resized.
 	     */
-	    isColumnResizing: PropTypes.bool },
+	    isColumnResizing: PropTypes.bool
+	  },
 
 	  getInitialState: function getInitialState() {
 	    // Throw warnings on deprecated props.
@@ -2769,7 +2875,8 @@ var ProperTable =
 	      }),
 	      this._convertedColumns(this.state.needsMigration)
 	    );
-	  } });
+	  }
+	});
 
 	module.exports = TransitionTable;
 
@@ -3054,7 +3161,8 @@ var ProperTable =
 	    /**
 	     * Whether a column is currently being resized.
 	     */
-	    isColumnResizing: PropTypes.bool },
+	    isColumnResizing: PropTypes.bool
+	  },
 
 	  getDefaultProps: function getDefaultProps() /*object*/{
 	    return {
@@ -3062,7 +3170,8 @@ var ProperTable =
 	      groupHeaderHeight: 0,
 	      headerHeight: 0,
 	      scrollLeft: 0,
-	      scrollTop: 0 };
+	      scrollTop: 0
+	    };
 	  },
 
 	  getInitialState: function getInitialState() /*object*/{
@@ -3585,7 +3694,8 @@ var ProperTable =
 	    // The order of elements in this object metters and bringing bodyHeight,
 	    // height or useGroupHeader to the top can break various features
 	    var newState = _extends({
-	      isColumnResizing: oldState && oldState.isColumnResizing }, columnInfo, props, {
+	      isColumnResizing: oldState && oldState.isColumnResizing
+	    }, columnInfo, props, {
 
 	      columns: columns,
 	      columnGroups: columnGroups,
@@ -3605,7 +3715,8 @@ var ProperTable =
 	      bodyHeight: bodyHeight,
 	      height: height,
 	      groupHeaderHeight: groupHeaderHeight,
-	      useGroupHeader: useGroupHeader });
+	      useGroupHeader: useGroupHeader
+	    });
 
 	    return newState;
 	  },
@@ -3633,7 +3744,8 @@ var ProperTable =
 	    }
 	    return {
 	      fixed: fixedColumns,
-	      scrollable: scrollableColumns };
+	      scrollable: scrollableColumns
+	    };
 	  },
 
 	  _onWheel: function _onWheel( /*number*/deltaX, /*number*/deltaY) {
@@ -3650,13 +3762,15 @@ var ProperTable =
 	          firstRowOffset: scrollState.offset,
 	          scrollY: scrollState.position,
 	          scrollContentHeight: scrollState.contentHeight,
-	          maxScrollY: maxScrollY });
+	          maxScrollY: maxScrollY
+	        });
 	      } else if (deltaX && this.props.overflowX !== 'hidden') {
 	        x += deltaX;
 	        x = x < 0 ? 0 : x;
 	        x = x > this.state.maxScrollX ? this.state.maxScrollX : x;
 	        this.setState({
-	          scrollX: x });
+	          scrollX: x
+	        });
 	      }
 
 	      this._didScrollStop();
@@ -3669,7 +3783,8 @@ var ProperTable =
 	        this._didScrollStart();
 	      }
 	      this.setState({
-	        scrollX: scrollPos });
+	        scrollX: scrollPos
+	      });
 	      this._didScrollStop();
 	    }
 	  },
@@ -3684,7 +3799,8 @@ var ProperTable =
 	        firstRowIndex: scrollState.index,
 	        firstRowOffset: scrollState.offset,
 	        scrollY: scrollState.position,
-	        scrollContentHeight: scrollState.contentHeight });
+	        scrollContentHeight: scrollState.contentHeight
+	      });
 	      this._didScrollStop();
 	    }
 	  },
@@ -3706,7 +3822,8 @@ var ProperTable =
 	        this.props.onScrollEnd(this.state.scrollX, this.state.scrollY);
 	      }
 	    }
-	  } });
+	  }
+	});
 
 	var HorizontalScrollbar = React.createClass({
 	  displayName: 'HorizontalScrollbar',
@@ -3717,17 +3834,20 @@ var ProperTable =
 	    offset: PropTypes.number.isRequired,
 	    onScroll: PropTypes.func.isRequired,
 	    position: PropTypes.number.isRequired,
-	    size: PropTypes.number.isRequired },
+	    size: PropTypes.number.isRequired
+	  },
 
 	  render: function render() /*object*/{
 	    var outerContainerStyle = {
 	      height: Scrollbar.SIZE,
-	      width: this.props.size };
+	      width: this.props.size
+	    };
 	    var innerContainerStyle = {
 	      height: Scrollbar.SIZE,
 	      position: 'absolute',
 	      overflow: 'hidden',
-	      width: this.props.size };
+	      width: this.props.size
+	    };
 	    translateDOMPositionXY(innerContainerStyle, 0, this.props.offset);
 
 	    return React.createElement(
@@ -3745,10 +3865,10 @@ var ProperTable =
 	        }))
 	      )
 	    );
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTable;
-
 	// isColumnResizing should be overwritten by value from props if
 	// avaialble
 
@@ -4446,7 +4566,7 @@ var ProperTable =
 	  },
 
 	  mobile: function mobile() {
-	    return _populate() || (_iphone || _ipad || _android || _mobile);
+	    return _populate() || _iphone || _ipad || _android || _mobile;
 	  },
 
 	  nativeApp: function nativeApp() {
@@ -4670,7 +4790,8 @@ var ProperTable =
 
 	var UNSCROLLABLE_STATE = {
 	  position: 0,
-	  scrollable: false };
+	  scrollable: false
+	};
 
 	var FACE_MARGIN = parseInt(cssVar('scrollbar-face-margin'), 10);
 	var FACE_MARGIN_2 = FACE_MARGIN * 2;
@@ -4717,7 +4838,8 @@ var ProperTable =
 	      isOpaque: false,
 	      onScroll: emptyFunction,
 	      orientation: 'vertical',
-	      zIndex: 99 };
+	      zIndex: 99
+	    };
 	  },
 
 	  render: function render() /*?object*/{
@@ -4741,20 +4863,23 @@ var ProperTable =
 	      'ScrollbarLayout/mainHorizontal': isHorizontal,
 	      'public/Scrollbar/main': true,
 	      'public/Scrollbar/mainOpaque': isOpaque,
-	      'public/Scrollbar/mainActive': isActive });
+	      'public/Scrollbar/mainActive': isActive
+	    });
 
 	    var faceClassName = cx({
 	      'ScrollbarLayout/face': true,
 	      'ScrollbarLayout/faceHorizontal': isHorizontal,
 	      'ScrollbarLayout/faceVertical': isVertical,
 	      'public/Scrollbar/faceActive': isActive,
-	      'public/Scrollbar/face': true });
+	      'public/Scrollbar/face': true
+	    });
 
 	    var position = this.state.position * this.state.scale + FACE_MARGIN;
 
 	    if (isHorizontal) {
 	      mainStyle = {
-	        width: size };
+	        width: size
+	      };
 	      faceStyle = {
 	        width: faceSize - FACE_MARGIN_2
 	      };
@@ -4762,9 +4887,11 @@ var ProperTable =
 	    } else {
 	      mainStyle = {
 	        top: verticalTop,
-	        height: size };
+	        height: size
+	      };
 	      faceStyle = {
-	        height: faceSize - FACE_MARGIN_2 };
+	        height: faceSize - FACE_MARGIN_2
+	      };
 	      translateDOMPositionXY(faceStyle, 0, position);
 	    }
 
@@ -4845,7 +4972,7 @@ var ProperTable =
 	      return UNSCROLLABLE_STATE;
 	    }
 
-	    var stateKey = '' + position + '_' + size + '_' + contentSize + '_' + orientation;
+	    var stateKey = position + '_' + size + '_' + contentSize + '_' + orientation;
 	    if (this._stateKey === stateKey) {
 	      return this._stateForKey;
 	    }
@@ -4884,7 +5011,8 @@ var ProperTable =
 	      isHorizontal: isHorizontal,
 	      position: position,
 	      scale: scale,
-	      scrollable: scrollable };
+	      scrollable: scrollable
+	    };
 
 	    // cache the state for later use.
 	    this._stateKey = stateKey;
@@ -5025,12 +5153,14 @@ var ProperTable =
 
 	  _onFocus: function _onFocus() {
 	    this.setState({
-	      focused: true });
+	      focused: true
+	    });
 	  },
 
 	  _onBlur: function _onBlur() {
 	    this.setState({
-	      focused: false });
+	      focused: false
+	    });
 	  },
 
 	  _blur: function _blur() {
@@ -5038,7 +5168,9 @@ var ProperTable =
 	      try {
 	        this._onBlur();
 	        ReactDOM.findDOMNode(this).blur();
-	      } catch (oops) {}
+	      } catch (oops) {
+	        // pass
+	      }
 	    }
 	  },
 
@@ -5068,14 +5200,13 @@ var ProperTable =
 
 	  _didScroll: function _didScroll() {
 	    this.props.onScroll(this.state.position);
-	  } });
+	  }
+	});
 
 	Scrollbar.KEYBOARD_SCROLL_AMOUNT = KEYBOARD_SCROLL_AMOUNT;
 	Scrollbar.SIZE = parseInt(cssVar('scrollbar-size'), 10);
 
 	module.exports = Scrollbar;
-
-	// pass
 
 /***/ },
 /* 19 */
@@ -5133,15 +5264,15 @@ var ProperTable =
 	    this._didMouseMove = this._didMouseMove.bind(this);
 	  }
 
+	  /**
+	   * This is to set up the listeners for listening to mouse move
+	   * and mouse up signaling the movement has ended. Please note that these
+	   * listeners are added at the document.body level. It takes in an event
+	   * in order to grab inital state.
+	   */
+
 	  _createClass(DOMMouseMoveTracker, [{
 	    key: 'captureMouseMoves',
-
-	    /**
-	     * This is to set up the listeners for listening to mouse move
-	     * and mouse up signaling the movement has ended. Please note that these
-	     * listeners are added at the document.body level. It takes in an event
-	     * in order to grab inital state.
-	     */
 	    value: function captureMouseMoves( /*object*/event) {
 	      if (!this._eventMoveToken && !this._eventUpToken) {
 	        this._eventMoveToken = EventListener.listen(this._domNode, 'mousemove', this._onMouseMove);
@@ -5157,12 +5288,12 @@ var ProperTable =
 	      }
 	      event.preventDefault();
 	    }
-	  }, {
-	    key: 'releaseMouseMoves',
 
 	    /**
 	     * These releases all of the listeners on document.body.
 	     */
+	  }, {
+	    key: 'releaseMouseMoves',
 	    value: function releaseMouseMoves() {
 	      if (this._eventMoveToken && this._eventUpToken) {
 	        this._eventMoveToken.remove();
@@ -5182,21 +5313,21 @@ var ProperTable =
 	        this._y = null;
 	      }
 	    }
-	  }, {
-	    key: 'isDragging',
 
 	    /**
 	     * Returns whether or not if the mouse movement is being tracked.
 	     */
+	  }, {
+	    key: 'isDragging',
 	    value: function isDragging() /*boolean*/{
 	      return this._isDragging;
 	    }
-	  }, {
-	    key: '_onMouseMove',
 
 	    /**
 	     * Calls onMove passed into constructor and updates internal state.
 	     */
+	  }, {
+	    key: '_onMouseMove',
 	    value: function _onMouseMove( /*object*/event) {
 	      var x = event.clientX;
 	      var y = event.clientY;
@@ -5222,12 +5353,12 @@ var ProperTable =
 	      this._deltaX = 0;
 	      this._deltaY = 0;
 	    }
-	  }, {
-	    key: '_onMouseUp',
 
 	    /**
 	     * Calls onMoveEnd passed into constructor and updates internal state.
 	     */
+	  }, {
+	    key: '_onMouseUp',
 	    value: function _onMouseUp() {
 	      if (this._animationFrameID) {
 	        this._didMouseMove();
@@ -5426,7 +5557,7 @@ var ProperTable =
 	 * @typechecks
 	 */
 
-	'use strict';
+	"use strict";
 
 	var CSS_VARS = {
 	  'scrollbar-face-active-color': '#7d7d7d',
@@ -5437,7 +5568,8 @@ var ProperTable =
 	  'scrollbar-size-large': '17px',
 	  'scrollbar-track-color': 'rgba(255, 255, 255, 0.8)',
 	  'fbui-white': '#fff',
-	  'fbui-desktop-background-light': '#f6f7f8' };
+	  'fbui-desktop-background-light': '#f6f7f8'
+	};
 
 	/**
 	 * @param {string} name
@@ -5613,7 +5745,8 @@ var ProperTable =
 	   */
 	  hasCSSTransitions: function hasCSSTransitions() {
 	    return !!getVendorPrefixedName('transition');
-	  } };
+	  }
+	};
 
 	module.exports = BrowserSupportCore;
 
@@ -5726,7 +5859,7 @@ var ProperTable =
 	 * @providesModule invariant
 	 */
 
-	'use strict';
+	"use strict";
 
 	/**
 	 * Use invariant() to assert state which your program assumes to be true.
@@ -5817,12 +5950,14 @@ var ProperTable =
 	    scrollLeft: PropTypes.number.isRequired,
 	    scrollableColumns: PropTypes.array.isRequired,
 	    showLastRowBorder: PropTypes.bool,
-	    width: PropTypes.number.isRequired },
+	    width: PropTypes.number.isRequired
+	  },
 
 	  getInitialState: function getInitialState() /*object*/{
 	    this._rowBuffer = new FixedDataTableRowBuffer(this.props.rowsCount, this.props.defaultRowHeight, this.props.height, this._getRowHeight);
 	    return {
-	      rowsToRender: this._rowBuffer.getRows(this.props.firstRowIndex, this.props.firstRowOffset) };
+	      rowsToRender: this._rowBuffer.getRows(this.props.firstRowIndex, this.props.firstRowOffset)
+	    };
 	  },
 
 	  componentWillMount: function componentWillMount() {
@@ -5841,14 +5976,16 @@ var ProperTable =
 	      this._updateBuffer();
 	    } else {
 	      this.setState({
-	        rowsToRender: this._rowBuffer.getRows(nextProps.firstRowIndex, nextProps.firstRowOffset) });
+	        rowsToRender: this._rowBuffer.getRows(nextProps.firstRowIndex, nextProps.firstRowOffset)
+	      });
 	    }
 	  },
 
 	  _updateBuffer: function _updateBuffer() {
 	    if (this.isMounted()) {
 	      this.setState({
-	        rowsToRender: this._rowBuffer.getRowsWithUpdatedBuffer() });
+	        rowsToRender: this._rowBuffer.getRowsWithUpdatedBuffer()
+	      });
 	    }
 	  },
 
@@ -5893,7 +6030,8 @@ var ProperTable =
 	        onMouseLeave: props.onRowMouseLeave,
 	        className: joinClasses(rowClassNameGetter(rowIndex), cx('public/fixedDataTable/bodyRow'), cx({
 	          'fixedDataTableLayout/hasBottomBorder': hasBottomBorder,
-	          'public/fixedDataTable/hasBottomBorder': hasBottomBorder }))
+	          'public/fixedDataTable/hasBottomBorder': hasBottomBorder
+	        }))
 	      });
 	    }
 
@@ -5901,7 +6039,8 @@ var ProperTable =
 
 	    var style = {
 	      position: 'absolute',
-	      pointerEvents: props.isScrolling ? 'none' : 'auto' };
+	      pointerEvents: props.isScrolling ? 'none' : 'auto'
+	    };
 
 	    translateDOMPositionXY(style, 0, props.firstRowOffset - firstRowPosition + props.offsetTop);
 
@@ -5914,7 +6053,8 @@ var ProperTable =
 
 	  _getRowHeight: function _getRowHeight( /*number*/index) /*number*/{
 	    return this.props.rowHeightGetter ? this.props.rowHeightGetter(index) : this.props.defaultRowHeight;
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTableBufferedRows;
 
@@ -5959,7 +6099,7 @@ var ProperTable =
 	  /*?function*/rowHeightGetter) {
 	    _classCallCheck(this, FixedDataTableRowBuffer);
 
-	    invariant(defaultRowHeight !== 0, 'defaultRowHeight musn\'t be equal 0 in FixedDataTableRowBuffer');
+	    invariant(defaultRowHeight !== 0, "defaultRowHeight musn't be equal 0 in FixedDataTableRowBuffer");
 
 	    this._bufferSet = new IntegerBufferSet();
 	    this._defaultRowHeight = defaultRowHeight;
@@ -6117,7 +6257,7 @@ var ProperTable =
 	  }, {
 	    key: 'getNewPositionForValue',
 	    value: function getNewPositionForValue( /*number*/value) /*number*/{
-	      invariant(this._valueToPositionMap[value] === undefined, 'Shouldn\'t try to find new position for value already stored in BufferSet');
+	      invariant(this._valueToPositionMap[value] === undefined, "Shouldn't try to find new position for value already stored in BufferSet");
 	      var newPosition = this._size;
 	      this._size++;
 	      this._pushToHeaps(newPosition, value);
@@ -6130,7 +6270,7 @@ var ProperTable =
 	    /*number*/lowValue,
 	    /*number*/highValue,
 	    /*number*/newValue) /*?number*/{
-	      invariant(this._valueToPositionMap[newValue] === undefined, 'Shouldn\'t try to replace values with value already stored value in ' + 'BufferSet');
+	      invariant(this._valueToPositionMap[newValue] === undefined, "Shouldn't try to replace values with value already stored value in " + "BufferSet");
 
 	      this._cleanHeaps();
 	      if (this._smallValues.empty() || this._largeValues.empty()) {
@@ -6167,7 +6307,8 @@ var ProperTable =
 	    value: function _pushToHeaps( /*number*/position, /*number*/value) {
 	      var element = {
 	        position: position,
-	        value: value };
+	        value: value
+	      };
 	      // We can reuse the same object in both heaps, because we don't mutate them
 	      this._smallValues.push(element);
 	      this._largeValues.push(element);
@@ -6249,15 +6390,16 @@ var ProperTable =
 
 	'use strict';
 
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
 	/*
 	 * @param {*} a
 	 * @param {*} b
 	 * @return {boolean}
 	 */
+
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
 	function defaultComparator(a, b) {
 	  return a < b;
 	}
@@ -6272,21 +6414,21 @@ var ProperTable =
 	    this._heapify();
 	  }
 
+	  /*
+	   * @return {boolean}
+	   */
+
 	  _createClass(Heap, [{
 	    key: 'empty',
-
-	    /*
-	     * @return {boolean}
-	     */
 	    value: function empty() {
 	      return this._size === 0;
 	    }
-	  }, {
-	    key: 'pop',
 
 	    /*
 	     * @return {*}
 	     */
+	  }, {
+	    key: 'pop',
 	    value: function pop() {
 	      if (this._size === 0) {
 	        return;
@@ -6304,31 +6446,31 @@ var ProperTable =
 
 	      return elt;
 	    }
-	  }, {
-	    key: 'push',
 
 	    /*
 	     * @param {*} item
 	     */
+	  }, {
+	    key: 'push',
 	    value: function push(item) {
 	      this._items[this._size++] = item;
 	      this._bubbleUp(this._size - 1);
 	    }
-	  }, {
-	    key: 'size',
 
 	    /*
 	     * @return {number}
 	     */
+	  }, {
+	    key: 'size',
 	    value: function size() {
 	      return this._size;
 	    }
-	  }, {
-	    key: 'peek',
 
 	    /*
 	     * @return {*}
 	     */
+	  }, {
+	    key: 'peek',
 	    value: function peek() {
 	      if (this._size === 0) {
 	        return;
@@ -6343,12 +6485,12 @@ var ProperTable =
 	        this._sinkDown(index);
 	      }
 	    }
-	  }, {
-	    key: '_bubbleUp',
 
 	    /*
 	     * @parent {number} index
 	     */
+	  }, {
+	    key: '_bubbleUp',
 	    value: function _bubbleUp(index) {
 	      var elt = this._items[index];
 	      while (index > 0) {
@@ -6366,12 +6508,12 @@ var ProperTable =
 	        index = parentIndex;
 	      }
 	    }
-	  }, {
-	    key: '_sinkDown',
 
 	    /*
 	     * @parent {number} index
 	     */
+	  }, {
+	    key: '_sinkDown',
 	    value: function _sinkDown(index) {
 	      var elt = this._items[index];
 
@@ -6542,19 +6684,22 @@ var ProperTable =
 	     * @param number|string columnKey
 	     * @param object event
 	     */
-	    onColumnResize: PropTypes.func },
+	    onColumnResize: PropTypes.func
+	  },
 
 	  render: function render() /*object*/{
 	    var style = {
 	      width: this.props.width,
-	      height: this.props.height };
+	      height: this.props.height
+	    };
 
 	    var className = cx({
 	      'fixedDataTableRowLayout/main': true,
 	      'public/fixedDataTableRow/main': true,
 	      'public/fixedDataTableRow/highlighted': this.props.index % 2 === 1,
 	      'public/fixedDataTableRow/odd': this.props.index % 2 === 1,
-	      'public/fixedDataTableRow/even': this.props.index % 2 === 0 });
+	      'public/fixedDataTableRow/even': this.props.index % 2 === 0
+	    });
 
 	    var fixedColumnsWidth = this._getColumnsWidth(this.props.fixedColumns);
 	    var fixedColumns = React.createElement(FixedDataTableCellGroup, {
@@ -6618,7 +6763,8 @@ var ProperTable =
 	        'fixedDataTableRowLayout/fixedColumnsDivider': true,
 	        'fixedDataTableRowLayout/columnsShadow': this.props.scrollLeft > 0,
 	        'public/fixedDataTableRow/fixedColumnsDivider': true,
-	        'public/fixedDataTableRow/columnsShadow': this.props.scrollLeft > 0 });
+	        'public/fixedDataTableRow/columnsShadow': this.props.scrollLeft > 0
+	      });
 	      var style = {
 	        left: left,
 	        height: this.props.height
@@ -6645,7 +6791,8 @@ var ProperTable =
 
 	  _onMouseLeave: function _onMouseLeave( /*object*/event) {
 	    this.props.onMouseLeave(event, this.props.index);
-	  } });
+	  }
+	});
 
 	var FixedDataTableRow = React.createClass({
 	  displayName: 'FixedDataTableRow',
@@ -6673,13 +6820,15 @@ var ProperTable =
 	    /**
 	     * Width of the row.
 	     */
-	    width: PropTypes.number.isRequired },
+	    width: PropTypes.number.isRequired
+	  },
 
 	  render: function render() /*object*/{
 	    var style = {
 	      width: this.props.width,
 	      height: this.props.height,
-	      zIndex: this.props.zIndex ? this.props.zIndex : 0 };
+	      zIndex: this.props.zIndex ? this.props.zIndex : 0
+	    };
 	    translateDOMPositionXY(style, 0, this.props.offsetTop);
 
 	    return React.createElement(
@@ -6692,7 +6841,8 @@ var ProperTable =
 	        zIndex: undefined
 	      }))
 	    );
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTableRow;
 
@@ -6756,7 +6906,8 @@ var ProperTable =
 
 	    width: PropTypes.number.isRequired,
 
-	    zIndex: PropTypes.number.isRequired },
+	    zIndex: PropTypes.number.isRequired
+	  },
 
 	  render: function render() /*object*/{
 	    var props = this.props;
@@ -6779,7 +6930,8 @@ var ProperTable =
 	      height: props.height,
 	      position: 'absolute',
 	      width: contentWidth,
-	      zIndex: props.zIndex };
+	      zIndex: props.zIndex
+	    };
 	    translateDOMPositionXY(style, -1 * DIR_SIGN * props.left, 0);
 
 	    return React.createElement(
@@ -6826,7 +6978,8 @@ var ProperTable =
 	      width += columns[i].props.width;
 	    }
 	    return width;
-	  } });
+	  }
+	});
 
 	var FixedDataTableCellGroup = React.createClass({
 	  displayName: 'FixedDataTableCellGroup',
@@ -6850,7 +7003,8 @@ var ProperTable =
 	     * Z-index on which the row will be displayed. Used e.g. for keeping
 	     * header and footer in front of other rows.
 	     */
-	    zIndex: PropTypes.number.isRequired },
+	    zIndex: PropTypes.number.isRequired
+	  },
 
 	  shouldComponentUpdate: function shouldComponentUpdate( /*object*/nextProps) /*boolean*/{
 	    return !nextProps.isScrolling || this.props.rowIndex !== nextProps.rowIndex || this.props.left !== nextProps.left;
@@ -6858,7 +7012,8 @@ var ProperTable =
 
 	  getDefaultProps: function getDefaultProps() /*object*/{
 	    return {
-	      offsetLeft: 0 };
+	      offsetLeft: 0
+	    };
 	  },
 
 	  render: function render() /*object*/{
@@ -6868,7 +7023,8 @@ var ProperTable =
 	    var props = _objectWithoutProperties(_props, ['offsetLeft']);
 
 	    var style = {
-	      height: props.height };
+	      height: props.height
+	    };
 
 	    if (DIR_SIGN === 1) {
 	      style.left = offsetLeft;
@@ -6897,7 +7053,8 @@ var ProperTable =
 	  /*string|number*/columnKey,
 	  /*object*/event) {
 	    this.props.onColumnResize && this.props.onColumnResize(this.props.offsetLeft, left - this.props.left + width, width, minWidth, maxWidth, columnKey, event);
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTableCellGroup;
 
@@ -6987,7 +7144,8 @@ var ProperTable =
 	      // new children
 	      if (haveColumnsChanged) {
 	        newChild = React.cloneElement(originalChild, {
-	          children: newColumns });
+	          children: newColumns
+	        });
 	      }
 	    } else if (originalChild.type === FixedDataTableColumn) {
 	      newChild = callback(originalChild);
@@ -7004,7 +7162,8 @@ var ProperTable =
 	  CELL_VISIBILITY_TOLERANCE: CELL_VISIBILITY_TOLERANCE,
 	  renderToString: renderToString,
 	  forEachColumn: forEachColumn,
-	  mapColumns: mapColumns };
+	  mapColumns: mapColumns
+	};
 
 	module.exports = FixedDataTableHelper;
 
@@ -7031,7 +7190,7 @@ var ProperTable =
 	    return false;
 	  },
 	  getDirection: function getDirection() {
-	    return "LTR";
+	    return 'LTR';
 	  }
 	};
 
@@ -7068,7 +7227,8 @@ var ProperTable =
 	  displayName: 'TransitionColumnGroup',
 
 	  statics: {
-	    __TableColumnGroup__: true },
+	    __TableColumnGroup__: true
+	  },
 
 	  render: function render() {
 	    if (false) {
@@ -7156,7 +7316,8 @@ var ProperTable =
 
 	var DEFAULT_PROPS = {
 	  align: 'left',
-	  highlighted: false };
+	  highlighted: false
+	};
 
 	var FixedDataTableCell = React.createClass({
 	  displayName: 'FixedDataTableCell',
@@ -7202,7 +7363,8 @@ var ProperTable =
 	    /**
 	     * The left offset in pixels of the cell.
 	     */
-	    left: PropTypes.number },
+	    left: PropTypes.number
+	  },
 
 	  shouldComponentUpdate: function shouldComponentUpdate(nextProps) {
 	    return !nextProps.isScrolling || this.props.rowIndex !== nextProps.rowIndex;
@@ -7222,7 +7384,8 @@ var ProperTable =
 
 	    var style = {
 	      height: height,
-	      width: width };
+	      width: width
+	    };
 
 	    if (DIR_SIGN === 1) {
 	      style.left = props.left;
@@ -7237,7 +7400,8 @@ var ProperTable =
 	      'fixedDataTableCellLayout/alignCenter': props.align === 'center',
 	      'public/fixedDataTableCell/alignRight': props.align === 'right',
 	      'public/fixedDataTableCell/highlighted': props.highlighted,
-	      'public/fixedDataTableCell/main': true }), props.className);
+	      'public/fixedDataTableCell/main': true
+	    }), props.className);
 
 	    var columnResizerComponent;
 	    if (props.onColumnResize) {
@@ -7290,7 +7454,8 @@ var ProperTable =
 
 	  _onColumnResizerMouseDown: function _onColumnResizerMouseDown( /*object*/event) {
 	    this.props.onColumnResize(this.props.left, this.props.width, this.props.minWidth, this.props.maxWidth, this.props.columnKey, event);
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTableCell;
 
@@ -7365,7 +7530,8 @@ var ProperTable =
 	     * Optional prop that if specified on the `Column` will be passed to the
 	     * cell. It can be used to uniquely identify which column is the cell is in.
 	     */
-	    columnKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) },
+	    columnKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+	  },
 
 	  render: function render() {
 	    var _props = this.props;
@@ -7379,7 +7545,8 @@ var ProperTable =
 
 	    var innerStyle = _extends({
 	      height: height,
-	      width: width }, style);
+	      width: width
+	    }, style);
 
 	    return React.createElement(
 	      'div',
@@ -7402,7 +7569,8 @@ var ProperTable =
 	        )
 	      )
 	    );
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTableCellDefault;
 
@@ -7537,7 +7705,8 @@ var ProperTable =
 	    /**
 	     * Column key for the column being resized.
 	     */
-	    columnKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) },
+	    columnKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+	  },
 
 	  getInitialState: function getInitialState() /*object*/{
 	    return {
@@ -7568,7 +7737,8 @@ var ProperTable =
 	  render: function render() /*object*/{
 	    var style = {
 	      width: this.state.width,
-	      height: this.props.height };
+	      height: this.props.height
+	    };
 	    if (Locale.isRTL()) {
 	      style.right = this.props.leftOffset;
 	    } else {
@@ -7580,7 +7750,8 @@ var ProperTable =
 	        className: cx({
 	          'fixedDataTableColumnResizerLineLayout/main': true,
 	          'fixedDataTableColumnResizerLineLayout/hiddenElem': !this.props.visible,
-	          'public/fixedDataTableColumnResizerLine/main': true }),
+	          'public/fixedDataTableColumnResizerLine/main': true
+	        }),
 	        style: style },
 	      React.createElement('div', {
 	        className: cx('fixedDataTableColumnResizerLineLayout/mouseArea'),
@@ -7607,7 +7778,8 @@ var ProperTable =
 	  _onColumnResizeEnd: function _onColumnResizeEnd() {
 	    this._mouseMoveTracker.releaseMouseMoves();
 	    this.props.onColumnResizeEnd(this.state.width, this.props.columnKey);
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTableColumnResizeHandle;
 
@@ -7641,7 +7813,8 @@ var ProperTable =
 	  index: 0,
 	  offset: 0,
 	  position: 0,
-	  contentHeight: 0 };
+	  contentHeight: 0
+	};
 
 	var FixedDataTableScrollHelper = (function () {
 	  function FixedDataTableScrollHelper(
@@ -7806,7 +7979,8 @@ var ProperTable =
 	        index: firstRowIndex,
 	        offset: firstRowOffset,
 	        position: this._position,
-	        contentHeight: this._contentHeight };
+	        contentHeight: this._contentHeight
+	      };
 	    }
 	  }, {
 	    key: '_getRowAtEndPosition',
@@ -7846,7 +8020,8 @@ var ProperTable =
 	          index: 0,
 	          offset: 0,
 	          position: this._position,
-	          contentHeight: this._contentHeight };
+	          contentHeight: this._contentHeight
+	        };
 	      } else if (position >= this._contentHeight - this._viewportHeight) {
 	        // If position is equal to or greater than max scroll value, we need
 	        // to make sure to have bottom border of last row visible.
@@ -7867,32 +8042,33 @@ var ProperTable =
 	        index: firstRowIndex,
 	        offset: firstRowOffset,
 	        position: this._position,
-	        contentHeight: this._contentHeight };
+	        contentHeight: this._contentHeight
+	      };
 	    }
-	  }, {
-	    key: 'scrollToRow',
 
 	    /**
 	     * Allows to scroll to selected row with specified offset. It always
 	     * brings that row to top of viewport with that offset
 	     */
+	  }, {
+	    key: 'scrollToRow',
 	    value: function scrollToRow( /*number*/rowIndex, /*number*/offset) /*object*/{
 	      rowIndex = clamp(rowIndex, 0, Math.max(this._rowCount - 1, 0));
 	      offset = clamp(offset, -this._storedHeights[rowIndex], 0);
 	      var firstRow = this._rowOffsets.sumUntil(rowIndex);
 	      return this.scrollTo(firstRow - offset);
 	    }
-	  }, {
-	    key: 'scrollRowIntoView',
 
 	    /**
 	     * Allows to scroll to selected row by bringing it to viewport with minimal
-	     * scrolling. This that if row is fully visible, scroll will not be changed.
+	     * scrolling. This that if row is fully visible scroll will not be changed.
 	     * If top border of row is above top of viewport it will be scrolled to be
 	     * fully visible on the top of viewport. If the bottom border of row is
-	     * below end of viewport, it will be scrolled up to be fully visible on the
+	     * below end of viewport it will be scrolled up to be fully visible on the
 	     * bottom of viewport.
 	     */
+	  }, {
+	    key: 'scrollRowIntoView',
 	    value: function scrollRowIntoView( /*number*/rowIndex) /*object*/{
 	      rowIndex = clamp(rowIndex, 0, Math.max(this._rowCount - 1, 0));
 	      var rowBegin = this._rowOffsets.sumUntil(rowIndex);
@@ -7925,7 +8101,7 @@ var ProperTable =
 	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule PrefixIntervalTree
-	 * @flow
+	 * 
 	 * @typechecks
 	 */
 
@@ -8019,12 +8195,12 @@ var ProperTable =
 	    value: function getSize() {
 	      return this._size;
 	    }
-	  }, {
-	    key: 'sumUntil',
 
 	    /**
 	     * Returns the sum get(0) + get(1) + ... + get(end - 1).
 	     */
+	  }, {
+	    key: 'sumUntil',
 	    value: function sumUntil(end) {
 	      invariant(0 <= end && end < this._size + 1, 'Index out of range %s', end);
 
@@ -8042,33 +8218,33 @@ var ProperTable =
 
 	      return sum;
 	    }
-	  }, {
-	    key: 'sumTo',
 
 	    /**
 	     * Returns the sum get(0) + get(1) + ... + get(inclusiveEnd).
 	     */
+	  }, {
+	    key: 'sumTo',
 	    value: function sumTo(inclusiveEnd) {
 	      invariant(0 <= inclusiveEnd && inclusiveEnd < this._size, 'Index out of range %s', inclusiveEnd);
 	      return this.sumUntil(inclusiveEnd + 1);
 	    }
-	  }, {
-	    key: 'sum',
 
 	    /**
 	     * Returns the sum get(begin) + get(begin + 1) + ... + get(end - 1).
 	     */
+	  }, {
+	    key: 'sum',
 	    value: function sum(begin, end) {
 	      invariant(begin <= end, 'Begin must precede end');
 	      return this.sumUntil(end) - this.sumUntil(begin);
 	    }
-	  }, {
-	    key: 'greatestLowerBound',
 
 	    /**
-	     * Returns the smallest i such that 0 <= i <= size and sumUntil(i) <= t, or
+	     * Returns the smallest i such that 0 <= i <= size and sumUntil(i) <= t or
 	     * -1 if no such i exists.
 	     */
+	  }, {
+	    key: 'greatestLowerBound',
 	    value: function greatestLowerBound(t) {
 	      if (t < 0) {
 	        return -1;
@@ -8091,13 +8267,13 @@ var ProperTable =
 
 	      return node - this._half;
 	    }
-	  }, {
-	    key: 'greatestStrictLowerBound',
 
 	    /**
-	     * Returns the smallest i such that 0 <= i <= size and sumUntil(i) < t, or
+	     * Returns the smallest i such that 0 <= i <= size and sumUntil(i) < t or
 	     * -1 if no such i exists.
 	     */
+	  }, {
+	    key: 'greatestStrictLowerBound',
 	    value: function greatestStrictLowerBound(t) {
 	      if (t <= 0) {
 	        return -1;
@@ -8120,23 +8296,23 @@ var ProperTable =
 
 	      return node - this._half;
 	    }
-	  }, {
-	    key: 'leastUpperBound',
 
 	    /**
-	     * Returns the smallest i such that 0 <= i <= size and t <= sumUntil(i), or
+	     * Returns the smallest i such that 0 <= i <= size and t <= sumUntil(i) or
 	     * size + 1 if no such i exists.
 	     */
+	  }, {
+	    key: 'leastUpperBound',
 	    value: function leastUpperBound(t) {
 	      return this.greatestStrictLowerBound(t) + 1;
 	    }
-	  }, {
-	    key: 'leastStrictUpperBound',
 
 	    /**
-	     * Returns the smallest i such that 0 <= i <= size and t < sumUntil(i), or
+	     * Returns the smallest i such that 0 <= i <= size and t < sumUntil(i) or
 	     * size + 1 if no such i exists.
 	     */
+	  }, {
+	    key: 'leastStrictUpperBound',
 	    value: function leastStrictUpperBound(t) {
 	      return this.greatestLowerBound(t) + 1;
 	    }
@@ -8218,7 +8394,8 @@ var ProperTable =
 	  if (flexWidth <= 0) {
 	    return {
 	      columns: columns,
-	      width: getTotalWidth(columns) };
+	      width: getTotalWidth(columns)
+	    };
 	  }
 	  var remainingFlexGrow = getTotalFlexGrow(columns);
 	  var remainingFlexWidth = flexWidth;
@@ -8243,7 +8420,8 @@ var ProperTable =
 
 	  return {
 	    columns: newColumns,
-	    width: totalWidth };
+	    width: totalWidth
+	  };
 	}
 
 	function adjustColumnGroupWidths(
@@ -8288,7 +8466,8 @@ var ProperTable =
 
 	  return {
 	    columns: newAllColumns,
-	    columnGroups: newColumnGroups };
+	    columnGroups: newColumnGroups
+	  };
 	}
 
 	function adjustColumnWidths(
@@ -8306,7 +8485,8 @@ var ProperTable =
 	  getTotalFlexGrow: getTotalFlexGrow,
 	  distributeFlexWidth: distributeFlexWidth,
 	  adjustColumnWidths: adjustColumnWidths,
-	  adjustColumnGroupWidths: adjustColumnGroupWidths };
+	  adjustColumnGroupWidths: adjustColumnGroupWidths
+	};
 
 	module.exports = FixedDataTableWidthHelper;
 
@@ -8396,7 +8576,7 @@ var ProperTable =
 	 *
 	 * @providesModule shallowEqual
 	 * @typechecks
-	 * @flow
+	 * 
 	 */
 
 	'use strict';
@@ -8601,12 +8781,14 @@ var ProperTable =
 	     * Setting the property to false will keep previous behaviour and keep
 	     * cell rendered if the row it belongs to is visible.
 	     */
-	    allowCellsRecycling: PropTypes.bool },
+	    allowCellsRecycling: PropTypes.bool
+	  },
 
 	  getDefaultProps: function getDefaultProps() /*object*/{
 	    return {
 	      allowCellsRecycling: false,
-	      fixed: false };
+	      fixed: false
+	    };
 	  },
 
 	  render: function render() {
@@ -8614,7 +8796,8 @@ var ProperTable =
 	      throw new Error('Component <FixedDataTableColumn /> should never render');
 	    }
 	    return null;
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTableColumn;
 
@@ -8647,7 +8830,8 @@ var ProperTable =
 	  displayName: 'FixedDataTableColumnGroup',
 
 	  statics: {
-	    __TableColumnGroup__: true },
+	    __TableColumnGroup__: true
+	  },
 
 	  propTypes: {
 	    /**
@@ -8679,11 +8863,14 @@ var ProperTable =
 	     * You can also pass in a function that returns a react elemnt, with the
 	     * props object above passed in as the first parameter.
 	     */
-	    header: PropTypes.oneOfType([PropTypes.node, PropTypes.func]) },
+	    header: PropTypes.oneOfType([PropTypes.node, PropTypes.func])
+
+	  },
 
 	  getDefaultProps: function getDefaultProps() /*object*/{
 	    return {
-	      fixed: false };
+	      fixed: false
+	    };
 	  },
 
 	  render: function render() {
@@ -8691,7 +8878,8 @@ var ProperTable =
 	      throw new Error('Component <FixedDataTableColumnGroup /> should never render');
 	    }
 	    return null;
-	  } });
+	  }
+	});
 
 	module.exports = FixedDataTableColumnGroup;
 
@@ -8751,6 +8939,7 @@ var ProperTable =
 	    isHeaderCell: PropTypes.bool, // header
 	    isFooterCell: PropTypes.bool },
 
+	  // footer
 	  shouldComponentUpdate: function shouldComponentUpdate( /*object*/nextProps) {
 	    var update = false;
 	    var rowData;
@@ -8868,7 +9057,8 @@ var ProperTable =
 
 	    var innerStyle = _extends({
 	      height: props.height,
-	      width: props.width }, props.style);
+	      width: props.width
+	    }, props.style);
 
 	    return React.createElement(
 	      'div',
@@ -8891,7 +9081,6 @@ var ProperTable =
 	});
 
 	module.exports = TransitionCell;
-	// footer
 
 /***/ },
 /* 54 */
@@ -8909,7 +9098,7 @@ var ProperTable =
 	(function (global, factory) {
 	   true ? module.exports = factory() :
 	  typeof define === 'function' && define.amd ? define(factory) :
-	  global.Immutable = factory();
+	  (global.Immutable = factory());
 	}(this, function () { 'use strict';var SLICE$0 = Array.prototype.slice;
 
 	  function createClass(ctor, superClass) {
@@ -9804,7 +9993,7 @@ var ProperTable =
 	      }
 	      return 'Range [ ' +
 	        this._start + '...' + this._end +
-	        (this._step > 1 ? ' by ' + this._step : '') +
+	        (this._step !== 1 ? ' by ' + this._step : '') +
 	      ' ]';
 	    };
 
@@ -9936,6 +10125,9 @@ var ProperTable =
 	    }
 	    var type = typeof o;
 	    if (type === 'number') {
+	      if (o !== o || o === Infinity) {
+	        return 0;
+	      }
 	      var h = o | 0;
 	      if (h !== o) {
 	        h ^= o * 0xFFFFFFFF;
@@ -10120,6 +10312,17 @@ var ProperTable =
 	          iter.forEach(function(v, k)  {return map.set(k, v)});
 	        });
 	    }
+
+	    Map.of = function() {var keyValues = SLICE$0.call(arguments, 0);
+	      return emptyMap().withMutations(function(map ) {
+	        for (var i = 0; i < keyValues.length; i += 2) {
+	          if (i + 1 >= keyValues.length) {
+	            throw new Error('Missing value for key: ' + keyValues[i]);
+	          }
+	          map.set(keyValues[i], keyValues[i + 1]);
+	        }
+	      });
+	    };
 
 	    Map.prototype.toString = function() {
 	      return this.__toString('Map {', '}');
@@ -12033,7 +12236,11 @@ var ProperTable =
 	      begin = begin | 0;
 	    }
 	    if (end !== undefined) {
-	      end = end | 0;
+	      if (end === Infinity) {
+	        end = originalSize;
+	      } else {
+	        end = end | 0;
+	      }
 	    }
 
 	    if (wholeSlice(begin, end, originalSize)) {
@@ -12569,6 +12776,12 @@ var ProperTable =
 	    Record.prototype.set = function(k, v) {
 	      if (!this.has(k)) {
 	        throw new Error('Cannot set unknown key "' + k + '" on ' + recordName(this));
+	      }
+	      if (this._map && !this._map.has(k)) {
+	        var defaultVal = this._defaultValues[k];
+	        if (v === defaultVal) {
+	          return this;
+	        }
 	      }
 	      var newMap = this._map && this._map.set(k, v);
 	      if (this.__ownerID || newMap === this._map) {
@@ -13253,21 +13466,6 @@ var ProperTable =
 	      return entry ? entry[1] : notSetValue;
 	    },
 
-	    findEntry: function(predicate, context) {
-	      var found;
-	      this.__iterate(function(v, k, c)  {
-	        if (predicate.call(context, v, k, c)) {
-	          found = [k, v];
-	          return false;
-	        }
-	      });
-	      return found;
-	    },
-
-	    findLastEntry: function(predicate, context) {
-	      return this.toSeq().reverse().findEntry(predicate, context);
-	    },
-
 	    forEach: function(sideEffect, context) {
 	      assertNotInfinite(this.size);
 	      return this.__iterate(context ? sideEffect.bind(context) : sideEffect);
@@ -13378,8 +13576,32 @@ var ProperTable =
 	      return this.filter(not(predicate), context);
 	    },
 
+	    findEntry: function(predicate, context, notSetValue) {
+	      var found = notSetValue;
+	      this.__iterate(function(v, k, c)  {
+	        if (predicate.call(context, v, k, c)) {
+	          found = [k, v];
+	          return false;
+	        }
+	      });
+	      return found;
+	    },
+
+	    findKey: function(predicate, context) {
+	      var entry = this.findEntry(predicate, context);
+	      return entry && entry[0];
+	    },
+
 	    findLast: function(predicate, context, notSetValue) {
 	      return this.toKeyedSeq().reverse().find(predicate, context, notSetValue);
+	    },
+
+	    findLastEntry: function(predicate, context, notSetValue) {
+	      return this.toKeyedSeq().reverse().findEntry(predicate, context, notSetValue);
+	    },
+
+	    findLastKey: function(predicate, context) {
+	      return this.toKeyedSeq().reverse().findKey(predicate, context);
 	    },
 
 	    first: function() {
@@ -13440,12 +13662,20 @@ var ProperTable =
 	      return iter.isSubset(this);
 	    },
 
+	    keyOf: function(searchValue) {
+	      return this.findKey(function(value ) {return is(value, searchValue)});
+	    },
+
 	    keySeq: function() {
 	      return this.toSeq().map(keyMapper).toIndexedSeq();
 	    },
 
 	    last: function() {
 	      return this.toSeq().reverse().first();
+	    },
+
+	    lastKeyOf: function(searchValue) {
+	      return this.toKeyedSeq().reverse().keyOf(searchValue);
 	    },
 
 	    max: function(comparator) {
@@ -13538,58 +13768,12 @@ var ProperTable =
 	  IterablePrototype.chain = IterablePrototype.flatMap;
 	  IterablePrototype.contains = IterablePrototype.includes;
 
-	  // Temporary warning about using length
-	  (function () {
-	    try {
-	      Object.defineProperty(IterablePrototype, 'length', {
-	        get: function () {
-	          if (!Iterable.noLengthWarning) {
-	            var stack;
-	            try {
-	              throw new Error();
-	            } catch (error) {
-	              stack = error.stack;
-	            }
-	            if (stack.indexOf('_wrapObject') === -1) {
-	              console && console.warn && console.warn(
-	                'iterable.length has been deprecated, '+
-	                'use iterable.size or iterable.count(). '+
-	                'This warning will become a silent error in a future version. ' +
-	                stack
-	              );
-	              return this.size;
-	            }
-	          }
-	        }
-	      });
-	    } catch (e) {}
-	  })();
-
-
-
 	  mixin(KeyedIterable, {
 
 	    // ### More sequential methods
 
 	    flip: function() {
 	      return reify(this, flipFactory(this));
-	    },
-
-	    findKey: function(predicate, context) {
-	      var entry = this.findEntry(predicate, context);
-	      return entry && entry[0];
-	    },
-
-	    findLastKey: function(predicate, context) {
-	      return this.toSeq().reverse().findKey(predicate, context);
-	    },
-
-	    keyOf: function(searchValue) {
-	      return this.findKey(function(value ) {return is(value, searchValue)});
-	    },
-
-	    lastKeyOf: function(searchValue) {
-	      return this.findLastKey(function(value ) {return is(value, searchValue)});
 	    },
 
 	    mapEntries: function(mapper, context) {var this$0 = this;
@@ -13640,16 +13824,13 @@ var ProperTable =
 	    },
 
 	    indexOf: function(searchValue) {
-	      var key = this.toKeyedSeq().keyOf(searchValue);
+	      var key = this.keyOf(searchValue);
 	      return key === undefined ? -1 : key;
 	    },
 
 	    lastIndexOf: function(searchValue) {
-	      var key = this.toKeyedSeq().reverse().keyOf(searchValue);
+	      var key = this.lastKeyOf(searchValue);
 	      return key === undefined ? -1 : key;
-
-	      // var index =
-	      // return this.toSeq().reverse().indexOf(searchValue);
 	    },
 
 	    reverse: function() {
@@ -13683,8 +13864,8 @@ var ProperTable =
 	    // ### More collection methods
 
 	    findLastIndex: function(predicate, context) {
-	      var key = this.toKeyedSeq().findLastKey(predicate, context);
-	      return key === undefined ? -1 : key;
+	      var entry = this.findLastEntry(predicate, context);
+	      return entry ? entry[0] : -1;
 	    },
 
 	    first: function() {
@@ -13723,6 +13904,10 @@ var ProperTable =
 	        interleaved.size = zipped.size * iterables.length;
 	      }
 	      return reify(this, interleaved);
+	    },
+
+	    keySeq: function() {
+	      return Range(0, this.size);
 	    },
 
 	    last: function() {
@@ -13773,6 +13958,7 @@ var ProperTable =
 	  });
 
 	  SetIterable.prototype.has = IterablePrototype.includes;
+	  SetIterable.prototype.contains = SetIterable.prototype.includes;
 
 
 	  // Mixin subclasses
@@ -13809,7 +13995,7 @@ var ProperTable =
 	  }
 
 	  function quoteString(value) {
-	    return typeof value === 'string' ? JSON.stringify(value) : value;
+	    return typeof value === 'string' ? JSON.stringify(value) : String(value);
 	  }
 
 	  function defaultZipper() {
@@ -13896,11 +14082,23 @@ var ProperTable =
 	exports['default'] = {
 		'SPA': {
 			loading: 'cargando...',
-			empty: 'No se encontró ningún elemento'
+			empty: 'No se encontró ningún elemento',
+			allData: 'Todos los datos, sin filtrar.',
+			filtering: 'filas filtradas de',
+			filtered: 'Filtrado por',
+			there: 'Hay',
+			sorted: 'Ordenado por',
+			rows: 'filas.'
 		},
 		'ENG': {
 			loading: 'loading...',
-			empty: 'No data found'
+			empty: 'No data found',
+			allData: 'All data, no filtering.',
+			filtering: 'filtered rows of',
+			filtered: 'Filtered by',
+			there: 'There is',
+			sorted: 'Sorted by',
+			rows: 'rows.'
 		}
 	};
 	module.exports = exports['default'];
@@ -14887,6 +15085,17 @@ var ProperTable =
 	    sortIcon = buildColumnFilter(props, sortIcon);
 	  }
 
+	  // Change sort direction on click in label when using a complex filter
+	  if (children && props.filterComponent && !isSelectorCol) {
+	    children = _react2['default'].createElement(
+	      'span',
+	      { onClick: function onClick(e) {
+	          onSortChange(e, props, sortable);
+	        } },
+	      children
+	    );
+	  }
+
 	  return _react2['default'].createElement(
 	    'div',
 	    { key: props.uniqueId + '-column-header' },
@@ -14902,7 +15111,7 @@ var ProperTable =
 	        }
 	      }, props),
 	      children,
-	      '   ',
+	      ' ',
 	      sortIcon
 	    )
 	  );
@@ -15191,8 +15400,8 @@ var ProperTable =
 	      if (mustUpdate && !nextProps.isSortedOrFiltered) {
 	        nextState.element.style.color = this.props.iconDefColor; // back to default color
 	      } else if (mustUpdate && nextProps.isSortedOrFiltered) {
-	          nextState.element.style.color = this.props.iconColor;
-	        }
+	        nextState.element.style.color = this.props.iconColor;
+	      }
 	    }
 	    return somethingchanged;
 	  };
@@ -15236,15 +15445,14 @@ var ProperTable =
 
 	      if (this.props.repositioning) {
 	        style.position = 'fixed';
-	        style.top = y + 5;
-	        style.left = x + 5;
+	        style.top = y - 1;
+	        style.left = x - width + 12;
 	        if (this.props.width) style.width = this.props.width;
 	        if (this.props.height) style.height = this.props.height;
-	        if (style.left >= window.innerWidth - width) style.left = x - width;
+	        if (style.left < 0) style.left = x + 1;
 	      }
 
 	      _CSSPropertyOperations2['default'].setValueForStyles(this.node, style);
-
 	      document.body.appendChild(this.node);
 	    }
 
@@ -15267,7 +15475,8 @@ var ProperTable =
 	      return;
 	    }
 
-	    var element = this.state.element;
+	    var element = this.state.element,
+	        position = e.target.getBoundingClientRect();
 
 	    // element which call
 	    if (!element) {
@@ -15281,7 +15490,7 @@ var ProperTable =
 	      }
 	    }
 
-	    this.openPortal(this.props, e.clientX, e.clientY, element);
+	    this.openPortal(this.props, position.left, position.top + position.height, element);
 	  };
 
 	  Portal.prototype.openPortal = function openPortal() {
@@ -16231,7 +16440,7 @@ var ProperTable =
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports.default = undefined;
+	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports["default"] = void 0;
 
 	var _shouldComponentUpdate = __webpack_require__(77);
 
@@ -16249,12 +16458,12 @@ var ProperTable =
 
 	var _immutableRenderDecorator2 = _interopRequireDefault(_immutableRenderDecorator);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-	exports.default = _immutableRenderMixin2.default;
-	exports.immutableRenderDecorator = _immutableRenderDecorator2.default;
-	exports.shouldComponentUpdate = _shouldComponentUpdate2.default;
-	exports.shallowEqualImmutable = _shallowEqualImmutable2.default;
+	exports["default"] = _immutableRenderMixin2["default"];
+	exports.immutableRenderDecorator = _immutableRenderDecorator2["default"];
+	exports.shouldComponentUpdate = _shouldComponentUpdate2["default"];
+	exports.shallowEqualImmutable = _shallowEqualImmutable2["default"];
 
 /***/ },
 /* 77 */
@@ -16265,16 +16474,16 @@ var ProperTable =
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.default = shouldComponentUpdate;
+	exports["default"] = shouldComponentUpdate;
 
 	var _shallowEqualImmutable = __webpack_require__(78);
 
 	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	function shouldComponentUpdate(nextProps, nextState) {
-	  return !(0, _shallowEqualImmutable2.default)(this.props, nextProps) || !(0, _shallowEqualImmutable2.default)(this.state, nextState);
+	  return !(0, _shallowEqualImmutable2["default"])(this.props, nextProps) || !(0, _shallowEqualImmutable2["default"])(this.state, nextState);
 	}
 
 /***/ },
@@ -16289,15 +16498,15 @@ var ProperTable =
 
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-	exports.default = shallowEqualImmutable;
+	exports["default"] = shallowEqualImmutable;
 
 	var _immutable = __webpack_require__(54);
 
 	var _immutable2 = _interopRequireDefault(_immutable);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-	var is = _immutable2.default.is.bind(_immutable2.default);
+	var is = _immutable2["default"].is.bind(_immutable2["default"]);
 
 	function shallowEqualImmutable(objA, objB) {
 	  if (objA === objB || is(objA, objB)) {
@@ -16340,10 +16549,10 @@ var ProperTable =
 
 	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-	exports.default = {
-	  shouldComponentUpdate: _shouldComponentUpdate2.default
+	exports["default"] = {
+	  shouldComponentUpdate: _shouldComponentUpdate2["default"]
 	};
 
 /***/ },
@@ -16358,7 +16567,7 @@ var ProperTable =
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	exports.default = immutableRenderDecorator;
+	exports["default"] = immutableRenderDecorator;
 
 	var _react = __webpack_require__(2);
 
@@ -16368,7 +16577,7 @@ var ProperTable =
 
 	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -16394,14 +16603,14 @@ var ProperTable =
 	    _createClass(Wrapper, [{
 	      key: 'render',
 	      value: function render() {
-	        return _react2.default.createElement(Target, this.props, this.props.children);
+	        return _react2["default"].createElement(Target, this.props, this.props.children);
 	      }
 	    }]);
 
 	    return Wrapper;
 	  }(_react.Component);
 
-	  Wrapper.prototype.shouldComponentUpdate = _shouldComponentUpdate2.default;
+	  Wrapper.prototype.shouldComponentUpdate = _shouldComponentUpdate2["default"];
 
 	  return Wrapper;
 	}
@@ -20433,7 +20642,7 @@ var ProperTable =
 		if (set.size !== 3) return false;
 		if (typeof set.add !== 'function') return false;
 		if (typeof set.clear !== 'function') return false;
-		if (typeof set.delete !== 'function') return false;
+		if (typeof set["delete"] !== 'function') return false;
 		if (typeof set.entries !== 'function') return false;
 		if (typeof set.forEach !== 'function') return false;
 		if (typeof set.has !== 'function') return false;
@@ -20504,7 +20713,7 @@ var ProperTable =
 			clear.call(this.__setData__);
 			this.emit('_clear');
 		}),
-		delete: d(function (value) {
+		"delete": d(function (value) {
 			var index = eIndexOf.call(this.__setData__, value);
 			if (index === -1) return false;
 			this.__setData__.splice(index, 1);
@@ -20781,7 +20990,7 @@ var ProperTable =
 
 	'use strict';
 
-	var map = { function: true, object: true };
+	var map = { "function": true, object: true };
 
 	module.exports = function (x) {
 		return ((x != null) && map[typeof x]) || false;
@@ -21305,7 +21514,7 @@ var ProperTable =
 		});
 	};
 	defineProperties(SymbolPolyfill, {
-		for: d(function (key) {
+		"for": d(function (key) {
 			if (globalSymbols[key]) return globalSymbols[key];
 			return (globalSymbols[key] = SymbolPolyfill(String(key)));
 		}),
@@ -21871,23 +22080,20 @@ var ProperTable =
 
 	'use strict';
 
-	exports.__esModule = true;
-
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	exports['default'] = Dimensions;
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-	function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-	var _react = __webpack_require__(2);
+	var React = __webpack_require__(2);
+	var onElementResize = __webpack_require__(145);
 
-	var _react2 = _interopRequireDefault(_react);
-
-	var style = {
+	var defaultContainerStyle = {
 	  width: '100%',
 	  height: '100%',
 	  padding: 0,
@@ -21913,21 +22119,19 @@ var ProperTable =
 	 * or as an [ES7 class decorator](https://github.com/wycats/javascript-decorators)
 	 * (see examples)
 	 *
-	 * v1.0.0 is for React v0.14 only. Use ^0.1.0 for React v0.13
-	 *
-	 * @param {object} [options] Options
-	 * @param {function} [options.getHeight] `getHeight(element)` should return element
-	 * height, where element is the wrapper div. Defaults to `element.clientHeight`
-	 * @param {function} [options.getWidth]  `getWidth(element)` should return element
-	 * width, where element is the wrapper div. Defaults to `element.clientWidth`
-	 * @return {function}                   Returns a higher-order component that can be
+	 * @param {object} [options]
+	 * @param {function} [options.getHeight] A function that is passed an element and returns element
+	 * height, where element is the wrapper div. Defaults to `(element) => element.clientHeight`
+	 * @param {function} [options.getWidth]  A function that is passed an element and returns element
+	 * width, where element is the wrapper div. Defaults to `(element) => element.clientWidth`
+	 * @param {object} [options.containerStyle] A style object for the `<div>` that will wrap your component.
+	 * The dimensions of this `div` are what are passed as props to your component. The default style is
+	 * `{ width: '100%', height: '100%', padding: 0, border: 0 }` which will cause the `div` to fill its
+	 * parent in most cases. If you are using a flexbox layout you will want to change this default style.
+	 * @param {boolean} [options.elementResize=false] Set true to watch the wrapper `div` for changes in
+	 * size which are not a result of window resizing - e.g. changes to the flexbox and other layout.
+	 * @return {function}                   A higher-order component that can be
 	 * used to enhance a react component `Dimensions()(MyComponent)`
-	 *
-	 * ### Live Example
-	 *
-	 * Will open a browser window for localhost:9966
-	 *
-	 * `npm i && npm i react react-dom && npm start`
 	 *
 	 * @example
 	 * // ES2015
@@ -21964,81 +22168,211 @@ var ProperTable =
 	 * module.exports = Dimensions()(MyComponent) // Enhanced component
 	 *
 	 */
-
-	function Dimensions() {
+	module.exports = function Dimensions() {
 	  var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
 	  var _ref$getHeight = _ref.getHeight;
 	  var getHeight = _ref$getHeight === undefined ? defaultGetHeight : _ref$getHeight;
 	  var _ref$getWidth = _ref.getWidth;
 	  var getWidth = _ref$getWidth === undefined ? defaultGetWidth : _ref$getWidth;
+	  var _ref$containerStyle = _ref.containerStyle;
+	  var containerStyle = _ref$containerStyle === undefined ? defaultContainerStyle : _ref$containerStyle;
+	  var _ref$elementResize = _ref.elementResize;
+	  var elementResize = _ref$elementResize === undefined ? false : _ref$elementResize;
 
 	  return function (ComposedComponent) {
-	    return (function (_React$Component) {
+	    return function (_React$Component) {
 	      _inherits(DimensionsHOC, _React$Component);
 
 	      function DimensionsHOC() {
-	        var _this = this;
+	        var _Object$getPrototypeO;
+
+	        var _temp, _this, _ret;
 
 	        _classCallCheck(this, DimensionsHOC);
 
-	        _React$Component.apply(this, arguments);
+	        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+	          args[_key] = arguments[_key];
+	        }
 
-	        this.state = {};
-
-	        this.updateDimensions = function () {
+	        return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_Object$getPrototypeO = Object.getPrototypeOf(DimensionsHOC)).call.apply(_Object$getPrototypeO, [this].concat(args))), _this), _this.state = {}, _this.updateDimensions = function () {
 	          var container = _this.refs.container;
-	          if (!container) {
-	            throw new Error('Cannot find container div');
-	          }
-	          _this.setState({
-	            containerWidth: getWidth(container),
-	            containerHeight: getHeight(container)
-	          });
-	        };
+	          var containerWidth = getWidth(container);
+	          var containerHeight = getHeight(container);
 
-	        this.onResize = function () {
+	          if (containerWidth !== _this.state.containerWidth || containerHeight !== _this.state.containerHeight) {
+	            _this.setState({ containerWidth: containerWidth, containerHeight: containerHeight });
+	          }
+	        }, _this.onResize = function () {
 	          if (_this.rqf) return;
-	          _this.rqf = window.requestAnimationFrame(function () {
+	          _this.rqf = _this.getWindow().requestAnimationFrame(function () {
 	            _this.rqf = null;
 	            _this.updateDimensions();
 	          });
-	        };
+	        }, _temp), _possibleConstructorReturn(_this, _ret);
 	      }
+	      // ES7 Class properties
+	      // http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers
 
-	      DimensionsHOC.prototype.componentDidMount = function componentDidMount() {
-	        this.updateDimensions();
-	        window.addEventListener('resize', this.onResize, false);
-	      };
 
-	      DimensionsHOC.prototype.componentWillUnmount = function componentWillUnmount() {
-	        window.removeEventListener('resize', this.onResize);
-	      };
+	      // Using arrow functions and ES7 Class properties to autobind
+	      // http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#arrow-functions
 
-	      DimensionsHOC.prototype.render = function render() {
-	        return _react2['default'].createElement(
-	          'div',
-	          { style: style, ref: 'container' },
-	          (this.state.containerWidth || this.state.containerHeight) && _react2['default'].createElement(ComposedComponent, _extends({}, this.state, this.props))
-	        );
-	      };
+
+	      _createClass(DimensionsHOC, [{
+	        key: 'getWindow',
+
+
+	        // If the component is mounted in a different window to the javascript
+	        // context, as with https://github.com/JakeGinnivan/react-popout
+	        // then the `window` global will be different from the `window` that
+	        // contains the component.
+	        // Depends on `defaultView` which is not supported <IE9
+	        value: function getWindow() {
+	          return this.refs.container ? this.refs.container.ownerDocument.defaultView || window : window;
+	        }
+	      }, {
+	        key: 'componentDidMount',
+	        value: function componentDidMount() {
+	          if (!this.refs.container) {
+	            throw new Error('Cannot find container div');
+	          }
+	          this.updateDimensions();
+	          if (elementResize) {
+	            // Experimental: `element-resize-event` fires when an element resizes.
+	            // It attaches its own window resize listener and also uses
+	            // requestAnimationFrame, so we can just call `this.updateDimensions`.
+	            onElementResize(this.refs.container, this.updateDimensions);
+	          } else {
+	            this.getWindow().addEventListener('resize', this.onResize, false);
+	          }
+	        }
+	      }, {
+	        key: 'componentWillUnmount',
+	        value: function componentWillUnmount() {
+	          this.getWindow().removeEventListener('resize', this.onResize);
+	        }
+
+	        /**
+	         * Returns the underlying wrapped component instance.
+	         * Useful if you need to access a method or property of the component
+	         * passed to react-dimensions.
+	         *
+	         * @return {object} The rendered React component
+	         **/
+
+	      }, {
+	        key: 'getWrappedInstance',
+	        value: function getWrappedInstance() {
+	          this.refs.wrappedInstance;
+	        }
+	      }, {
+	        key: 'render',
+	        value: function render() {
+	          return React.createElement(
+	            'div',
+	            { style: containerStyle, ref: 'container' },
+	            (this.state.containerWidth || this.state.containerHeight) && React.createElement(ComposedComponent, _extends({}, this.state, this.props, {
+	              updateDimensions: this.updateDimensions,
+	              ref: 'wrappedInstance'
+	            }))
+	          );
+	        }
+	      }]);
 
 	      return DimensionsHOC;
-	    })(_react2['default'].Component);
+	    }(React.Component);
 	  };
-	}
-
-	module.exports = exports['default'];
-
-	// ES7 Class properties
-	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers
-
-	// Using arrow functions and ES7 Class properties to autobind
-	// http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#arrow-functions
+	};
 
 
 /***/ },
 /* 145 */
+/***/ function(module, exports) {
+
+	var exports = function exports(element, fn) {
+	  var window = this
+	  var document = window.document
+	  var isIE
+	  var requestFrame
+
+	  var attachEvent = document.attachEvent
+	  if (typeof navigator !== 'undefined') {
+	    isIE = navigator.userAgent.match(/Trident/) || navigator.userAgent.match(/Edge/)
+	  }
+
+	  requestFrame = (function () {
+	    var raf = window.requestAnimationFrame ||
+	      window.mozRequestAnimationFrame ||
+	        window.webkitRequestAnimationFrame ||
+	          function fallbackRAF(func) {
+	            return window.setTimeout(func, 20)
+	          }
+	    return function requestFrameFunction(func) {
+	      return raf(func)
+	    }
+	  })()
+
+	  var cancelFrame = (function () {
+	    var cancel = window.cancelAnimationFrame ||
+	      window.mozCancelAnimationFrame ||
+	        window.webkitCancelAnimationFrame ||
+	          window.clearTimeout
+	    return function cancelFrameFunction(id) {
+	      return cancel(id)
+	    }
+	  })()
+
+	  function resizeListener(e) {
+	    var win = e.target || e.srcElement
+	    if (win.__resizeRAF__) {
+	      cancelFrame(win.__resizeRAF__)
+	    }
+	    win.__resizeRAF__ = requestFrame(function () {
+	      var trigger = win.__resizeTrigger__
+	      trigger.__resizeListeners__.forEach(function (fn) {
+	        fn.call(trigger, e)
+	      })
+	    })
+	  }
+
+	  function objectLoad() {
+	    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__
+	    this.contentDocument.defaultView.addEventListener('resize', resizeListener)
+	  }
+
+	  if (!element.__resizeListeners__) {
+	    element.__resizeListeners__ = []
+	    if (attachEvent) {
+	      element.__resizeTrigger__ = element
+	      element.attachEvent('onresize', resizeListener)
+	    } else {
+	      if (getComputedStyle(element).position === 'static') {
+	        element.style.position = 'relative'
+	      }
+	      var obj = element.__resizeTrigger__ = document.createElement('object')
+	      obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;')
+	      obj.setAttribute('class', 'resize-sensor')
+	      obj.__resizeElement__ = element
+	      obj.onload = objectLoad
+	      obj.type = 'text/html'
+	      if (isIE) {
+	        element.appendChild(obj)
+	      }
+	      obj.data = 'about:blank'
+	      if (!isIE) {
+	        element.appendChild(obj)
+	      }
+	    }
+	  }
+	  element.__resizeListeners__.push(fn)
+	}
+
+	module.exports = (typeof window === 'undefined') ? exports : exports.bind(window)
+
+
+/***/ },
+/* 146 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin

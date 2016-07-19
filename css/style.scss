@@ -2,6 +2,9 @@
 @import "fixed-data-table";
 
 .propertable {
+	position: relative;
+	background-color: #fff;
+
 	.fa-square-o {
 		&:hover {
 			cursor: pointer;
@@ -32,6 +35,42 @@
 				}
 			}
 		}
+	}
+
+	.propertable-footer-info {
+	    background-color: #fff;
+	    border: 1px solid rgb(211,211,211);
+	    color: #777;
+	    position: absolute;
+	    bottom: 0;
+	    left: 0;
+	    right: 0;
+	    padding-right: 15px;
+	    padding-left: 10px;
+	    padding-top: 7px;
+	    z-index: 100;
+	    box-sizing: border-box;
+	    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+	    overflow: hidden;
+
+	    > div {
+	    	display: inline;
+	    	white-space: nowrap;
+		    overflow: hidden;
+		    text-overflow: ellipsis;
+	    }
+
+	    > .footer-left-info {
+		    float: left;
+		    text-align: left;
+		    max-width: 60%;
+	    }
+
+	    > .footer-right-info {
+		    float: right;
+		    text-align: right;
+		    max-width: 39%;
+	    }
 	}
 
 	&.column-complex-filter {

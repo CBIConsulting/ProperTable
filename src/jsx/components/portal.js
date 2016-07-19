@@ -157,15 +157,14 @@ class Portal extends React.Component {
 
       if (this.props.repositioning) {
   	  	style.position = 'fixed';
-  	  	style.top = y + 5;
-  	  	style.left = x + 5;
+        style.top = y - 1;
+        style.left = x - width + 12;
         if (this.props.width) style.width = this.props.width;
         if (this.props.height) style.height = this.props.height;
-      	if (style.left >= (window.innerWidth - width)) style.left = x - width;
+        if (style.left < 0) style.left = x + 1;
       }
 
     	CSSPropertyOperations.setValueForStyles(this.node, style);
-
       document.body.appendChild(this.node);
     }
 
@@ -186,7 +185,7 @@ class Portal extends React.Component {
 
     if (this.state.active) { return; }
 
-    let element = this.state.element;
+    let element = this.state.element, position = e.target.getBoundingClientRect();
 
     // element which call
     if (!element) {
@@ -200,7 +199,7 @@ class Portal extends React.Component {
   		}
   	}
 
-    this.openPortal(this.props, e.clientX, e.clientY, element);
+    this.openPortal(this.props, position.left, (position.top + position.height), element);
   }
 
   openPortal(props = this.props, x = this.state.x, y = this.state.y, element = this.state.element) {

@@ -117,7 +117,8 @@ class ProperTable extends React.Component {
 			selection:initialData.defSelection,
 			sortCache: initialData.defSortCache,
 			allSelected: false,
-			sendSorted: false
+			sendSorted: false,
+			hasSortedColumns: false
 		};
 	}
 
@@ -417,13 +418,13 @@ class ProperTable extends React.Component {
  * @param (object) 	props 			Component props or new props on update
  * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
  * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
- * @param (boolean) forceApply		If it's true then when when update sort or update Filters is not allowed it will apply the colSettings anyway.
+ * @param (boolean) forceApply		If it's true then when update sort or update Filters is not allowed it will apply the colSettings anyway.
  */
 	applySettings(colSettings = this.state.colSettings, props = this.props, updateSort = true, updateFilters = true, forceSendSettings = false, forceApply = false) {
 		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newDirection;
 		let updateSortAllowed = updateSort && props.colSortDirs && _.size(props.colSortDirs) > 0;
 		let updateFiltersAllowed = updateFilters && props.colFilters, hasSelectionFilter, hasCustomFilter, operations = {};
-		let sortedData = [], filterValue; // Date filters
+		let sortedData = [], filterValue, newFilter; // Date filters
 
 		// Update settings
 		colSettings = _.map(colSettings, col => {
@@ -441,9 +442,9 @@ class ProperTable extends React.Component {
 			}
 
 			if (updateFiltersAllowed) {
-				if (props.colFilters[col.column]) {
-					let newFilter = props.colFilters[col.column];
+				newFilter = props.colFilters[col.column];
 
+				if (newFilter) {
 					if (!newFilter.type || newFilter.type === FILTERTYPE_SELECTION) {
 						if (!hasFilter) {
 							if (col.filterType !== FILTERTYPE_SELECTION) { // Has changed Type
@@ -457,7 +458,8 @@ class ProperTable extends React.Component {
 						col.selection = newFilter.selection;
 
 					} else if (newFilter.type === FILTERTYPE_CUSTOM) {
-						if (!hasFilter && ((col.operationFilterType !== newFilter.operationType) || (col.operationFilterValue !== newFilter.operationValue))) {
+						if (!hasFilter && (col.filterType !== FILTERTYPE_CUSTOM || col.operationFilterType !== newFilter.operationType
+							|| col.operationFilterValue !== newFilter.operationValue)) {
 							hasFilter = true;
 						}
 
@@ -471,8 +473,8 @@ class ProperTable extends React.Component {
 				hasFilter = true;
 			}
 
-			hasSelectionFilter = col.selection.length > 0 && col.filterType === FILTERTYPE_SELECTION;
-			if (!hasSelectionFilter) hasCustomFilter =  col.operationFilterValue.length > 0 && col.filterType === FILTERTYPE_CUSTOM;
+			hasSelectionFilter = (col.selection.length > 0) && col.filterType === FILTERTYPE_SELECTION;
+			if (!hasSelectionFilter) hasCustomFilter =  (col.operationFilterValue.length > 0) && col.filterType === FILTERTYPE_CUSTOM;
 
 			// Build all selection || operation filter in case it has filter
 			if (hasSelectionFilter || hasCustomFilter) {
@@ -543,7 +545,6 @@ class ProperTable extends React.Component {
 			let result, field, formatter, val;
 
 			filteredData = initialData.filter(element => {
-
 				// If value has been found (result = true) then leave loop and return true
 				columns.every(column => {
 					field = fields[column];
@@ -556,7 +557,6 @@ class ProperTable extends React.Component {
 					if (_.isNull(val)) val = '';
 
 					if (typeof val === 'string' || typeof val === 'number') {
-
 						if (formatter) {
 							if (operations[column] && operations[column].type) {
 							 	if (notAllowedTypes.has(operations[column].type)) {
@@ -728,9 +728,12 @@ class ProperTable extends React.Component {
 					valid =  typeof val === 'string' || typeof val === 'number' ? true : false;
 
 					if (valid && !_.isNull(val) && val !== '') {
-						if (colData.formatter) val = colData.formatter(val, null, null);
+						if (colData.formatter) {
+							val = colData.formatter(val, null, null);
+							valid =  typeof val === 'string' || typeof val === 'number' ? true : false;
+						}
 
-						if (!idSet.has(val) && !_.isNull(val) && !_.isUndefined(val)){ // No repeat
+						if (valid && !idSet.has(val) && !_.isNull(val) && !_.isUndefined(val)){ // No repeat
 							idSet.add(val);
 
 							row = row.set(colData.field, val.toString());
@@ -858,7 +861,7 @@ class ProperTable extends React.Component {
 	clearFilterAndSort(e) {
 		e.preventDefault();
 		let colSettings = this.state.colSettings, data, indexed = this.state.indexed;
-		let clear = CLEAR_OPTIONS[this.props.restartOnClickType];
+		let clear = CLEAR_OPTIONS[this.props.restartOnClickType], hasSortedColumns = this.state.hasSortedColumns;
 
 		colSettings = _.map(colSettings, element => {
 			if (clear.filters) {
@@ -883,10 +886,13 @@ class ProperTable extends React.Component {
 			return element;
 		});
 
+		if (clear.sort) hasSortedColumns = false;
+
 		this.setState({
 			data: data,
 			indexed: indexed,
-			colSettings: colSettings
+			colSettings: colSettings,
+			hasSortedColumns: hasSortedColumns
 		}, this.sendSortedAndSettings(data, colSettings));
 	}
 
@@ -945,6 +951,7 @@ class ProperTable extends React.Component {
 			if (col.column !== SELECTOR_COL_NAME) {
 				if (col.column === columnKey) { // Update
 					col.selection = selection;
+					col.filterType = FILTERTYPE_SELECTION;
 				}
 
 				if (!hasSort && col.direction !== DEFAULT_SORT_DIRECTION) hasSort = true;
@@ -1046,6 +1053,7 @@ class ProperTable extends React.Component {
 			// After change the sort position priority of the other elements if the new position is lower than the current position set new position.
 			if (initialPos < colSettings[index].position) colSettings[index].position = initialPos;
 		}
+
 		return colSettings;
 	}
 
@@ -1061,9 +1069,13 @@ class ProperTable extends React.Component {
  */
 	sortTable(colSettings, sendSorted = true, newData = null) {
 		let data = newData ? newData.data : this.state.data, indexedData = newData ? newData.indexed : this.state.indexed;
-		let sendSortedAllowed = sendSorted;
+		let sendSortedAllowed = sendSorted, hasSortedColumns = false;
 
 		colSettings = _.sortBy(colSettings, (element) => {
+			if (!hasSortedColumns && element.direction !== DEFAULT_SORT_DIRECTION) {
+				hasSortedColumns = true;
+			}
+
 			return element.position;
 		}).reverse();
 
@@ -1078,7 +1090,8 @@ class ProperTable extends React.Component {
   			indexed: data.indexed,
 	      	colSettings: colSettings,
 	      	sortCache: data.sortCache,
-	      	sendSorted: sendSortedAllowed
+	      	sendSorted: sendSortedAllowed,
+	      	hasSortedColumns: hasSortedColumns
 	    });
 	}
 
@@ -1155,8 +1168,8 @@ class ProperTable extends React.Component {
  * @return 	{object}	col 		The builded column or tree of columns
  */
 	parseColumn(colData, isChildren = false, hasNested = false) {
-		let col = null, colname = null, sortDir = DEFAULT_SORT_DIRECTION, sortable = null, selection = null, columnFilter = null, hasComplexFilter = false;
-		let indexed = null, headerData = null, className = null, settings = null, isSortedOrFiltered = false, extraProps = {
+		let col = null, colname = null, sortDir = DEFAULT_SORT_DIRECTION, sortable = null, selection = [], columnFilter = null, hasComplexFilter = false;
+		let indexed = null, headerData = null, className = null, settings = null, isSortedOrFiltered = false, align = 'center', extraProps = {
 			width: 100,
 			fixed: false,
 			isResizable: true
@@ -1190,6 +1203,10 @@ class ProperTable extends React.Component {
 			extraProps.isResizable = colData.isResizable;
 		}
 
+		if (colData.align !== undefined) {
+			align = colData.align;
+		}
+
 		// If this column doesn't have childrens then build a column, otherwise build a ColumnGroup and call the method recursively
 		// setting the result inside this columns group.
 		if (colData.children === undefined || !colData.children.length) {
@@ -1200,13 +1217,14 @@ class ProperTable extends React.Component {
 			sortable = _.isUndefined(colData.sortable) ? true : colData.sortable;
 
 			// Check for a complex filter component. In that case use onColumnFilter instead of onSortChange. That method render the received component
-			// just beside the icon of the column header
+			// just beside the icon of the column header. If the filter type isn't selection then selection must be an empty array
 			if (this.props.columnFilterComponent) { // react component
 				hasComplexFilter = true;
 				columnFilter = this.onColumnGetFiltered.bind(this);
 
 			  	if (settings.filterType === FILTERTYPE_SELECTION) {
 			    	isSortedOrFiltered = settings.selection.length > 0;
+			    	selection = settings.selection;
 			  	} else if (settings.filterType === FILTERTYPE_CUSTOM) {
 			    	isSortedOrFiltered = settings.operationFilterValue.length > 0;
 			  	}
@@ -1229,7 +1247,7 @@ class ProperTable extends React.Component {
 						data={settings.data} // data for columnFilter
 						rawdata={this.state.rawdata} // data for columnFilter
 						indexed={settings.indexedData}
-						selection={settings.selection} // selection for complex filter
+						selection={selection} // selection for complex filter
 						iconColor={this.props.iconColor} // icon color when column filter displayed
 						iconDefColor={this.props.iconDefColor} // icon color when column filter closed
 						col={colData.field}
@@ -1246,7 +1264,7 @@ class ProperTable extends React.Component {
 				}
 				cell={<CellRenderer tableId={this.uniqueId} idField={this.props.idField} indexed={this.state.indexed} data={this.state.data} colData={colData} col={colData.field}/>}
 				allowCellsRecycling={!hasComplexFilter}
-				align='center'
+				align={align}
 				{...extraProps}
 			/>;
 
@@ -1335,6 +1353,71 @@ class ProperTable extends React.Component {
 		});
 
 		return columns;
+	}
+
+/*
+ * Build the table footer with info about sort and filters.
+ */
+	buildFooter() {
+		let footer = null;
+
+		if (this.props.displayFooter) {
+			let messages = this.props.msgs[this.props.lang];
+			let msgFilters, msgSort = null, isFirstFilter = true, isFirstColumn = true, column;
+			let hasSort = this.state.hasSortedColumns;
+
+			if (this.state.data.size < this.state.initialData.size) {
+				msgFilters = messages.filtered;
+				if (hasSort) msgSort = messages.sorted + ' ';
+
+				for (let i = this.state.colSettings.length - 1; i >= 0; i--) {
+					column = this.state.colSettings[i];
+
+					if (column.selection.length > 0 && column.filterType === FILTERTYPE_SELECTION
+						|| column.operationFilterValue. length > 0 && column.filterType === FILTERTYPE_CUSTOM) {
+						if (!isFirstFilter) msgFilters += ' > ';
+						msgFilters += ' ' + column.column;
+						isFirstFilter = false;
+					}
+
+					if (hasSort) {
+						if (column.direction !== DEFAULT_SORT_DIRECTION) {
+							if (!isFirstColumn) msgSort += ' > ';
+							msgSort += ' ' + column.column + ' - ' + column.direction;
+							isFirstColumn = false;
+						}
+					}
+				}
+				msgFilters += '. ' + messages.there + ' ' + this.state.data.size + ' ' + messages.filtering + ' ' + this.state.initialData.size;
+				if (hasSort) hasSort = false; // It's already parsed.
+
+			} else {
+				msgFilters = messages.allData + ' ' + this.state.data.size + ' ' + messages.rows;
+			}
+
+			if (hasSort) {
+				msgSort = messages.sorted + ' ';
+
+				for (let i = this.state.colSettings.length - 1; i >= 0; i--) {
+					column = this.state.colSettings[i];
+
+					if (column.direction !== DEFAULT_SORT_DIRECTION) {
+						if (!isFirstColumn) msgSort += ' > ';
+						msgSort += ' ' + column.column + ' - ' + column.direction;
+						isFirstColumn = false;
+					}
+				}
+			}
+
+			footer = (
+				<div className="propertable-footer-info" style={{height: this.props.footerInfoHeight}}>
+					<div className="footer-left-info">{msgSort}</div>
+					<div className="footer-right-info">{msgFilters}</div>
+				</div>
+			);
+		}
+
+		return footer;
 	}
 
 /**
@@ -1670,14 +1753,20 @@ class ProperTable extends React.Component {
 	}
 
 	render() {
-		let content = <div className="propertable-empty">{this.props.msgs[this.props.lang].empty}</div>;
+		// let content = <div className="propertable-empty">{this.props.msgs[this.props.lang].empty}</div>;
+		let content = null, tableHeight = this.props.containerHeight || 400;
 		let tableContent = this.buildTable();
+		let footer = this.buildFooter();
+
+		if (this.props.containerHeight && this.props.displayFooter) {
+			tableHeight -= this.props.footerInfoHeight;
+		}
 
 		content = <Table
 			ref="fixeddatatable"
 			key={this.uniqueId+'-table'}
-			width={this.props.containerWidth || 100}
-			height={this.props.containerHeight || 100}
+			width={this.props.containerWidth || 400}
+			height={tableHeight}
 			headerHeight={this.props.headerHeight || this.props.rowHeight}
 			groupHeaderHeight={this.props.rowHeight}
 			rowHeight={this.props.rowHeight}
@@ -1692,7 +1781,12 @@ class ProperTable extends React.Component {
 			{tableContent}
 		</Table>;
 
-		return <div key={this.uniqueId} id={this.uniqueId} className={'propertable '+this.props.className}> {content} </div>;
+		return (
+			<div key={this.uniqueId} id={this.uniqueId} className={'propertable '+this.props.className}>
+				{content}
+				{footer}
+			</div>
+		);
 	}
 }
 
@@ -1737,7 +1831,12 @@ ProperTable.propTypes = {
     filterWidth: React.PropTypes.number,
     onScrollStart: React.PropTypes.func,
     onScrollEnd: React.PropTypes.func,
-    hasDisableRows: React.PropTypes.bool
+    hasDisableRows: React.PropTypes.bool,
+    displayFooter: React.PropTypes.bool,
+    footerInfoHeight: React.PropTypes.oneOfType([
+    	React.PropTypes.number,
+    	React.PropTypes.string
+    ])
 }
 
 ProperTable.defaultProps = {
@@ -1767,7 +1866,9 @@ ProperTable.defaultProps = {
 	filterWidth: null,
 	onScrollStart: null,
 	onScrollEnd: null,
-	hasDisableRows: false
+	hasDisableRows: false,
+	displayFooter: false,
+	footerInfoHeight: 30
 }
 
 export default ProperTable;
