@@ -1510,7 +1510,8 @@ var ProperTable =
 			    settings = null,
 			    isSortedOrFiltered = false,
 			    align = 'center',
-			    extraProps = {
+			    filterExtraProps = {};
+			var extraProps = {
 				width: 100,
 				fixed: false,
 				isResizable: true
@@ -1574,6 +1575,10 @@ var ProperTable =
 					if (!isSortedOrFiltered && settings.direction !== DEFAULT_SORT_DIRECTION) {
 						isSortedOrFiltered = true;
 					}
+
+					if (_underscore2['default'].isObject(colData.filterProps) && !_underscore2['default'].isArray(colData.filterProps)) {
+						filterExtraProps = colData.filterProps;
+					}
 				}
 
 				col = _react2['default'].createElement(_fixedDataTable.Column, _extends({
@@ -1600,7 +1605,8 @@ var ProperTable =
 						sortable: sortable,
 						userClassName: className,
 						columnFormater: null // Formatter function that get the value to be render and return it parsed settings.formatter
-						, isSortedOrFiltered: isSortedOrFiltered
+						, isSortedOrFiltered: isSortedOrFiltered,
+						extraProps: filterExtraProps
 					}),
 					cell: _react2['default'].createElement(_cellRenderer2['default'], { tableId: this.uniqueId, idField: this.props.idField, indexed: this.state.indexed, data: this.state.data, colData: colData, col: colData.field }),
 					allowCellsRecycling: !hasComplexFilter,
@@ -15166,7 +15172,7 @@ var ProperTable =
 	      width: portalWidth,
 	      style: { opacity: 0, position: 'fixed', width: portalWidth }
 	    },
-	    _react2['default'].createElement(props.filterComponent, {
+	    _react2['default'].createElement(props.filterComponent, _extends({
 	      key: props.uniqueId + '-column-header-component-filter',
 	      data: props.data // Initial data Inmutable
 	      , rawdata: props.rawdata // Raw data Inmutable
@@ -15181,7 +15187,7 @@ var ProperTable =
 	      afterSelect: afterSelect,
 	      afterSort: afterSort,
 	      afterClear: afterClear
-	    })
+	    }, props.extaProps))
 	  );
 
 	  return filter;
