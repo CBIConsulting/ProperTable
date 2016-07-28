@@ -90,8 +90,16 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 	 	* formatter: Parser for the cell data before render. WARNING! When you are using a complex filter component for cell header (read down), you must be carefull of the formatter because the data for filter sometimes has to be formated then it should be a string or number. The solution is that you ill get just only the first parameter and the other's will be null, so you can return a string (for filtering, show in filter, etc) when you get a null in the second and third parameter (Function)
 	 		* Ex:
 	 		```javascript
-				formatter: function(value) {
-					return ProperTable.formatters.number(value+1);
+				formatter: function(value, colData, rowData) {
+					if (colData === null || rowData === null) { // Using formater for column filter so must return string or numeric
+						return ProperTable.formatters.number(value+1);
+					}
+
+					return (
+						<div>
+							<span>Number:</span> {value}
+						</div>
+					)
 				}
 			```
 		* sortVal: Parser for the column cells before sort. (Function)
