@@ -127,6 +127,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 			console.log('Selected row ids: ', selection);
 		}}
 	```
+* getCurrentData: Use as HOC. Get the current data rendered in Table.
 * onScrollStart: Callback that is called when scrolling starts with current horizontal and vertical scroll values.
 * onScrollEnd: Callback that is called when scrolling ends or stops with new horizontal and vertical scroll values.
 * selectable: If the rows (all table) can be selected or not and if that selection is multiple. Values: True || 'Multiple' || False
