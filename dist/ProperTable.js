@@ -1518,6 +1518,7 @@ var ProperTable =
 
 						return rawdata.get(rowIndex);
 					});
+					data = data.toJSON();
 				})();
 			}
 

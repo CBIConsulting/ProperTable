@@ -1182,6 +1182,7 @@ class ProperTable extends React.Component {
 
 				return rawdata.get(rowIndex);
 			});
+			data = data.toJSON();
 		}
 
 		return data;
