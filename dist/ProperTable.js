@@ -773,7 +773,7 @@ var ProperTable =
 							// Skip unvalid values
 							if (_underscore2['default'].isNull(val)) val = '';
 
-							if (typeof val === 'string' || typeof val === 'number') {
+							if (_this4.isValidType(val)) {
 								if (formatter) {
 									if (operations[column] && operations[column].type) {
 										if (notAllowedTypes.has(operations[column].type)) {
@@ -933,6 +933,18 @@ var ProperTable =
 		};
 
 		/**
+	  * If the value is string, number or boolean
+	  *
+	  * @param 	(string) 	value 	Value to parse
+	  * @return 	(boolean)	If value is of valid type
+	  */
+
+
+		ProperTable.prototype.isValidType = function isValidType(value) {
+			return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+		};
+
+		/**
 	  * Prepare the columns sort / filtering data to all columns and the array of functions to parse the data of each column before sorting.
 	  *
 	  * @param (array)	props 			Component props (or nextProps)
@@ -944,6 +956,8 @@ var ProperTable =
 
 
 		ProperTable.prototype.prepareColSettings = function prepareColSettings() {
+			var _this5 = this;
+
 			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
 			var rawdata = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
 
@@ -979,15 +993,14 @@ var ProperTable =
 						// Parsing data for filter
 						parsedData = rawdata.map(function (row) {
 							val = row.get(colData.field);
-							valid = false;
 
 							// Only string or number values then formated (Dates, etc...) Not objects allowed
-							valid = typeof val === 'string' || typeof val === 'number' ? true : false;
+							valid = _this5.isValidType(val);
 
 							if (valid && !_underscore2['default'].isNull(val) && val !== '') {
 								if (colData.formatter) {
 									val = colData.formatter(val, null, null);
-									valid = typeof val === 'string' || typeof val === 'number' ? true : false;
+									valid = _this5.isValidType(val);
 								}
 
 								if (valid && !idSet.has(val) && !_underscore2['default'].isNull(val) && !_underscore2['default'].isUndefined(val)) {
@@ -1076,7 +1089,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.buildColSortDirs = function buildColSortDirs(cols) {
-			var _this5 = this;
+			var _this6 = this;
 
 			var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
 			var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
@@ -1097,7 +1110,7 @@ var ProperTable =
 						formatter: formatter
 					});
 				} else {
-					_this5.buildColSortDirs(element.children, colSortDirs, sortVals);
+					_this6.buildColSortDirs(element.children, colSortDirs, sortVals);
 				}
 			});
 
@@ -1137,7 +1150,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.clearFilterAndSort = function clearFilterAndSort(e) {
-			var _this6 = this;
+			var _this7 = this;
 
 			e.preventDefault();
 			var colSettings = this.state.colSettings,
@@ -1161,10 +1174,10 @@ var ProperTable =
 
 			// Apply default
 			data = this.state.initialData.map(function (element, index) {
-				if (_this6.state.selection.has(element.get(_this6.props.idField))) {
+				if (_this7.state.selection.has(element.get(_this7.props.idField))) {
 					element = element.set(SELECTED_FIELD, true);
 				}
-				indexed[element.get(_this6.props.idField)]._rowIndex = index; // Update index into indexed data.
+				indexed[element.get(_this7.props.idField)]._rowIndex = index; // Update index into indexed data.
 
 				return element;
 			});
@@ -1368,7 +1381,6 @@ var ProperTable =
 	  * @param 	{array}		colSettings Sort settings of each column
 	  * @param 	{boolean}	sendSorted 	If the sorted data must be sent or not
 	  * @param 	{object}	newData 	In case this method is called after filtering data (don't update state twice for the same)
-	 
 	  * @return 	{array}		-colSettings: Sorted column in colSettings
 	  *						-data: Sorted data to be updated in the component state.
 	  */
@@ -1418,7 +1430,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.sortColumns = function sortColumns(data, indexed, colSettings) {
-			var _this7 = this;
+			var _this8 = this;
 
 			var sortedData = data,
 			    indexedData = indexed;
@@ -1437,7 +1449,7 @@ var ProperTable =
 					sortParser = colSortParsers[element.column];
 
 					sortedData = sortedData.sortBy(function (row, rowIndex, allData) {
-						rowId = row.get(_this7.props.idField);
+						rowId = row.get(_this8.props.idField);
 						// sortCache [row-id] [column-id] = procesed value.
 						if (_underscore2['default'].isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
 							val = sortParser(row.get(element.field));
@@ -1470,7 +1482,7 @@ var ProperTable =
 
 			// Update index into indexed data.
 			sortedData.map(function (element, index) {
-				indexedData[element.get(_this7.props.idField)]._rowIndex = index;
+				indexedData[element.get(_this8.props.idField)]._rowIndex = index;
 			});
 
 			return {
@@ -1481,18 +1493,51 @@ var ProperTable =
 		};
 
 		/**
+	  *	Get the current data rendered in component using a HOC
+	  *
+	  * @param (boolean)			getAsRaw 	Get the data as inmutable or parse to raw data
+	  * @return (array...object)	data
+	  */
+
+
+		ProperTable.prototype.getCurrentData = function getCurrentData() {
+			var _this9 = this;
+
+			var getAsRaw = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+
+			var data = this.state.data;
+
+			if (getAsRaw) {
+				(function () {
+					var properId = void 0,
+					    rowIndex = void 0,
+					    rawdata = _this9.state.rawdata;
+					data = data.map(function (row) {
+						properId = row.get(_this9.props.idField);
+						rowIndex = _this9.state.initialIndexed[properId]._rowIndex;
+
+						return rawdata.get(rowIndex);
+					});
+					data = data.toJSON();
+				})();
+			}
+
+			return data;
+		};
+
+		/**
 	  * Recursive function that build the nested columns. If the column has childrens then call itself and put the column into
 	  * a ColumnGroup.
 	  *
-	  * @param 	{array}		colData 	Data to be parsed
-	  * @param 	{boolean}	isChildren	Is a children of another column or not
-	  * @param 	{boolean}	hasNested	The whole table has nested columns or not
-	  * @return 	{object}	col 		The builded column or tree of columns
+	  * @param 	(array)		colData 	Data to be parsed
+	  * @param 	(boolean)	isChildren	Is a children of another column or not
+	  * @param 	(boolean)	hasNested	The whole table has nested columns or not
+	  * @return 	(object)	col 		The builded column or tree of columns
 	  */
 
 
 		ProperTable.prototype.parseColumn = function parseColumn(colData) {
-			var _this8 = this;
+			var _this10 = this;
 
 			var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 			var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
@@ -1625,7 +1670,7 @@ var ProperTable =
 				// Call the method recursively to all the childrens of this column.
 				var hasFalsy = false,
 				    inner = colData.children.map(function (c) {
-					if (c.isVisible === undefined || c.isVisible) return _this8.parseColumn(c, true);else hasFalsy = true;
+					if (c.isVisible === undefined || c.isVisible) return _this10.parseColumn(c, true);else hasFalsy = true;
 				});
 
 				if (hasFalsy) inner = _underscore2['default'].compact(inner);
@@ -1652,12 +1697,12 @@ var ProperTable =
 	  * Build the table calling the parsecolumn() method for each column in props.cols and saving it to an array to be render into
 	  * a react fixed-datatable Table. If multiple rows can be selected then build a column with checkboxes to show which rows are seleted.
 	  *
-	  * @return {array} 	columns 	Array with all the columns to be rendered.
+	  * @return (array) 	columns 	Array with all the columns to be rendered.
 	  */
 
 
 		ProperTable.prototype.buildTable = function buildTable() {
-			var _this9 = this;
+			var _this11 = this;
 
 			var columns = [],
 			    isNested = this.hasNested(this.state.cols),
@@ -1712,7 +1757,7 @@ var ProperTable =
 
 			this.state.cols.forEach(function (col) {
 				if (col.get('isVisible', true)) {
-					columns.push(_this9.parseColumn(col.toJSON(), false, isNested));
+					columns.push(_this11.parseColumn(col.toJSON(), false, isNested));
 				}
 			});
 
@@ -1805,16 +1850,16 @@ var ProperTable =
 
 
 		ProperTable.prototype.handleSelectAll = function handleSelectAll(e) {
-			var _this10 = this;
+			var _this12 = this;
 
 			e.preventDefault();
 
 			if (this.props.selectable) {
 				(function () {
-					var idField = _this10.props.idField,
+					var idField = _this12.props.idField,
 					    value = void 0,
-					    selection = new Set(_this10.state.selection);
-					var _state2 = _this10.state;
+					    selection = new Set(_this12.state.selection);
+					var _state2 = _this12.state;
 					var allSelected = _state2.allSelected;
 					var data = _state2.data;
 					var indexed = _state2.indexed;
@@ -1846,7 +1891,7 @@ var ProperTable =
 						}
 					}
 
-					_this10.triggerSelection(selection);
+					_this12.triggerSelection(selection);
 				})();
 			}
 		};
@@ -1878,7 +1923,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.isAllSelected = function isAllSelected(data, selection) {
-			var _this11 = this;
+			var _this13 = this;
 
 			var result = true;
 
@@ -1886,7 +1931,7 @@ var ProperTable =
 
 			// Filtered data
 			data.forEach(function (element) {
-				if (!selection.has(element.get(_this11.props.idField).toString())) {
+				if (!selection.has(element.get(_this13.props.idField).toString())) {
 					// Some data not in selection
 					result = false;
 					return false;
@@ -1951,7 +1996,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.updateSelectionData = function updateSelectionData(newSelection) {
-			var _this12 = this;
+			var _this14 = this;
 
 			var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
 
@@ -2015,7 +2060,7 @@ var ProperTable =
 			} else {
 				// Change all data
 				newData = newData.map(function (row) {
-					rowid = row.get(_this12.props.idField);
+					rowid = row.get(_this14.props.idField);
 					selected = newSelection.has(rowid.toString());
 					rdata = row.set(SELECTED_FIELD, selected);
 					curIndex = newIndexed[rowid];
@@ -2068,13 +2113,13 @@ var ProperTable =
 
 
 		ProperTable.prototype.sendSelection = function sendSelection() {
-			var _this13 = this;
+			var _this15 = this;
 
 			var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
 
 			if (typeof this.props.afterSelect == 'function') {
 				(function () {
-					var _state3 = _this13.state;
+					var _state3 = _this15.state;
 					var selection = _state3.selection;
 					var initialIndexed = _state3.initialIndexed;
 					var rawdata = _state3.rawdata;
@@ -2104,11 +2149,11 @@ var ProperTable =
 
 					output = _underscore2['default'].compact(output);
 
-					if (_this13.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
+					if (_this15.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
 						output = output[0];
 					}
 
-					_this13.props.afterSelect(output, selectionArray);
+					_this15.props.afterSelect(output, selectionArray);
 				})();
 			}
 		};
@@ -2134,22 +2179,22 @@ var ProperTable =
 
 
 		ProperTable.prototype.sendSortedData = function sendSortedData(data) {
-			var _this14 = this;
+			var _this16 = this;
 
 			if (typeof this.props.afterSort === 'function') {
 				(function () {
-					var _state4 = _this14.state;
+					var _state4 = _this16.state;
 					var initialIndexed = _state4.initialIndexed;
 					var rawdata = _state4.rawdata;
 
 					var output = [];
 
 					output = data.map(function (row) {
-						var rowIndex = initialIndexed[row.get(_this14.props.idField)]._rowIndex;
+						var rowIndex = initialIndexed[row.get(_this16.props.idField)]._rowIndex;
 						return rawdata.get(rowIndex);
 					});
 
-					_this14.props.afterSort(output.toJSON());
+					_this16.props.afterSort(output.toJSON());
 				})();
 			}
 		};
@@ -22088,14 +22133,16 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
 	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
+	/***
+	  CUSTOM VERSION from https://github.com/digidem/react-dimensions
+	  All credits to Gregor MacLennan
+	***/
 	var React = __webpack_require__(2);
 	var onElementResize = __webpack_require__(145);
 
@@ -22190,107 +22237,93 @@ var ProperTable =
 	    return function (_React$Component) {
 	      _inherits(DimensionsHOC, _React$Component);
 
-	      function DimensionsHOC() {
-	        var _Object$getPrototypeO;
-
-	        var _temp, _this, _ret;
-
+	      function DimensionsHOC(props) {
 	        _classCallCheck(this, DimensionsHOC);
 
-	        for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
-	          args[_key] = arguments[_key];
-	        }
+	        var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
-	        return _ret = (_temp = (_this = _possibleConstructorReturn(this, (_Object$getPrototypeO = Object.getPrototypeOf(DimensionsHOC)).call.apply(_Object$getPrototypeO, [this].concat(args))), _this), _this.state = {}, _this.updateDimensions = function () {
-	          var container = _this.refs.container;
-	          var containerWidth = getWidth(container);
-	          var containerHeight = getHeight(container);
-
-	          if (containerWidth !== _this.state.containerWidth || containerHeight !== _this.state.containerHeight) {
-	            _this.setState({ containerWidth: containerWidth, containerHeight: containerHeight });
-	          }
-	        }, _this.onResize = function () {
-	          if (_this.rqf) return;
-	          _this.rqf = _this.getWindow().requestAnimationFrame(function () {
-	            _this.rqf = null;
-	            _this.updateDimensions();
-	          });
-	        }, _temp), _possibleConstructorReturn(_this, _ret);
+	        _this.state = {};
+	        return _this;
 	      }
-	      // ES7 Class properties
-	      // http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#property-initializers
 
+	      DimensionsHOC.prototype.updateDimensions = function updateDimensions() {
+	        var container = this.refs.container;
+	        var containerWidth = getWidth(container);
+	        var containerHeight = getHeight(container);
 
-	      // Using arrow functions and ES7 Class properties to autobind
-	      // http://babeljs.io/blog/2015/06/07/react-on-es6-plus/#arrow-functions
-
-
-	      _createClass(DimensionsHOC, [{
-	        key: 'getWindow',
-
-
-	        // If the component is mounted in a different window to the javascript
-	        // context, as with https://github.com/JakeGinnivan/react-popout
-	        // then the `window` global will be different from the `window` that
-	        // contains the component.
-	        // Depends on `defaultView` which is not supported <IE9
-	        value: function getWindow() {
-	          return this.refs.container ? this.refs.container.ownerDocument.defaultView || window : window;
+	        if (containerWidth !== this.state.containerWidth || containerHeight !== this.state.containerHeight) {
+	          this.setState({ containerWidth: containerWidth, containerHeight: containerHeight });
 	        }
-	      }, {
-	        key: 'componentDidMount',
-	        value: function componentDidMount() {
-	          if (!this.refs.container) {
-	            throw new Error('Cannot find container div');
-	          }
-	          this.updateDimensions();
-	          if (elementResize) {
-	            // Experimental: `element-resize-event` fires when an element resizes.
-	            // It attaches its own window resize listener and also uses
-	            // requestAnimationFrame, so we can just call `this.updateDimensions`.
-	            onElementResize(this.refs.container, this.updateDimensions);
-	          } else {
-	            this.getWindow().addEventListener('resize', this.onResize, false);
-	          }
-	        }
-	      }, {
-	        key: 'componentWillUnmount',
-	        value: function componentWillUnmount() {
-	          this.getWindow().removeEventListener('resize', this.onResize);
-	        }
+	      };
 
-	        /**
-	         * Returns the underlying wrapped component instance.
-	         * Useful if you need to access a method or property of the component
-	         * passed to react-dimensions.
-	         *
-	         * @return {object} The rendered React component
-	         **/
+	      DimensionsHOC.prototype.onResize = function onResize() {
+	        var _this2 = this;
 
-	      }, {
-	        key: 'getWrappedInstance',
-	        value: function getWrappedInstance() {
-	          this.refs.wrappedInstance;
+	        if (this.rqf) return;
+	        this.rqf = this.getWindow().requestAnimationFrame(function () {
+	          _this2.rqf = null;
+	          _this2.updateDimensions();
+	        });
+	      };
+
+	      // If the component is mounted in a different window to the javascript
+	      // context, as with https://github.com/JakeGinnivan/react-popout
+	      // then the `window` global will be different from the `window` that
+	      // contains the component.
+	      // Depends on `defaultView` which is not supported <IE9
+
+
+	      DimensionsHOC.prototype.getWindow = function getWindow() {
+	        return this.refs.container ? this.refs.container.ownerDocument.defaultView || window : window;
+	      };
+
+	      DimensionsHOC.prototype.componentDidMount = function componentDidMount() {
+	        if (!this.refs.container) {
+	          throw new Error('Cannot find container div');
 	        }
-	      }, {
-	        key: 'render',
-	        value: function render() {
-	          return React.createElement(
-	            'div',
-	            { style: containerStyle, ref: 'container' },
-	            (this.state.containerWidth || this.state.containerHeight) && React.createElement(ComposedComponent, _extends({}, this.state, this.props, {
-	              updateDimensions: this.updateDimensions,
-	              ref: 'wrappedInstance'
-	            }))
-	          );
+	        this.updateDimensions();
+	        if (elementResize) {
+	          // Experimental: `element-resize-event` fires when an element resizes.
+	          // It attaches its own window resize listener and also uses
+	          // requestAnimationFrame, so we can just call `this.updateDimensions`.
+	          onElementResize(this.refs.container, this.updateDimensions);
+	        } else {
+	          this.getWindow().addEventListener('resize', this.onResize.bind(this), false);
 	        }
-	      }]);
+	      };
+
+	      DimensionsHOC.prototype.componentWillUnmount = function componentWillUnmount() {
+	        this.getWindow().removeEventListener('resize', this.onResize.bind(this));
+	      };
+
+	      /**
+	       * Returns the underlying wrapped component instance.
+	       * Useful if you need to access a method or property of the component
+	       * passed to react-dimensions.
+	       *
+	       * @return {object} The rendered React component
+	       **/
+
+
+	      DimensionsHOC.prototype.getWrappedInstance = function getWrappedInstance() {
+	        return this.refs.wrappedInstance;
+	      };
+
+	      DimensionsHOC.prototype.render = function render() {
+	        return React.createElement(
+	          'div',
+	          { style: containerStyle, ref: 'container' },
+	          (this.state.containerWidth || this.state.containerHeight) && React.createElement(ComposedComponent, _extends({}, this.state, this.props, {
+	            updateDimensions: this.updateDimensions,
+	            ref: 'wrappedInstance'
+	          }))
+	        );
+	      };
 
 	      return DimensionsHOC;
 	    }(React.Component);
 	  };
 	};
-
 
 /***/ },
 /* 145 */

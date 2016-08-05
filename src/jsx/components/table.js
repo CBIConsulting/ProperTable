@@ -556,7 +556,7 @@ class ProperTable extends React.Component {
 					// Skip unvalid values
 					if (_.isNull(val)) val = '';
 
-					if (typeof val === 'string' || typeof val === 'number') {
+					if (this.isValidType(val)) {
 						if (formatter) {
 							if (operations[column] && operations[column].type) {
 							 	if (notAllowedTypes.has(operations[column].type)) {
@@ -693,6 +693,16 @@ class ProperTable extends React.Component {
 	}
 
 /**
+ * If the value is string, number or boolean
+ *
+ * @param 	(string) 	value 	Value to parse
+ * @return 	(boolean)	If value is of valid type
+ */
+	isValidType(value) {
+		return typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+	}
+
+/**
  * Prepare the columns sort / filtering data to all columns and the array of functions to parse the data of each column before sorting.
  *
  * @param (array)	props 			Component props (or nextProps)
@@ -722,15 +732,14 @@ class ProperTable extends React.Component {
 				// Parsing data for filter
 				parsedData = rawdata.map(row => {
 					val = row.get(colData.field);
-					valid = false
 
 					// Only string or number values then formated (Dates, etc...) Not objects allowed
-					valid =  typeof val === 'string' || typeof val === 'number' ? true : false;
+					valid = this.isValidType(val);
 
 					if (valid && !_.isNull(val) && val !== '') {
 						if (colData.formatter) {
 							val = colData.formatter(val, null, null);
-							valid =  typeof val === 'string' || typeof val === 'number' ? true : false;
+							valid = this.isValidType(val);
 						}
 
 						if (valid && !idSet.has(val) && !_.isNull(val) && !_.isUndefined(val)){ // No repeat
@@ -1063,7 +1072,6 @@ class ProperTable extends React.Component {
  * @param 	{array}		colSettings Sort settings of each column
  * @param 	{boolean}	sendSorted 	If the sorted data must be sent or not
  * @param 	{object}	newData 	In case this method is called after filtering data (don't update state twice for the same)
-
  * @return 	{array}		-colSettings: Sorted column in colSettings
  *						-data: Sorted data to be updated in the component state.
  */
@@ -1157,15 +1165,37 @@ class ProperTable extends React.Component {
 		}
 	}
 
+/**
+ *	Get the current data rendered in component using a HOC
+ *
+ * @param (boolean)			getAsRaw 	Get the data as inmutable or parse to raw data
+ * @return (array...object)	data
+ */
+	getCurrentData(getAsRaw = false) {
+		let data = this.state.data;
+
+		if (getAsRaw) {
+			let properId, rowIndex, rawdata = this.state.rawdata;
+			data = data.map(row => {
+				properId = row.get(this.props.idField);
+				rowIndex = this.state.initialIndexed[properId]._rowIndex;
+
+				return rawdata.get(rowIndex);
+			});
+			data = data.toJSON();
+		}
+
+		return data;
+	}
 
 /**
  * Recursive function that build the nested columns. If the column has childrens then call itself and put the column into
  * a ColumnGroup.
  *
- * @param 	{array}		colData 	Data to be parsed
- * @param 	{boolean}	isChildren	Is a children of another column or not
- * @param 	{boolean}	hasNested	The whole table has nested columns or not
- * @return 	{object}	col 		The builded column or tree of columns
+ * @param 	(array)		colData 	Data to be parsed
+ * @param 	(boolean)	isChildren	Is a children of another column or not
+ * @param 	(boolean)	hasNested	The whole table has nested columns or not
+ * @return 	(object)	col 		The builded column or tree of columns
  */
 	parseColumn(colData, isChildren = false, hasNested = false) {
 		let col = null, colname = null, sortDir = DEFAULT_SORT_DIRECTION, sortable = null, selection = [], columnFilter = null, hasComplexFilter = false;
@@ -1304,7 +1334,7 @@ class ProperTable extends React.Component {
  * Build the table calling the parsecolumn() method for each column in props.cols and saving it to an array to be render into
  * a react fixed-datatable Table. If multiple rows can be selected then build a column with checkboxes to show which rows are seleted.
  *
- * @return {array} 	columns 	Array with all the columns to be rendered.
+ * @return (array) 	columns 	Array with all the columns to be rendered.
  */
 	buildTable() {
 		let columns = [], isNested = this.hasNested(this.state.cols), selColumn = null;
