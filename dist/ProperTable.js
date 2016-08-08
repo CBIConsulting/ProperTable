@@ -293,7 +293,7 @@ var ProperTable =
 			if (this.state.sendSorted) {
 				this.setState({
 					sendSorted: false
-				}, this.sendSortedAndSettings(this.state.data, this.state.colSettings));
+				}, this.sendSortedAndSettings.bind(this, this.state.data, this.state.colSettings));
 			} else {
 				this.sendColSettings(this.state.colSettings);
 			}
@@ -321,7 +321,7 @@ var ProperTable =
 					var colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges || colsDeepCompare.hasChangedPosition;
 					var dataChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.data, _this2.props.data);
 					var colSortDirsChanged = nextProps.colSortDirs ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colSortDirs, _this2.props.colSortDirs) : false;
-					var colFiltersChanged = nextProps.colFilters ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colFilters, _this2.props.colFilters) : false;
+					var colFiltersChanged = nextProps.colFilters ? !_this2.checkFiltersEquality(nextProps.colFilters, _this2.props.colFilters) : false;
 					var colData = null,
 					    preparedData = null,
 					    cols = null,
@@ -348,7 +348,7 @@ var ProperTable =
 								rawdata: preparedData.rawdata,
 								sortCache: preparedData.defSortCache,
 								selection: preparedData.defSelection
-							}, _this2.applySettings(colData.colSettings, nextProps, true, true, true));
+							}, _this2.applySettings.bind(_this2, colData.colSettings, nextProps, true, true, true));
 						} else if (colsChanged) {
 							if (colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition) {
 								(function () {
@@ -368,7 +368,7 @@ var ProperTable =
 										colSortParsers: colData.colSortParsers,
 										cols: cols,
 										sortCache: sortCache
-									}, _this2.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+									}, _this2.applySettings.bind(_this2, colData.colSettings, nextProps)); // apply selection and sort
 								})();
 							} else if (colsDeepCompare.hasSmallChanges) {
 								cols = _this2.state.cols.map(function (col) {
@@ -591,14 +591,68 @@ var ProperTable =
 			}
 		};
 
+		ProperTable.prototype.checkFiltersEquality = function checkFiltersEquality(nextFilters, currFilters) {
+			var keysNext = void 0,
+			    keysCurrent = void 0,
+			    result = void 0;
+
+			if (!nextFilters && currFilters || nextFilters && !currFilters) {
+				return false;
+			}
+
+			keysNext = _underscore2['default'].keys(nextFilters);
+			keysCurrent = _underscore2['default'].keys(currFilters);
+
+			if (keysNext.length !== keysCurrent.length) return false;
+
+			result = _underscore2['default'].some(keysNext, function (key) {
+				result = _underscore2['default'].find(keysCurrent, function (currKey) {
+					return key === currKey;
+				});
+
+				if (!result) {
+					return true;
+				} else {
+					result = nextFilters[key].type === currFilters[key].type;
+					if (result) {
+						if (nextFilters[key].type === FILTERTYPE_SELECTION) {
+							if (nextFilters[key].selection.length !== currFilters[key].selection.length) {
+								return true;
+							} else {
+								var _ret3 = function () {
+									var selectionSet = new Set(currFilters[key].selection),
+									    selectionChange = void 0;
+									selectionChange = _underscore2['default'].some(nextFilters[key].selection, function (id) {
+										return selectionSet.has(id) ? false : true;
+									});
+									return {
+										v: selectionChange
+									};
+								}();
+
+								if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
+							}
+						} else {
+							if (nextFilters[key].operationType !== currFilters[key].operationType || nextFilters[key].operationValue !== currFilters[key].operationValue) {
+								return true;
+							}
+						}
+					}
+					return false;
+				}
+			});
+
+			return !result;
+		};
+
 		/**
 	  * Apply the columns sort and filters over table data and update state.
 	  *
-	  * @param (array)	colSettings 	Sort / Filter settings of each column. From current or next state (case the props data/cols change)
-	  * @param (object) 	props 			Component props or new props on update
-	  * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
-	  * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
-	  * @param (boolean) forceApply		If it's true then when update sort or update Filters is not allowed it will apply the colSettings anyway.
+	  * @param (array)	colSettings 		Sort / Filter settings of each column. From current or next state (case the props data/cols change)
+	  * @param (object) 	props 				Component props or new props on update
+	  * @param (boolean) updateSort 			If this parameter is true then chech props colSortDirs for default sort settings
+	  * @param (boolean) updateFilters 		If this parameter is true then chech props colFilters for default filter settings
+	  * @param (boolean) forceSendSettings
 	  */
 
 
@@ -606,12 +660,11 @@ var ProperTable =
 			var colSettings = arguments.length <= 0 || arguments[0] === undefined ? this.state.colSettings : arguments[0];
 			var props = arguments.length <= 1 || arguments[1] === undefined ? this.props : arguments[1];
 			var updateSort = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
-			var updateFilters = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
 
 			var _this3 = this;
 
+			var updateFilters = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
 			var forceSendSettings = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
-			var forceApply = arguments.length <= 5 || arguments[5] === undefined ? false : arguments[5];
 
 			var selectionSet = {},
 			    columnKeysFiltered = [],
@@ -641,7 +694,7 @@ var ProperTable =
 						sortedData.push({ name: col.column, direction: newDirection }); // To be applied after
 						hasSort = true;
 					}
-				} else if (forceApply && col.direction !== DEFAULT_SORT_DIRECTION) {
+				} else if (col.direction !== DEFAULT_SORT_DIRECTION) {
 					hasSort = true;
 				}
 
@@ -671,7 +724,7 @@ var ProperTable =
 							col.operationFilterValue = newFilter.operationValue;
 						}
 					}
-				} else if (forceApply && (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
+				} else if (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0) {
 					hasFilter = true;
 				}
 
@@ -688,7 +741,7 @@ var ProperTable =
 					fields[col.column] = col.field;
 
 					if (hasSelectionFilter) {
-						selectionSet[col.column] = new Set(col.selection);
+						selectionSet[col.column] = new Set(col.selection.toString().split(','));
 						operations[col.column] = null;
 					} else {
 						selectionSet[col.column] = null;
@@ -1189,7 +1242,7 @@ var ProperTable =
 				indexed: indexed,
 				colSettings: colSettings,
 				hasSortedColumns: hasSortedColumns
-			}, this.sendSortedAndSettings(data, colSettings));
+			}, this.sendSortedAndSettings.bind(this, data, colSettings));
 		};
 
 		/**
@@ -1270,7 +1323,7 @@ var ProperTable =
 
 					if (col.selection.length > 0) {
 						// Build all selection
-						selectionSet[col.column] = new Set(col.selection);
+						selectionSet[col.column] = new Set(col.selection.toString().split(','));
 						formatters[col.column] = col.formatter;
 						columnKeysFiltered.push(col.column);
 
@@ -1292,7 +1345,7 @@ var ProperTable =
 				if (hasSort) {
 					this.sortTable(colSettings, true, newData);
 				} else {
-					this.setState(newData, this.sendColSettings(colSettings)); // All columns have sort to default
+					this.setState(newData, this.sendColSettings.bind(this, colSettings)); // All columns have sort to default
 				}
 			} else {
 				// Update col Settings with new sort direction for this column, then sort the data and update the component's state.
@@ -1613,7 +1666,8 @@ var ProperTable =
 					if (settings.filterType === FILTERTYPE_SELECTION) {
 						isSortedOrFiltered = settings.selection.length > 0;
 						selection = settings.selection;
-					} else if (settings.filterType === FILTERTYPE_CUSTOM) {
+					} else {
+						// if (settings.filterType === FILTERTYPE_CUSTOM)
 						isSortedOrFiltered = settings.operationFilterValue.length > 0;
 					}
 
@@ -15042,8 +15096,8 @@ var ProperTable =
 	 *  Asociated Icons when it's sorting
 	 */
 	var SortIcons = {
-	  ASC: _react2['default'].createElement('i', { key: 'asc-icon', className: 'fa fa-long-arrow-up' }),
-	  DESC: _react2['default'].createElement('i', { key: 'desc-icon', className: 'fa fa-long-arrow-down' }),
+	  ASC: "fa fa-long-arrow-up",
+	  DESC: "fa fa-long-arrow-down",
 	  DEF: null
 	};
 
@@ -15051,7 +15105,7 @@ var ProperTable =
 	 *  Icons for column filter
 	 */
 	var ColumnFilterIcons = {
-	  DEF: _react2['default'].createElement('i', { key: 'def-icon', className: 'fa fa-caret-square-o-down' }),
+	  DEF: "fa fa-caret-square-o-down",
 	  NONE: null
 	};
 
@@ -15117,6 +15171,7 @@ var ProperTable =
 	      isSelectorCol = props.columnKey === SELECTOR_COL_NAME ? true : false;
 	  var userClass = props.userClassName || '';
 	  var className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
+	  var isSortedOrFiltered = '';
 
 	  // Check for custom icons array and if the column is sortable
 	  if (!_underscore2['default'].isNull(sortDir) && sortable) {
@@ -15133,7 +15188,11 @@ var ProperTable =
 
 	  // Check if the columns have complex filter to be rendered behind the column
 	  if (props.filterComponent && sortable && !isSelectorCol) {
+	    isSortedOrFiltered = props.isSortedOrFiltered ? ' _isFilteredOrSorted' : '';
+	    sortIcon = _react2['default'].createElement('i', { className: sortIcon + isSortedOrFiltered });
 	    sortIcon = buildColumnFilter(props, sortIcon);
+	  } else {
+	    sortIcon = _underscore2['default'].isString(sortIcon) ? _react2['default'].createElement('i', { className: sortIcon }) : sortIcon;
 	  }
 
 	  // Change sort direction on click in label when using a complex filter

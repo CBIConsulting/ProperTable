@@ -23,8 +23,8 @@ const SortTypes = {
  *  Asociated Icons when it's sorting
  */
 const SortIcons = {
-  ASC: <i key="asc-icon" className="fa fa-long-arrow-up"/>,
-  DESC: <i key="desc-icon" className="fa fa-long-arrow-down"/>,
+  ASC: "fa fa-long-arrow-up",
+  DESC:"fa fa-long-arrow-down",
   DEF: null
 };
 
@@ -32,7 +32,7 @@ const SortIcons = {
  *  Icons for column filter
  */
 const ColumnFilterIcons = {
-  DEF: <i key="def-icon" className="fa fa-caret-square-o-down"/>,
+  DEF: "fa fa-caret-square-o-down",
   NONE: null
 };
 
@@ -97,6 +97,7 @@ const HeaderCell = props => {
   let sortIcon = null, columnFilter = null, isSelectorCol = props.columnKey === SELECTOR_COL_NAME ? true : false;
   let userClass = props.userClassName || '';
   let className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
+  let isSortedOrFiltered = '';
 
   // Check for custom icons array and if the column is sortable
   if (!_.isNull(sortDir) && sortable) {
@@ -111,7 +112,11 @@ const HeaderCell = props => {
 
   // Check if the columns have complex filter to be rendered behind the column
   if (props.filterComponent && sortable && !isSelectorCol) {
+    isSortedOrFiltered = props.isSortedOrFiltered ? ' _isFilteredOrSorted' : '';
+    sortIcon = <i className={sortIcon + isSortedOrFiltered}/>;
     sortIcon = buildColumnFilter(props, sortIcon);
+  } else {
+    sortIcon = _.isString(sortIcon) ? <i className={sortIcon}/> : sortIcon;
   }
 
   // Change sort direction on click in label when using a complex filter
