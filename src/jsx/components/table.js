@@ -139,7 +139,7 @@ class ProperTable extends React.Component {
 		if (this.state.sendSorted) {
 			this.setState({
 				sendSorted: false
-			}, this.sendSortedAndSettings(this.state.data, this.state.colSettings));
+			}, this.sendSortedAndSettings.bind(this, this.state.data, this.state.colSettings));
 		} else {
 			this.sendColSettings(this.state.colSettings);
 		}
@@ -164,7 +164,7 @@ class ProperTable extends React.Component {
 			let colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges || colsDeepCompare.hasChangedPosition;
 			let dataChanged = !shallowEqualImmutable(nextProps.data, this.props.data);
 			let colSortDirsChanged = nextProps.colSortDirs ? !shallowEqualImmutable(nextProps.colSortDirs, this.props.colSortDirs) : false;
-			let colFiltersChanged = nextProps.colFilters ? !shallowEqualImmutable(nextProps.colFilters, this.props.colFilters) : false;
+			let colFiltersChanged = nextProps.colFilters ? !this.checkFiltersEquality(nextProps.colFilters, this.props.colFilters) : false;
 			let colData = null, preparedData = null, cols = null, newCol;
 
 			// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
@@ -188,7 +188,7 @@ class ProperTable extends React.Component {
 						rawdata: preparedData.rawdata,
 						sortCache: preparedData.defSortCache,
 						selection: preparedData.defSelection,
-					}, this.applySettings(colData.colSettings, nextProps, true, true, true));
+					}, this.applySettings.bind(this, colData.colSettings, nextProps, true, true, true));
 
 				} else if (colsChanged) {
 					if (colsDeepCompare.hasChangedDeeply || (colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition)) {
@@ -208,7 +208,7 @@ class ProperTable extends React.Component {
 							colSortParsers: colData.colSortParsers,
 							cols: cols,
 							sortCache: sortCache
-						}, this.applySettings(colData.colSettings, nextProps)); // apply selection and sort
+						}, this.applySettings.bind(this, colData.colSettings, nextProps)); // apply selection and sort
 
 					} else if (colsDeepCompare.hasSmallChanges) {
 						cols = this.state.cols.map(col => {
@@ -411,16 +411,61 @@ class ProperTable extends React.Component {
 		}
 	}
 
+	checkFiltersEquality(nextFilters, currFilters) {
+		let keysNext, keysCurrent, result;
+
+		if (!nextFilters && currFilters || nextFilters && !currFilters) {
+			return false;
+		}
+
+		keysNext = _.keys(nextFilters);
+		keysCurrent = _.keys(currFilters);
+
+		if (keysNext.length !== keysCurrent.length) return false;
+
+		result = _.some(keysNext, key => {
+			result =_.find(keysCurrent, currKey => {
+				return key === currKey;
+			});
+
+			if (!result) {
+				return true;
+			} else {
+				result = nextFilters[key].type === currFilters[key].type;
+				if (result) {
+					if (nextFilters[key].type === FILTERTYPE_SELECTION) {
+						if (nextFilters[key].selection.length !== currFilters[key].selection.length) {
+							return true;
+						} else {
+							let selectionSet = new Set(currFilters[key].selection), selectionChange;
+							selectionChange = _.some(nextFilters[key].selection, id => {
+								return selectionSet.has(id) ? false : true;
+							});
+							return selectionChange;
+						}
+					} else {
+						if (nextFilters[key].operationType !== currFilters[key].operationType || nextFilters[key].operationValue !== currFilters[key].operationValue) {
+							return true;
+						}
+					}
+				}
+				return false;
+			}
+		});
+
+		return !result;
+	}
+
 /**
  * Apply the columns sort and filters over table data and update state.
  *
- * @param (array)	colSettings 	Sort / Filter settings of each column. From current or next state (case the props data/cols change)
- * @param (object) 	props 			Component props or new props on update
- * @param (boolean) updateSort 		If this parameter is true then chech props colSortDirs for default sort settings
- * @param (boolean) updateFilters 	If this parameter is true then chech props colFilters for default filter settings
- * @param (boolean) forceApply		If it's true then when update sort or update Filters is not allowed it will apply the colSettings anyway.
+ * @param (array)	colSettings 		Sort / Filter settings of each column. From current or next state (case the props data/cols change)
+ * @param (object) 	props 				Component props or new props on update
+ * @param (boolean) updateSort 			If this parameter is true then chech props colSortDirs for default sort settings
+ * @param (boolean) updateFilters 		If this parameter is true then chech props colFilters for default filter settings
+ * @param (boolean) forceSendSettings
  */
-	applySettings(colSettings = this.state.colSettings, props = this.props, updateSort = true, updateFilters = true, forceSendSettings = false, forceApply = false) {
+	applySettings(colSettings = this.state.colSettings, props = this.props, updateSort = true, updateFilters = true, forceSendSettings = false) {
 		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newDirection;
 		let updateSortAllowed = updateSort && props.colSortDirs && _.size(props.colSortDirs) > 0;
 		let updateFiltersAllowed = updateFilters && props.colFilters, hasSelectionFilter, hasCustomFilter, operations = {};
@@ -437,7 +482,7 @@ class ProperTable extends React.Component {
 					sortedData.push({name: col.column, direction: newDirection}); // To be applied after
 					hasSort = true;
 				}
-			} else if (forceApply && col.direction !== DEFAULT_SORT_DIRECTION) {
+			} else if (col.direction !== DEFAULT_SORT_DIRECTION) {
 				hasSort = true;
 			}
 
@@ -468,8 +513,8 @@ class ProperTable extends React.Component {
 						col.operationFilterValue = newFilter.operationValue;
 					}
 				}
-			} else if (forceApply && ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0)
-				|| (col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0))) {
+			} else if ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0)
+				|| (col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
 				hasFilter = true;
 			}
 
@@ -486,7 +531,7 @@ class ProperTable extends React.Component {
 				fields[col.column] = col.field;
 
 				if (hasSelectionFilter) {
-					selectionSet[col.column] = new Set(col.selection);
+					selectionSet[col.column] = new Set(col.selection.toString().split(','));
 					operations[col.column] = null;
 
 				} else {
@@ -902,7 +947,7 @@ class ProperTable extends React.Component {
 			indexed: indexed,
 			colSettings: colSettings,
 			hasSortedColumns: hasSortedColumns
-		}, this.sendSortedAndSettings(data, colSettings));
+		}, this.sendSortedAndSettings.bind(this, data, colSettings));
 	}
 
 /**
@@ -966,7 +1011,7 @@ class ProperTable extends React.Component {
 				if (!hasSort && col.direction !== DEFAULT_SORT_DIRECTION) hasSort = true;
 
 				if (col.selection.length > 0) { // Build all selection
-					selectionSet[col.column] = new Set(col.selection);
+					selectionSet[col.column] = new Set(col.selection.toString().split(','));
 					formatters[col.column] = col.formatter;
 					columnKeysFiltered.push(col.column);
 
@@ -988,7 +1033,7 @@ class ProperTable extends React.Component {
 			if (hasSort) {
 				this.sortTable(colSettings, true, newData);
 			} else {
-				this.setState(newData, this.sendColSettings(colSettings)); // All columns have sort to default
+				this.setState(newData, this.sendColSettings.bind(this, colSettings)); // All columns have sort to default
 			}
 		} else {
 			// Update col Settings with new sort direction for this column, then sort the data and update the component's state.
@@ -1256,7 +1301,7 @@ class ProperTable extends React.Component {
 			  	if (settings.filterType === FILTERTYPE_SELECTION) {
 			    	isSortedOrFiltered = settings.selection.length > 0;
 			    	selection = settings.selection;
-			  	} else if (settings.filterType === FILTERTYPE_CUSTOM) {
+			  	} else { // if (settings.filterType === FILTERTYPE_CUSTOM)
 			    	isSortedOrFiltered = settings.operationFilterValue.length > 0;
 			  	}
 
