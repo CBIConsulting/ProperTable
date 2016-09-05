@@ -32,7 +32,7 @@ const CellRenderer = (props) => {
 
 	if (row) {
 		// Get the value of the current column in the row
-		val = rawdata[props.col] || null;
+		val = rawdata[props.col] === undefined ? null : rawdata[props.col];
 		formatted = val;
 	}
 
