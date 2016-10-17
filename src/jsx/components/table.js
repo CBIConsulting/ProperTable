@@ -98,11 +98,11 @@ class ProperTable extends React.Component {
 		super(props);
 
 		// Get initial data
-		let initialData = this.prepareData();
+		let initialData = this.prepareData(props, null);
 		// Get initial columns sort
-		let initialColSettings = this.prepareColSettings(this.props, initialData.rawdata);
+		let initialColSettings = this.prepareColSettings(props, initialData.rawdata);
 		// Sort cols by position if exist
-		let cols = this.sortTableCols(Immutable.fromJS(this.props.cols));
+		let cols = this.sortTableCols(Immutable.fromJS(props.cols));
 
 		this.state = {
 			cols: cols,
@@ -123,7 +123,7 @@ class ProperTable extends React.Component {
 	}
 
 	componentWillMount() {
-		this.uniqueId = this.props.uniqueId || _.uniqueId('propertable-');
+		this.uniqueId = this.props.uniqueId ? this.props.uniqueId : _.uniqueId('propertable-');
 
 		// Sort the table and apply filters if exist in props
 		this.applySettings();
@@ -188,7 +188,7 @@ class ProperTable extends React.Component {
 						rawdata: preparedData.rawdata,
 						sortCache: preparedData.defSortCache,
 						selection: preparedData.defSelection,
-					}, this.applySettings.bind(this, colData.colSettings, nextProps, true, true, true));
+					}, this.applySettings.bind(this, colData.colSettings, nextProps, true));
 
 				} else if (colsChanged) {
 					if (colsDeepCompare.hasChangedDeeply || (colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition)) {
@@ -238,7 +238,7 @@ class ProperTable extends React.Component {
 				return false;
 
 			} else if (colSortDirsChanged || colFiltersChanged) {
-				this.applySettings(nextState.colSettings, nextProps, colSortDirsChanged, colFiltersChanged);
+				this.applySettings(nextState.colSettings, nextProps);
 
 			} else if (nextProps.selected) {
 				this.setDefaultSelection(nextProps);
@@ -461,15 +461,13 @@ class ProperTable extends React.Component {
  *
  * @param (array)	colSettings 		Sort / Filter settings of each column. From current or next state (case the props data/cols change)
  * @param (object) 	props 				Component props or new props on update
- * @param (boolean) updateSort 			If this parameter is true then chech props colSortDirs for default sort settings
- * @param (boolean) updateFilters 		If this parameter is true then chech props colFilters for default filter settings
  * @param (boolean) forceSendSettings
  */
-	applySettings(colSettings = this.state.colSettings, props = this.props, updateSort = true, updateFilters = true, forceSendSettings = false) {
+	applySettings(colSettings = this.state.colSettings, props = this.props, forceSendSettings = false) {
 		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newDirection;
-		let updateSortAllowed = updateSort && props.colSortDirs && _.size(props.colSortDirs) > 0;
-		let updateFiltersAllowed = updateFilters && props.colFilters, hasSelectionFilter, hasCustomFilter, operations = {};
-		let sortedData = [], filterValue, newFilter; // Date filters
+		let sortedData = [], filterValue, newFilter, hasSelectionFilter, hasCustomFilter, operations = {};
+		let updateSortAllowed = props.colSortDirs && _.isObject(props.colSortDirs);
+		let updateFiltersAllowed = props.colFilters && _.isObject(props.colFilters);
 
 		// Update settings
 		colSettings = _.map(colSettings, col => {
@@ -498,7 +496,6 @@ class ProperTable extends React.Component {
 							 	hasFilter = !shallowEqualImmutable(col.selection, newFilter.selection);
 							}
 						}
-
 						col.filterType = FILTERTYPE_SELECTION;
 						col.selection = newFilter.selection;
 
@@ -507,14 +504,13 @@ class ProperTable extends React.Component {
 							|| col.operationFilterValue !== newFilter.operationValue)) {
 							hasFilter = true;
 						}
-
 						col.filterType = FILTERTYPE_CUSTOM;
 						col.operationFilterType = newFilter.operationType;
 						col.operationFilterValue = newFilter.operationValue;
 					}
 				}
-			} else if ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0)
-				|| (col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
+			} else if (!hasFilter && ((col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0)
+				|| (col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0))) {
 				hasFilter = true;
 			}
 
@@ -560,7 +556,7 @@ class ProperTable extends React.Component {
 		if (hasSort) {
 			this.sortTable(colSettings, true, newData); // This method set state and send the cols settings
 		} else if (hasFilter) {
-			this.setState(newData, this.sendColSettings(colSettings));
+			this.setState(newData, this.sendColSettings.bind(this, colSettings));
 		} else if (forceSendSettings) {
 			this.sendColSettings(colSettings);
 		}

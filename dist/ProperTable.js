@@ -57,7 +57,7 @@ var ProperTable =
 
 	var _portal2 = _interopRequireDefault(_portal);
 
-	var _formatters = __webpack_require__(91);
+	var _formatters = __webpack_require__(92);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -65,7 +65,7 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(144);
+	var _reactDimensions = __webpack_require__(145);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
@@ -74,7 +74,7 @@ var ProperTable =
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	if (true) {
-		__webpack_require__(146);
+		__webpack_require__(147);
 	}
 
 	exports["default"] = {
@@ -95,7 +95,7 @@ var ProperTable =
 
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 
-	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
 
 	var _CLEAR_OPTIONS;
 
@@ -133,11 +133,11 @@ var ProperTable =
 
 	var _headerCell2 = _interopRequireDefault(_headerCell);
 
-	var _binarysearch = __webpack_require__(82);
+	var _binarysearch = __webpack_require__(83);
 
 	var _binarysearch2 = _interopRequireDefault(_binarysearch);
 
-	var _clone = __webpack_require__(83);
+	var _clone = __webpack_require__(84);
 
 	var _clone2 = _interopRequireDefault(_clone);
 
@@ -147,15 +147,15 @@ var ProperTable =
 
 	var _rowcache2 = _interopRequireDefault(_rowcache);
 
-	var _moment = __webpack_require__(88);
+	var _moment = __webpack_require__(89);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _normalizer = __webpack_require__(89);
+	var _normalizer = __webpack_require__(90);
 
 	var _normalizer2 = _interopRequireDefault(_normalizer);
 
-	var _comparators = __webpack_require__(90);
+	var _comparators = __webpack_require__(91);
 
 	var _comparators2 = _interopRequireDefault(_comparators);
 
@@ -196,7 +196,7 @@ var ProperTable =
 	var NOTCONTAINS = 'notcontains';
 	var EMPTY = 'empty';
 	var CACHE_NAME = 'formatted';
-	var Set = __webpack_require__(93);
+	var Set = __webpack_require__(94);
 	var DATE_TYPES = new Set([AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]);
 	var CLEAR_OPTIONS = (_CLEAR_OPTIONS = {}, _CLEAR_OPTIONS[CLEAR_BOTH] = { sort: true, filters: true }, _CLEAR_OPTIONS[CLEAR_FILTERS] = { sort: false, filters: true }, _CLEAR_OPTIONS[CLEAR_SORT] = { sort: true, filters: false }, _CLEAR_OPTIONS);
 
@@ -248,14 +248,13 @@ var ProperTable =
 			_classCallCheck(this, ProperTable);
 
 			// Get initial data
-
 			var _this = _possibleConstructorReturn(this, _React$Component.call(this, props));
 
-			var initialData = _this.prepareData();
+			var initialData = _this.prepareData(props, null);
 			// Get initial columns sort
-			var initialColSettings = _this.prepareColSettings(_this.props, initialData.rawdata);
+			var initialColSettings = _this.prepareColSettings(props, initialData.rawdata);
 			// Sort cols by position if exist
-			var cols = _this.sortTableCols(_immutable2['default'].fromJS(_this.props.cols));
+			var cols = _this.sortTableCols(_immutable2['default'].fromJS(props.cols));
 
 			_this.state = {
 				cols: cols,
@@ -277,7 +276,7 @@ var ProperTable =
 		}
 
 		ProperTable.prototype.componentWillMount = function componentWillMount() {
-			this.uniqueId = this.props.uniqueId || _underscore2['default'].uniqueId('propertable-');
+			this.uniqueId = this.props.uniqueId ? this.props.uniqueId : _underscore2['default'].uniqueId('propertable-');
 
 			// Sort the table and apply filters if exist in props
 			this.applySettings();
@@ -348,7 +347,7 @@ var ProperTable =
 								rawdata: preparedData.rawdata,
 								sortCache: preparedData.defSortCache,
 								selection: preparedData.defSelection
-							}, _this2.applySettings.bind(_this2, colData.colSettings, nextProps, true, true, true));
+							}, _this2.applySettings.bind(_this2, colData.colSettings, nextProps, true));
 						} else if (colsChanged) {
 							if (colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition) {
 								(function () {
@@ -399,7 +398,7 @@ var ProperTable =
 							v: false
 						};
 					} else if (colSortDirsChanged || colFiltersChanged) {
-						_this2.applySettings(nextState.colSettings, nextProps, colSortDirsChanged, colFiltersChanged);
+						_this2.applySettings(nextState.colSettings, nextProps);
 					} else if (nextProps.selected) {
 						_this2.setDefaultSelection(nextProps);
 
@@ -650,21 +649,17 @@ var ProperTable =
 	  *
 	  * @param (array)	colSettings 		Sort / Filter settings of each column. From current or next state (case the props data/cols change)
 	  * @param (object) 	props 				Component props or new props on update
-	  * @param (boolean) updateSort 			If this parameter is true then chech props colSortDirs for default sort settings
-	  * @param (boolean) updateFilters 		If this parameter is true then chech props colFilters for default filter settings
 	  * @param (boolean) forceSendSettings
 	  */
 
 
 		ProperTable.prototype.applySettings = function applySettings() {
-			var colSettings = arguments.length <= 0 || arguments[0] === undefined ? this.state.colSettings : arguments[0];
-			var props = arguments.length <= 1 || arguments[1] === undefined ? this.props : arguments[1];
-			var updateSort = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
+			var colSettings = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.state.colSettings;
 
 			var _this3 = this;
 
-			var updateFilters = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
-			var forceSendSettings = arguments.length <= 4 || arguments[4] === undefined ? false : arguments[4];
+			var props = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.props;
+			var forceSendSettings = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
 			var selectionSet = {},
 			    columnKeysFiltered = [],
@@ -674,14 +669,14 @@ var ProperTable =
 			    hasFilter = false,
 			    hasSort = false,
 			    newDirection = void 0;
-			var updateSortAllowed = updateSort && props.colSortDirs && _underscore2['default'].size(props.colSortDirs) > 0;
-			var updateFiltersAllowed = updateFilters && props.colFilters,
+			var sortedData = [],
+			    filterValue = void 0,
+			    newFilter = void 0,
 			    hasSelectionFilter = void 0,
 			    hasCustomFilter = void 0,
 			    operations = {};
-			var sortedData = [],
-			    filterValue = void 0,
-			    newFilter = void 0; // Date filters
+			var updateSortAllowed = props.colSortDirs && _underscore2['default'].isObject(props.colSortDirs);
+			var updateFiltersAllowed = props.colFilters && _underscore2['default'].isObject(props.colFilters);
 
 			// Update settings
 			colSettings = _underscore2['default'].map(colSettings, function (col) {
@@ -711,20 +706,18 @@ var ProperTable =
 									hasFilter = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.selection, newFilter.selection);
 								}
 							}
-
 							col.filterType = FILTERTYPE_SELECTION;
 							col.selection = newFilter.selection;
 						} else if (newFilter.type === FILTERTYPE_CUSTOM) {
 							if (!hasFilter && (col.filterType !== FILTERTYPE_CUSTOM || col.operationFilterType !== newFilter.operationType || col.operationFilterValue !== newFilter.operationValue)) {
 								hasFilter = true;
 							}
-
 							col.filterType = FILTERTYPE_CUSTOM;
 							col.operationFilterType = newFilter.operationType;
 							col.operationFilterValue = newFilter.operationValue;
 						}
 					}
-				} else if (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0) {
+				} else if (!hasFilter && (col.filterType === FILTERTYPE_SELECTION && col.selection.length > 0 || col.filterType === FILTERTYPE_CUSTOM && col.operationFilterValue.length > 0)) {
 					hasFilter = true;
 				}
 
@@ -769,7 +762,7 @@ var ProperTable =
 			if (hasSort) {
 				this.sortTable(colSettings, true, newData); // This method set state and send the cols settings
 			} else if (hasFilter) {
-				this.setState(newData, this.sendColSettings(colSettings));
+				this.setState(newData, this.sendColSettings.bind(this, colSettings));
 			} else if (forceSendSettings) {
 				this.sendColSettings(colSettings);
 			}
@@ -794,7 +787,7 @@ var ProperTable =
 		ProperTable.prototype.applyFilters = function applyFilters(columns, formatters, filters, fields) {
 			var _this4 = this;
 
-			var operations = arguments.length <= 4 || arguments[4] === undefined ? [] : arguments[4];
+			var operations = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
 			var _state = this.state;
 			var initialData = _state.initialData;
 			var indexed = _state.indexed;
@@ -882,8 +875,8 @@ var ProperTable =
 
 
 		ProperTable.prototype.prepareData = function prepareData() {
-			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
-			var state = arguments.length <= 1 || arguments[1] === undefined ? this.state : arguments[1];
+			var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.props;
+			var state = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.state;
 
 			// The data will be immutable inside the component
 			var data = _immutable2['default'].fromJS(props.data),
@@ -946,7 +939,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.setDefaultSelection = function setDefaultSelection() {
-			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+			var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.props;
 
 			if (props.selected) {
 				var selection = this.parseSelected(props);
@@ -963,7 +956,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.parseSelected = function parseSelected() {
-			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
+			var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.props;
 
 			var selection = void 0,
 			    isArray = _underscore2['default'].isArray(props.selected),
@@ -1011,8 +1004,8 @@ var ProperTable =
 		ProperTable.prototype.prepareColSettings = function prepareColSettings() {
 			var _this5 = this;
 
-			var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
-			var rawdata = arguments.length <= 1 || arguments[1] === undefined ? null : arguments[1];
+			var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.props;
+			var rawdata = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
 			var cols = props.cols,
 			    colSettings = [];
@@ -1144,8 +1137,8 @@ var ProperTable =
 		ProperTable.prototype.buildColSortDirs = function buildColSortDirs(cols) {
 			var _this6 = this;
 
-			var colSortDirs = arguments.length <= 1 || arguments[1] === undefined ? [] : arguments[1];
-			var sortVals = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+			var colSortDirs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+			var sortVals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
 			cols.forEach(function (element) {
 				if (!element.children) {
@@ -1192,7 +1185,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.customFilter = function customFilter(type, value, compareTo) {
-			var escapeLess = arguments.length <= 3 || arguments[3] === undefined ? false : arguments[3];
+			var escapeLess = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : false;
 
 			return _comparators2['default'][type](_normalizer2['default'].normalize(value, escapeLess), _normalizer2['default'].normalize(compareTo, escapeLess));
 		};
@@ -1280,7 +1273,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.onSortChange = function onSortChange(columnKey, sortDir) {
-			var newData = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+			var newData = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
 			var colSettings = newData ? newData.colSettings : this.state.colSettings;
 
@@ -1299,8 +1292,8 @@ var ProperTable =
 
 
 		ProperTable.prototype.onColumnGetFiltered = function onColumnGetFiltered(columnKey, selection) {
-			var sortDir = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
-			var colSettings = arguments.length <= 3 || arguments[3] === undefined ? this.state.colSettings : arguments[3];
+			var sortDir = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+			var colSettings = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : this.state.colSettings;
 
 			var selectionSet = {},
 			    columnKeysFiltered = [],
@@ -1367,7 +1360,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.updateSortDir = function updateSortDir(columnKey, sortDir) {
-			var colSettings = arguments.length <= 2 || arguments[2] === undefined ? this.state.colSettings : arguments[2];
+			var colSettings = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.state.colSettings;
 
 			var position = 1;
 
@@ -1440,8 +1433,8 @@ var ProperTable =
 
 
 		ProperTable.prototype.sortTable = function sortTable(colSettings) {
-			var sendSorted = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
-			var newData = arguments.length <= 2 || arguments[2] === undefined ? null : arguments[2];
+			var sendSorted = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+			var newData = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
 			var data = newData ? newData.data : this.state.data,
 			    indexedData = newData ? newData.indexed : this.state.indexed;
@@ -1556,7 +1549,7 @@ var ProperTable =
 		ProperTable.prototype.getCurrentData = function getCurrentData() {
 			var _this9 = this;
 
-			var getAsRaw = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+			var getAsRaw = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
 			var data = this.state.data;
 
@@ -1592,8 +1585,8 @@ var ProperTable =
 		ProperTable.prototype.parseColumn = function parseColumn(colData) {
 			var _this10 = this;
 
-			var isChildren = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
-			var hasNested = arguments.length <= 2 || arguments[2] === undefined ? false : arguments[2];
+			var isChildren = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+			var hasNested = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
 
 			var col = null,
 			    colname = null,
@@ -2052,7 +2045,7 @@ var ProperTable =
 		ProperTable.prototype.updateSelectionData = function updateSelectionData(newSelection) {
 			var _this14 = this;
 
-			var newAllSelected = arguments.length <= 1 || arguments[1] === undefined ? false : arguments[1];
+			var newAllSelected = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
 			var newIndexed = this.state.indexed;
 			var oldSelection = this.state.selection;
@@ -2145,8 +2138,8 @@ var ProperTable =
 
 
 		ProperTable.prototype.triggerSelection = function triggerSelection() {
-			var newSelection = arguments.length <= 0 || arguments[0] === undefined ? new Set() : arguments[0];
-			var sendSelection = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
+			var newSelection = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : new Set();
+			var sendSelection = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
 
 			if (sendSelection) {
 				this.setState({
@@ -2169,7 +2162,7 @@ var ProperTable =
 		ProperTable.prototype.sendSelection = function sendSelection() {
 			var _this15 = this;
 
-			var newSelection = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+			var newSelection = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
 			if (typeof this.props.afterSelect == 'function') {
 				(function () {
@@ -2458,7 +2451,7 @@ var ProperTable =
 	  Table: FixedDataTable
 	};
 
-	FixedDataTableRoot.version = '0.6.1';
+	FixedDataTableRoot.version = '0.6.3';
 	module.exports = FixedDataTableRoot;
 
 /***/ },
@@ -7645,8 +7638,11 @@ var ProperTable =
 	    var style = _props.style;
 	    var className = _props.className;
 	    var children = _props.children;
+	    var columnKey = _props.columnKey;
+	    var // Unused but should not be passed through
+	    rowIndex = _props.rowIndex;
 
-	    var props = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children']);
+	    var props = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children', 'columnKey', 'rowIndex']);
 
 	    var innerStyle = _extends({
 	      height: height,
@@ -7678,6 +7674,7 @@ var ProperTable =
 	});
 
 	module.exports = FixedDataTableCellDefault;
+	// Unused but should not be passed through
 
 /***/ },
 /* 44 */
@@ -14447,7 +14444,7 @@ var ProperTable =
 
 	var RowCache = function () {
 		function RowCache() {
-			var base = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+			var base = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
 			_classCallCheck(this, RowCache);
 
@@ -14455,7 +14452,7 @@ var ProperTable =
 		}
 
 		RowCache.prototype.init = function init() {
-			var base = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+			var base = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
 			cache = base;
 
@@ -14480,7 +14477,7 @@ var ProperTable =
 		};
 
 		RowCache.prototype.flush = function flush() {
-			var key = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+			var key = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
 			if (key) {
 				var k = parseKey(key);
@@ -14647,7 +14644,7 @@ var ProperTable =
 	DotObject.prototype.str = function (path, v, obj, mod) {
 	  if (path.indexOf(this.seperator) !== -1) {
 	    this._fill(path.split(this.seperator), obj, v, mod)
-	  } else if (this.override) {
+	  } else if (!obj.hasOwnProperty(path) || this.override) {
 	    obj[path] = _process(v, mod)
 	  }
 
@@ -14944,7 +14941,7 @@ var ProperTable =
 	  tgt = tgt || {}
 	  path = path || []
 	  Object.keys(obj).forEach(function (key) {
-	    if (Object(obj[key]) === obj[key]) {
+	    if (Object(obj[key]) === obj[key] && (Object.prototype.toString.call(obj[key]) === '[object Object]') || Object.prototype.toString.call(obj[key]) === '[object Array]') {
 	      return this.dot(obj[key], tgt, path.concat(key))
 	    } else {
 	      tgt[path.concat(key).join(this.seperator)] = obj[key]
@@ -15221,7 +15218,7 @@ var ProperTable =
 	        }
 	      }, props),
 	      children,
-	      ' ',
+	      '\xA0',
 	      sortIcon
 	    )
 	  );
@@ -15540,8 +15537,8 @@ var ProperTable =
 	  };
 
 	  Portal.prototype.renderPortal = function renderPortal(props) {
-	    var x = arguments.length <= 1 || arguments[1] === undefined ? this.state.x : arguments[1];
-	    var y = arguments.length <= 2 || arguments[2] === undefined ? this.state.y : arguments[2];
+	    var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.state.x;
+	    var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.state.y;
 
 	    var style = props.style || {},
 	        width = this.props.width || 280;
@@ -15604,10 +15601,10 @@ var ProperTable =
 	  };
 
 	  Portal.prototype.openPortal = function openPortal() {
-	    var props = arguments.length <= 0 || arguments[0] === undefined ? this.props : arguments[0];
-	    var x = arguments.length <= 1 || arguments[1] === undefined ? this.state.x : arguments[1];
-	    var y = arguments.length <= 2 || arguments[2] === undefined ? this.state.y : arguments[2];
-	    var element = arguments.length <= 3 || arguments[3] === undefined ? this.state.element : arguments[3];
+	    var props = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.props;
+	    var x = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : this.state.x;
+	    var y = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : this.state.y;
+	    var element = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : this.state.element;
 
 	    this.setState({ active: true, x: x, y: y, element: element });
 	    this.renderPortal(props, x, y);
@@ -15618,7 +15615,7 @@ var ProperTable =
 	  Portal.prototype.closePortal = function closePortal() {
 	    var _this2 = this;
 
-	    var isUnmounted = arguments.length <= 0 || arguments[0] === undefined ? false : arguments[0];
+	    var isUnmounted = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : false;
 
 	    var resetPortalState = function resetPortalState() {
 	      if (_this2.node) {
@@ -16729,7 +16726,7 @@ var ProperTable =
 /* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process) {/**
 	 * Tween.js - Licensed under the MIT license
 	 * https://github.com/tweenjs/tween.js
 	 * ----------------------------------------------
@@ -16737,29 +16734,6 @@ var ProperTable =
 	 * See https://github.com/tweenjs/tween.js/graphs/contributors for the full list of contributors.
 	 * Thank you all, you're awesome!
 	 */
-
-	// Include a performance.now polyfill
-	(function () {
-
-		if ('performance' in window === false) {
-			window.performance = {};
-		}
-
-		// IE 8
-		Date.now = (Date.now || function () {
-			return new Date().getTime();
-		});
-
-		if ('now' in window.performance === false) {
-			var offset = window.performance.timing && window.performance.timing.navigationStart ? window.performance.timing.navigationStart
-			                                                                                    : Date.now();
-
-			window.performance.now = function () {
-				return Date.now() - offset;
-			};
-		}
-
-	})();
 
 	var TWEEN = TWEEN || (function () {
 
@@ -16795,7 +16769,7 @@ var ProperTable =
 
 			},
 
-			update: function (time) {
+			update: function (time, preserve) {
 
 				if (_tweens.length === 0) {
 					return false;
@@ -16803,11 +16777,11 @@ var ProperTable =
 
 				var i = 0;
 
-				time = time !== undefined ? time : window.performance.now();
+				time = time !== undefined ? time : TWEEN.now();
 
 				while (i < _tweens.length) {
 
-					if (_tweens[i].update(time)) {
+					if (_tweens[i].update(time) || preserve) {
 						i++;
 					} else {
 						_tweens.splice(i, 1);
@@ -16821,6 +16795,40 @@ var ProperTable =
 		};
 
 	})();
+
+
+	// Include a performance.now polyfill
+	(function () {
+		// In node.js, use process.hrtime.
+		if (this.window === undefined && this.process !== undefined) {
+			TWEEN.now = function () {
+				var time = process.hrtime();
+
+				// Convert [seconds, microseconds] to milliseconds.
+				return time[0] * 1000 + time[1] / 1000;
+			};
+		}
+		// In a browser, use window.performance.now if it is available.
+		else if (this.window !== undefined &&
+		         window.performance !== undefined &&
+			 window.performance.now !== undefined) {
+
+			// This must be bound, because directly assigning this function
+			// leads to an invocation exception in Chrome.
+			TWEEN.now = window.performance.now.bind(window.performance);
+		}
+		// Use Date.now if it is available.
+		else if (Date.now !== undefined) {
+			TWEEN.now = Date.now;
+		}
+		// Otherwise, use 'new Date().getTime()'.
+		else {
+			TWEEN.now = function () {
+				return new Date().getTime();
+			};
+		}
+	})();
+
 
 	TWEEN.Tween = function (object) {
 
@@ -16869,7 +16877,7 @@ var ProperTable =
 
 			_onStartCallbackFired = false;
 
-			_startTime = time !== undefined ? time : window.performance.now();
+			_startTime = time !== undefined ? time : TWEEN.now();
 			_startTime += _delayTime;
 
 			for (var property in _valuesEnd) {
@@ -17047,7 +17055,7 @@ var ProperTable =
 					// Parses relative end values with start as base (e.g.: +10, -3)
 					if (typeof (end) === 'string') {
 
-						if (end.startsWith('+') || end.startsWith('-')) {
+						if (end.charAt(0) === '+' || end.charAt(0) === '-') {
 							end = start + parseFloat(end, 10);
 						} else {
 							end = parseFloat(end, 10);
@@ -17328,10 +17336,6 @@ var ProperTable =
 
 			In: function (k) {
 
-				var s;
-				var a = 0.1;
-				var p = 0.4;
-
 				if (k === 0) {
 					return 0;
 				}
@@ -17340,23 +17344,12 @@ var ProperTable =
 					return 1;
 				}
 
-				if (!a || a < 1) {
-					a = 1;
-					s = p / 4;
-				} else {
-					s = p * Math.asin(1 / a) / (2 * Math.PI);
-				}
-
-				return - (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+				return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
 
 			},
 
 			Out: function (k) {
 
-				var s;
-				var a = 0.1;
-				var p = 0.4;
-
 				if (k === 0) {
 					return 0;
 				}
@@ -17365,23 +17358,12 @@ var ProperTable =
 					return 1;
 				}
 
-				if (!a || a < 1) {
-					a = 1;
-					s = p / 4;
-				} else {
-					s = p * Math.asin(1 / a) / (2 * Math.PI);
-				}
-
-				return (a * Math.pow(2, - 10 * k) * Math.sin((k - s) * (2 * Math.PI) / p) + 1);
+				return Math.pow(2, -10 * k) * Math.sin((k - 0.1) * 5 * Math.PI) + 1;
 
 			},
 
 			InOut: function (k) {
 
-				var s;
-				var a = 0.1;
-				var p = 0.4;
-
 				if (k === 0) {
 					return 0;
 				}
@@ -17390,18 +17372,13 @@ var ProperTable =
 					return 1;
 				}
 
-				if (!a || a < 1) {
-					a = 1;
-					s = p / 4;
-				} else {
-					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				k *= 2;
+
+				if (k < 1) {
+					return -0.5 * Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
 				}
 
-				if ((k *= 2) < 1) {
-					return - 0.5 * (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
-				}
-
-				return a * Math.pow(2, -10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p) * 0.5 + 1;
+				return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
 
 			}
 
@@ -17620,9 +17597,196 @@ var ProperTable =
 
 	})(this);
 
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(82)))
 
 /***/ },
 /* 82 */
+/***/ function(module, exports) {
+
+	// shim for using process in browser
+	var process = module.exports = {};
+
+	// cached from whatever global is present so that test runners that stub it
+	// don't break things.  But we need to wrap it in a try catch in case it is
+	// wrapped in strict mode code which doesn't define any globals.  It's inside a
+	// function because try/catches deoptimize in certain engines.
+
+	var cachedSetTimeout;
+	var cachedClearTimeout;
+
+	function defaultSetTimout() {
+	    throw new Error('setTimeout has not been defined');
+	}
+	function defaultClearTimeout () {
+	    throw new Error('clearTimeout has not been defined');
+	}
+	(function () {
+	    try {
+	        if (typeof setTimeout === 'function') {
+	            cachedSetTimeout = setTimeout;
+	        } else {
+	            cachedSetTimeout = defaultSetTimout;
+	        }
+	    } catch (e) {
+	        cachedSetTimeout = defaultSetTimout;
+	    }
+	    try {
+	        if (typeof clearTimeout === 'function') {
+	            cachedClearTimeout = clearTimeout;
+	        } else {
+	            cachedClearTimeout = defaultClearTimeout;
+	        }
+	    } catch (e) {
+	        cachedClearTimeout = defaultClearTimeout;
+	    }
+	} ())
+	function runTimeout(fun) {
+	    if (cachedSetTimeout === setTimeout) {
+	        //normal enviroments in sane situations
+	        return setTimeout(fun, 0);
+	    }
+	    // if setTimeout wasn't available but was latter defined
+	    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+	        cachedSetTimeout = setTimeout;
+	        return setTimeout(fun, 0);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedSetTimeout(fun, 0);
+	    } catch(e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+	            return cachedSetTimeout.call(null, fun, 0);
+	        } catch(e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+	            return cachedSetTimeout.call(this, fun, 0);
+	        }
+	    }
+
+
+	}
+	function runClearTimeout(marker) {
+	    if (cachedClearTimeout === clearTimeout) {
+	        //normal enviroments in sane situations
+	        return clearTimeout(marker);
+	    }
+	    // if clearTimeout wasn't available but was latter defined
+	    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+	        cachedClearTimeout = clearTimeout;
+	        return clearTimeout(marker);
+	    }
+	    try {
+	        // when when somebody has screwed with setTimeout but no I.E. maddness
+	        return cachedClearTimeout(marker);
+	    } catch (e){
+	        try {
+	            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+	            return cachedClearTimeout.call(null, marker);
+	        } catch (e){
+	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+	            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+	            return cachedClearTimeout.call(this, marker);
+	        }
+	    }
+
+
+
+	}
+	var queue = [];
+	var draining = false;
+	var currentQueue;
+	var queueIndex = -1;
+
+	function cleanUpNextTick() {
+	    if (!draining || !currentQueue) {
+	        return;
+	    }
+	    draining = false;
+	    if (currentQueue.length) {
+	        queue = currentQueue.concat(queue);
+	    } else {
+	        queueIndex = -1;
+	    }
+	    if (queue.length) {
+	        drainQueue();
+	    }
+	}
+
+	function drainQueue() {
+	    if (draining) {
+	        return;
+	    }
+	    var timeout = runTimeout(cleanUpNextTick);
+	    draining = true;
+
+	    var len = queue.length;
+	    while(len) {
+	        currentQueue = queue;
+	        queue = [];
+	        while (++queueIndex < len) {
+	            if (currentQueue) {
+	                currentQueue[queueIndex].run();
+	            }
+	        }
+	        queueIndex = -1;
+	        len = queue.length;
+	    }
+	    currentQueue = null;
+	    draining = false;
+	    runClearTimeout(timeout);
+	}
+
+	process.nextTick = function (fun) {
+	    var args = new Array(arguments.length - 1);
+	    if (arguments.length > 1) {
+	        for (var i = 1; i < arguments.length; i++) {
+	            args[i - 1] = arguments[i];
+	        }
+	    }
+	    queue.push(new Item(fun, args));
+	    if (queue.length === 1 && !draining) {
+	        runTimeout(drainQueue);
+	    }
+	};
+
+	// v8 likes predictible objects
+	function Item(fun, array) {
+	    this.fun = fun;
+	    this.array = array;
+	}
+	Item.prototype.run = function () {
+	    this.fun.apply(null, this.array);
+	};
+	process.title = 'browser';
+	process.browser = true;
+	process.env = {};
+	process.argv = [];
+	process.version = ''; // empty string to avoid regexp issues
+	process.versions = {};
+
+	function noop() {}
+
+	process.on = noop;
+	process.addListener = noop;
+	process.once = noop;
+	process.off = noop;
+	process.removeListener = noop;
+	process.removeAllListeners = noop;
+	process.emit = noop;
+
+	process.binding = function (name) {
+	    throw new Error('process.binding is not supported');
+	};
+
+	process.cwd = function () { return '/' };
+	process.chdir = function (dir) {
+	    throw new Error('process.chdir is not supported');
+	};
+	process.umask = function() { return 0; };
+
+
+/***/ },
+/* 83 */
 /***/ function(module, exports) {
 
 	
@@ -17845,7 +18009,7 @@ var ProperTable =
 
 
 /***/ },
-/* 83 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {var clone = (function() {
@@ -18009,10 +18173,10 @@ var ProperTable =
 	  module.exports = clone;
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(84).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(85).Buffer))
 
 /***/ },
-/* 84 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
@@ -18025,16 +18189,13 @@ var ProperTable =
 
 	'use strict'
 
-	var base64 = __webpack_require__(85)
-	var ieee754 = __webpack_require__(86)
-	var isArray = __webpack_require__(87)
+	var base64 = __webpack_require__(86)
+	var ieee754 = __webpack_require__(87)
+	var isArray = __webpack_require__(88)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
 	exports.INSPECT_MAX_BYTES = 50
-	Buffer.poolSize = 8192 // not used by this implementation
-
-	var rootParent = {}
 
 	/**
 	 * If `Buffer.TYPED_ARRAY_SUPPORT`:
@@ -18052,9 +18213,6 @@ var ProperTable =
 	 *   - Firefox 4-29 lacks support for adding new properties to `Uint8Array` instances,
 	 *     See: https://bugzilla.mozilla.org/show_bug.cgi?id=695438.
 	 *
-	 *   - Safari 5-7 lacks support for changing the `Object.prototype.constructor` property
-	 *     on objects.
-	 *
 	 *   - Chrome 9-10 is missing the `TypedArray.prototype.subarray` function.
 	 *
 	 *   - IE10 has a broken `TypedArray.prototype.subarray` function which returns arrays of
@@ -18067,14 +18225,16 @@ var ProperTable =
 	  ? global.TYPED_ARRAY_SUPPORT
 	  : typedArraySupport()
 
+	/*
+	 * Export kMaxLength after typed array support is determined.
+	 */
+	exports.kMaxLength = kMaxLength()
+
 	function typedArraySupport () {
-	  function Bar () {}
 	  try {
 	    var arr = new Uint8Array(1)
-	    arr.foo = function () { return 42 }
-	    arr.constructor = Bar
+	    arr.__proto__ = {__proto__: Uint8Array.prototype, foo: function () { return 42 }}
 	    return arr.foo() === 42 && // typed array instances can be augmented
-	        arr.constructor === Bar && // constructor can be set
 	        typeof arr.subarray === 'function' && // chrome 9-10 lack `subarray`
 	        arr.subarray(1, 1).byteLength === 0 // ie10 has broken `subarray`
 	  } catch (e) {
@@ -18088,184 +18248,252 @@ var ProperTable =
 	    : 0x3fffffff
 	}
 
-	/**
-	 * Class: Buffer
-	 * =============
-	 *
-	 * The Buffer constructor returns instances of `Uint8Array` that are augmented
-	 * with function properties for all the node `Buffer` API functions. We use
-	 * `Uint8Array` so that square bracket notation works as expected -- it returns
-	 * a single octet.
-	 *
-	 * By augmenting the instances, we can avoid modifying the `Uint8Array`
-	 * prototype.
-	 */
-	function Buffer (arg) {
-	  if (!(this instanceof Buffer)) {
-	    // Avoid going through an ArgumentsAdaptorTrampoline in the common case.
-	    if (arguments.length > 1) return new Buffer(arg, arguments[1])
-	    return new Buffer(arg)
+	function createBuffer (that, length) {
+	  if (kMaxLength() < length) {
+	    throw new RangeError('Invalid typed array length')
+	  }
+	  if (Buffer.TYPED_ARRAY_SUPPORT) {
+	    // Return an augmented `Uint8Array` instance, for best performance
+	    that = new Uint8Array(length)
+	    that.__proto__ = Buffer.prototype
+	  } else {
+	    // Fallback: Return an object instance of the Buffer class
+	    if (that === null) {
+	      that = new Buffer(length)
+	    }
+	    that.length = length
 	  }
 
-	  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-	    this.length = 0
-	    this.parent = undefined
+	  return that
+	}
+
+	/**
+	 * The Buffer constructor returns instances of `Uint8Array` that have their
+	 * prototype changed to `Buffer.prototype`. Furthermore, `Buffer` is a subclass of
+	 * `Uint8Array`, so the returned instances will have all the node `Buffer` methods
+	 * and the `Uint8Array` methods. Square bracket notation works as expected -- it
+	 * returns a single octet.
+	 *
+	 * The `Uint8Array` prototype remains unmodified.
+	 */
+
+	function Buffer (arg, encodingOrOffset, length) {
+	  if (!Buffer.TYPED_ARRAY_SUPPORT && !(this instanceof Buffer)) {
+	    return new Buffer(arg, encodingOrOffset, length)
 	  }
 
 	  // Common case.
 	  if (typeof arg === 'number') {
-	    return fromNumber(this, arg)
+	    if (typeof encodingOrOffset === 'string') {
+	      throw new Error(
+	        'If encoding is specified then the first argument must be a string'
+	      )
+	    }
+	    return allocUnsafe(this, arg)
 	  }
-
-	  // Slightly less common case.
-	  if (typeof arg === 'string') {
-	    return fromString(this, arg, arguments.length > 1 ? arguments[1] : 'utf8')
-	  }
-
-	  // Unusual.
-	  return fromObject(this, arg)
+	  return from(this, arg, encodingOrOffset, length)
 	}
 
-	function fromNumber (that, length) {
-	  that = allocate(that, length < 0 ? 0 : checked(length) | 0)
+	Buffer.poolSize = 8192 // not used by this implementation
+
+	// TODO: Legacy, not needed anymore. Remove in next major version.
+	Buffer._augment = function (arr) {
+	  arr.__proto__ = Buffer.prototype
+	  return arr
+	}
+
+	function from (that, value, encodingOrOffset, length) {
+	  if (typeof value === 'number') {
+	    throw new TypeError('"value" argument must not be a number')
+	  }
+
+	  if (typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer) {
+	    return fromArrayBuffer(that, value, encodingOrOffset, length)
+	  }
+
+	  if (typeof value === 'string') {
+	    return fromString(that, value, encodingOrOffset)
+	  }
+
+	  return fromObject(that, value)
+	}
+
+	/**
+	 * Functionally equivalent to Buffer(arg, encoding) but throws a TypeError
+	 * if value is a number.
+	 * Buffer.from(str[, encoding])
+	 * Buffer.from(array)
+	 * Buffer.from(buffer)
+	 * Buffer.from(arrayBuffer[, byteOffset[, length]])
+	 **/
+	Buffer.from = function (value, encodingOrOffset, length) {
+	  return from(null, value, encodingOrOffset, length)
+	}
+
+	if (Buffer.TYPED_ARRAY_SUPPORT) {
+	  Buffer.prototype.__proto__ = Uint8Array.prototype
+	  Buffer.__proto__ = Uint8Array
+	  if (typeof Symbol !== 'undefined' && Symbol.species &&
+	      Buffer[Symbol.species] === Buffer) {
+	    // Fix subarray() in ES2016. See: https://github.com/feross/buffer/pull/97
+	    Object.defineProperty(Buffer, Symbol.species, {
+	      value: null,
+	      configurable: true
+	    })
+	  }
+	}
+
+	function assertSize (size) {
+	  if (typeof size !== 'number') {
+	    throw new TypeError('"size" argument must be a number')
+	  } else if (size < 0) {
+	    throw new RangeError('"size" argument must not be negative')
+	  }
+	}
+
+	function alloc (that, size, fill, encoding) {
+	  assertSize(size)
+	  if (size <= 0) {
+	    return createBuffer(that, size)
+	  }
+	  if (fill !== undefined) {
+	    // Only pay attention to encoding if it's a string. This
+	    // prevents accidentally sending in a number that would
+	    // be interpretted as a start offset.
+	    return typeof encoding === 'string'
+	      ? createBuffer(that, size).fill(fill, encoding)
+	      : createBuffer(that, size).fill(fill)
+	  }
+	  return createBuffer(that, size)
+	}
+
+	/**
+	 * Creates a new filled Buffer instance.
+	 * alloc(size[, fill[, encoding]])
+	 **/
+	Buffer.alloc = function (size, fill, encoding) {
+	  return alloc(null, size, fill, encoding)
+	}
+
+	function allocUnsafe (that, size) {
+	  assertSize(size)
+	  that = createBuffer(that, size < 0 ? 0 : checked(size) | 0)
 	  if (!Buffer.TYPED_ARRAY_SUPPORT) {
-	    for (var i = 0; i < length; i++) {
+	    for (var i = 0; i < size; ++i) {
 	      that[i] = 0
 	    }
 	  }
 	  return that
 	}
 
+	/**
+	 * Equivalent to Buffer(num), by default creates a non-zero-filled Buffer instance.
+	 * */
+	Buffer.allocUnsafe = function (size) {
+	  return allocUnsafe(null, size)
+	}
+	/**
+	 * Equivalent to SlowBuffer(num), by default creates a non-zero-filled Buffer instance.
+	 */
+	Buffer.allocUnsafeSlow = function (size) {
+	  return allocUnsafe(null, size)
+	}
+
 	function fromString (that, string, encoding) {
-	  if (typeof encoding !== 'string' || encoding === '') encoding = 'utf8'
+	  if (typeof encoding !== 'string' || encoding === '') {
+	    encoding = 'utf8'
+	  }
 
-	  // Assumption: byteLength() return value is always < kMaxLength.
+	  if (!Buffer.isEncoding(encoding)) {
+	    throw new TypeError('"encoding" must be a valid string encoding')
+	  }
+
 	  var length = byteLength(string, encoding) | 0
-	  that = allocate(that, length)
+	  that = createBuffer(that, length)
 
-	  that.write(string, encoding)
-	  return that
-	}
+	  var actual = that.write(string, encoding)
 
-	function fromObject (that, object) {
-	  if (Buffer.isBuffer(object)) return fromBuffer(that, object)
-
-	  if (isArray(object)) return fromArray(that, object)
-
-	  if (object == null) {
-	    throw new TypeError('must start with number, buffer, array or string')
+	  if (actual !== length) {
+	    // Writing a hex string, for example, that contains invalid characters will
+	    // cause everything after the first invalid character to be ignored. (e.g.
+	    // 'abxxcd' will be treated as 'ab')
+	    that = that.slice(0, actual)
 	  }
 
-	  if (typeof ArrayBuffer !== 'undefined') {
-	    if (object.buffer instanceof ArrayBuffer) {
-	      return fromTypedArray(that, object)
-	    }
-	    if (object instanceof ArrayBuffer) {
-	      return fromArrayBuffer(that, object)
-	    }
-	  }
-
-	  if (object.length) return fromArrayLike(that, object)
-
-	  return fromJsonObject(that, object)
-	}
-
-	function fromBuffer (that, buffer) {
-	  var length = checked(buffer.length) | 0
-	  that = allocate(that, length)
-	  buffer.copy(that, 0, 0, length)
-	  return that
-	}
-
-	function fromArray (that, array) {
-	  var length = checked(array.length) | 0
-	  that = allocate(that, length)
-	  for (var i = 0; i < length; i += 1) {
-	    that[i] = array[i] & 255
-	  }
-	  return that
-	}
-
-	// Duplicate of fromArray() to keep fromArray() monomorphic.
-	function fromTypedArray (that, array) {
-	  var length = checked(array.length) | 0
-	  that = allocate(that, length)
-	  // Truncating the elements is probably not what people expect from typed
-	  // arrays with BYTES_PER_ELEMENT > 1 but it's compatible with the behavior
-	  // of the old Buffer constructor.
-	  for (var i = 0; i < length; i += 1) {
-	    that[i] = array[i] & 255
-	  }
-	  return that
-	}
-
-	function fromArrayBuffer (that, array) {
-	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    // Return an augmented `Uint8Array` instance, for best performance
-	    array.byteLength
-	    that = Buffer._augment(new Uint8Array(array))
-	  } else {
-	    // Fallback: Return an object instance of the Buffer class
-	    that = fromTypedArray(that, new Uint8Array(array))
-	  }
 	  return that
 	}
 
 	function fromArrayLike (that, array) {
-	  var length = checked(array.length) | 0
-	  that = allocate(that, length)
+	  var length = array.length < 0 ? 0 : checked(array.length) | 0
+	  that = createBuffer(that, length)
 	  for (var i = 0; i < length; i += 1) {
 	    that[i] = array[i] & 255
 	  }
 	  return that
 	}
 
-	// Deserialize { type: 'Buffer', data: [1,2,3,...] } into a Buffer object.
-	// Returns a zero-length buffer for inputs that don't conform to the spec.
-	function fromJsonObject (that, object) {
-	  var array
-	  var length = 0
+	function fromArrayBuffer (that, array, byteOffset, length) {
+	  array.byteLength // this throws if `array` is not a valid ArrayBuffer
 
-	  if (object.type === 'Buffer' && isArray(object.data)) {
-	    array = object.data
-	    length = checked(array.length) | 0
+	  if (byteOffset < 0 || array.byteLength < byteOffset) {
+	    throw new RangeError('\'offset\' is out of bounds')
 	  }
-	  that = allocate(that, length)
 
-	  for (var i = 0; i < length; i += 1) {
-	    that[i] = array[i] & 255
+	  if (array.byteLength < byteOffset + (length || 0)) {
+	    throw new RangeError('\'length\' is out of bounds')
 	  }
-	  return that
-	}
 
-	if (Buffer.TYPED_ARRAY_SUPPORT) {
-	  Buffer.prototype.__proto__ = Uint8Array.prototype
-	  Buffer.__proto__ = Uint8Array
-	} else {
-	  // pre-set for values that may exist in the future
-	  Buffer.prototype.length = undefined
-	  Buffer.prototype.parent = undefined
-	}
+	  if (byteOffset === undefined && length === undefined) {
+	    array = new Uint8Array(array)
+	  } else if (length === undefined) {
+	    array = new Uint8Array(array, byteOffset)
+	  } else {
+	    array = new Uint8Array(array, byteOffset, length)
+	  }
 
-	function allocate (that, length) {
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
 	    // Return an augmented `Uint8Array` instance, for best performance
-	    that = Buffer._augment(new Uint8Array(length))
+	    that = array
 	    that.__proto__ = Buffer.prototype
 	  } else {
 	    // Fallback: Return an object instance of the Buffer class
-	    that.length = length
-	    that._isBuffer = true
+	    that = fromArrayLike(that, array)
 	  }
-
-	  var fromPool = length !== 0 && length <= Buffer.poolSize >>> 1
-	  if (fromPool) that.parent = rootParent
-
 	  return that
 	}
 
+	function fromObject (that, obj) {
+	  if (Buffer.isBuffer(obj)) {
+	    var len = checked(obj.length) | 0
+	    that = createBuffer(that, len)
+
+	    if (that.length === 0) {
+	      return that
+	    }
+
+	    obj.copy(that, 0, 0, len)
+	    return that
+	  }
+
+	  if (obj) {
+	    if ((typeof ArrayBuffer !== 'undefined' &&
+	        obj.buffer instanceof ArrayBuffer) || 'length' in obj) {
+	      if (typeof obj.length !== 'number' || isnan(obj.length)) {
+	        return createBuffer(that, 0)
+	      }
+	      return fromArrayLike(that, obj)
+	    }
+
+	    if (obj.type === 'Buffer' && isArray(obj.data)) {
+	      return fromArrayLike(that, obj.data)
+	    }
+	  }
+
+	  throw new TypeError('First argument must be a string, Buffer, ArrayBuffer, Array, or array-like object.')
+	}
+
 	function checked (length) {
-	  // Note: cannot use `length < kMaxLength` here because that fails when
+	  // Note: cannot use `length < kMaxLength()` here because that fails when
 	  // length is NaN (which is otherwise coerced to zero.)
 	  if (length >= kMaxLength()) {
 	    throw new RangeError('Attempt to allocate Buffer larger than maximum ' +
@@ -18274,12 +18502,11 @@ var ProperTable =
 	  return length | 0
 	}
 
-	function SlowBuffer (subject, encoding) {
-	  if (!(this instanceof SlowBuffer)) return new SlowBuffer(subject, encoding)
-
-	  var buf = new Buffer(subject, encoding)
-	  delete buf.parent
-	  return buf
+	function SlowBuffer (length) {
+	  if (+length != length) { // eslint-disable-line eqeqeq
+	    length = 0
+	  }
+	  return Buffer.alloc(+length)
 	}
 
 	Buffer.isBuffer = function isBuffer (b) {
@@ -18296,17 +18523,12 @@ var ProperTable =
 	  var x = a.length
 	  var y = b.length
 
-	  var i = 0
-	  var len = Math.min(x, y)
-	  while (i < len) {
-	    if (a[i] !== b[i]) break
-
-	    ++i
-	  }
-
-	  if (i !== len) {
-	    x = a[i]
-	    y = b[i]
+	  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+	    if (a[i] !== b[i]) {
+	      x = a[i]
+	      y = b[i]
+	      break
+	    }
 	  }
 
 	  if (x < y) return -1
@@ -18320,9 +18542,9 @@ var ProperTable =
 	    case 'utf8':
 	    case 'utf-8':
 	    case 'ascii':
+	    case 'latin1':
 	    case 'binary':
 	    case 'base64':
-	    case 'raw':
 	    case 'ucs2':
 	    case 'ucs-2':
 	    case 'utf16le':
@@ -18334,32 +18556,46 @@ var ProperTable =
 	}
 
 	Buffer.concat = function concat (list, length) {
-	  if (!isArray(list)) throw new TypeError('list argument must be an Array of Buffers.')
+	  if (!isArray(list)) {
+	    throw new TypeError('"list" argument must be an Array of Buffers')
+	  }
 
 	  if (list.length === 0) {
-	    return new Buffer(0)
+	    return Buffer.alloc(0)
 	  }
 
 	  var i
 	  if (length === undefined) {
 	    length = 0
-	    for (i = 0; i < list.length; i++) {
+	    for (i = 0; i < list.length; ++i) {
 	      length += list[i].length
 	    }
 	  }
 
-	  var buf = new Buffer(length)
+	  var buffer = Buffer.allocUnsafe(length)
 	  var pos = 0
-	  for (i = 0; i < list.length; i++) {
-	    var item = list[i]
-	    item.copy(buf, pos)
-	    pos += item.length
+	  for (i = 0; i < list.length; ++i) {
+	    var buf = list[i]
+	    if (!Buffer.isBuffer(buf)) {
+	      throw new TypeError('"list" argument must be an Array of Buffers')
+	    }
+	    buf.copy(buffer, pos)
+	    pos += buf.length
 	  }
-	  return buf
+	  return buffer
 	}
 
 	function byteLength (string, encoding) {
-	  if (typeof string !== 'string') string = '' + string
+	  if (Buffer.isBuffer(string)) {
+	    return string.length
+	  }
+	  if (typeof ArrayBuffer !== 'undefined' && typeof ArrayBuffer.isView === 'function' &&
+	      (ArrayBuffer.isView(string) || string instanceof ArrayBuffer)) {
+	    return string.byteLength
+	  }
+	  if (typeof string !== 'string') {
+	    string = '' + string
+	  }
 
 	  var len = string.length
 	  if (len === 0) return 0
@@ -18369,13 +18605,12 @@ var ProperTable =
 	  for (;;) {
 	    switch (encoding) {
 	      case 'ascii':
+	      case 'latin1':
 	      case 'binary':
-	      // Deprecated
-	      case 'raw':
-	      case 'raws':
 	        return len
 	      case 'utf8':
 	      case 'utf-8':
+	      case undefined:
 	        return utf8ToBytes(string).length
 	      case 'ucs2':
 	      case 'ucs-2':
@@ -18398,13 +18633,39 @@ var ProperTable =
 	function slowToString (encoding, start, end) {
 	  var loweredCase = false
 
-	  start = start | 0
-	  end = end === undefined || end === Infinity ? this.length : end | 0
+	  // No need to verify that "this.length <= MAX_UINT32" since it's a read-only
+	  // property of a typed array.
+
+	  // This behaves neither like String nor Uint8Array in that we set start/end
+	  // to their upper/lower bounds if the value passed is out of range.
+	  // undefined is handled specially as per ECMA-262 6th Edition,
+	  // Section 13.3.3.7 Runtime Semantics: KeyedBindingInitialization.
+	  if (start === undefined || start < 0) {
+	    start = 0
+	  }
+	  // Return early if start > this.length. Done here to prevent potential uint32
+	  // coercion fail below.
+	  if (start > this.length) {
+	    return ''
+	  }
+
+	  if (end === undefined || end > this.length) {
+	    end = this.length
+	  }
+
+	  if (end <= 0) {
+	    return ''
+	  }
+
+	  // Force coersion to uint32. This will also coerce falsey/NaN values to 0.
+	  end >>>= 0
+	  start >>>= 0
+
+	  if (end <= start) {
+	    return ''
+	  }
 
 	  if (!encoding) encoding = 'utf8'
-	  if (start < 0) start = 0
-	  if (end > this.length) end = this.length
-	  if (end <= start) return ''
 
 	  while (true) {
 	    switch (encoding) {
@@ -18418,8 +18679,9 @@ var ProperTable =
 	      case 'ascii':
 	        return asciiSlice(this, start, end)
 
+	      case 'latin1':
 	      case 'binary':
-	        return binarySlice(this, start, end)
+	        return latin1Slice(this, start, end)
 
 	      case 'base64':
 	        return base64Slice(this, start, end)
@@ -18436,6 +18698,53 @@ var ProperTable =
 	        loweredCase = true
 	    }
 	  }
+	}
+
+	// The property is used by `Buffer.isBuffer` and `is-buffer` (in Safari 5-7) to detect
+	// Buffer instances.
+	Buffer.prototype._isBuffer = true
+
+	function swap (b, n, m) {
+	  var i = b[n]
+	  b[n] = b[m]
+	  b[m] = i
+	}
+
+	Buffer.prototype.swap16 = function swap16 () {
+	  var len = this.length
+	  if (len % 2 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 16-bits')
+	  }
+	  for (var i = 0; i < len; i += 2) {
+	    swap(this, i, i + 1)
+	  }
+	  return this
+	}
+
+	Buffer.prototype.swap32 = function swap32 () {
+	  var len = this.length
+	  if (len % 4 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 32-bits')
+	  }
+	  for (var i = 0; i < len; i += 4) {
+	    swap(this, i, i + 3)
+	    swap(this, i + 1, i + 2)
+	  }
+	  return this
+	}
+
+	Buffer.prototype.swap64 = function swap64 () {
+	  var len = this.length
+	  if (len % 8 !== 0) {
+	    throw new RangeError('Buffer size must be a multiple of 64-bits')
+	  }
+	  for (var i = 0; i < len; i += 8) {
+	    swap(this, i, i + 7)
+	    swap(this, i + 1, i + 6)
+	    swap(this, i + 2, i + 5)
+	    swap(this, i + 3, i + 4)
+	  }
+	  return this
 	}
 
 	Buffer.prototype.toString = function toString () {
@@ -18461,63 +18770,197 @@ var ProperTable =
 	  return '<Buffer ' + str + '>'
 	}
 
-	Buffer.prototype.compare = function compare (b) {
-	  if (!Buffer.isBuffer(b)) throw new TypeError('Argument must be a Buffer')
-	  if (this === b) return 0
-	  return Buffer.compare(this, b)
+	Buffer.prototype.compare = function compare (target, start, end, thisStart, thisEnd) {
+	  if (!Buffer.isBuffer(target)) {
+	    throw new TypeError('Argument must be a Buffer')
+	  }
+
+	  if (start === undefined) {
+	    start = 0
+	  }
+	  if (end === undefined) {
+	    end = target ? target.length : 0
+	  }
+	  if (thisStart === undefined) {
+	    thisStart = 0
+	  }
+	  if (thisEnd === undefined) {
+	    thisEnd = this.length
+	  }
+
+	  if (start < 0 || end > target.length || thisStart < 0 || thisEnd > this.length) {
+	    throw new RangeError('out of range index')
+	  }
+
+	  if (thisStart >= thisEnd && start >= end) {
+	    return 0
+	  }
+	  if (thisStart >= thisEnd) {
+	    return -1
+	  }
+	  if (start >= end) {
+	    return 1
+	  }
+
+	  start >>>= 0
+	  end >>>= 0
+	  thisStart >>>= 0
+	  thisEnd >>>= 0
+
+	  if (this === target) return 0
+
+	  var x = thisEnd - thisStart
+	  var y = end - start
+	  var len = Math.min(x, y)
+
+	  var thisCopy = this.slice(thisStart, thisEnd)
+	  var targetCopy = target.slice(start, end)
+
+	  for (var i = 0; i < len; ++i) {
+	    if (thisCopy[i] !== targetCopy[i]) {
+	      x = thisCopy[i]
+	      y = targetCopy[i]
+	      break
+	    }
+	  }
+
+	  if (x < y) return -1
+	  if (y < x) return 1
+	  return 0
 	}
 
-	Buffer.prototype.indexOf = function indexOf (val, byteOffset) {
-	  if (byteOffset > 0x7fffffff) byteOffset = 0x7fffffff
-	  else if (byteOffset < -0x80000000) byteOffset = -0x80000000
-	  byteOffset >>= 0
+	// Finds either the first index of `val` in `buffer` at offset >= `byteOffset`,
+	// OR the last index of `val` in `buffer` at offset <= `byteOffset`.
+	//
+	// Arguments:
+	// - buffer - a Buffer to search
+	// - val - a string, Buffer, or number
+	// - byteOffset - an index into `buffer`; will be clamped to an int32
+	// - encoding - an optional encoding, relevant is val is a string
+	// - dir - true for indexOf, false for lastIndexOf
+	function bidirectionalIndexOf (buffer, val, byteOffset, encoding, dir) {
+	  // Empty buffer means no match
+	  if (buffer.length === 0) return -1
 
-	  if (this.length === 0) return -1
-	  if (byteOffset >= this.length) return -1
+	  // Normalize byteOffset
+	  if (typeof byteOffset === 'string') {
+	    encoding = byteOffset
+	    byteOffset = 0
+	  } else if (byteOffset > 0x7fffffff) {
+	    byteOffset = 0x7fffffff
+	  } else if (byteOffset < -0x80000000) {
+	    byteOffset = -0x80000000
+	  }
+	  byteOffset = +byteOffset  // Coerce to Number.
+	  if (isNaN(byteOffset)) {
+	    // byteOffset: it it's undefined, null, NaN, "foo", etc, search whole buffer
+	    byteOffset = dir ? 0 : (buffer.length - 1)
+	  }
 
-	  // Negative offsets start from the end of the buffer
-	  if (byteOffset < 0) byteOffset = Math.max(this.length + byteOffset, 0)
+	  // Normalize byteOffset: negative offsets start from the end of the buffer
+	  if (byteOffset < 0) byteOffset = buffer.length + byteOffset
+	  if (byteOffset >= buffer.length) {
+	    if (dir) return -1
+	    else byteOffset = buffer.length - 1
+	  } else if (byteOffset < 0) {
+	    if (dir) byteOffset = 0
+	    else return -1
+	  }
 
+	  // Normalize val
 	  if (typeof val === 'string') {
-	    if (val.length === 0) return -1 // special case: looking for empty string always fails
-	    return String.prototype.indexOf.call(this, val, byteOffset)
-	  }
-	  if (Buffer.isBuffer(val)) {
-	    return arrayIndexOf(this, val, byteOffset)
-	  }
-	  if (typeof val === 'number') {
-	    if (Buffer.TYPED_ARRAY_SUPPORT && Uint8Array.prototype.indexOf === 'function') {
-	      return Uint8Array.prototype.indexOf.call(this, val, byteOffset)
-	    }
-	    return arrayIndexOf(this, [ val ], byteOffset)
+	    val = Buffer.from(val, encoding)
 	  }
 
-	  function arrayIndexOf (arr, val, byteOffset) {
-	    var foundIndex = -1
-	    for (var i = 0; byteOffset + i < arr.length; i++) {
-	      if (arr[byteOffset + i] === val[foundIndex === -1 ? 0 : i - foundIndex]) {
-	        if (foundIndex === -1) foundIndex = i
-	        if (i - foundIndex + 1 === val.length) return byteOffset + foundIndex
+	  // Finally, search either indexOf (if dir is true) or lastIndexOf
+	  if (Buffer.isBuffer(val)) {
+	    // Special case: looking for empty string/buffer always fails
+	    if (val.length === 0) {
+	      return -1
+	    }
+	    return arrayIndexOf(buffer, val, byteOffset, encoding, dir)
+	  } else if (typeof val === 'number') {
+	    val = val & 0xFF // Search for a byte value [0-255]
+	    if (Buffer.TYPED_ARRAY_SUPPORT &&
+	        typeof Uint8Array.prototype.indexOf === 'function') {
+	      if (dir) {
+	        return Uint8Array.prototype.indexOf.call(buffer, val, byteOffset)
 	      } else {
-	        foundIndex = -1
+	        return Uint8Array.prototype.lastIndexOf.call(buffer, val, byteOffset)
 	      }
 	    }
-	    return -1
+	    return arrayIndexOf(buffer, [ val ], byteOffset, encoding, dir)
 	  }
 
 	  throw new TypeError('val must be string, number or Buffer')
 	}
 
-	// `get` is deprecated
-	Buffer.prototype.get = function get (offset) {
-	  console.log('.get() is deprecated. Access using array indexes instead.')
-	  return this.readUInt8(offset)
+	function arrayIndexOf (arr, val, byteOffset, encoding, dir) {
+	  var indexSize = 1
+	  var arrLength = arr.length
+	  var valLength = val.length
+
+	  if (encoding !== undefined) {
+	    encoding = String(encoding).toLowerCase()
+	    if (encoding === 'ucs2' || encoding === 'ucs-2' ||
+	        encoding === 'utf16le' || encoding === 'utf-16le') {
+	      if (arr.length < 2 || val.length < 2) {
+	        return -1
+	      }
+	      indexSize = 2
+	      arrLength /= 2
+	      valLength /= 2
+	      byteOffset /= 2
+	    }
+	  }
+
+	  function read (buf, i) {
+	    if (indexSize === 1) {
+	      return buf[i]
+	    } else {
+	      return buf.readUInt16BE(i * indexSize)
+	    }
+	  }
+
+	  var i
+	  if (dir) {
+	    var foundIndex = -1
+	    for (i = byteOffset; i < arrLength; i++) {
+	      if (read(arr, i) === read(val, foundIndex === -1 ? 0 : i - foundIndex)) {
+	        if (foundIndex === -1) foundIndex = i
+	        if (i - foundIndex + 1 === valLength) return foundIndex * indexSize
+	      } else {
+	        if (foundIndex !== -1) i -= i - foundIndex
+	        foundIndex = -1
+	      }
+	    }
+	  } else {
+	    if (byteOffset + valLength > arrLength) byteOffset = arrLength - valLength
+	    for (i = byteOffset; i >= 0; i--) {
+	      var found = true
+	      for (var j = 0; j < valLength; j++) {
+	        if (read(arr, i + j) !== read(val, j)) {
+	          found = false
+	          break
+	        }
+	      }
+	      if (found) return i
+	    }
+	  }
+
+	  return -1
 	}
 
-	// `set` is deprecated
-	Buffer.prototype.set = function set (v, offset) {
-	  console.log('.set() is deprecated. Access using array indexes instead.')
-	  return this.writeUInt8(v, offset)
+	Buffer.prototype.includes = function includes (val, byteOffset, encoding) {
+	  return this.indexOf(val, byteOffset, encoding) !== -1
+	}
+
+	Buffer.prototype.indexOf = function indexOf (val, byteOffset, encoding) {
+	  return bidirectionalIndexOf(this, val, byteOffset, encoding, true)
+	}
+
+	Buffer.prototype.lastIndexOf = function lastIndexOf (val, byteOffset, encoding) {
+	  return bidirectionalIndexOf(this, val, byteOffset, encoding, false)
 	}
 
 	function hexWrite (buf, string, offset, length) {
@@ -18534,14 +18977,14 @@ var ProperTable =
 
 	  // must be an even number of digits
 	  var strLen = string.length
-	  if (strLen % 2 !== 0) throw new Error('Invalid hex string')
+	  if (strLen % 2 !== 0) throw new TypeError('Invalid hex string')
 
 	  if (length > strLen / 2) {
 	    length = strLen / 2
 	  }
-	  for (var i = 0; i < length; i++) {
+	  for (var i = 0; i < length; ++i) {
 	    var parsed = parseInt(string.substr(i * 2, 2), 16)
-	    if (isNaN(parsed)) throw new Error('Invalid hex string')
+	    if (isNaN(parsed)) return i
 	    buf[offset + i] = parsed
 	  }
 	  return i
@@ -18555,7 +18998,7 @@ var ProperTable =
 	  return blitBuffer(asciiToBytes(string), buf, offset, length)
 	}
 
-	function binaryWrite (buf, string, offset, length) {
+	function latin1Write (buf, string, offset, length) {
 	  return asciiWrite(buf, string, offset, length)
 	}
 
@@ -18590,17 +19033,16 @@ var ProperTable =
 	    }
 	  // legacy write(string, encoding, offset, length) - remove in v0.13
 	  } else {
-	    var swap = encoding
-	    encoding = offset
-	    offset = length | 0
-	    length = swap
+	    throw new Error(
+	      'Buffer.write(string, encoding, offset[, length]) is no longer supported'
+	    )
 	  }
 
 	  var remaining = this.length - offset
 	  if (length === undefined || length > remaining) length = remaining
 
 	  if ((string.length > 0 && (length < 0 || offset < 0)) || offset > this.length) {
-	    throw new RangeError('attempt to write outside buffer bounds')
+	    throw new RangeError('Attempt to write outside buffer bounds')
 	  }
 
 	  if (!encoding) encoding = 'utf8'
@@ -18618,8 +19060,9 @@ var ProperTable =
 	      case 'ascii':
 	        return asciiWrite(this, string, offset, length)
 
+	      case 'latin1':
 	      case 'binary':
-	        return binaryWrite(this, string, offset, length)
+	        return latin1Write(this, string, offset, length)
 
 	      case 'base64':
 	        // Warning: maxLength not taken into account in base64Write
@@ -18754,17 +19197,17 @@ var ProperTable =
 	  var ret = ''
 	  end = Math.min(buf.length, end)
 
-	  for (var i = start; i < end; i++) {
+	  for (var i = start; i < end; ++i) {
 	    ret += String.fromCharCode(buf[i] & 0x7F)
 	  }
 	  return ret
 	}
 
-	function binarySlice (buf, start, end) {
+	function latin1Slice (buf, start, end) {
 	  var ret = ''
 	  end = Math.min(buf.length, end)
 
-	  for (var i = start; i < end; i++) {
+	  for (var i = start; i < end; ++i) {
 	    ret += String.fromCharCode(buf[i])
 	  }
 	  return ret
@@ -18777,7 +19220,7 @@ var ProperTable =
 	  if (!end || end < 0 || end > len) end = len
 
 	  var out = ''
-	  for (var i = start; i < end; i++) {
+	  for (var i = start; i < end; ++i) {
 	    out += toHex(buf[i])
 	  }
 	  return out
@@ -18815,16 +19258,15 @@ var ProperTable =
 
 	  var newBuf
 	  if (Buffer.TYPED_ARRAY_SUPPORT) {
-	    newBuf = Buffer._augment(this.subarray(start, end))
+	    newBuf = this.subarray(start, end)
+	    newBuf.__proto__ = Buffer.prototype
 	  } else {
 	    var sliceLen = end - start
 	    newBuf = new Buffer(sliceLen, undefined)
-	    for (var i = 0; i < sliceLen; i++) {
+	    for (var i = 0; i < sliceLen; ++i) {
 	      newBuf[i] = this[i + start]
 	    }
 	  }
-
-	  if (newBuf.length) newBuf.parent = this.parent || this
 
 	  return newBuf
 	}
@@ -18994,16 +19436,19 @@ var ProperTable =
 	}
 
 	function checkInt (buf, value, offset, ext, max, min) {
-	  if (!Buffer.isBuffer(buf)) throw new TypeError('buffer must be a Buffer instance')
-	  if (value > max || value < min) throw new RangeError('value is out of bounds')
-	  if (offset + ext > buf.length) throw new RangeError('index out of range')
+	  if (!Buffer.isBuffer(buf)) throw new TypeError('"buffer" argument must be a Buffer instance')
+	  if (value > max || value < min) throw new RangeError('"value" argument is out of bounds')
+	  if (offset + ext > buf.length) throw new RangeError('Index out of range')
 	}
 
 	Buffer.prototype.writeUIntLE = function writeUIntLE (value, offset, byteLength, noAssert) {
 	  value = +value
 	  offset = offset | 0
 	  byteLength = byteLength | 0
-	  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+	  if (!noAssert) {
+	    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+	    checkInt(this, value, offset, byteLength, maxBytes, 0)
+	  }
 
 	  var mul = 1
 	  var i = 0
@@ -19019,7 +19464,10 @@ var ProperTable =
 	  value = +value
 	  offset = offset | 0
 	  byteLength = byteLength | 0
-	  if (!noAssert) checkInt(this, value, offset, byteLength, Math.pow(2, 8 * byteLength), 0)
+	  if (!noAssert) {
+	    var maxBytes = Math.pow(2, 8 * byteLength) - 1
+	    checkInt(this, value, offset, byteLength, maxBytes, 0)
+	  }
 
 	  var i = byteLength - 1
 	  var mul = 1
@@ -19042,7 +19490,7 @@ var ProperTable =
 
 	function objectWriteUInt16 (buf, value, offset, littleEndian) {
 	  if (value < 0) value = 0xffff + value + 1
-	  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; i++) {
+	  for (var i = 0, j = Math.min(buf.length - offset, 2); i < j; ++i) {
 	    buf[offset + i] = (value & (0xff << (8 * (littleEndian ? i : 1 - i)))) >>>
 	      (littleEndian ? i : 1 - i) * 8
 	  }
@@ -19076,7 +19524,7 @@ var ProperTable =
 
 	function objectWriteUInt32 (buf, value, offset, littleEndian) {
 	  if (value < 0) value = 0xffffffff + value + 1
-	  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; i++) {
+	  for (var i = 0, j = Math.min(buf.length - offset, 4); i < j; ++i) {
 	    buf[offset + i] = (value >>> (littleEndian ? i : 3 - i) * 8) & 0xff
 	  }
 	}
@@ -19122,9 +19570,12 @@ var ProperTable =
 
 	  var i = 0
 	  var mul = 1
-	  var sub = value < 0 ? 1 : 0
+	  var sub = 0
 	  this[offset] = value & 0xFF
 	  while (++i < byteLength && (mul *= 0x100)) {
+	    if (value < 0 && sub === 0 && this[offset + i - 1] !== 0) {
+	      sub = 1
+	    }
 	    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
 	  }
 
@@ -19142,9 +19593,12 @@ var ProperTable =
 
 	  var i = byteLength - 1
 	  var mul = 1
-	  var sub = value < 0 ? 1 : 0
+	  var sub = 0
 	  this[offset + i] = value & 0xFF
 	  while (--i >= 0 && (mul *= 0x100)) {
+	    if (value < 0 && sub === 0 && this[offset + i + 1] !== 0) {
+	      sub = 1
+	    }
 	    this[offset + i] = ((value / mul) >> 0) - sub & 0xFF
 	  }
 
@@ -19219,9 +19673,8 @@ var ProperTable =
 	}
 
 	function checkIEEE754 (buf, value, offset, ext, max, min) {
-	  if (value > max || value < min) throw new RangeError('value is out of bounds')
-	  if (offset + ext > buf.length) throw new RangeError('index out of range')
-	  if (offset < 0) throw new RangeError('index out of range')
+	  if (offset + ext > buf.length) throw new RangeError('Index out of range')
+	  if (offset < 0) throw new RangeError('Index out of range')
 	}
 
 	function writeFloat (buf, value, offset, littleEndian, noAssert) {
@@ -19286,142 +19739,90 @@ var ProperTable =
 
 	  if (this === target && start < targetStart && targetStart < end) {
 	    // descending copy from end
-	    for (i = len - 1; i >= 0; i--) {
+	    for (i = len - 1; i >= 0; --i) {
 	      target[i + targetStart] = this[i + start]
 	    }
 	  } else if (len < 1000 || !Buffer.TYPED_ARRAY_SUPPORT) {
 	    // ascending copy from start
-	    for (i = 0; i < len; i++) {
+	    for (i = 0; i < len; ++i) {
 	      target[i + targetStart] = this[i + start]
 	    }
 	  } else {
-	    target._set(this.subarray(start, start + len), targetStart)
+	    Uint8Array.prototype.set.call(
+	      target,
+	      this.subarray(start, start + len),
+	      targetStart
+	    )
 	  }
 
 	  return len
 	}
 
-	// fill(value, start=0, end=buffer.length)
-	Buffer.prototype.fill = function fill (value, start, end) {
-	  if (!value) value = 0
-	  if (!start) start = 0
-	  if (!end) end = this.length
+	// Usage:
+	//    buffer.fill(number[, offset[, end]])
+	//    buffer.fill(buffer[, offset[, end]])
+	//    buffer.fill(string[, offset[, end]][, encoding])
+	Buffer.prototype.fill = function fill (val, start, end, encoding) {
+	  // Handle string cases:
+	  if (typeof val === 'string') {
+	    if (typeof start === 'string') {
+	      encoding = start
+	      start = 0
+	      end = this.length
+	    } else if (typeof end === 'string') {
+	      encoding = end
+	      end = this.length
+	    }
+	    if (val.length === 1) {
+	      var code = val.charCodeAt(0)
+	      if (code < 256) {
+	        val = code
+	      }
+	    }
+	    if (encoding !== undefined && typeof encoding !== 'string') {
+	      throw new TypeError('encoding must be a string')
+	    }
+	    if (typeof encoding === 'string' && !Buffer.isEncoding(encoding)) {
+	      throw new TypeError('Unknown encoding: ' + encoding)
+	    }
+	  } else if (typeof val === 'number') {
+	    val = val & 255
+	  }
 
-	  if (end < start) throw new RangeError('end < start')
+	  // Invalid ranges are not set to a default, so can range check early.
+	  if (start < 0 || this.length < start || this.length < end) {
+	    throw new RangeError('Out of range index')
+	  }
 
-	  // Fill 0 bytes; we're done
-	  if (end === start) return
-	  if (this.length === 0) return
+	  if (end <= start) {
+	    return this
+	  }
 
-	  if (start < 0 || start >= this.length) throw new RangeError('start out of bounds')
-	  if (end < 0 || end > this.length) throw new RangeError('end out of bounds')
+	  start = start >>> 0
+	  end = end === undefined ? this.length : end >>> 0
+
+	  if (!val) val = 0
 
 	  var i
-	  if (typeof value === 'number') {
-	    for (i = start; i < end; i++) {
-	      this[i] = value
+	  if (typeof val === 'number') {
+	    for (i = start; i < end; ++i) {
+	      this[i] = val
 	    }
 	  } else {
-	    var bytes = utf8ToBytes(value.toString())
+	    var bytes = Buffer.isBuffer(val)
+	      ? val
+	      : utf8ToBytes(new Buffer(val, encoding).toString())
 	    var len = bytes.length
-	    for (i = start; i < end; i++) {
-	      this[i] = bytes[i % len]
+	    for (i = 0; i < end - start; ++i) {
+	      this[i + start] = bytes[i % len]
 	    }
 	  }
 
 	  return this
 	}
 
-	/**
-	 * Creates a new `ArrayBuffer` with the *copied* memory of the buffer instance.
-	 * Added in Node 0.12. Only available in browsers that support ArrayBuffer.
-	 */
-	Buffer.prototype.toArrayBuffer = function toArrayBuffer () {
-	  if (typeof Uint8Array !== 'undefined') {
-	    if (Buffer.TYPED_ARRAY_SUPPORT) {
-	      return (new Buffer(this)).buffer
-	    } else {
-	      var buf = new Uint8Array(this.length)
-	      for (var i = 0, len = buf.length; i < len; i += 1) {
-	        buf[i] = this[i]
-	      }
-	      return buf.buffer
-	    }
-	  } else {
-	    throw new TypeError('Buffer.toArrayBuffer not supported in this browser')
-	  }
-	}
-
 	// HELPER FUNCTIONS
 	// ================
-
-	var BP = Buffer.prototype
-
-	/**
-	 * Augment a Uint8Array *instance* (not the Uint8Array class!) with Buffer methods
-	 */
-	Buffer._augment = function _augment (arr) {
-	  arr.constructor = Buffer
-	  arr._isBuffer = true
-
-	  // save reference to original Uint8Array set method before overwriting
-	  arr._set = arr.set
-
-	  // deprecated
-	  arr.get = BP.get
-	  arr.set = BP.set
-
-	  arr.write = BP.write
-	  arr.toString = BP.toString
-	  arr.toLocaleString = BP.toString
-	  arr.toJSON = BP.toJSON
-	  arr.equals = BP.equals
-	  arr.compare = BP.compare
-	  arr.indexOf = BP.indexOf
-	  arr.copy = BP.copy
-	  arr.slice = BP.slice
-	  arr.readUIntLE = BP.readUIntLE
-	  arr.readUIntBE = BP.readUIntBE
-	  arr.readUInt8 = BP.readUInt8
-	  arr.readUInt16LE = BP.readUInt16LE
-	  arr.readUInt16BE = BP.readUInt16BE
-	  arr.readUInt32LE = BP.readUInt32LE
-	  arr.readUInt32BE = BP.readUInt32BE
-	  arr.readIntLE = BP.readIntLE
-	  arr.readIntBE = BP.readIntBE
-	  arr.readInt8 = BP.readInt8
-	  arr.readInt16LE = BP.readInt16LE
-	  arr.readInt16BE = BP.readInt16BE
-	  arr.readInt32LE = BP.readInt32LE
-	  arr.readInt32BE = BP.readInt32BE
-	  arr.readFloatLE = BP.readFloatLE
-	  arr.readFloatBE = BP.readFloatBE
-	  arr.readDoubleLE = BP.readDoubleLE
-	  arr.readDoubleBE = BP.readDoubleBE
-	  arr.writeUInt8 = BP.writeUInt8
-	  arr.writeUIntLE = BP.writeUIntLE
-	  arr.writeUIntBE = BP.writeUIntBE
-	  arr.writeUInt16LE = BP.writeUInt16LE
-	  arr.writeUInt16BE = BP.writeUInt16BE
-	  arr.writeUInt32LE = BP.writeUInt32LE
-	  arr.writeUInt32BE = BP.writeUInt32BE
-	  arr.writeIntLE = BP.writeIntLE
-	  arr.writeIntBE = BP.writeIntBE
-	  arr.writeInt8 = BP.writeInt8
-	  arr.writeInt16LE = BP.writeInt16LE
-	  arr.writeInt16BE = BP.writeInt16BE
-	  arr.writeInt32LE = BP.writeInt32LE
-	  arr.writeInt32BE = BP.writeInt32BE
-	  arr.writeFloatLE = BP.writeFloatLE
-	  arr.writeFloatBE = BP.writeFloatBE
-	  arr.writeDoubleLE = BP.writeDoubleLE
-	  arr.writeDoubleBE = BP.writeDoubleBE
-	  arr.fill = BP.fill
-	  arr.inspect = BP.inspect
-	  arr.toArrayBuffer = BP.toArrayBuffer
-
-	  return arr
-	}
 
 	var INVALID_BASE64_RE = /[^+\/0-9A-Za-z-_]/g
 
@@ -19454,7 +19855,7 @@ var ProperTable =
 	  var leadSurrogate = null
 	  var bytes = []
 
-	  for (var i = 0; i < length; i++) {
+	  for (var i = 0; i < length; ++i) {
 	    codePoint = string.charCodeAt(i)
 
 	    // is surrogate component
@@ -19529,7 +19930,7 @@ var ProperTable =
 
 	function asciiToBytes (str) {
 	  var byteArray = []
-	  for (var i = 0; i < str.length; i++) {
+	  for (var i = 0; i < str.length; ++i) {
 	    // Node's code seems to be doing this and not & 0x7F..
 	    byteArray.push(str.charCodeAt(i) & 0xFF)
 	  }
@@ -19539,7 +19940,7 @@ var ProperTable =
 	function utf16leToBytes (str, units) {
 	  var c, hi, lo
 	  var byteArray = []
-	  for (var i = 0; i < str.length; i++) {
+	  for (var i = 0; i < str.length; ++i) {
 	    if ((units -= 2) < 0) break
 
 	    c = str.charCodeAt(i)
@@ -19557,147 +19958,141 @@ var ProperTable =
 	}
 
 	function blitBuffer (src, dst, offset, length) {
-	  for (var i = 0; i < length; i++) {
+	  for (var i = 0; i < length; ++i) {
 	    if ((i + offset >= dst.length) || (i >= src.length)) break
 	    dst[i + offset] = src[i]
 	  }
 	  return i
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(84).Buffer, (function() { return this; }())))
+	function isnan (val) {
+	  return val !== val // eslint-disable-line no-self-compare
+	}
 
-/***/ },
-/* 85 */
-/***/ function(module, exports, __webpack_require__) {
-
-	var lookup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-	;(function (exports) {
-		'use strict';
-
-	  var Arr = (typeof Uint8Array !== 'undefined')
-	    ? Uint8Array
-	    : Array
-
-		var PLUS   = '+'.charCodeAt(0)
-		var SLASH  = '/'.charCodeAt(0)
-		var NUMBER = '0'.charCodeAt(0)
-		var LOWER  = 'a'.charCodeAt(0)
-		var UPPER  = 'A'.charCodeAt(0)
-		var PLUS_URL_SAFE = '-'.charCodeAt(0)
-		var SLASH_URL_SAFE = '_'.charCodeAt(0)
-
-		function decode (elt) {
-			var code = elt.charCodeAt(0)
-			if (code === PLUS ||
-			    code === PLUS_URL_SAFE)
-				return 62 // '+'
-			if (code === SLASH ||
-			    code === SLASH_URL_SAFE)
-				return 63 // '/'
-			if (code < NUMBER)
-				return -1 //no match
-			if (code < NUMBER + 10)
-				return code - NUMBER + 26 + 26
-			if (code < UPPER + 26)
-				return code - UPPER
-			if (code < LOWER + 26)
-				return code - LOWER + 26
-		}
-
-		function b64ToByteArray (b64) {
-			var i, j, l, tmp, placeHolders, arr
-
-			if (b64.length % 4 > 0) {
-				throw new Error('Invalid string. Length must be a multiple of 4')
-			}
-
-			// the number of equal signs (place holders)
-			// if there are two placeholders, than the two characters before it
-			// represent one byte
-			// if there is only one, then the three characters before it represent 2 bytes
-			// this is just a cheap hack to not do indexOf twice
-			var len = b64.length
-			placeHolders = '=' === b64.charAt(len - 2) ? 2 : '=' === b64.charAt(len - 1) ? 1 : 0
-
-			// base64 is 4/3 + up to two characters of the original data
-			arr = new Arr(b64.length * 3 / 4 - placeHolders)
-
-			// if there are placeholders, only get up to the last complete 4 chars
-			l = placeHolders > 0 ? b64.length - 4 : b64.length
-
-			var L = 0
-
-			function push (v) {
-				arr[L++] = v
-			}
-
-			for (i = 0, j = 0; i < l; i += 4, j += 3) {
-				tmp = (decode(b64.charAt(i)) << 18) | (decode(b64.charAt(i + 1)) << 12) | (decode(b64.charAt(i + 2)) << 6) | decode(b64.charAt(i + 3))
-				push((tmp & 0xFF0000) >> 16)
-				push((tmp & 0xFF00) >> 8)
-				push(tmp & 0xFF)
-			}
-
-			if (placeHolders === 2) {
-				tmp = (decode(b64.charAt(i)) << 2) | (decode(b64.charAt(i + 1)) >> 4)
-				push(tmp & 0xFF)
-			} else if (placeHolders === 1) {
-				tmp = (decode(b64.charAt(i)) << 10) | (decode(b64.charAt(i + 1)) << 4) | (decode(b64.charAt(i + 2)) >> 2)
-				push((tmp >> 8) & 0xFF)
-				push(tmp & 0xFF)
-			}
-
-			return arr
-		}
-
-		function uint8ToBase64 (uint8) {
-			var i,
-				extraBytes = uint8.length % 3, // if we have 1 byte left, pad 2 bytes
-				output = "",
-				temp, length
-
-			function encode (num) {
-				return lookup.charAt(num)
-			}
-
-			function tripletToBase64 (num) {
-				return encode(num >> 18 & 0x3F) + encode(num >> 12 & 0x3F) + encode(num >> 6 & 0x3F) + encode(num & 0x3F)
-			}
-
-			// go through the array every three bytes, we'll deal with trailing stuff later
-			for (i = 0, length = uint8.length - extraBytes; i < length; i += 3) {
-				temp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
-				output += tripletToBase64(temp)
-			}
-
-			// pad the end with zeros, but make sure to not forget the extra bytes
-			switch (extraBytes) {
-				case 1:
-					temp = uint8[uint8.length - 1]
-					output += encode(temp >> 2)
-					output += encode((temp << 4) & 0x3F)
-					output += '=='
-					break
-				case 2:
-					temp = (uint8[uint8.length - 2] << 8) + (uint8[uint8.length - 1])
-					output += encode(temp >> 10)
-					output += encode((temp >> 4) & 0x3F)
-					output += encode((temp << 2) & 0x3F)
-					output += '='
-					break
-			}
-
-			return output
-		}
-
-		exports.toByteArray = b64ToByteArray
-		exports.fromByteArray = uint8ToBase64
-	}( false ? (this.base64js = {}) : exports))
-
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(85).Buffer, (function() { return this; }())))
 
 /***/ },
 /* 86 */
+/***/ function(module, exports) {
+
+	'use strict'
+
+	exports.byteLength = byteLength
+	exports.toByteArray = toByteArray
+	exports.fromByteArray = fromByteArray
+
+	var lookup = []
+	var revLookup = []
+	var Arr = typeof Uint8Array !== 'undefined' ? Uint8Array : Array
+
+	var code = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
+	for (var i = 0, len = code.length; i < len; ++i) {
+	  lookup[i] = code[i]
+	  revLookup[code.charCodeAt(i)] = i
+	}
+
+	revLookup['-'.charCodeAt(0)] = 62
+	revLookup['_'.charCodeAt(0)] = 63
+
+	function placeHoldersCount (b64) {
+	  var len = b64.length
+	  if (len % 4 > 0) {
+	    throw new Error('Invalid string. Length must be a multiple of 4')
+	  }
+
+	  // the number of equal signs (place holders)
+	  // if there are two placeholders, than the two characters before it
+	  // represent one byte
+	  // if there is only one, then the three characters before it represent 2 bytes
+	  // this is just a cheap hack to not do indexOf twice
+	  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+	}
+
+	function byteLength (b64) {
+	  // base64 is 4/3 + up to two characters of the original data
+	  return b64.length * 3 / 4 - placeHoldersCount(b64)
+	}
+
+	function toByteArray (b64) {
+	  var i, j, l, tmp, placeHolders, arr
+	  var len = b64.length
+	  placeHolders = placeHoldersCount(b64)
+
+	  arr = new Arr(len * 3 / 4 - placeHolders)
+
+	  // if there are placeholders, only get up to the last complete 4 chars
+	  l = placeHolders > 0 ? len - 4 : len
+
+	  var L = 0
+
+	  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
+	    arr[L++] = (tmp >> 16) & 0xFF
+	    arr[L++] = (tmp >> 8) & 0xFF
+	    arr[L++] = tmp & 0xFF
+	  }
+
+	  if (placeHolders === 2) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
+	    arr[L++] = tmp & 0xFF
+	  } else if (placeHolders === 1) {
+	    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
+	    arr[L++] = (tmp >> 8) & 0xFF
+	    arr[L++] = tmp & 0xFF
+	  }
+
+	  return arr
+	}
+
+	function tripletToBase64 (num) {
+	  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+	}
+
+	function encodeChunk (uint8, start, end) {
+	  var tmp
+	  var output = []
+	  for (var i = start; i < end; i += 3) {
+	    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+	    output.push(tripletToBase64(tmp))
+	  }
+	  return output.join('')
+	}
+
+	function fromByteArray (uint8) {
+	  var tmp
+	  var len = uint8.length
+	  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
+	  var output = ''
+	  var parts = []
+	  var maxChunkLength = 16383 // must be multiple of 3
+
+	  // go through the array every three bytes, we'll deal with trailing stuff later
+	  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
+	    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+	  }
+
+	  // pad the end with zeros, but make sure to not forget the extra bytes
+	  if (extraBytes === 1) {
+	    tmp = uint8[len - 1]
+	    output += lookup[tmp >> 2]
+	    output += lookup[(tmp << 4) & 0x3F]
+	    output += '=='
+	  } else if (extraBytes === 2) {
+	    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
+	    output += lookup[tmp >> 10]
+	    output += lookup[(tmp >> 4) & 0x3F]
+	    output += lookup[(tmp << 2) & 0x3F]
+	    output += '='
+	  }
+
+	  parts.push(output)
+
+	  return parts.join('')
+	}
+
+
+/***/ },
+/* 87 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -19787,7 +20182,7 @@ var ProperTable =
 
 
 /***/ },
-/* 87 */
+/* 88 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -19798,13 +20193,13 @@ var ProperTable =
 
 
 /***/ },
-/* 88 */
+/* 89 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 89 */
+/* 90 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -19825,9 +20220,9 @@ var ProperTable =
 
 	exports['default'] = {
 		normalize: function normalize(value) {
-			var escapeLess = arguments.length <= 1 || arguments[1] === undefined ? true : arguments[1];
-			var parseToLower = arguments.length <= 2 || arguments[2] === undefined ? true : arguments[2];
-			var trim = arguments.length <= 3 || arguments[3] === undefined ? true : arguments[3];
+			var escapeLess = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+			var parseToLower = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+			var trim = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : true;
 
 			var internalVal = value.toString();
 
@@ -19857,7 +20252,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 90 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -19866,11 +20261,11 @@ var ProperTable =
 
 	var _BIGGERTHAN$LOWERTHAN;
 
-	var _formatters = __webpack_require__(91);
+	var _formatters = __webpack_require__(92);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
-	var _moment = __webpack_require__(88);
+	var _moment = __webpack_require__(89);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
@@ -19967,18 +20362,18 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 91 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	exports.__esModule = true;
 
-	var _moment = __webpack_require__(88);
+	var _moment = __webpack_require__(89);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(92);
+	var _numeral = __webpack_require__(93);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -19990,7 +20385,7 @@ var ProperTable =
 
 	exports["default"] = {
 		string: function string() {
-			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+			var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
 			if (value === null) {
 				return null;
@@ -19999,7 +20394,7 @@ var ProperTable =
 			return value.toString();
 		},
 		number: function number() {
-			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+			var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
 			if (value === null || !isNumeric(value)) {
 				return null;
@@ -20012,7 +20407,7 @@ var ProperTable =
 			return (0, _numeral2["default"])(value).format('0,0[.]00');
 		},
 		date: function date() {
-			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+			var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
 			if (value === null) {
 				return null;
@@ -20027,7 +20422,7 @@ var ProperTable =
 			return result;
 		},
 		datetime: function datetime() {
-			var value = arguments.length <= 0 || arguments[0] === undefined ? null : arguments[0];
+			var value = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
 			if (value === null) {
 				return null;
@@ -20045,7 +20440,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 92 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
@@ -20730,16 +21125,16 @@ var ProperTable =
 
 
 /***/ },
-/* 93 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(94)() ? Set : __webpack_require__(95);
+	module.exports = __webpack_require__(95)() ? Set : __webpack_require__(96);
 
 
 /***/ },
-/* 94 */
+/* 95 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20769,22 +21164,22 @@ var ProperTable =
 
 
 /***/ },
-/* 95 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var clear          = __webpack_require__(96)
-	  , eIndexOf       = __webpack_require__(98)
-	  , setPrototypeOf = __webpack_require__(104)
-	  , callable       = __webpack_require__(109)
-	  , d              = __webpack_require__(110)
-	  , ee             = __webpack_require__(122)
-	  , Symbol         = __webpack_require__(123)
-	  , iterator       = __webpack_require__(128)
-	  , forOf          = __webpack_require__(132)
-	  , Iterator       = __webpack_require__(142)
-	  , isNative       = __webpack_require__(143)
+	var clear          = __webpack_require__(97)
+	  , eIndexOf       = __webpack_require__(99)
+	  , setPrototypeOf = __webpack_require__(105)
+	  , callable       = __webpack_require__(110)
+	  , d              = __webpack_require__(111)
+	  , ee             = __webpack_require__(123)
+	  , Symbol         = __webpack_require__(124)
+	  , iterator       = __webpack_require__(129)
+	  , forOf          = __webpack_require__(133)
+	  , Iterator       = __webpack_require__(143)
+	  , isNative       = __webpack_require__(144)
 
 	  , call = Function.prototype.call
 	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
@@ -20855,7 +21250,7 @@ var ProperTable =
 
 
 /***/ },
-/* 96 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Inspired by Google Closure:
@@ -20864,7 +21259,7 @@ var ProperTable =
 
 	'use strict';
 
-	var value = __webpack_require__(97);
+	var value = __webpack_require__(98);
 
 	module.exports = function () {
 		value(this).length = 0;
@@ -20873,7 +21268,7 @@ var ProperTable =
 
 
 /***/ },
-/* 97 */
+/* 98 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20885,13 +21280,13 @@ var ProperTable =
 
 
 /***/ },
-/* 98 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toPosInt = __webpack_require__(99)
-	  , value    = __webpack_require__(97)
+	var toPosInt = __webpack_require__(100)
+	  , value    = __webpack_require__(98)
 
 	  , indexOf = Array.prototype.indexOf
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
@@ -20920,12 +21315,12 @@ var ProperTable =
 
 
 /***/ },
-/* 99 */
+/* 100 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var toInteger = __webpack_require__(100)
+	var toInteger = __webpack_require__(101)
 
 	  , max = Math.max;
 
@@ -20933,12 +21328,12 @@ var ProperTable =
 
 
 /***/ },
-/* 100 */
+/* 101 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var sign = __webpack_require__(101)
+	var sign = __webpack_require__(102)
 
 	  , abs = Math.abs, floor = Math.floor;
 
@@ -20951,18 +21346,18 @@ var ProperTable =
 
 
 /***/ },
-/* 101 */
+/* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(102)()
+	module.exports = __webpack_require__(103)()
 		? Math.sign
-		: __webpack_require__(103);
+		: __webpack_require__(104);
 
 
 /***/ },
-/* 102 */
+/* 103 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20975,7 +21370,7 @@ var ProperTable =
 
 
 /***/ },
-/* 103 */
+/* 104 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20988,18 +21383,18 @@ var ProperTable =
 
 
 /***/ },
-/* 104 */
+/* 105 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(105)()
+	module.exports = __webpack_require__(106)()
 		? Object.setPrototypeOf
-		: __webpack_require__(106);
+		: __webpack_require__(107);
 
 
 /***/ },
-/* 105 */
+/* 106 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21016,7 +21411,7 @@ var ProperTable =
 
 
 /***/ },
-/* 106 */
+/* 107 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Big thanks to @WebReflection for sorting this out
@@ -21024,8 +21419,8 @@ var ProperTable =
 
 	'use strict';
 
-	var isObject      = __webpack_require__(107)
-	  , value         = __webpack_require__(97)
+	var isObject      = __webpack_require__(108)
+	  , value         = __webpack_require__(98)
 
 	  , isPrototypeOf = Object.prototype.isPrototypeOf
 	  , defineProperty = Object.defineProperty
@@ -21091,11 +21486,11 @@ var ProperTable =
 		return false;
 	}())));
 
-	__webpack_require__(108);
+	__webpack_require__(109);
 
 
 /***/ },
-/* 107 */
+/* 108 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21108,7 +21503,7 @@ var ProperTable =
 
 
 /***/ },
-/* 108 */
+/* 109 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
@@ -21117,8 +21512,8 @@ var ProperTable =
 
 	var create = Object.create, shim;
 
-	if (!__webpack_require__(105)()) {
-		shim = __webpack_require__(106);
+	if (!__webpack_require__(106)()) {
+		shim = __webpack_require__(107);
 	}
 
 	module.exports = (function () {
@@ -21150,7 +21545,7 @@ var ProperTable =
 
 
 /***/ },
-/* 109 */
+/* 110 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21162,15 +21557,15 @@ var ProperTable =
 
 
 /***/ },
-/* 110 */
+/* 111 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign        = __webpack_require__(111)
-	  , normalizeOpts = __webpack_require__(117)
-	  , isCallable    = __webpack_require__(118)
-	  , contains      = __webpack_require__(119)
+	var assign        = __webpack_require__(112)
+	  , normalizeOpts = __webpack_require__(118)
+	  , isCallable    = __webpack_require__(119)
+	  , contains      = __webpack_require__(120)
 
 	  , d;
 
@@ -21231,18 +21626,18 @@ var ProperTable =
 
 
 /***/ },
-/* 111 */
+/* 112 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(112)()
+	module.exports = __webpack_require__(113)()
 		? Object.assign
-		: __webpack_require__(113);
+		: __webpack_require__(114);
 
 
 /***/ },
-/* 112 */
+/* 113 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21257,13 +21652,13 @@ var ProperTable =
 
 
 /***/ },
-/* 113 */
+/* 114 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var keys  = __webpack_require__(114)
-	  , value = __webpack_require__(97)
+	var keys  = __webpack_require__(115)
+	  , value = __webpack_require__(98)
 
 	  , max = Math.max;
 
@@ -21285,18 +21680,18 @@ var ProperTable =
 
 
 /***/ },
-/* 114 */
+/* 115 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(115)()
+	module.exports = __webpack_require__(116)()
 		? Object.keys
-		: __webpack_require__(116);
+		: __webpack_require__(117);
 
 
 /***/ },
-/* 115 */
+/* 116 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21310,7 +21705,7 @@ var ProperTable =
 
 
 /***/ },
-/* 116 */
+/* 117 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21323,7 +21718,7 @@ var ProperTable =
 
 
 /***/ },
-/* 117 */
+/* 118 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21346,7 +21741,7 @@ var ProperTable =
 
 
 /***/ },
-/* 118 */
+/* 119 */
 /***/ function(module, exports) {
 
 	// Deprecated
@@ -21357,18 +21752,18 @@ var ProperTable =
 
 
 /***/ },
-/* 119 */
+/* 120 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(120)()
+	module.exports = __webpack_require__(121)()
 		? String.prototype.contains
-		: __webpack_require__(121);
+		: __webpack_require__(122);
 
 
 /***/ },
-/* 120 */
+/* 121 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21382,7 +21777,7 @@ var ProperTable =
 
 
 /***/ },
-/* 121 */
+/* 122 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21395,13 +21790,13 @@ var ProperTable =
 
 
 /***/ },
-/* 122 */
+/* 123 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var d        = __webpack_require__(110)
-	  , callable = __webpack_require__(109)
+	var d        = __webpack_require__(111)
+	  , callable = __webpack_require__(110)
 
 	  , apply = Function.prototype.apply, call = Function.prototype.call
 	  , create = Object.create, defineProperty = Object.defineProperty
@@ -21533,16 +21928,16 @@ var ProperTable =
 
 
 /***/ },
-/* 123 */
+/* 124 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(124)() ? Symbol : __webpack_require__(125);
+	module.exports = __webpack_require__(125)() ? Symbol : __webpack_require__(126);
 
 
 /***/ },
-/* 124 */
+/* 125 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21566,15 +21961,15 @@ var ProperTable =
 
 
 /***/ },
-/* 125 */
+/* 126 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
 
 	'use strict';
 
-	var d              = __webpack_require__(110)
-	  , validateSymbol = __webpack_require__(126)
+	var d              = __webpack_require__(111)
+	  , validateSymbol = __webpack_require__(127)
 
 	  , create = Object.create, defineProperties = Object.defineProperties
 	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
@@ -21679,12 +22074,12 @@ var ProperTable =
 
 
 /***/ },
-/* 126 */
+/* 127 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isSymbol = __webpack_require__(127);
+	var isSymbol = __webpack_require__(128);
 
 	module.exports = function (value) {
 		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
@@ -21693,7 +22088,7 @@ var ProperTable =
 
 
 /***/ },
-/* 127 */
+/* 128 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21704,12 +22099,12 @@ var ProperTable =
 
 
 /***/ },
-/* 128 */
+/* 129 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isIterable = __webpack_require__(129);
+	var isIterable = __webpack_require__(130);
 
 	module.exports = function (value) {
 		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
@@ -21718,14 +22113,14 @@ var ProperTable =
 
 
 /***/ },
-/* 129 */
+/* 130 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments    = __webpack_require__(130)
-	  , isString       = __webpack_require__(131)
-	  , iteratorSymbol = __webpack_require__(123).iterator
+	var isArguments    = __webpack_require__(131)
+	  , isString       = __webpack_require__(132)
+	  , iteratorSymbol = __webpack_require__(124).iterator
 
 	  , isArray = Array.isArray;
 
@@ -21739,7 +22134,7 @@ var ProperTable =
 
 
 /***/ },
-/* 130 */
+/* 131 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21752,7 +22147,7 @@ var ProperTable =
 
 
 /***/ },
-/* 131 */
+/* 132 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21768,15 +22163,15 @@ var ProperTable =
 
 
 /***/ },
-/* 132 */
+/* 133 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments = __webpack_require__(130)
-	  , callable    = __webpack_require__(109)
-	  , isString    = __webpack_require__(131)
-	  , get         = __webpack_require__(133)
+	var isArguments = __webpack_require__(131)
+	  , callable    = __webpack_require__(110)
+	  , isString    = __webpack_require__(132)
+	  , get         = __webpack_require__(134)
 
 	  , isArray = Array.isArray, call = Function.prototype.call
 	  , some = Array.prototype.some;
@@ -21820,17 +22215,17 @@ var ProperTable =
 
 
 /***/ },
-/* 133 */
+/* 134 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isArguments    = __webpack_require__(130)
-	  , isString       = __webpack_require__(131)
-	  , ArrayIterator  = __webpack_require__(134)
-	  , StringIterator = __webpack_require__(141)
-	  , iterable       = __webpack_require__(128)
-	  , iteratorSymbol = __webpack_require__(123).iterator;
+	var isArguments    = __webpack_require__(131)
+	  , isString       = __webpack_require__(132)
+	  , ArrayIterator  = __webpack_require__(135)
+	  , StringIterator = __webpack_require__(142)
+	  , iterable       = __webpack_require__(129)
+	  , iteratorSymbol = __webpack_require__(124).iterator;
 
 	module.exports = function (obj) {
 		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
@@ -21841,15 +22236,15 @@ var ProperTable =
 
 
 /***/ },
-/* 134 */
+/* 135 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var setPrototypeOf = __webpack_require__(104)
-	  , contains       = __webpack_require__(119)
-	  , d              = __webpack_require__(110)
-	  , Iterator       = __webpack_require__(135)
+	var setPrototypeOf = __webpack_require__(105)
+	  , contains       = __webpack_require__(120)
+	  , d              = __webpack_require__(111)
+	  , Iterator       = __webpack_require__(136)
 
 	  , defineProperty = Object.defineProperty
 	  , ArrayIterator;
@@ -21877,18 +22272,18 @@ var ProperTable =
 
 
 /***/ },
-/* 135 */
+/* 136 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var clear    = __webpack_require__(96)
-	  , assign   = __webpack_require__(111)
-	  , callable = __webpack_require__(109)
-	  , value    = __webpack_require__(97)
-	  , d        = __webpack_require__(110)
-	  , autoBind = __webpack_require__(136)
-	  , Symbol   = __webpack_require__(123)
+	var clear    = __webpack_require__(97)
+	  , assign   = __webpack_require__(112)
+	  , callable = __webpack_require__(110)
+	  , value    = __webpack_require__(98)
+	  , d        = __webpack_require__(111)
+	  , autoBind = __webpack_require__(137)
+	  , Symbol   = __webpack_require__(124)
 
 	  , defineProperty = Object.defineProperty
 	  , defineProperties = Object.defineProperties
@@ -21973,15 +22368,15 @@ var ProperTable =
 
 
 /***/ },
-/* 136 */
+/* 137 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var copy       = __webpack_require__(137)
-	  , map        = __webpack_require__(138)
-	  , callable   = __webpack_require__(109)
-	  , validValue = __webpack_require__(97)
+	var copy       = __webpack_require__(138)
+	  , map        = __webpack_require__(139)
+	  , callable   = __webpack_require__(110)
+	  , validValue = __webpack_require__(98)
 
 	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
@@ -22010,13 +22405,13 @@ var ProperTable =
 
 
 /***/ },
-/* 137 */
+/* 138 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign = __webpack_require__(111)
-	  , value  = __webpack_require__(97);
+	var assign = __webpack_require__(112)
+	  , value  = __webpack_require__(98);
 
 	module.exports = function (obj) {
 		var copy = Object(value(obj));
@@ -22026,13 +22421,13 @@ var ProperTable =
 
 
 /***/ },
-/* 138 */
+/* 139 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var callable = __webpack_require__(109)
-	  , forEach  = __webpack_require__(139)
+	var callable = __webpack_require__(110)
+	  , forEach  = __webpack_require__(140)
 
 	  , call = Function.prototype.call;
 
@@ -22047,16 +22442,16 @@ var ProperTable =
 
 
 /***/ },
-/* 139 */
+/* 140 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(140)('forEach');
+	module.exports = __webpack_require__(141)('forEach');
 
 
 /***/ },
-/* 140 */
+/* 141 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Internal method, used by iteration functions.
@@ -22065,8 +22460,8 @@ var ProperTable =
 
 	'use strict';
 
-	var callable = __webpack_require__(109)
-	  , value    = __webpack_require__(97)
+	var callable = __webpack_require__(110)
+	  , value    = __webpack_require__(98)
 
 	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
 	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
@@ -22091,7 +22486,7 @@ var ProperTable =
 
 
 /***/ },
-/* 141 */
+/* 142 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Thanks @mathiasbynens
@@ -22099,9 +22494,9 @@ var ProperTable =
 
 	'use strict';
 
-	var setPrototypeOf = __webpack_require__(104)
-	  , d              = __webpack_require__(110)
-	  , Iterator       = __webpack_require__(135)
+	var setPrototypeOf = __webpack_require__(105)
+	  , d              = __webpack_require__(111)
+	  , Iterator       = __webpack_require__(136)
 
 	  , defineProperty = Object.defineProperty
 	  , StringIterator;
@@ -22134,16 +22529,16 @@ var ProperTable =
 
 
 /***/ },
-/* 142 */
+/* 143 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var setPrototypeOf    = __webpack_require__(104)
-	  , contains          = __webpack_require__(119)
-	  , d                 = __webpack_require__(110)
-	  , Iterator          = __webpack_require__(135)
-	  , toStringTagSymbol = __webpack_require__(123).toStringTag
+	var setPrototypeOf    = __webpack_require__(105)
+	  , contains          = __webpack_require__(120)
+	  , d                 = __webpack_require__(111)
+	  , Iterator          = __webpack_require__(136)
+	  , toStringTagSymbol = __webpack_require__(124).toStringTag
 
 	  , defineProperty = Object.defineProperty
 	  , SetIterator;
@@ -22170,7 +22565,7 @@ var ProperTable =
 
 
 /***/ },
-/* 143 */
+/* 144 */
 /***/ function(module, exports) {
 
 	// Exports true if environment provides native `Set` implementation,
@@ -22185,7 +22580,7 @@ var ProperTable =
 
 
 /***/ },
-/* 144 */
+/* 145 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22203,7 +22598,7 @@ var ProperTable =
 	  All credits to Gregor MacLennan
 	***/
 	var React = __webpack_require__(2);
-	var onElementResize = __webpack_require__(145);
+	var onElementResize = __webpack_require__(146);
 
 	var defaultContainerStyle = {
 	  width: '100%',
@@ -22281,7 +22676,7 @@ var ProperTable =
 	 *
 	 */
 	module.exports = function Dimensions() {
-	  var _ref = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	  var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
 	  var _ref$getHeight = _ref.getHeight;
 	  var getHeight = _ref$getHeight === undefined ? defaultGetHeight : _ref$getHeight;
@@ -22385,7 +22780,7 @@ var ProperTable =
 	};
 
 /***/ },
-/* 145 */
+/* 146 */
 /***/ function(module, exports) {
 
 	var exports = function exports(element, fn) {
@@ -22428,9 +22823,11 @@ var ProperTable =
 	    }
 	    win.__resizeRAF__ = requestFrame(function () {
 	      var trigger = win.__resizeTrigger__
-	      trigger.__resizeListeners__.forEach(function (fn) {
-	        fn.call(trigger, e)
-	      })
+	      if(trigger !== undefined) {
+	        trigger.__resizeListeners__.forEach(function (fn) {
+	          fn.call(trigger, e)
+	        })
+	      }
 	    })
 	  }
 
@@ -22449,7 +22846,7 @@ var ProperTable =
 	        element.style.position = 'relative'
 	      }
 	      var obj = element.__resizeTrigger__ = document.createElement('object')
-	      obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;')
+	      obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0;')
 	      obj.setAttribute('class', 'resize-sensor')
 	      obj.__resizeElement__ = element
 	      obj.onload = objectLoad
@@ -22466,11 +22863,24 @@ var ProperTable =
 	  element.__resizeListeners__.push(fn)
 	}
 
+	exports.unbind = function(element, fn){
+	  var attachEvent = document.attachEvent;
+	  element.__resizeListeners__.splice(element.__resizeListeners__.indexOf(fn), 1);
+	  if (!element.__resizeListeners__.length) {
+	    if (attachEvent) {
+	      element.detachEvent('onresize', resizeListener);
+	    } else {
+	      element.__resizeTrigger__.contentDocument.defaultView.removeEventListener('resize', resizeListener);
+	      element.__resizeTrigger__ = !element.removeChild(element.__resizeTrigger__);
+	    }
+	  }
+	}
+
 	module.exports = (typeof window === 'undefined') ? exports : exports.bind(window)
 
 
 /***/ },
-/* 146 */
+/* 147 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
