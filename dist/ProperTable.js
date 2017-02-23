@@ -315,100 +315,90 @@ var ProperTable =
 			var somethingchanged = propschanged || statechanged;
 
 			if (propschanged) {
-				var _ret = function () {
-					var colsDeepCompare = _this2.deepColsCompare(nextProps.cols, _this2.props.cols);
-					var colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges || colsDeepCompare.hasChangedPosition;
-					var dataChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.data, _this2.props.data);
-					var colSortDirsChanged = nextProps.colSortDirs ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colSortDirs, _this2.props.colSortDirs) : false;
-					var colFiltersChanged = nextProps.colFilters ? !_this2.checkFiltersEquality(nextProps.colFilters, _this2.props.colFilters) : false;
-					var colData = null,
-					    preparedData = null,
-					    cols = null,
-					    newCol = void 0;
+				var colsDeepCompare = this.deepColsCompare(nextProps.cols, this.props.cols);
+				var colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges || colsDeepCompare.hasChangedPosition;
+				var dataChanged = !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.data, this.props.data);
+				var colSortDirsChanged = nextProps.colSortDirs ? !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(nextProps.colSortDirs, this.props.colSortDirs) : false;
+				var colFiltersChanged = nextProps.colFilters ? !this.checkFiltersEquality(nextProps.colFilters, this.props.colFilters) : false;
+				var colData = null,
+				    preparedData = null,
+				    cols = null,
+				    newCol = void 0;
 
-					// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
-					// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
-					if (colsChanged || dataChanged) {
-						if (dataChanged) {
-							_rowcache2['default'].flush([CACHE_NAME, 'tb_' + _this2.uniqueId]);
+				// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
+				// and set selection if it has been received). If both change It's almost the same as rebuild the component. Almost everything changes
+				if (colsChanged || dataChanged) {
+					if (dataChanged) {
+						_rowcache2['default'].flush([CACHE_NAME, 'tb_' + this.uniqueId]);
 
-							preparedData = _this2.prepareData(nextProps, nextState);
-							colData = _this2.prepareColSettings(nextProps, preparedData.rawdata);
-							cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
+						preparedData = this.prepareData(nextProps, nextState);
+						colData = this.prepareColSettings(nextProps, preparedData.rawdata);
+						cols = this.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
 
-							_this2.setState({
+						this.setState({
+							colSettings: colData.colSettings,
+							colSortParsers: colData.colSortParsers,
+							cols: cols,
+							data: preparedData.data,
+							initialData: preparedData.initialData,
+							indexed: preparedData.indexed,
+							initialIndexed: preparedData.initialIndexed,
+							rawdata: preparedData.rawdata,
+							sortCache: preparedData.defSortCache,
+							selection: preparedData.defSelection
+						}, this.applySettings.bind(this, colData.colSettings, nextProps, true));
+					} else if (colsChanged) {
+						if (colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition) {
+							var sortCache = [];
+
+							_rowcache2['default'].flush([CACHE_NAME, 'tb_' + this.uniqueId]);
+							colData = this.prepareColSettings(nextProps, this.state.rawdata);
+							cols = this.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
+
+							// Restart cache
+							nextState.data.forEach(function (row) {
+								sortCache[row.get(_this2.props.idField)] = {};
+							});
+
+							this.setState({
 								colSettings: colData.colSettings,
 								colSortParsers: colData.colSortParsers,
 								cols: cols,
-								data: preparedData.data,
-								initialData: preparedData.initialData,
-								indexed: preparedData.indexed,
-								initialIndexed: preparedData.initialIndexed,
-								rawdata: preparedData.rawdata,
-								sortCache: preparedData.defSortCache,
-								selection: preparedData.defSelection
-							}, _this2.applySettings.bind(_this2, colData.colSettings, nextProps, true));
-						} else if (colsChanged) {
-							if (colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges && colsDeepCompare.hasChangedPosition) {
-								(function () {
-									var sortCache = [];
+								sortCache: sortCache
+							}, this.applySettings.bind(this, colData.colSettings, nextProps)); // apply selection and sort
+						} else if (colsDeepCompare.hasSmallChanges) {
+							cols = this.state.cols.map(function (col) {
+								newCol = colsDeepCompare.changedCols[col.get('name')];
 
-									_rowcache2['default'].flush([CACHE_NAME, 'tb_' + _this2.uniqueId]);
-									colData = _this2.prepareColSettings(nextProps, _this2.state.rawdata);
-									cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
-
-									// Restart cache
-									nextState.data.forEach(function (row) {
-										sortCache[row.get(_this2.props.idField)] = {};
+								if (newCol) {
+									_underscore2['default'].each(newCol, function (value, key) {
+										col = col.set(key, value);
 									});
+								}
 
-									_this2.setState({
-										colSettings: colData.colSettings,
-										colSortParsers: colData.colSortParsers,
-										cols: cols,
-										sortCache: sortCache
-									}, _this2.applySettings.bind(_this2, colData.colSettings, nextProps)); // apply selection and sort
-								})();
-							} else if (colsDeepCompare.hasSmallChanges) {
-								cols = _this2.state.cols.map(function (col) {
-									newCol = colsDeepCompare.changedCols[col.get('name')];
+								return col;
+							});
 
-									if (newCol) {
-										_underscore2['default'].each(newCol, function (value, key) {
-											col = col.set(key, value);
-										});
-									}
+							this.setState({
+								cols: cols
+							});
+						} else {
+							cols = this.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
 
-									return col;
-								});
-
-								_this2.setState({
-									cols: cols
-								});
-							} else {
-								cols = _this2.sortTableCols(_immutable2['default'].fromJS(nextProps.cols));
-
-								_this2.setState({
-									cols: cols
-								});
-							}
+							this.setState({
+								cols: cols
+							});
 						}
-
-						return {
-							v: false
-						};
-					} else if (colSortDirsChanged || colFiltersChanged) {
-						_this2.applySettings(nextState.colSettings, nextProps);
-					} else if (nextProps.selected) {
-						_this2.setDefaultSelection(nextProps);
-
-						return {
-							v: false
-						};
 					}
-				}();
 
-				if ((typeof _ret === 'undefined' ? 'undefined' : _typeof(_ret)) === "object") return _ret.v;
+					return false;
+				} else if (colSortDirsChanged || colFiltersChanged) {
+					this.applySettings(nextState.colSettings, nextProps);
+				} else if (nextProps.selected) {
+					this.setDefaultSelection(nextProps);
+
+					return false;
+				}
 			}
 
 			return somethingchanged;
@@ -481,7 +471,7 @@ var ProperTable =
 				_underscore2['default'].every(nextCols, function (col, index) {
 					curCol = currentCols[index];
 
-					if (col.name !== curCol.name || col.field !== curCol.field || col.sortable !== curCol.sortable || col.uniqueId !== curCol.uniqueId || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.formatter, curCol.formatter) || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.sortVal, curCol.sortVal) || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.children, curCol.children)) {
+					if (col.name !== curCol.name || col.field !== curCol.field || col.sortable !== curCol.sortable || col.uniqueId !== curCol.uniqueId || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.formatter, curCol.formatter) || !(0, _reactImmutableRenderMixin.shallowEqualImmutable)(col.children, curCol.children)) {
 
 						hasChangedDeeply = true;
 						return false; // Break
@@ -548,7 +538,11 @@ var ProperTable =
 		ProperTable.prototype.addClickListener = function addClickListener(restartOnClick) {
 			if (!_react2['default'].isValidElement(restartOnClick)) {
 				// Not React element
-				restartOnClick.addEventListener('click', this.clearFilterAndSort.bind(this));
+				if (restartOnClick.length) {
+					for (var i = restartOnClick.length - 1; i >= 0; i--) {
+						restartOnClick[i].addEventListener('click', this.clearFilterAndSort.bind(this));
+					}
+				}
 			} else {
 				var btn = null;
 
@@ -557,8 +551,8 @@ var ProperTable =
 					btn.addEventListener('click', this.clearFilterAndSort.bind(this));
 				} else if (this.props.restartOnClick.props.className) {
 					btn = document.getElementsByClassName(restartOnClick.props.className);
-					for (var i = btn.length - 1; i >= 0; i--) {
-						btn[i].addEventListener('click', this.clearFilterAndSort.bind(this));
+					for (var _i = btn.length - 1; _i >= 0; _i--) {
+						btn[_i].addEventListener('click', this.clearFilterAndSort.bind(this));
 					}
 				}
 			}
@@ -618,18 +612,12 @@ var ProperTable =
 							if (nextFilters[key].selection.length !== currFilters[key].selection.length) {
 								return true;
 							} else {
-								var _ret3 = function () {
-									var selectionSet = new Set(currFilters[key].selection),
-									    selectionChange = void 0;
-									selectionChange = _underscore2['default'].some(nextFilters[key].selection, function (id) {
-										return selectionSet.has(id) ? false : true;
-									});
-									return {
-										v: selectionChange
-									};
-								}();
-
-								if ((typeof _ret3 === 'undefined' ? 'undefined' : _typeof(_ret3)) === "object") return _ret3.v;
+								var selectionSet = new Set(currFilters[key].selection),
+								    selectionChange = void 0;
+								selectionChange = _underscore2['default'].some(nextFilters[key].selection, function (id) {
+									return selectionSet.has(id) ? false : true;
+								});
+								return selectionChange;
 							}
 						} else {
 							if (nextFilters[key].operationType !== currFilters[key].operationType || nextFilters[key].operationValue !== currFilters[key].operationValue) {
@@ -788,10 +776,10 @@ var ProperTable =
 			var _this4 = this;
 
 			var operations = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : [];
-			var _state = this.state;
-			var initialData = _state.initialData;
-			var indexed = _state.indexed;
-			var selection = _state.selection;
+			var _state = this.state,
+			    initialData = _state.initialData,
+			    indexed = _state.indexed,
+			    selection = _state.selection;
 
 			var filteredData = initialData,
 			    idField = this.props.idField,
@@ -801,51 +789,49 @@ var ProperTable =
 
 			// Get the data that match with the selection (of all column filters)
 			if (_underscore2['default'].size(filters) > 0) {
-				(function () {
-					var result = void 0,
-					    field = void 0,
-					    formatter = void 0,
-					    val = void 0;
+				var result = void 0,
+				    field = void 0,
+				    formatter = void 0,
+				    val = void 0;
 
-					filteredData = initialData.filter(function (element) {
-						// If value has been found (result = true) then leave loop and return true
-						columns.every(function (column) {
-							field = fields[column];
-							formatter = formatters[column];
-							val = element.get(field);
-							result = false;
-							applyFormatter = true;
+				filteredData = initialData.filter(function (element) {
+					// If value has been found (result = true) then leave loop and return true
+					columns.every(function (column) {
+						field = fields[column];
+						formatter = formatters[column];
+						val = element.get(field);
+						result = false;
+						applyFormatter = true;
 
-							// Skip unvalid values
-							if (_underscore2['default'].isNull(val)) val = '';
+						// Skip unvalid values
+						if (_underscore2['default'].isNull(val)) val = '';
 
-							if (_this4.isValidType(val)) {
-								if (formatter) {
-									if (operations[column] && operations[column].type) {
-										if (notAllowedTypes.has(operations[column].type)) {
-											applyFormatter = false;
-										}
-									}
-
-									if (applyFormatter) {
-										val = formatter(val, null, null);
-										if (_underscore2['default'].isNull(val) || _underscore2['default'].isUndefined(val)) val = '';
+						if (_this4.isValidType(val)) {
+							if (formatter) {
+								if (operations[column] && operations[column].type) {
+									if (notAllowedTypes.has(operations[column].type)) {
+										applyFormatter = false;
 									}
 								}
 
-								if (filters[column]) {
-									result = filters[column].has(val.toString());
-								} else if (operations[column]) {
-									result = _this4.customFilter(operations[column].type, operations[column].value, val, notAllowedTypes.has(operations[column].type));
+								if (applyFormatter) {
+									val = formatter(val, null, null);
+									if (_underscore2['default'].isNull(val) || _underscore2['default'].isUndefined(val)) val = '';
 								}
 							}
 
-							return result;
-						});
+							if (filters[column]) {
+								result = filters[column].has(val.toString());
+							} else if (operations[column]) {
+								result = _this4.customFilter(operations[column].type, operations[column].value, val, notAllowedTypes.has(operations[column].type));
+							}
+						}
 
 						return result;
 					});
-				})();
+
+					return result;
+				});
 			}
 
 			// Apply selection and update index of each element in indexed data
@@ -1018,8 +1004,7 @@ var ProperTable =
 			    parsedData = null;
 
 			// The default sort dirs (in case that's exist) will be applied in applyColSettings
-
-			// Through each element, of the colSortDirs built data, build the colSortDirs with the default directions received,
+			// Iterate through each element of the colSortDirs and the built data, build the colSortDirs with the default directions received,
 			// setting a position (position of priority to sort (it will be modified after click on the diferent columns)), if
 			// the column is sortable or not and if the Table has multisort or just only single.
 			for (var i = 0; i <= sortData.colSortDirs.length - 1; i++) {
@@ -1118,19 +1103,19 @@ var ProperTable =
 
 			return {
 				colSettings: colSettings,
-				colSortParsers: sortData.sortVals
+				colSortParsers: sortData.sortParsers
 			};
 		};
 
 		/**
-	  * Build the structure of the colSortDirs array and the sortVals array with the functions received in cols or a default function to parse.
+	  * Build the structure of the colSortDirs array and the sortParsers array with the functions received in cols or a default function to parse.
 	  * In fact this method look through all the columns in props.cols recursively and add all that aren't a ColumnGroup,
 	  * the columns that may be sorted.
 	  *
 	  * @param 	(array)	cols Describe each column data. (name, sortable, fixed...)
 	  *
 	  * @return 	(array)	-colSortDirs: Sort settings of each column.
-	  *					-sortValues: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
+	  *					-sortParsers: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
 	  */
 
 
@@ -1138,15 +1123,28 @@ var ProperTable =
 			var _this6 = this;
 
 			var colSortDirs = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
-			var sortVals = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+			var sortParsers = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
 
 			cols.forEach(function (element) {
 				if (!element.children) {
 					var sortable = _underscore2['default'].isUndefined(element.sortable) ? null : element.sortable;
 					var formatter = _underscore2['default'].isUndefined(element.formatter) ? null : element.formatter;
-					sortVals[element.name] = element.sortVal || function (val) {
-						return val;
-					}; // Function to iterate
+					var sortParser = element.sortParser ? element.sortParser : null;
+
+					if (sortParser === null) {
+						if (element.sortVal) {
+							sortParser = element.sortVal;
+
+							if (console && console.warm) {
+								console.warm('The sortVal property of the column has been deprecated. Please, use the sortParser instead for this purpouse');
+							}
+						} else {
+							sortParser = function sortParser(val) {
+								return val;
+							};
+						}
+					}
+					sortParsers[element.name] = sortParser; // Function to iterate
 
 					colSortDirs.push({
 						column: element.name,
@@ -1156,19 +1154,19 @@ var ProperTable =
 						formatter: formatter
 					});
 				} else {
-					_this6.buildColSortDirs(element.children, colSortDirs, sortVals);
+					_this6.buildColSortDirs(element.children, colSortDirs, sortParsers);
 				}
 			});
 
 			if (this.props.selectable == MULTIPLE_SELECTION) {
-				sortVals[SELECTOR_COL_NAME] = function (val) {
+				sortParsers[SELECTOR_COL_NAME] = function (val) {
 					return val;
 				};
 			}
 
 			return {
 				colSortDirs: colSortDirs,
-				sortVals: sortVals
+				sortParsers: sortParsers
 			};
 		};
 
@@ -1276,7 +1274,6 @@ var ProperTable =
 			var newData = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
 
 			var colSettings = newData ? newData.colSettings : this.state.colSettings;
-
 			colSettings = this.updateSortDir(columnKey, sortDir, colSettings);
 			this.sortTable(colSettings, true, newData);
 		};
@@ -1380,37 +1377,37 @@ var ProperTable =
 				var initialPos = 0,
 				    index = 0;
 
-				for (var _i = 0; _i <= colSettings.length - 1; _i++) {
+				for (var _i2 = 0; _i2 <= colSettings.length - 1; _i2++) {
 					// If some columns were sorted before then the position of the sorted columns wont be changed, so the initial
 					// position will be the next. If 2 columns are already sorted and we sort by a new one then the position of this
 					// last column will be 3 and will change to 2 or 1 if the sorted columns back to default.
-					if (colSettings[_i].sorted) initialPos++;
+					if (colSettings[_i2].sorted) initialPos++;
 
-					if (colSettings[_i].column === columnKey) {
-						colSettings[_i].direction = sortDir; // Set the new direction
-						position = colSettings[_i].position; // Save the current position
-						index = _i;
+					if (colSettings[_i2].column === columnKey) {
+						colSettings[_i2].direction = sortDir; // Set the new direction
+						position = colSettings[_i2].position; // Save the current position
+						index = _i2;
 
 						// If the sort direction is not default and the column isn't already sorted then add one to the initial position
 						// and set the column to sorted. Otherwise if the sort direction is default set it to unsorted.
-						if (sortDir !== DEFAULT_SORT_DIRECTION && !colSettings[_i].sorted) {
+						if (sortDir !== DEFAULT_SORT_DIRECTION && !colSettings[_i2].sorted) {
 							initialPos++;
-							colSettings[_i].sorted = true;
+							colSettings[_i2].sorted = true;
 						} else if (sortDir == DEFAULT_SORT_DIRECTION) {
-							colSettings[_i].sorted = false;
+							colSettings[_i2].sorted = false;
 						}
 					}
 				}
 
 				// Change the priority position to sort of the elements.
-				for (var _i2 = 0; _i2 <= colSettings.length - 1; _i2++) {
+				for (var _i3 = 0; _i3 <= colSettings.length - 1; _i3++) {
 
 					// When the position of the current element is lower than the position of the changed element and bigger or equals to the
 					// initial position to change.
-					if (colSettings[_i2].position < position && colSettings[_i2].position >= initialPos) {
+					if (colSettings[_i3].position < position && colSettings[_i3].position >= initialPos) {
 						// Move element to the next position only if the new sort direction wasn't default, in that case keep the element in the same
 						// sorting priority position.
-						if (colSettings[_i2].direction === DEFAULT_SORT_DIRECTION) colSettings[_i2].position = colSettings[_i2].position + 1;
+						if (colSettings[_i3].direction === DEFAULT_SORT_DIRECTION) colSettings[_i3].position = colSettings[_i3].position + 1;
 					}
 				}
 
@@ -1498,18 +1495,18 @@ var ProperTable =
 						rowId = row.get(_this8.props.idField);
 						// sortCache [row-id] [column-id] = procesed value.
 						if (_underscore2['default'].isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
-							val = sortParser(row.get(element.field));
+							val = sortParser(row.get(element.field), null, null);
 							sortCache[rowId][element.field] = val || ''; // Turn null's into empty values
 						}
 
 						return sortCache[rowId][element.field];
-					}, function (val1, val2) {
-						if (val1 == val2) {
+					}, function (a, b) {
+						if (a == b) {
 							return 0;
 						} else if (element.direction == ASCENDING_SORT_DIRECTION) {
-							return val1 > val2 ? 1 : -1;
+							return a > b ? -1 : 1;
 						} else if (element.direction == DESCENDING_SORT_DIRECTION) {
-							return val1 > val2 ? -1 : 1;
+							return a > b ? 1 : -1;
 						}
 					});
 					defaultSort = false;
@@ -1521,8 +1518,8 @@ var ProperTable =
 				//  Set to default
 				sortedData = data.sortBy(function (row, rowIndex, allData) {
 					return row.get(ROW_INDEX_FIELD);
-				}, function (val1, val2) {
-					return val1 > val2 ? 1 : val1 == val2 ? 0 : -1;
+				}, function (a, b) {
+					return a > b ? 1 : a == b ? 0 : -1;
 				});
 			}
 
@@ -1554,18 +1551,16 @@ var ProperTable =
 			var data = this.state.data;
 
 			if (getAsRaw) {
-				(function () {
-					var properId = void 0,
-					    rowIndex = void 0,
-					    rawdata = _this9.state.rawdata;
-					data = data.map(function (row) {
-						properId = row.get(_this9.props.idField);
-						rowIndex = _this9.state.initialIndexed[properId]._rowIndex;
+				var properId = void 0,
+				    rowIndex = void 0,
+				    rawdata = this.state.rawdata;
+				data = data.map(function (row) {
+					properId = row.get(_this9.props.idField);
+					rowIndex = _this9.state.initialIndexed[properId]._rowIndex;
 
-						return rawdata.get(rowIndex);
-					});
-					data = data.toJSON();
-				})();
+					return rawdata.get(rowIndex);
+				});
+				data = data.toJSON();
 			}
 
 			return data;
@@ -1820,7 +1815,7 @@ var ProperTable =
 			var footer = null;
 
 			if (this.props.displayFooter) {
-				var _messages = this.props.msgs[this.props.lang];
+				var _messages = this.getTranslatedMessages();
 				var msgFilters = void 0,
 				    msgSort = null,
 				    isFirstFilter = true,
@@ -1858,8 +1853,8 @@ var ProperTable =
 				if (hasSort) {
 					msgSort = _messages.sorted + ' ';
 
-					for (var _i3 = this.state.colSettings.length - 1; _i3 >= 0; _i3--) {
-						column = this.state.colSettings[_i3];
+					for (var _i4 = this.state.colSettings.length - 1; _i4 >= 0; _i4--) {
+						column = this.state.colSettings[_i4];
 
 						if (column.direction !== DEFAULT_SORT_DIRECTION) {
 							if (!isFirstColumn) msgSort += ' > ';
@@ -1897,49 +1892,45 @@ var ProperTable =
 
 
 		ProperTable.prototype.handleSelectAll = function handleSelectAll(e) {
-			var _this12 = this;
-
 			e.preventDefault();
 
 			if (this.props.selectable) {
-				(function () {
-					var idField = _this12.props.idField,
-					    value = void 0,
-					    selection = new Set(_this12.state.selection);
-					var _state2 = _this12.state;
-					var allSelected = _state2.allSelected;
-					var data = _state2.data;
-					var indexed = _state2.indexed;
-					var rawdata = _state2.rawdata;
+				var idField = this.props.idField,
+				    value = void 0,
+				    selection = new Set(this.state.selection);
+				var _state2 = this.state,
+				    allSelected = _state2.allSelected,
+				    data = _state2.data,
+				    indexed = _state2.indexed,
+				    rawdata = _state2.rawdata;
 
-					// Select all
+				// Select all
 
-					if (!allSelected) {
-						if (data.size < rawdata.size) {
-							// Filtered
-							data.forEach(function (element) {
-								value = element.get(idField);
-								if (!selection.has(value.toString())) selection.add(value.toString());
-							});
-						} else {
-							selection = new Set(_underscore2['default'].keys(indexed));
-						}
-					} else if (selection.size > 0) {
-						// Unselect all
-						// Filtered data
-						if (data.size < rawdata.size) {
-							// Remove elements from selection
-							data.forEach(function (element) {
-								value = element.get(idField);
-								if (selection.has(value.toString())) selection['delete'](value.toString());
-							});
-						} else {
-							selection = new Set();
-						}
+				if (!allSelected) {
+					if (data.size < rawdata.size) {
+						// Filtered
+						data.forEach(function (element) {
+							value = element.get(idField);
+							if (!selection.has(value.toString())) selection.add(value.toString());
+						});
+					} else {
+						selection = new Set(_underscore2['default'].keys(indexed));
 					}
+				} else if (selection.size > 0) {
+					// Unselect all
+					// Filtered data
+					if (data.size < rawdata.size) {
+						// Remove elements from selection
+						data.forEach(function (element) {
+							value = element.get(idField);
+							if (selection.has(value.toString())) selection['delete'](value.toString());
+						});
+					} else {
+						selection = new Set();
+					}
+				}
 
-					_this12.triggerSelection(selection);
-				})();
+				this.triggerSelection(selection);
 			}
 		};
 
@@ -1970,7 +1961,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.isAllSelected = function isAllSelected(data, selection) {
-			var _this13 = this;
+			var _this12 = this;
 
 			var result = true;
 
@@ -1978,7 +1969,7 @@ var ProperTable =
 
 			// Filtered data
 			data.forEach(function (element) {
-				if (!selection.has(element.get(_this13.props.idField).toString())) {
+				if (!selection.has(element.get(_this12.props.idField).toString())) {
 					// Some data not in selection
 					result = false;
 					return false;
@@ -2043,7 +2034,7 @@ var ProperTable =
 
 
 		ProperTable.prototype.updateSelectionData = function updateSelectionData(newSelection) {
-			var _this14 = this;
+			var _this13 = this;
 
 			var newAllSelected = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
@@ -2107,7 +2098,7 @@ var ProperTable =
 			} else {
 				// Change all data
 				newData = newData.map(function (row) {
-					rowid = row.get(_this14.props.idField);
+					rowid = row.get(_this13.props.idField);
 					selected = newSelection.has(rowid.toString());
 					rdata = row.set(SELECTED_FIELD, selected);
 					curIndex = newIndexed[rowid];
@@ -2160,48 +2151,44 @@ var ProperTable =
 
 
 		ProperTable.prototype.sendSelection = function sendSelection() {
-			var _this15 = this;
-
 			var newSelection = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : null;
 
 			if (typeof this.props.afterSelect == 'function') {
-				(function () {
-					var _state3 = _this15.state;
-					var selection = _state3.selection;
-					var initialIndexed = _state3.initialIndexed;
-					var rawdata = _state3.rawdata;
+				var _state3 = this.state,
+				    selection = _state3.selection,
+				    initialIndexed = _state3.initialIndexed,
+				    rawdata = _state3.rawdata;
 
-					var output = [];
-					var selectionArray = [];
+				var output = [];
+				var selectionArray = [];
 
-					if (newSelection) {
-						newSelection.forEach(function (element) {
-							selectionArray.push(element);
-						});
-					} else {
-						selection.forEach(function (element) {
-							selectionArray.push(element);
-						});
-					}
-
-					output = _underscore2['default'].map(selectionArray, function (pId) {
-						if (typeof initialIndexed[pId] == 'undefined') {
-							return null;
-						}
-
-						var rowIndex = initialIndexed[pId]._rowIndex;
-
-						return rawdata.get(rowIndex).toJSON();
+				if (newSelection) {
+					newSelection.forEach(function (element) {
+						selectionArray.push(element);
 					});
+				} else {
+					selection.forEach(function (element) {
+						selectionArray.push(element);
+					});
+				}
 
-					output = _underscore2['default'].compact(output);
-
-					if (_this15.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
-						output = output[0];
+				output = _underscore2['default'].map(selectionArray, function (pId) {
+					if (typeof initialIndexed[pId] == 'undefined') {
+						return null;
 					}
 
-					_this15.props.afterSelect(output, selectionArray);
-				})();
+					var rowIndex = initialIndexed[pId]._rowIndex;
+
+					return rawdata.get(rowIndex).toJSON();
+				});
+
+				output = _underscore2['default'].compact(output);
+
+				if (this.props.selectable === true && !_underscore2['default'].isUndefined(output[0])) {
+					output = output[0];
+				}
+
+				this.props.afterSelect(output, selectionArray);
 			}
 		};
 
@@ -2226,23 +2213,21 @@ var ProperTable =
 
 
 		ProperTable.prototype.sendSortedData = function sendSortedData(data) {
-			var _this16 = this;
+			var _this14 = this;
 
 			if (typeof this.props.afterSort === 'function') {
-				(function () {
-					var _state4 = _this16.state;
-					var initialIndexed = _state4.initialIndexed;
-					var rawdata = _state4.rawdata;
+				var _state4 = this.state,
+				    initialIndexed = _state4.initialIndexed,
+				    rawdata = _state4.rawdata;
 
-					var output = [];
+				var output = [];
 
-					output = data.map(function (row) {
-						var rowIndex = initialIndexed[row.get(_this16.props.idField)]._rowIndex;
-						return rawdata.get(rowIndex);
-					});
+				output = data.map(function (row) {
+					var rowIndex = initialIndexed[row.get(_this14.props.idField)]._rowIndex;
+					return rawdata.get(rowIndex);
+				});
 
-					_this16.props.afterSort(output.toJSON());
-				})();
+				this.props.afterSort(output.toJSON());
 			}
 		};
 
@@ -2286,6 +2271,25 @@ var ProperTable =
 			return addClass;
 		};
 
+		/**
+	  * Get the translated messages for the component.
+	  *
+	  * @return object Messages of the selected language or in English if the translation for this lang doesn't exist.
+	  */
+
+
+		ProperTable.prototype.getTranslatedMessages = function getTranslatedMessages() {
+			if (!_underscore2['default'].isObject(this.props.msgs)) {
+				return {};
+			}
+
+			if (this.props.msgs[this.props.lang]) {
+				return this.props.msgs[this.props.lang];
+			}
+
+			return this.props.msgs['ENG'];
+		};
+
 		ProperTable.prototype.onResize = function onResize(width, column) {
 			var sizes = this.state.sizes;
 			var newsizes = sizes.set(column, width);
@@ -2294,7 +2298,7 @@ var ProperTable =
 		};
 
 		ProperTable.prototype.render = function render() {
-			// let content = <div className="propertable-empty">{this.props.msgs[this.props.lang].empty}</div>;
+			// let content = <div className="propertable-empty">{this.getTranslatedMessages().empty}</div>;
 			var content = null,
 			    tableHeight = this.props.containerHeight || 400;
 			var tableContent = this.buildTable();
@@ -2365,7 +2369,9 @@ var ProperTable =
 		onScrollEnd: _react2['default'].PropTypes.func,
 		hasDisableRows: _react2['default'].PropTypes.bool,
 		displayFooter: _react2['default'].PropTypes.bool,
-		footerInfoHeight: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.number, _react2['default'].PropTypes.string])
+		footerInfoHeight: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.number, _react2['default'].PropTypes.string]),
+		containerHeight: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.number, _react2['default'].PropTypes.string]),
+		containerWidth: _react2['default'].PropTypes.oneOfType([_react2['default'].PropTypes.number, _react2['default'].PropTypes.string])
 	};
 
 	ProperTable.defaultProps = {
@@ -16547,7 +16553,7 @@ var ProperTable =
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports["default"] = void 0;
+	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports["default"] = undefined;
 
 	var _shouldComponentUpdate = __webpack_require__(77);
 
@@ -16797,37 +16803,34 @@ var ProperTable =
 	})();
 
 
-	// Include a performance.now polyfill
-	(function () {
-		// In node.js, use process.hrtime.
-		if (this.window === undefined && this.process !== undefined) {
-			TWEEN.now = function () {
-				var time = process.hrtime();
+	// Include a performance.now polyfill.
+	// In node.js, use process.hrtime.
+	if (typeof (window) === 'undefined' && typeof (process) !== 'undefined') {
+		TWEEN.now = function () {
+			var time = process.hrtime();
 
-				// Convert [seconds, microseconds] to milliseconds.
-				return time[0] * 1000 + time[1] / 1000;
-			};
-		}
-		// In a browser, use window.performance.now if it is available.
-		else if (this.window !== undefined &&
-		         window.performance !== undefined &&
+			// Convert [seconds, nanoseconds] to milliseconds.
+			return time[0] * 1000 + time[1] / 1000000;
+		};
+	}
+	// In a browser, use window.performance.now if it is available.
+	else if (typeof (window) !== 'undefined' &&
+	         window.performance !== undefined &&
 			 window.performance.now !== undefined) {
-
-			// This must be bound, because directly assigning this function
-			// leads to an invocation exception in Chrome.
-			TWEEN.now = window.performance.now.bind(window.performance);
-		}
-		// Use Date.now if it is available.
-		else if (Date.now !== undefined) {
-			TWEEN.now = Date.now;
-		}
-		// Otherwise, use 'new Date().getTime()'.
-		else {
-			TWEEN.now = function () {
-				return new Date().getTime();
-			};
-		}
-	})();
+		// This must be bound, because directly assigning this function
+		// leads to an invocation exception in Chrome.
+		TWEEN.now = window.performance.now.bind(window.performance);
+	}
+	// Use Date.now if it is available.
+	else if (Date.now !== undefined) {
+		TWEEN.now = Date.now;
+	}
+	// Otherwise, use 'new Date().getTime()'.
+	else {
+		TWEEN.now = function () {
+			return new Date().getTime();
+		};
+	}
 
 
 	TWEEN.Tween = function (object) {
@@ -16838,6 +16841,7 @@ var ProperTable =
 		var _valuesStartRepeat = {};
 		var _duration = 1000;
 		var _repeat = 0;
+		var _repeatDelayTime;
 		var _yoyo = false;
 		var _isPlaying = false;
 		var _reversed = false;
@@ -16852,18 +16856,13 @@ var ProperTable =
 		var _onCompleteCallback = null;
 		var _onStopCallback = null;
 
-		// Set all starting values present on the target object
-		for (var field in object) {
-			_valuesStart[field] = parseFloat(object[field], 10);
-		}
-
 		this.to = function (properties, duration) {
+
+			_valuesEnd = properties;
 
 			if (duration !== undefined) {
 				_duration = duration;
 			}
-
-			_valuesEnd = properties;
 
 			return this;
 
@@ -16896,10 +16895,11 @@ var ProperTable =
 
 				// If `to()` specifies a property that doesn't exist in the source object,
 				// we should not set that property in the object
-				if (_valuesStart[property] === undefined) {
+				if (_object[property] === undefined) {
 					continue;
 				}
 
+				// Save the starting value.
 				_valuesStart[property] = _object[property];
 
 				if ((_valuesStart[property] instanceof Array) === false) {
@@ -16924,10 +16924,17 @@ var ProperTable =
 			_isPlaying = false;
 
 			if (_onStopCallback !== null) {
-				_onStopCallback.call(_object);
+				_onStopCallback.call(_object, _object);
 			}
 
 			this.stopChainedTweens();
+			return this;
+
+		};
+
+		this.end = function () {
+
+			this.update(_startTime + _duration);
 			return this;
 
 		};
@@ -16950,6 +16957,13 @@ var ProperTable =
 		this.repeat = function (times) {
 
 			_repeat = times;
+			return this;
+
+		};
+
+		this.repeatDelay = function (amount) {
+
+			_repeatDelayTime = amount;
 			return this;
 
 		};
@@ -17024,11 +17038,10 @@ var ProperTable =
 			if (_onStartCallbackFired === false) {
 
 				if (_onStartCallback !== null) {
-					_onStartCallback.call(_object);
+					_onStartCallback.call(_object, _object);
 				}
 
 				_onStartCallbackFired = true;
-
 			}
 
 			elapsed = (time - _startTime) / _duration;
@@ -17056,9 +17069,9 @@ var ProperTable =
 					if (typeof (end) === 'string') {
 
 						if (end.charAt(0) === '+' || end.charAt(0) === '-') {
-							end = start + parseFloat(end, 10);
+							end = start + parseFloat(end);
 						} else {
-							end = parseFloat(end, 10);
+							end = parseFloat(end);
 						}
 					}
 
@@ -17087,7 +17100,7 @@ var ProperTable =
 					for (property in _valuesStartRepeat) {
 
 						if (typeof (_valuesEnd[property]) === 'string') {
-							_valuesStartRepeat[property] = _valuesStartRepeat[property] + parseFloat(_valuesEnd[property], 10);
+							_valuesStartRepeat[property] = _valuesStartRepeat[property] + parseFloat(_valuesEnd[property]);
 						}
 
 						if (_yoyo) {
@@ -17105,14 +17118,19 @@ var ProperTable =
 						_reversed = !_reversed;
 					}
 
-					_startTime = time + _delayTime;
+					if (_repeatDelayTime !== undefined) {
+						_startTime = time + _repeatDelayTime;
+					} else {
+						_startTime = time + _delayTime;
+					}
 
 					return true;
 
 				} else {
 
 					if (_onCompleteCallback !== null) {
-						_onCompleteCallback.call(_object);
+
+						_onCompleteCallback.call(_object, _object);
 					}
 
 					for (var i = 0, numChainedTweens = _chainedTweens.length; i < numChainedTweens; i++) {
@@ -18179,7 +18197,7 @@ var ProperTable =
 /* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
+	/* WEBPACK VAR INJECTION */(function(global) {/*!
 	 * The buffer module from node.js, for the browser.
 	 *
 	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
@@ -19969,7 +19987,7 @@ var ProperTable =
 	  return val !== val // eslint-disable-line no-self-compare
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(85).Buffer, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
 
 /***/ },
 /* 86 */
@@ -20443,29 +20461,40 @@ var ProperTable =
 /* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*! @preserve
 	 * numeral.js
-	 * version : 1.5.3
+	 * version : 1.5.6
 	 * author : Adam Draper
 	 * license : MIT
 	 * http://adamwdraper.github.com/Numeral-js/
 	 */
 
-	(function () {
+	(function() {
 
 	    /************************************
-	        Constants
+	        Variables
 	    ************************************/
 
 	    var numeral,
-	        VERSION = '1.5.3',
+	        VERSION = '1.5.6',
 	        // internal storage for language config files
 	        languages = {},
-	        currentLanguage = 'en',
-	        zeroFormat = null,
-	        defaultFormat = '0,0',
-	        // check for nodeJS
-	        hasModule = (typeof module !== 'undefined' && module.exports);
+	        defaults = {
+	            currentLanguage: 'en',
+	            zeroFormat: null,
+	            nullFormat: null,
+	            defaultFormat: '0,0'
+	        },
+	        options = {
+	            currentLanguage: defaults.currentLanguage,
+	            zeroFormat: defaults.zeroFormat,
+	            nullFormat: defaults.nullFormat,
+	            defaultFormat: defaults.defaultFormat
+	        },
+	        byteSuffixes = {
+	            bytes: ['B','KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+	            iec: ['B','KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+	        };
 
 
 	    /************************************
@@ -20474,7 +20503,7 @@ var ProperTable =
 
 
 	    // Numeral prototype object
-	    function Numeral (number) {
+	    function Numeral(number) {
 	        this._value = number;
 	    }
 
@@ -20484,17 +20513,29 @@ var ProperTable =
 	     * Fixes binary rounding issues (eg. (0.615).toFixed(2) === '0.61') that present
 	     * problems for accounting- and finance-related software.
 	     */
-	    function toFixed (value, precision, roundingFunction, optionals) {
-	        var power = Math.pow(10, precision),
+	    function toFixed (value, maxDecimals, roundingFunction, optionals) {
+	        var splitValue = value.toString().split('.'),
+	            minDecimals = maxDecimals - (optionals || 0),
+	            boundedPrecision,
 	            optionalsRegExp,
+	            power,
 	            output;
-	            
+
+	        // Use the smallest precision value possible to avoid errors from floating point representation
+	        if (splitValue.length === 2) {
+	          boundedPrecision = Math.min(Math.max(splitValue[1].length, minDecimals), maxDecimals);
+	        } else {
+	          boundedPrecision = minDecimals;
+	        }
+
+	        power = Math.pow(10, boundedPrecision);
+
 	        //roundingFunction = (roundingFunction !== undefined ? roundingFunction : Math.round);
 	        // Multiply up by precision, round accurately, then divide and use native toFixed():
-	        output = (roundingFunction(value * power) / power).toFixed(precision);
+	        output = (roundingFunction(value * power) / power).toFixed(boundedPrecision);
 
-	        if (optionals) {
-	            optionalsRegExp = new RegExp('0{1,' + optionals + '}$');
+	        if (optionals > maxDecimals - boundedPrecision) {
+	            optionalsRegExp = new RegExp('\\.?0{1,' + (optionals - (maxDecimals - boundedPrecision)) + '}$');
 	            output = output.replace(optionalsRegExp, '');
 	        }
 
@@ -20506,71 +20547,34 @@ var ProperTable =
 	    ************************************/
 
 	    // determine what type of formatting we need to do
-	    function formatNumeral (n, format, roundingFunction) {
+	    function formatNumeral(n, format, roundingFunction) {
 	        var output;
 
-	        // figure out what kind of format we are dealing with
-	        if (format.indexOf('$') > -1) { // currency!!!!!
-	            output = formatCurrency(n, format, roundingFunction);
-	        } else if (format.indexOf('%') > -1) { // percentage
-	            output = formatPercentage(n, format, roundingFunction);
-	        } else if (format.indexOf(':') > -1) { // time
-	            output = formatTime(n, format);
-	        } else { // plain ol' numbers or bytes
-	            output = formatNumber(n._value, format, roundingFunction);
+	        if (n._value === 0 && options.zeroFormat !== null) {
+	            output = options.zeroFormat;
+	        } else if (n._value === null && options.nullFormat !== null) {
+	            output = options.nullFormat;
+	        } else {
+	            // figure out what kind of format we are dealing with
+	            if (format.indexOf('$') > -1) {
+	                output = formatCurrency(n, format, roundingFunction);
+	            } else if (format.indexOf('%') > -1) {
+	                output = formatPercentage(n, format, roundingFunction);
+	            } else if (format.indexOf(':') > -1) {
+	                output = formatTime(n, format);
+	            } else if (format.indexOf('b') > -1 || format.indexOf('ib') > -1) {
+	                output = formatBytes(n, format, roundingFunction);
+	            } else if (format.indexOf('o') > -1) {
+	                output = formatOrdinal(n, format, roundingFunction);
+	            } else {
+	                output = formatNumber(n._value, format, roundingFunction);
+	            }
 	        }
 
-	        // return string
 	        return output;
 	    }
 
-	    // revert to number
-	    function unformatNumeral (n, string) {
-	        var stringOriginal = string,
-	            thousandRegExp,
-	            millionRegExp,
-	            billionRegExp,
-	            trillionRegExp,
-	            suffixes = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-	            bytesMultiplier = false,
-	            power;
-
-	        if (string.indexOf(':') > -1) {
-	            n._value = unformatTime(string);
-	        } else {
-	            if (string === zeroFormat) {
-	                n._value = 0;
-	            } else {
-	                if (languages[currentLanguage].delimiters.decimal !== '.') {
-	                    string = string.replace(/\./g,'').replace(languages[currentLanguage].delimiters.decimal, '.');
-	                }
-
-	                // see if abbreviations are there so that we can multiply to the correct number
-	                thousandRegExp = new RegExp('[^a-zA-Z]' + languages[currentLanguage].abbreviations.thousand + '(?:\\)|(\\' + languages[currentLanguage].currency.symbol + ')?(?:\\))?)?$');
-	                millionRegExp = new RegExp('[^a-zA-Z]' + languages[currentLanguage].abbreviations.million + '(?:\\)|(\\' + languages[currentLanguage].currency.symbol + ')?(?:\\))?)?$');
-	                billionRegExp = new RegExp('[^a-zA-Z]' + languages[currentLanguage].abbreviations.billion + '(?:\\)|(\\' + languages[currentLanguage].currency.symbol + ')?(?:\\))?)?$');
-	                trillionRegExp = new RegExp('[^a-zA-Z]' + languages[currentLanguage].abbreviations.trillion + '(?:\\)|(\\' + languages[currentLanguage].currency.symbol + ')?(?:\\))?)?$');
-
-	                // see if bytes are there so that we can multiply to the correct number
-	                for (power = 0; power <= suffixes.length; power++) {
-	                    bytesMultiplier = (string.indexOf(suffixes[power]) > -1) ? Math.pow(1024, power + 1) : false;
-
-	                    if (bytesMultiplier) {
-	                        break;
-	                    }
-	                }
-
-	                // do some math to create our number
-	                n._value = ((bytesMultiplier) ? bytesMultiplier : 1) * ((stringOriginal.match(thousandRegExp)) ? Math.pow(10, 3) : 1) * ((stringOriginal.match(millionRegExp)) ? Math.pow(10, 6) : 1) * ((stringOriginal.match(billionRegExp)) ? Math.pow(10, 9) : 1) * ((stringOriginal.match(trillionRegExp)) ? Math.pow(10, 12) : 1) * ((string.indexOf('%') > -1) ? 0.01 : 1) * (((string.split('-').length + Math.min(string.split('(').length-1, string.split(')').length-1)) % 2)? 1: -1) * Number(string.replace(/[^0-9\.]+/g, ''));
-
-	                // round if we are talking about bytes
-	                n._value = (bytesMultiplier) ? Math.ceil(n._value) : n._value;
-	            }
-	        }
-	        return n._value;
-	    }
-
-	    function formatCurrency (n, format, roundingFunction) {
+	    function formatCurrency(n, format, roundingFunction) {
 	        var symbolIndex = format.indexOf('$'),
 	            openParenIndex = format.indexOf('('),
 	            minusSignIndex = format.indexOf('-'),
@@ -20590,36 +20594,36 @@ var ProperTable =
 	        }
 
 	        // format the number
-	        output = formatNumber(n._value, format, roundingFunction);
+	        output = formatNumber(n._value, format, roundingFunction, false);
 
 	        // position the symbol
 	        if (symbolIndex <= 1) {
 	            if (output.indexOf('(') > -1 || output.indexOf('-') > -1) {
 	                output = output.split('');
 	                spliceIndex = 1;
-	                if (symbolIndex < openParenIndex || symbolIndex < minusSignIndex){
+	                if (symbolIndex < openParenIndex || symbolIndex < minusSignIndex) {
 	                    // the symbol appears before the "(" or "-"
 	                    spliceIndex = 0;
 	                }
-	                output.splice(spliceIndex, 0, languages[currentLanguage].currency.symbol + space);
+	                output.splice(spliceIndex, 0, languages[options.currentLanguage].currency.symbol + space);
 	                output = output.join('');
 	            } else {
-	                output = languages[currentLanguage].currency.symbol + space + output;
+	                output = languages[options.currentLanguage].currency.symbol + space + output;
 	            }
 	        } else {
 	            if (output.indexOf(')') > -1) {
 	                output = output.split('');
-	                output.splice(-1, 0, space + languages[currentLanguage].currency.symbol);
+	                output.splice(-1, 0, space + languages[options.currentLanguage].currency.symbol);
 	                output = output.join('');
 	            } else {
-	                output = output + space + languages[currentLanguage].currency.symbol;
+	                output = output + space + languages[options.currentLanguage].currency.symbol;
 	            }
 	        }
 
 	        return output;
 	    }
 
-	    function formatPercentage (n, format, roundingFunction) {
+	    function formatPercentage(n, format, roundingFunction) {
 	        var space = '',
 	            output,
 	            value = n._value * 100;
@@ -20633,8 +20637,8 @@ var ProperTable =
 	        }
 
 	        output = formatNumber(value, format, roundingFunction);
-	        
-	        if (output.indexOf(')') > -1 ) {
+
+	        if (output.indexOf(')') > -1) {
 	            output = output.split('');
 	            output.splice(-1, 0, space + '%');
 	            output = output.join('');
@@ -20645,14 +20649,255 @@ var ProperTable =
 	        return output;
 	    }
 
-	    function formatTime (n) {
-	        var hours = Math.floor(n._value/60/60),
-	            minutes = Math.floor((n._value - (hours * 60 * 60))/60),
+	    function formatBytes(n, format, roundingFunction) {
+	        var output,
+	            suffixes = format.indexOf('ib') > -1 ? byteSuffixes.iec : byteSuffixes.bytes,
+	            value = n._value,
+	            suffix = '',
+	            power,
+	            min,
+	            max;
+
+	        // check for space before
+	        if (format.indexOf(' b') > -1 || format.indexOf(' ib') > -1) {
+	            suffix = ' ';
+	            format = format.replace(' ib', '').replace(' b', '');
+	        } else {
+	            format = format.replace('ib', '').replace('b', '');
+	        }
+
+	        for (power = 0; power <= suffixes.length; power++) {
+	            min = Math.pow(1024, power);
+	            max = Math.pow(1024, power + 1);
+
+	            if (value === null || value === 0 || value >= min && value < max) {
+	                suffix += suffixes[power];
+
+	                if (min > 0) {
+	                    value = value / min;
+	                }
+
+	                break;
+	            }
+	        }
+
+	        output = formatNumber(value, format, roundingFunction);
+
+	        return output + suffix;
+	    }
+
+	    function formatOrdinal(n, format, roundingFunction) {
+	        var output,
+	            ordinal = '';
+
+	        // check for space before
+	        if (format.indexOf(' o') > -1) {
+	            ordinal = ' ';
+	            format = format.replace(' o', '');
+	        } else {
+	            format = format.replace('o', '');
+	        }
+
+	        ordinal += languages[options.currentLanguage].ordinal(n._value);
+
+	        output = formatNumber(n._value, format, roundingFunction);
+
+	        return output + ordinal;
+	    }
+
+	    function formatTime(n) {
+	        var hours = Math.floor(n._value / 60 / 60),
+	            minutes = Math.floor((n._value - (hours * 60 * 60)) / 60),
 	            seconds = Math.round(n._value - (hours * 60 * 60) - (minutes * 60));
+
 	        return hours + ':' + ((minutes < 10) ? '0' + minutes : minutes) + ':' + ((seconds < 10) ? '0' + seconds : seconds);
 	    }
 
-	    function unformatTime (string) {
+	    function formatNumber(value, format, roundingFunction) {
+	        var negP = false,
+	            signed = false,
+	            optDec = false,
+	            abbr = '',
+	            abbrK = false, // force abbreviation to thousands
+	            abbrM = false, // force abbreviation to millions
+	            abbrB = false, // force abbreviation to billions
+	            abbrT = false, // force abbreviation to trillions
+	            abbrForce = false, // force abbreviation
+	            abs,
+	            min,
+	            max,
+	            power,
+	            w,
+	            precision,
+	            thousands,
+	            d = '',
+	            neg = false;
+
+	        if (value === null) {
+	            value = 0;
+	        }
+
+	        abs = Math.abs(value);
+
+	        // see if we should use parentheses for negative number or if we should prefix with a sign
+	        // if both are present we default to parentheses
+	        if (format.indexOf('(') > -1) {
+	            negP = true;
+	            format = format.slice(1, -1);
+	        } else if (format.indexOf('+') > -1) {
+	            signed = true;
+	            format = format.replace(/\+/g, '');
+	        }
+
+	        // see if abbreviation is wanted
+	        if (format.indexOf('a') > -1) {
+	            // check if abbreviation is specified
+	            abbrK = format.indexOf('aK') >= 0;
+	            abbrM = format.indexOf('aM') >= 0;
+	            abbrB = format.indexOf('aB') >= 0;
+	            abbrT = format.indexOf('aT') >= 0;
+	            abbrForce = abbrK || abbrM || abbrB || abbrT;
+
+	            // check for space before abbreviation
+	            if (format.indexOf(' a') > -1) {
+	                abbr = ' ';
+	            }
+
+	            format = format.replace(new RegExp(abbr + 'a[KMBT]?'), '');
+
+	            if (abs >= Math.pow(10, 12) && !abbrForce || abbrT) {
+	                // trillion
+	                abbr = abbr + languages[options.currentLanguage].abbreviations.trillion;
+	                value = value / Math.pow(10, 12);
+	            } else if (abs < Math.pow(10, 12) && abs >= Math.pow(10, 9) && !abbrForce || abbrB) {
+	                // billion
+	                abbr = abbr + languages[options.currentLanguage].abbreviations.billion;
+	                value = value / Math.pow(10, 9);
+	            } else if (abs < Math.pow(10, 9) && abs >= Math.pow(10, 6) && !abbrForce || abbrM) {
+	                // million
+	                abbr = abbr + languages[options.currentLanguage].abbreviations.million;
+	                value = value / Math.pow(10, 6);
+	            } else if (abs < Math.pow(10, 6) && abs >= Math.pow(10, 3) && !abbrForce || abbrK) {
+	                // thousand
+	                abbr = abbr + languages[options.currentLanguage].abbreviations.thousand;
+	                value = value / Math.pow(10, 3);
+	            }
+	        }
+
+
+	        if (format.indexOf('[.]') > -1) {
+	            optDec = true;
+	            format = format.replace('[.]', '.');
+	        }
+
+	        w = value.toString().split('.')[0];
+	        precision = format.split('.')[1];
+	        thousands = format.indexOf(',');
+
+	        if (precision) {
+	            if (precision.indexOf('[') > -1) {
+	                precision = precision.replace(']', '');
+	                precision = precision.split('[');
+	                d = toFixed(value, (precision[0].length + precision[1].length), roundingFunction, precision[1].length);
+	            } else {
+	                d = toFixed(value, precision.length, roundingFunction);
+	            }
+
+	            w = d.split('.')[0];
+
+	            if (d.indexOf('.') > -1) {
+	                d = languages[options.currentLanguage].delimiters.decimal + d.split('.')[1];
+	            } else {
+	                d = '';
+	            }
+
+	            if (optDec && Number(d.slice(1)) === 0) {
+	                d = '';
+	            }
+	        } else {
+	            w = toFixed(value, null, roundingFunction);
+	        }
+
+	        // format number
+	        if (w.indexOf('-') > -1) {
+	            w = w.slice(1);
+	            neg = true;
+	        }
+
+	        if (thousands > -1) {
+	            w = w.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + languages[options.currentLanguage].delimiters.thousands);
+	        }
+
+	        if (format.indexOf('.') === 0) {
+	            w = '';
+	        }
+
+	        return ((negP && neg) ? '(' : '') + ((!negP && neg) ? '-' : '') + ((!neg && signed) ? '+' : '') + w + d + ((abbr) ? abbr : '') + ((negP && neg) ? ')' : '');
+	    }
+
+
+	    /************************************
+	        Unformatting
+	    ************************************/
+
+	    // revert to number
+	    function unformatNumeral(n, string) {
+	        var stringOriginal = string,
+	            thousandRegExp,
+	            millionRegExp,
+	            billionRegExp,
+	            trillionRegExp,
+	            bytesMultiplier = false,
+	            power,
+	            value;
+
+	        if (string.indexOf(':') > -1) {
+	            value = unformatTime(string);
+	        } else {
+	            if (string === options.zeroFormat || string === options.nullFormat) {
+	                value = 0;
+	            } else {
+	                if (languages[options.currentLanguage].delimiters.decimal !== '.') {
+	                    string = string.replace(/\./g, '').replace(languages[options.currentLanguage].delimiters.decimal, '.');
+	                }
+
+	                // see if abbreviations are there so that we can multiply to the correct number
+	                thousandRegExp = new RegExp('[^a-zA-Z]' + languages[options.currentLanguage].abbreviations.thousand + '(?:\\)|(\\' + languages[options.currentLanguage].currency.symbol + ')?(?:\\))?)?$');
+	                millionRegExp = new RegExp('[^a-zA-Z]' + languages[options.currentLanguage].abbreviations.million + '(?:\\)|(\\' + languages[options.currentLanguage].currency.symbol + ')?(?:\\))?)?$');
+	                billionRegExp = new RegExp('[^a-zA-Z]' + languages[options.currentLanguage].abbreviations.billion + '(?:\\)|(\\' + languages[options.currentLanguage].currency.symbol + ')?(?:\\))?)?$');
+	                trillionRegExp = new RegExp('[^a-zA-Z]' + languages[options.currentLanguage].abbreviations.trillion + '(?:\\)|(\\' + languages[options.currentLanguage].currency.symbol + ')?(?:\\))?)?$');
+
+	                // see if bytes are there so that we can multiply to the correct number
+	                for (power = 1; power <= byteSuffixes.bytes.length; power++) {
+	                    bytesMultiplier = ((string.indexOf(byteSuffixes.bytes[power]) > -1) || (string.indexOf(byteSuffixes.iec[power]) > -1))? Math.pow(1024, power) : false;
+
+	                    if (bytesMultiplier) {
+	                        break;
+	                    }
+	                }
+
+	                // do some math to create our number
+	                value = bytesMultiplier ? bytesMultiplier : 1;
+	                value *= stringOriginal.match(thousandRegExp) ? Math.pow(10, 3) : 1;
+	                value *= stringOriginal.match(millionRegExp) ? Math.pow(10, 6) : 1;
+	                value *= stringOriginal.match(billionRegExp) ? Math.pow(10, 9) : 1;
+	                value *= stringOriginal.match(trillionRegExp) ? Math.pow(10, 12) : 1;
+	                // check for percentage
+	                value *= string.indexOf('%') > -1 ? 0.01 : 1;
+	                // check for negative number
+	                value *= (string.split('-').length + Math.min(string.split('(').length - 1, string.split(')').length - 1)) % 2 ? 1 : -1;
+	                // remove non numbers
+	                value *= Number(string.replace(/[^0-9\.]+/g, ''));
+	                // round if we are talking about bytes
+	                value = bytesMultiplier ? Math.ceil(value) : value;
+	            }
+	        }
+
+	        n._value = value;
+
+	        return n._value;
+	    }
+	    function unformatTime(string) {
 	        var timeArray = string.split(':'),
 	            seconds = 0;
 	        // turn hours and minutes into seconds and add them all up
@@ -20672,204 +20917,52 @@ var ProperTable =
 	        return Number(seconds);
 	    }
 
-	    function formatNumber (value, format, roundingFunction) {
-	        var negP = false,
-	            signed = false,
-	            optDec = false,
-	            abbr = '',
-	            abbrK = false, // force abbreviation to thousands
-	            abbrM = false, // force abbreviation to millions
-	            abbrB = false, // force abbreviation to billions
-	            abbrT = false, // force abbreviation to trillions
-	            abbrForce = false, // force abbreviation
-	            bytes = '',
-	            ord = '',
-	            abs = Math.abs(value),
-	            suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-	            min,
-	            max,
-	            power,
-	            w,
-	            precision,
-	            thousands,
-	            d = '',
-	            neg = false;
-
-	        // check if number is zero and a custom zero format has been set
-	        if (value === 0 && zeroFormat !== null) {
-	            return zeroFormat;
-	        } else {
-	            // see if we should use parentheses for negative number or if we should prefix with a sign
-	            // if both are present we default to parentheses
-	            if (format.indexOf('(') > -1) {
-	                negP = true;
-	                format = format.slice(1, -1);
-	            } else if (format.indexOf('+') > -1) {
-	                signed = true;
-	                format = format.replace(/\+/g, '');
-	            }
-
-	            // see if abbreviation is wanted
-	            if (format.indexOf('a') > -1) {
-	                // check if abbreviation is specified
-	                abbrK = format.indexOf('aK') >= 0;
-	                abbrM = format.indexOf('aM') >= 0;
-	                abbrB = format.indexOf('aB') >= 0;
-	                abbrT = format.indexOf('aT') >= 0;
-	                abbrForce = abbrK || abbrM || abbrB || abbrT;
-
-	                // check for space before abbreviation
-	                if (format.indexOf(' a') > -1) {
-	                    abbr = ' ';
-	                    format = format.replace(' a', '');
-	                } else {
-	                    format = format.replace('a', '');
-	                }
-
-	                if (abs >= Math.pow(10, 12) && !abbrForce || abbrT) {
-	                    // trillion
-	                    abbr = abbr + languages[currentLanguage].abbreviations.trillion;
-	                    value = value / Math.pow(10, 12);
-	                } else if (abs < Math.pow(10, 12) && abs >= Math.pow(10, 9) && !abbrForce || abbrB) {
-	                    // billion
-	                    abbr = abbr + languages[currentLanguage].abbreviations.billion;
-	                    value = value / Math.pow(10, 9);
-	                } else if (abs < Math.pow(10, 9) && abs >= Math.pow(10, 6) && !abbrForce || abbrM) {
-	                    // million
-	                    abbr = abbr + languages[currentLanguage].abbreviations.million;
-	                    value = value / Math.pow(10, 6);
-	                } else if (abs < Math.pow(10, 6) && abs >= Math.pow(10, 3) && !abbrForce || abbrK) {
-	                    // thousand
-	                    abbr = abbr + languages[currentLanguage].abbreviations.thousand;
-	                    value = value / Math.pow(10, 3);
-	                }
-	            }
-
-	            // see if we are formatting bytes
-	            if (format.indexOf('b') > -1) {
-	                // check for space before
-	                if (format.indexOf(' b') > -1) {
-	                    bytes = ' ';
-	                    format = format.replace(' b', '');
-	                } else {
-	                    format = format.replace('b', '');
-	                }
-
-	                for (power = 0; power <= suffixes.length; power++) {
-	                    min = Math.pow(1024, power);
-	                    max = Math.pow(1024, power+1);
-
-	                    if (value >= min && value < max) {
-	                        bytes = bytes + suffixes[power];
-	                        if (min > 0) {
-	                            value = value / min;
-	                        }
-	                        break;
-	                    }
-	                }
-	            }
-
-	            // see if ordinal is wanted
-	            if (format.indexOf('o') > -1) {
-	                // check for space before
-	                if (format.indexOf(' o') > -1) {
-	                    ord = ' ';
-	                    format = format.replace(' o', '');
-	                } else {
-	                    format = format.replace('o', '');
-	                }
-
-	                ord = ord + languages[currentLanguage].ordinal(value);
-	            }
-
-	            if (format.indexOf('[.]') > -1) {
-	                optDec = true;
-	                format = format.replace('[.]', '.');
-	            }
-
-	            w = value.toString().split('.')[0];
-	            precision = format.split('.')[1];
-	            thousands = format.indexOf(',');
-
-	            if (precision) {
-	                if (precision.indexOf('[') > -1) {
-	                    precision = precision.replace(']', '');
-	                    precision = precision.split('[');
-	                    d = toFixed(value, (precision[0].length + precision[1].length), roundingFunction, precision[1].length);
-	                } else {
-	                    d = toFixed(value, precision.length, roundingFunction);
-	                }
-
-	                w = d.split('.')[0];
-
-	                if (d.split('.')[1].length) {
-	                    d = languages[currentLanguage].delimiters.decimal + d.split('.')[1];
-	                } else {
-	                    d = '';
-	                }
-
-	                if (optDec && Number(d.slice(1)) === 0) {
-	                    d = '';
-	                }
-	            } else {
-	                w = toFixed(value, null, roundingFunction);
-	            }
-
-	            // format number
-	            if (w.indexOf('-') > -1) {
-	                w = w.slice(1);
-	                neg = true;
-	            }
-
-	            if (thousands > -1) {
-	                w = w.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + languages[currentLanguage].delimiters.thousands);
-	            }
-
-	            if (format.indexOf('.') === 0) {
-	                w = '';
-	            }
-
-	            return ((negP && neg) ? '(' : '') + ((!negP && neg) ? '-' : '') + ((!neg && signed) ? '+' : '') + w + d + ((ord) ? ord : '') + ((abbr) ? abbr : '') + ((bytes) ? bytes : '') + ((negP && neg) ? ')' : '');
-	        }
-	    }
 
 	    /************************************
 	        Top Level Functions
 	    ************************************/
 
-	    numeral = function (input) {
+	    numeral = function(input) {
 	        if (numeral.isNumeral(input)) {
 	            input = input.value();
 	        } else if (input === 0 || typeof input === 'undefined') {
 	            input = 0;
+	        } else if (input === null) {
+	            input = null;
 	        } else if (!Number(input)) {
 	            input = numeral.fn.unformat(input);
+	        } else {
+	            input = Number(input);
 	        }
 
-	        return new Numeral(Number(input));
+	        return new Numeral(input);
 	    };
 
 	    // version number
 	    numeral.version = VERSION;
 
 	    // compare numeral object
-	    numeral.isNumeral = function (obj) {
+	    numeral.isNumeral = function(obj) {
 	        return obj instanceof Numeral;
 	    };
+
 
 	    // This function will load languages and then set the global language.  If
 	    // no arguments are passed in, it will simply return the current global
 	    // language key.
-	    numeral.language = function (key, values) {
+	    numeral.language = function(key, values) {
 	        if (!key) {
-	            return currentLanguage;
+	            return options.currentLanguage;
 	        }
 
+	        key = key.toLowerCase();
+
 	        if (key && !values) {
-	            if(!languages[key]) {
+	            if (!languages[key]) {
 	                throw new Error('Unknown language : ' + key);
 	            }
-	            currentLanguage = key;
+
+	            options.currentLanguage = key;
 	        }
 
 	        if (values || !languages[key]) {
@@ -20878,19 +20971,25 @@ var ProperTable =
 
 	        return numeral;
 	    };
-	    
+
+	    numeral.reset = function() {
+	        for (var property in defaults) {
+	            options[property] = defaults[property];
+	        }
+	    };
+
 	    // This function provides access to the loaded language data.  If
 	    // no arguments are passed in, it will simply return the current
 	    // global language object.
-	    numeral.languageData = function (key) {
+	    numeral.languageData = function(key) {
 	        if (!key) {
-	            return languages[currentLanguage];
+	            return languages[options.currentLanguage];
 	        }
-	        
+
 	        if (!languages[key]) {
 	            throw new Error('Unknown language : ' + key);
 	        }
-	        
+
 	        return languages[key];
 	    };
 
@@ -20905,9 +21004,9 @@ var ProperTable =
 	            billion: 'b',
 	            trillion: 't'
 	        },
-	        ordinal: function (number) {
+	        ordinal: function(number) {
 	            var b = number % 10;
-	            return (~~ (number % 100 / 10) === 1) ? 'th' :
+	            return (~~(number % 100 / 10) === 1) ? 'th' :
 	                (b === 1) ? 'st' :
 	                (b === 2) ? 'nd' :
 	                (b === 3) ? 'rd' : 'th';
@@ -20917,12 +21016,105 @@ var ProperTable =
 	        }
 	    });
 
-	    numeral.zeroFormat = function (format) {
-	        zeroFormat = typeof(format) === 'string' ? format : null;
+	    numeral.zeroFormat = function(format) {
+	        options.zeroFormat = typeof(format) === 'string' ? format : null;
 	    };
 
-	    numeral.defaultFormat = function (format) {
-	        defaultFormat = typeof(format) === 'string' ? format : '0.0';
+	    numeral.nullFormat = function (format) {
+	        options.nullFormat = typeof(format) === 'string' ? format : null;
+	    };
+
+	    numeral.defaultFormat = function(format) {
+	        options.defaultFormat = typeof(format) === 'string' ? format : '0.0';
+	    };
+
+	    numeral.validate = function(val, culture) {
+	        var _decimalSep,
+	            _thousandSep,
+	            _currSymbol,
+	            _valArray,
+	            _abbrObj,
+	            _thousandRegEx,
+	            languageData,
+	            temp;
+
+	        //coerce val to string
+	        if (typeof val !== 'string') {
+	            val += '';
+	            if (console.warn) {
+	                console.warn('Numeral.js: Value is not string. It has been co-erced to: ', val);
+	            }
+	        }
+
+	        //trim whitespaces from either sides
+	        val = val.trim();
+
+	        //if val is just digits return true
+	        if ( !! val.match(/^\d+$/)) {
+	            return true;
+	        }
+
+	        //if val is empty return false
+	        if (val === '') {
+	            return false;
+	        }
+
+	        //get the decimal and thousands separator from numeral.languageData
+	        try {
+	            //check if the culture is understood by numeral. if not, default it to current language
+	            languageData = numeral.languageData(culture);
+	        } catch (e) {
+	            languageData = numeral.languageData(numeral.language());
+	        }
+
+	        //setup the delimiters and currency symbol based on culture/language
+	        _currSymbol = languageData.currency.symbol;
+	        _abbrObj = languageData.abbreviations;
+	        _decimalSep = languageData.delimiters.decimal;
+	        if (languageData.delimiters.thousands === '.') {
+	            _thousandSep = '\\.';
+	        } else {
+	            _thousandSep = languageData.delimiters.thousands;
+	        }
+
+	        // validating currency symbol
+	        temp = val.match(/^[^\d]+/);
+	        if (temp !== null) {
+	            val = val.substr(1);
+	            if (temp[0] !== _currSymbol) {
+	                return false;
+	            }
+	        }
+
+	        //validating abbreviation symbol
+	        temp = val.match(/[^\d]+$/);
+	        if (temp !== null) {
+	            val = val.slice(0, -1);
+	            if (temp[0] !== _abbrObj.thousand && temp[0] !== _abbrObj.million && temp[0] !== _abbrObj.billion && temp[0] !== _abbrObj.trillion) {
+	                return false;
+	            }
+	        }
+
+	        _thousandRegEx = new RegExp(_thousandSep + '{2}');
+
+	        if (!val.match(/[^\d.,]/g)) {
+	            _valArray = val.split(_decimalSep);
+	            if (_valArray.length > 2) {
+	                return false;
+	            } else {
+	                if (_valArray.length < 2) {
+	                    return ( !! _valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx));
+	                } else {
+	                    if (_valArray[0].length === 1) {
+	                        return ( !! _valArray[0].match(/^\d+$/) && !_valArray[0].match(_thousandRegEx) && !! _valArray[1].match(/^\d+$/));
+	                    } else {
+	                        return ( !! _valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx) && !! _valArray[1].match(/^\d+$/));
+	                    }
+	                }
+	            }
+	        }
+
+	        return false;
 	    };
 
 	    /************************************
@@ -20940,55 +21132,43 @@ var ProperTable =
 	    // The floating-point helper functions and implementation
 	    // borrows heavily from sinful.js: http://guipn.github.io/sinful.js/
 
-	    /**
-	     * Array.prototype.reduce for browsers that don't support it
-	     * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce#Compatibility
-	     */
-	    if ('function' !== typeof Array.prototype.reduce) {
-	        Array.prototype.reduce = function (callback, opt_initialValue) {
+	    // Production steps of ECMA-262, Edition 5, 15.4.4.21
+	    // Reference: http://es5.github.io/#x15.4.4.21
+	    if (!Array.prototype.reduce) {
+	        Array.prototype.reduce = function(callback /*, initialValue*/) {
 	            'use strict';
-	            
-	            if (null === this || 'undefined' === typeof this) {
-	                // At the moment all modern browsers, that support strict mode, have
-	                // native implementation of Array.prototype.reduce. For instance, IE8
-	                // does not support strict mode, so this check is actually useless.
+	            if (this === null) {
 	                throw new TypeError('Array.prototype.reduce called on null or undefined');
 	            }
-	            
-	            if ('function' !== typeof callback) {
+
+	            if (typeof callback !== 'function') {
 	                throw new TypeError(callback + ' is not a function');
 	            }
 
-	            var index,
-	                value,
-	                length = this.length >>> 0,
-	                isValueSet = false;
+	            var t = Object(this), len = t.length >>> 0, k = 0, value;
 
-	            if (1 < arguments.length) {
-	                value = opt_initialValue;
-	                isValueSet = true;
+	            if (arguments.length === 2) {
+	                value = arguments[1];
+	            } else {
+	                while (k < len && !(k in t)) {
+	                    k++;
+	                }
+
+	                if (k >= len) {
+	                    throw new TypeError('Reduce of empty array with no initial value');
+	                }
+
+	                value = t[k++];
 	            }
-
-	            for (index = 0; length > index; ++index) {
-	                if (this.hasOwnProperty(index)) {
-	                    if (isValueSet) {
-	                        value = callback(value, this[index], index, this);
-	                    } else {
-	                        value = this[index];
-	                        isValueSet = true;
-	                    }
+	            for (; k < len; k++) {
+	                if (k in t) {
+	                    value = callback(value, t[k], k, t);
 	                }
 	            }
-
-	            if (!isValueSet) {
-	                throw new TypeError('Reduce of empty array with no initial value');
-	            }
-
 	            return value;
 	        };
 	    }
 
-	    
 	    /**
 	     * Computes the multiplier necessary to make x >= 1,
 	     * effectively eliminating miscalculations caused by
@@ -21009,12 +21189,12 @@ var ProperTable =
 	     */
 	    function correctionFactor() {
 	        var args = Array.prototype.slice.call(arguments);
-	        return args.reduce(function (prev, next) {
+	        return args.reduce(function(prev, next) {
 	            var mp = multiplier(prev),
 	                mn = multiplier(next);
-	        return mp > mn ? mp : mn;
+	            return mp > mn ? mp : mn;
 	        }, -Infinity);
-	    }        
+	    }
 
 
 	    /************************************
@@ -21024,39 +21204,41 @@ var ProperTable =
 
 	    numeral.fn = Numeral.prototype = {
 
-	        clone : function () {
+	        clone: function() {
 	            return numeral(this);
 	        },
 
-	        format : function (inputString, roundingFunction) {
-	            return formatNumeral(this, 
-	                  inputString ? inputString : defaultFormat, 
-	                  (roundingFunction !== undefined) ? roundingFunction : Math.round
-	              );
+	        format: function (inputString, roundingFunction) {
+	            return formatNumeral(this,
+	                inputString ? inputString : options.defaultFormat,
+	                roundingFunction !== undefined ? roundingFunction : Math.round
+	            );
 	        },
 
-	        unformat : function (inputString) {
-	            if (Object.prototype.toString.call(inputString) === '[object Number]') { 
-	                return inputString; 
+	        unformat: function (inputString) {
+	            if (Object.prototype.toString.call(inputString) === '[object Number]') {
+	                return inputString;
 	            }
-	            return unformatNumeral(this, inputString ? inputString : defaultFormat);
+
+	            return unformatNumeral(this, inputString ? inputString : options.defaultFormat);
 	        },
 
-	        value : function () {
+	        value: function() {
 	            return this._value;
 	        },
 
-	        valueOf : function () {
+	        valueOf: function() {
 	            return this._value;
 	        },
 
-	        set : function (value) {
+	        set: function(value) {
 	            this._value = Number(value);
 	            return this;
 	        },
 
-	        add : function (value) {
+	        add: function(value) {
 	            var corrFactor = correctionFactor.call(null, this._value, value);
+
 	            function cback(accum, curr, currI, O) {
 	                return accum + corrFactor * curr;
 	            }
@@ -21064,16 +21246,17 @@ var ProperTable =
 	            return this;
 	        },
 
-	        subtract : function (value) {
+	        subtract: function(value) {
 	            var corrFactor = correctionFactor.call(null, this._value, value);
+
 	            function cback(accum, curr, currI, O) {
 	                return accum - corrFactor * curr;
 	            }
-	            this._value = [value].reduce(cback, this._value * corrFactor) / corrFactor;            
+	            this._value = [value].reduce(cback, this._value * corrFactor) / corrFactor;
 	            return this;
 	        },
 
-	        multiply : function (value) {
+	        multiply: function(value) {
 	            function cback(accum, curr, currI, O) {
 	                var corrFactor = correctionFactor(accum, curr);
 	                return (accum * corrFactor) * (curr * corrFactor) /
@@ -21083,16 +21266,16 @@ var ProperTable =
 	            return this;
 	        },
 
-	        divide : function (value) {
+	        divide: function(value) {
 	            function cback(accum, curr, currI, O) {
 	                var corrFactor = correctionFactor(accum, curr);
 	                return (accum * corrFactor) / (curr * corrFactor);
 	            }
-	            this._value = [this._value, value].reduce(cback);            
+	            this._value = [this._value, value].reduce(cback);
 	            return this;
 	        },
 
-	        difference : function (value) {
+	        difference: function(value) {
 	            return Math.abs(numeral(this._value).subtract(value).value());
 	        }
 
@@ -21103,7 +21286,7 @@ var ProperTable =
 	    ************************************/
 
 	    // CommonJS module is defined
-	    if (hasModule) {
+	    if (typeof module !== 'undefined' && module.exports) {
 	        module.exports = numeral;
 	    }
 
@@ -21117,7 +21300,7 @@ var ProperTable =
 
 	    /*global define:false */
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() {
 	            return numeral;
 	        }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    }
@@ -21942,19 +22125,18 @@ var ProperTable =
 
 	'use strict';
 
+	var validTypes = { object: true, symbol: true };
+
 	module.exports = function () {
 		var symbol;
 		if (typeof Symbol !== 'function') return false;
 		symbol = Symbol('test symbol');
 		try { String(symbol); } catch (e) { return false; }
-		if (typeof Symbol.iterator === 'symbol') return true;
 
-		// Return 'true' for polyfills
-		if (typeof Symbol.isConcatSpreadable !== 'object') return false;
-		if (typeof Symbol.iterator !== 'object') return false;
-		if (typeof Symbol.toPrimitive !== 'object') return false;
-		if (typeof Symbol.toStringTag !== 'object') return false;
-		if (typeof Symbol.unscopables !== 'object') return false;
+		// Return 'true' also for polyfills
+		if (!validTypes[typeof Symbol.iterator]) return false;
+		if (!validTypes[typeof Symbol.toPrimitive]) return false;
+		if (!validTypes[typeof Symbol.toStringTag]) return false;
 
 		return true;
 	};
@@ -21964,7 +22146,7 @@ var ProperTable =
 /* 126 */
 /***/ function(module, exports, __webpack_require__) {
 
-	// ES2015 Symbol polyfill for environments that do not support it (or partially support it_
+	// ES2015 Symbol polyfill for environments that do not support it (or partially support it)
 
 	'use strict';
 
@@ -21973,9 +22155,16 @@ var ProperTable =
 
 	  , create = Object.create, defineProperties = Object.defineProperties
 	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
-	  , NativeSymbol, SymbolPolyfill, HiddenSymbol, globalSymbols = create(null);
+	  , NativeSymbol, SymbolPolyfill, HiddenSymbol, globalSymbols = create(null)
+	  , isNativeSafe;
 
-	if (typeof Symbol === 'function') NativeSymbol = Symbol;
+	if (typeof Symbol === 'function') {
+		NativeSymbol = Symbol;
+		try {
+			String(NativeSymbol());
+			isNativeSafe = true;
+		} catch (ignore) {}
+	}
 
 	var generateName = (function () {
 		var created = create(null);
@@ -22011,6 +22200,7 @@ var ProperTable =
 	module.exports = SymbolPolyfill = function Symbol(description) {
 		var symbol;
 		if (this instanceof Symbol) throw new TypeError('TypeError: Symbol is not a constructor');
+		if (isNativeSafe) return NativeSymbol(description);
 		symbol = create(HiddenSymbol.prototype);
 		description = (description === undefined ? '' : String(description));
 		return defineProperties(symbol, {
@@ -22057,8 +22247,11 @@ var ProperTable =
 		toString: d(function () { return 'Symbol (' + validateSymbol(this).__description__ + ')'; }),
 		valueOf: d(function () { return validateSymbol(this); })
 	});
-	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toPrimitive, d('',
-		function () { return validateSymbol(this); }));
+	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toPrimitive, d('', function () {
+		var symbol = validateSymbol(this);
+		if (typeof symbol === 'symbol') return symbol;
+		return symbol.toString();
+	}));
 	defineProperty(SymbolPolyfill.prototype, SymbolPolyfill.toStringTag, d('c', 'Symbol'));
 
 	// Proper implementaton of toPrimitive and toStringTag for returned symbol instances
@@ -22094,7 +22287,11 @@ var ProperTable =
 	'use strict';
 
 	module.exports = function (x) {
-		return (x && ((typeof x === 'symbol') || (x['@@toStringTag'] === 'Symbol'))) || false;
+		if (!x) return false;
+		if (typeof x === 'symbol') return true;
+		if (!x.constructor) return false;
+		if (x.constructor.name !== 'Symbol') return false;
+		return (x[x.constructor.toStringTag] === 'Symbol');
 	};
 
 
@@ -22676,16 +22873,15 @@ var ProperTable =
 	 *
 	 */
 	module.exports = function Dimensions() {
-	  var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
-
-	  var _ref$getHeight = _ref.getHeight;
-	  var getHeight = _ref$getHeight === undefined ? defaultGetHeight : _ref$getHeight;
-	  var _ref$getWidth = _ref.getWidth;
-	  var getWidth = _ref$getWidth === undefined ? defaultGetWidth : _ref$getWidth;
-	  var _ref$containerStyle = _ref.containerStyle;
-	  var containerStyle = _ref$containerStyle === undefined ? defaultContainerStyle : _ref$containerStyle;
-	  var _ref$elementResize = _ref.elementResize;
-	  var elementResize = _ref$elementResize === undefined ? false : _ref$elementResize;
+	  var _ref = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {},
+	      _ref$getHeight = _ref.getHeight,
+	      getHeight = _ref$getHeight === undefined ? defaultGetHeight : _ref$getHeight,
+	      _ref$getWidth = _ref.getWidth,
+	      getWidth = _ref$getWidth === undefined ? defaultGetWidth : _ref$getWidth,
+	      _ref$containerStyle = _ref.containerStyle,
+	      containerStyle = _ref$containerStyle === undefined ? defaultContainerStyle : _ref$containerStyle,
+	      _ref$elementResize = _ref.elementResize,
+	      elementResize = _ref$elementResize === undefined ? false : _ref$elementResize;
 
 	  return function (ComposedComponent) {
 	    return function (_React$Component) {

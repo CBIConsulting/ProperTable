@@ -306,8 +306,7 @@ class ProperTable extends React.Component {
 				curCol = currentCols[index];
 
 				if (col.name !== curCol.name || col.field !== curCol.field || col.sortable !== curCol.sortable ||  col.uniqueId !== curCol.uniqueId
-					|| !shallowEqualImmutable(col.formatter, curCol.formatter) || !shallowEqualImmutable(col.sortVal, curCol.sortVal)
-					|| !shallowEqualImmutable(col.children, curCol.children)) {
+					|| !shallowEqualImmutable(col.formatter, curCol.formatter) || !shallowEqualImmutable(col.children, curCol.children)) {
 
 					hasChangedDeeply = true;
 					return false; // Break
@@ -370,14 +369,17 @@ class ProperTable extends React.Component {
  */
 	addClickListener(restartOnClick) {
 		if (!React.isValidElement(restartOnClick)) { // Not React element
-			restartOnClick.addEventListener('click', this.clearFilterAndSort.bind(this));
+			if (restartOnClick.length) {
+				for (var i = restartOnClick.length - 1; i >= 0; i--) {
+					restartOnClick[i].addEventListener('click', this.clearFilterAndSort.bind(this));
+				}
+			}
 		} else {
 			let btn = null;
 
 			if (restartOnClick.props.id)	{
 				btn = document.getElementById(restartOnClick.props.id);
 				btn.addEventListener('click', this.clearFilterAndSort.bind(this));
-
 			} else if (this.props.restartOnClick.props.className){
 				btn = document.getElementsByClassName(restartOnClick.props.className);
 				for (let i = btn.length - 1; i >= 0; i--) {
@@ -758,8 +760,7 @@ class ProperTable extends React.Component {
         let multisort = props.multisort, direction = null, sortable = null, colData = null, indexed = null, parsedData = null;
 
 		// The default sort dirs (in case that's exist) will be applied in applyColSettings
-
-        // Through each element, of the colSortDirs built data, build the colSortDirs with the default directions received,
+        // Iterate through each element of the colSortDirs and the built data, build the colSortDirs with the default directions received,
         // setting a position (position of priority to sort (it will be modified after click on the diferent columns)), if
         // the column is sortable or not and if the Table has multisort or just only single.
         for (let i = 0; i <= sortData.colSortDirs.length - 1; i++) {
@@ -848,26 +849,39 @@ class ProperTable extends React.Component {
 
         return {
             colSettings: colSettings,
-            colSortParsers: sortData.sortVals
+            colSortParsers: sortData.sortParsers
         }
     }
 
 /**
- * Build the structure of the colSortDirs array and the sortVals array with the functions received in cols or a default function to parse.
+ * Build the structure of the colSortDirs array and the sortParsers array with the functions received in cols or a default function to parse.
  * In fact this method look through all the columns in props.cols recursively and add all that aren't a ColumnGroup,
  * the columns that may be sorted.
  *
  * @param 	(array)	cols Describe each column data. (name, sortable, fixed...)
  *
  * @return 	(array)	-colSortDirs: Sort settings of each column.
- *					-sortValues: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
+ *					-sortParsers: Array of functions to parse the data of a column before use it to sort (ex. Date -> function(val){return dateToUnix(val)})
  */
-	buildColSortDirs(cols, colSortDirs = [], sortVals = {}) {
+	buildColSortDirs(cols, colSortDirs = [], sortParsers = {}) {
 		cols.forEach( element => {
 			if (!element.children) {
 				let sortable = _.isUndefined(element.sortable) ? null : element.sortable;
 				let formatter = _.isUndefined(element.formatter) ? null : element.formatter;
-				sortVals[element.name] = element.sortVal || function(val) {return val}; // Function to iterate
+				let sortParser = element.sortParser ? element.sortParser : null;
+
+				if (sortParser === null) {
+					if (element.sortVal) {
+						sortParser = element.sortVal;
+
+						if (console && console.warm) {
+							console.warm('The sortVal property of the column has been deprecated. Please, use the sortParser instead for this purpouse');
+						}
+					} else {
+						sortParser = function(val) {return val};
+					}
+				}
+				sortParsers[element.name] = sortParser; // Function to iterate
 
 				colSortDirs.push({
 					column: element.name,
@@ -877,17 +891,17 @@ class ProperTable extends React.Component {
 					formatter: formatter
 				});
 			} else {
-				this.buildColSortDirs(element.children, colSortDirs, sortVals);
+				this.buildColSortDirs(element.children, colSortDirs, sortParsers);
 			}
 		});
 
 		if (this.props.selectable == MULTIPLE_SELECTION) {
-		  	sortVals[SELECTOR_COL_NAME] = function(val) {return val};
+		  	sortParsers[SELECTOR_COL_NAME] = function(val) {return val};
 		}
 
 		return {
 			colSortDirs: colSortDirs,
-			sortVals: sortVals
+			sortParsers: sortParsers
 		}
 	}
 
@@ -978,7 +992,6 @@ class ProperTable extends React.Component {
  */
 	onSortChange(columnKey, sortDir, newData = null) {
   		let colSettings = newData ? newData.colSettings : this.state.colSettings;
-
   		colSettings = this.updateSortDir(columnKey, sortDir, colSettings);
   		this.sortTable(colSettings, true, newData);
 	}
@@ -1166,18 +1179,18 @@ class ProperTable extends React.Component {
 					rowId = row.get(this.props.idField);
 					// sortCache [row-id] [column-id] = procesed value.
 					if (_.isUndefined(sortCache[rowId][element.field]) || element.column === SELECTOR_COL_NAME) {
-						val = sortParser(row.get(element.field));
+						val = sortParser(row.get(element.field), null, null);
 						sortCache[rowId][element.field] = val || ''; // Turn null's into empty values
 					}
 
 	  				return sortCache[rowId][element.field];
-				}, (val1, val2) => {
-					if (val1 == val2) {
+				}, (a, b) => {
+					if (a == b) {
 						return 0;
 					} else if (element.direction == ASCENDING_SORT_DIRECTION) {
-						return val1 > val2? 1 : -1;
+						return a > b ? -1 : 1;
 					} else if (element.direction == DESCENDING_SORT_DIRECTION) {
-					 	return val1 > val2? -1 : 1;
+					 	return a > b ? 1 : -1;
 					}
 				});
 				defaultSort = false;
@@ -1189,8 +1202,8 @@ class ProperTable extends React.Component {
 			//  Set to default
 			sortedData = data.sortBy((row, rowIndex, allData) => {
 	  			return row.get(ROW_INDEX_FIELD);
-			}, (val1, val2) => {
-				return val1 > val2? 1 : (val1 == val2 ? 0:-1);
+			}, (a, b) => {
+				return a > b ? 1 : (a == b ? 0:-1);
 			});
 		}
 
@@ -1439,7 +1452,7 @@ class ProperTable extends React.Component {
 		let footer = null;
 
 		if (this.props.displayFooter) {
-			let messages = this.props.msgs[this.props.lang];
+			let messages = this.getTranslatedMessages();
 			let msgFilters, msgSort = null, isFirstFilter = true, isFirstColumn = true, column;
 			let hasSort = this.state.hasSortedColumns;
 
@@ -1822,6 +1835,23 @@ class ProperTable extends React.Component {
 		return addClass;
 	}
 
+/**
+ * Get the translated messages for the component.
+ *
+ * @return object Messages of the selected language or in English if the translation for this lang doesn't exist.
+ */
+	getTranslatedMessages() {
+		if (!_.isObject(this.props.msgs)) {
+			return {};
+		}
+
+		if (this.props.msgs[this.props.lang]) {
+			return this.props.msgs[this.props.lang];
+		}
+
+		return this.props.msgs['ENG'];
+	}
+
 	onResize(width, column) {
 		let sizes = this.state.sizes;
 		let newsizes = sizes.set(column, width);
@@ -1830,7 +1860,7 @@ class ProperTable extends React.Component {
 	}
 
 	render() {
-		// let content = <div className="propertable-empty">{this.props.msgs[this.props.lang].empty}</div>;
+		// let content = <div className="propertable-empty">{this.getTranslatedMessages().empty}</div>;
 		let content = null, tableHeight = this.props.containerHeight || 400;
 		let tableContent = this.buildTable();
 		let footer = this.buildFooter();
@@ -1911,6 +1941,14 @@ ProperTable.propTypes = {
     hasDisableRows: React.PropTypes.bool,
     displayFooter: React.PropTypes.bool,
     footerInfoHeight: React.PropTypes.oneOfType([
+    	React.PropTypes.number,
+    	React.PropTypes.string
+    ]),
+    containerHeight: React.PropTypes.oneOfType([
+    	React.PropTypes.number,
+    	React.PropTypes.string
+    ]),
+    containerWidth: React.PropTypes.oneOfType([
     	React.PropTypes.number,
     	React.PropTypes.string
     ])
