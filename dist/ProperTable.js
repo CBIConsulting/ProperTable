@@ -1504,9 +1504,9 @@ var ProperTable =
 						if (a == b) {
 							return 0;
 						} else if (element.direction == ASCENDING_SORT_DIRECTION) {
-							return a > b ? -1 : 1;
-						} else if (element.direction == DESCENDING_SORT_DIRECTION) {
 							return a > b ? 1 : -1;
+						} else if (element.direction == DESCENDING_SORT_DIRECTION) {
+							return a > b ? -1 : 1;
 						}
 					});
 					defaultSort = false;
@@ -1564,6 +1564,17 @@ var ProperTable =
 			}
 
 			return data;
+		};
+
+		/**
+	  *	Get the current cols using a HOC
+	  *
+	  * @return (array)	cols
+	  */
+
+
+		ProperTable.prototype.getCurrentCols = function getCurrentCols() {
+			return this.state.cols.toJSON();
 		};
 
 		/**
