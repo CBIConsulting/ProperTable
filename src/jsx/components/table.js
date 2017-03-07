@@ -1188,9 +1188,9 @@ class ProperTable extends React.Component {
 					if (a == b) {
 						return 0;
 					} else if (element.direction == ASCENDING_SORT_DIRECTION) {
-						return a > b ? -1 : 1;
+						return a > b ? 1 : -1;
 					} else if (element.direction == DESCENDING_SORT_DIRECTION) {
-					 	return a > b ? 1 : -1;
+					 	return a > b ? -1 : 1;
 					}
 				});
 				defaultSort = false;
@@ -1240,6 +1240,15 @@ class ProperTable extends React.Component {
 		}
 
 		return data;
+	}
+
+/**
+ *	Get the current cols using a HOC
+ *
+ * @return (array)	cols
+ */
+	getCurrentCols() {
+		return this.state.cols.toJSON();
 	}
 
 /**
