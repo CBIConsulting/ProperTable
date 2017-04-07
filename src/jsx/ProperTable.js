@@ -10,7 +10,7 @@ if (process.env.APP_ENV === 'browser') {
 }
 
 export default {
-	Table: Dimensions()(Table),
+	Table: Dimensions({elementResize: true})(Table),
 	Portal: Portal,
 	formatters: formatters,
 	lang: messages

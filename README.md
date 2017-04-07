@@ -207,10 +207,9 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * getColSettings: Function that get the column settings of the table. Each time the column settings changed (sort or filter of any column change) or get created then the function get the new settings. Name and field are the same as in Cols array, the selection field (selection of the column, array of filtered values of the column), direction ('DEF' *default || 'ASC' || 'DESC'), and other settings. Remenber that's a refenrence to an internal state, be very carefull. This property was thought to get the internal filters / sort data and show it externally (if you want to apply a change use the properties colSortDirs and colFilters). It's usefull when you have a filter component for the column and you want to have external filters aswell, then you can update the colSortDirs and colFilters externally (not causig a rerender)  [See docs here...](https://github.com/CBIConsulting/ProperTable/tree/dev/docs/SETTINGS.md)
 	* Ex:
 	```javascript
-		getColSettings={(colSettings) => {
-			console.log('settings');
+		getColumnSettings(colSettings) {
 			console.log(colSettings);
-		}}
+		}
 	```
 * sortIcons: An array like the const SortIcons in HeaderCell file to use instead [HeaderCell](https://github.com/CBIConsulting/ProperTable/tree/dev/src/jsx/components/headerCell.js)
 * iconColor: Color of the icon to open the column filter (if that exist) in the header of column. This color is used on open / filtered or sorted.
