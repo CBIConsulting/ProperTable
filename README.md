@@ -74,9 +74,11 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * cols: Describe columns data. (Array)
 	* Mandatory properties:
 	 	* name: Internal name. Must be unique.(String)
-	 	* field: Describe field data. {id, number, nestedField...} (String)
+	 	* field: Describe field data. {id, number, nestedField...} It's the same name as in the data. (String)
 	 	* label: Label in the column header. Could be an html tag, a string (in this cases uses a FixedDataTable Cell)...
 	* Optional properties:
+		* aggregationField: Describe aggregation field data. It's the same name as in the agregation data. (String)
+		* aggregationOperation: Describe aggregation operation to display it in the aggregation footer row. (String)
 	 	* fixed: If the column is fixed on horizontal scroll or not (Boolean) Default false
 	 	* className: CSS class to add on columns header and each cell.(String)
 	 	* width: Column width. (Integer) Default 100
@@ -112,6 +114,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 		* align: Alignment of the column. (Default center)
 		* children: Children column of the current column. Should have the same structure as a column. Each column can have multiple childrens (Array)
 * data: Data of the table (Array)
+* aggregationData: Aggregation data of the table, to display in the footer of the table (Object)
 * afterSort: Function called after the data has been sorted. Return the raw data sorted.
 	* Ex:
 	```javascript
@@ -241,7 +244,9 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * restartOnClickType: This prop allows you to set if you want the restartOnClick element to clear both (filters and sort) or just one of them. Default both. The options are 'clear_filters', 'clear_sort' or 'clear_both'.
 * hasDisableRows: If this property is set to true (default false) then all the rows in the data that doesn't have a property Enabled or has Enabled = false will cause the row to has less opacity (disabled). Default false.
 * displayFooter: If the footer must be displayed or not. The footer contains info about sort and filters. Default false.
+* displayAggregationFooter: If the aggregation data footer must be displayed or not. The footer contains the aggregation of the data in each column. Even if it's true will be only displayed if there is aggregation data. Default true.
 * footerInfoHeight: If display footer then set the footer height to this value. Default 30px
+* footerAggregationHeight: If display aggregation footer then set the footer height to this value. Default rowHeight
 
 ### Basic Example
 ------------

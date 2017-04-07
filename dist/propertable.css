@@ -297,6 +297,17 @@ body[dir="rtl"] .fixedDataTableColumnResizerLineLayout_main, .fixedDataTableColu
     color: #999; }
   .propertable .fixedDataTableRowLayout_rowWrapper .public_fixedDataTableRow_main.disabled-row.selected .public_fixedDataTableCell_main {
     background-color: #DEF3FF; }
+  .propertable .propertable-footer-cell {
+    width: 100%;
+    height: 100%; }
+    .propertable .propertable-footer-cell .footer-value {
+      text-align: center;
+      font-size: 13px; }
+    .propertable .propertable-footer-cell .footer-aggregation-operator {
+      font-size: 9px;
+      position: absolute;
+      bottom: 0;
+      right: 7px; }
   .propertable .propertable-footer-info {
     background-color: #fff;
     border: 1px solid lightgray;

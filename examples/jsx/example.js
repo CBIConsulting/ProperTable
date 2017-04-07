@@ -106,9 +106,9 @@ $(function() {
 		}
 	];
 
-	var data = [];
+	const data = [];
 
-	for (var i = 10; i > 0; i--) {
+	for (let i = 10; i > 0; i--) {
 		data.push({
 			id: i,
 			col1: 'added-'+i,
@@ -136,7 +136,10 @@ $(function() {
 		},{
 			name: 'col3',
 			label: 'col3',
-			field: 'col3'
+			field: 'col3',
+			aggregationField: 'aggr_col3',
+			aggregationOperator: 'SUM',
+			formatter: ProperTable.formatters.number
 		},{
 			name: 'col4',
 			label: 'col4',
@@ -172,10 +175,13 @@ $(function() {
 		}
 	];
 
-	let ex3data = [];
+	const ex3data = [];
+	const ex3aggr_data = {
+		aggr_col3: 0
+	};
 	let k = 0;
 
-	for (i = 10000 - 1; i >= 0; i--) {
+	for (let i = 10000 - 1; i >= 0; i--) {
 		let row = {
 			col1: _.uniqueId('row-')
 		};
@@ -186,6 +192,7 @@ $(function() {
 			row['col'+k] = i * k;
 		}
 
+		ex3aggr_data.aggr_col3 += i * 3;
 		ex3data.push(row);
 	}
 
@@ -209,6 +216,7 @@ $(function() {
 		key={'testtable3'}
 		cols={ex3cols}
 		data={ex3data}
+		aggregationData={ex3aggr_data}
 		selectable="multiple"
 	/>, body3);
 });
