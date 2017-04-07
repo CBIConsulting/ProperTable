@@ -7,6 +7,7 @@ import messages from "../lang/messages";
 import Selector from './selector';
 import CellRenderer from './cellRenderer';
 import HeaderCell from './headerCell';
+import FooterCell from './footerCell';
 import bs from 'binarysearch';
 import clone from 'clone';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
@@ -98,17 +99,18 @@ class ProperTable extends React.Component {
 		super(props);
 
 		// Get initial data
-		let initialData = this.prepareData(props, null);
+		const initialData = this.prepareData(props, null);
 		// Get initial columns sort
-		let initialColSettings = this.prepareColSettings(props, initialData.rawdata);
+		const initialColSettings = this.prepareColSettings(props, initialData.rawdata);
 		// Sort cols by position if exist
-		let cols = this.sortTableCols(Immutable.fromJS(props.cols));
+		const cols = this.sortTableCols(Immutable.fromJS(props.cols));
 
 		this.state = {
 			cols: cols,
 			colSettings: initialColSettings.colSettings,
 			colSortParsers: initialColSettings.colSortParsers,
 			data: initialData.data,
+			aggregationData: Immutable.fromJS(props.aggregationData), // Sums, avgs, etc by column object
 			initialData: initialData.initialData,
 			indexed: initialData.indexed,
 			initialIndexed: initialData.initialIndexed,
@@ -155,16 +157,16 @@ class ProperTable extends React.Component {
 	}
 
 	shouldComponentUpdate(nextProps, nextState) {
-		let propschanged = !shallowEqualImmutable(this.props, nextProps);
-		let statechanged = !shallowEqualImmutable(this.state, nextState);
-		let somethingchanged = propschanged || statechanged;
+		const propschanged = !shallowEqualImmutable(this.props, nextProps);
+		const statechanged = !shallowEqualImmutable(this.state, nextState);
+		const somethingchanged = propschanged || statechanged;
 
 		if (propschanged) {
-			let colsDeepCompare = this.deepColsCompare(nextProps.cols, this.props.cols);
-			let colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges || colsDeepCompare.hasChangedPosition;
-			let dataChanged = !shallowEqualImmutable(nextProps.data, this.props.data);
-			let colSortDirsChanged = nextProps.colSortDirs ? !shallowEqualImmutable(nextProps.colSortDirs, this.props.colSortDirs) : false;
-			let colFiltersChanged = nextProps.colFilters ? !this.checkFiltersEquality(nextProps.colFilters, this.props.colFilters) : false;
+			const colsDeepCompare = this.deepColsCompare(nextProps.cols, this.props.cols);
+			const colsChanged = colsDeepCompare.hasChangedDeeply || colsDeepCompare.hasSmallChanges || colsDeepCompare.hasChangedPosition;
+			const dataChanged = !shallowEqualImmutable(nextProps.data, this.props.data);
+			const colSortDirsChanged = nextProps.colSortDirs ? !shallowEqualImmutable(nextProps.colSortDirs, this.props.colSortDirs) : false;
+			const colFiltersChanged = nextProps.colFilters ? !this.checkFiltersEquality(nextProps.colFilters, this.props.colFilters) : false;
 			let colData = null, preparedData = null, cols = null, newCol;
 
 			// If data and columns change the colSettings and all data states must be updated. Then apply default (sort table
@@ -182,6 +184,7 @@ class ProperTable extends React.Component {
 						colSortParsers: colData.colSortParsers,
 						cols: cols,
 						data: preparedData.data,
+						aggregationData: Immutable.fromJS(nextProps.aggregationData),
 						initialData: preparedData.initialData,
 						indexed: preparedData.indexed,
 						initialIndexed: preparedData.initialIndexed,
@@ -296,7 +299,7 @@ class ProperTable extends React.Component {
  * 						- (object)  changedCols 		Object with the changed cols indexed by the index (when it has just small changes)
  */
 	deepColsCompare(nextCols, currentCols) {
-		let nextLength = nextCols.length, currentLength = currentCols.length, hasChangedDeeply = false, hasSmallChanges = false, changedCols = {};
+		let hasChangedDeeply = false, hasSmallChanges = false, changedCols = {};
 		let fixedChanged, classNameChanged, isVisibleChanged, labelChanged, somethingchanged, curCol, hasChangedPosition = false;
 
 		if (currentCols.length !== nextCols.length) {
@@ -468,8 +471,8 @@ class ProperTable extends React.Component {
 	applySettings(colSettings = this.state.colSettings, props = this.props, forceSendSettings = false) {
 		let selectionSet = {}, columnKeysFiltered = [], fields = [], formatters = [], newData = null, hasFilter = false, hasSort = false, newDirection;
 		let sortedData = [], filterValue, newFilter, hasSelectionFilter, hasCustomFilter, operations = {};
-		let updateSortAllowed = props.colSortDirs && _.isObject(props.colSortDirs);
-		let updateFiltersAllowed = props.colFilters && _.isObject(props.colFilters);
+		const updateSortAllowed = props.colSortDirs && _.isObject(props.colSortDirs);
+		const updateFiltersAllowed = props.colFilters && _.isObject(props.colFilters);
 
 		// Update settings
 		colSettings = _.map(colSettings, col => {
@@ -579,9 +582,10 @@ class ProperTable extends React.Component {
  *					-indexed 	Indexed data updated.
  */
 	applyFilters(columns, formatters, filters, fields, operations = []) {
-		let {initialData, indexed, selection} = this.state;
-		let filteredData = initialData, idField = this.props.idField, formatterAllowed, applyFormatter;
-		let notAllowedTypes = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
+		const {initialData, indexed, selection} = this.state;
+		const idField = this.props.idField
+		const notAllowedTypes = new Set([BETWEENDATES, AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]); // Date filters
+		let filteredData = initialData, formatterAllowed, applyFormatter;
 
 		// Get the data that match with the selection (of all column filters)
 		if (_.size(filters) > 0) {
@@ -653,9 +657,10 @@ class ProperTable extends React.Component {
  */
 	prepareData(props = this.props, state = this.state) {
 		// The data will be immutable inside the component
-		let data = Immutable.fromJS(props.data), index = 0, id, sortCache = [];
+		const data = Immutable.fromJS(props.data);
+		const keyField = this.props.idField;
+		let index = 0, id, sortCache = [];
 		let indexed = {}, initialData = null, parsed = [], defSelection = new Set();
-		let keyField = this.props.idField;
 
 		if (props.selected) {
 			defSelection = this.parseSelected(props);
@@ -1362,6 +1367,13 @@ class ProperTable extends React.Component {
 					/>
 				}
 				cell={<CellRenderer tableId={this.uniqueId} idField={this.props.idField} indexed={this.state.indexed} data={this.state.data} colData={colData} col={colData.field}/>}
+				footer={
+					<FooterCell
+						key={this.uniqueId + '-footer'}
+						data={this.state.aggregationData}
+						colData={colData}
+					/>
+				}
 				allowCellsRecycling={!hasComplexFilter}
 				align={align}
 				{...extraProps}
@@ -1461,7 +1473,7 @@ class ProperTable extends React.Component {
 		let footer = null;
 
 		if (this.props.displayFooter) {
-			let messages = this.getTranslatedMessages();
+			const messages = this.getTranslatedMessages();
 			let msgFilters, msgSort = null, isFirstFilter = true, isFirstColumn = true, column;
 			let hasSort = this.state.hasSortedColumns;
 
@@ -1869,10 +1881,13 @@ class ProperTable extends React.Component {
 	}
 
 	render() {
-		// let content = <div className="propertable-empty">{this.getTranslatedMessages().empty}</div>;
-		let content = null, tableHeight = this.props.containerHeight || 400;
-		let tableContent = this.buildTable();
-		let footer = this.buildFooter();
+		const tableContent = this.buildTable();
+		const footer = this.buildFooter();
+		let content = null, tableHeight = this.props.containerHeight || 400, tableFooterHeight = 0;
+
+		if (this.props.displayAggregationFooter && this.state.aggregationData.size) {
+			tableFooterHeight = this.props.rowHeight;
+		}
 
 		if (this.props.containerHeight && this.props.displayFooter) {
 			tableHeight -= this.props.footerInfoHeight;
@@ -1886,11 +1901,13 @@ class ProperTable extends React.Component {
 			headerHeight={this.props.headerHeight || this.props.rowHeight}
 			groupHeaderHeight={this.props.rowHeight}
 			rowHeight={this.props.rowHeight}
+			footerHeight={tableFooterHeight}
 			rowsCount={this.state.data.size}
 			isColumnResizing={false}
 			onRowClick={this.handleRowClick.bind(this)}
 			rowClassNameGetter={this.getRowClassName.bind(this)}
 			onColumnResizeEndCallback={this.onResize.bind(this)}
+			containerWidth={200}
 			className="propertable-table"
 			{...this.props}
 		>
@@ -1910,6 +1927,7 @@ ProperTable.propTypes = {
 	className: React.PropTypes.string,
 	data: React.PropTypes.array,
 	cols: React.PropTypes.array.isRequired,
+	aggregationData: React.PropTypes.object,
 	uniqueId: React.PropTypes.oneOfType([
       	React.PropTypes.string,
       	React.PropTypes.number
@@ -1949,6 +1967,7 @@ ProperTable.propTypes = {
     onScrollEnd: React.PropTypes.func,
     hasDisableRows: React.PropTypes.bool,
     displayFooter: React.PropTypes.bool,
+    displayAggregationFooter: React.PropTypes.bool,
     footerInfoHeight: React.PropTypes.oneOfType([
     	React.PropTypes.number,
     	React.PropTypes.string
@@ -1960,6 +1979,10 @@ ProperTable.propTypes = {
     containerWidth: React.PropTypes.oneOfType([
     	React.PropTypes.number,
     	React.PropTypes.string
+    ]),
+    footerAggregationHeight: React.PropTypes.oneOfType([
+    	React.PropTypes.number,
+    	React.PropTypes.string
     ])
 }
 
@@ -1967,6 +1990,7 @@ ProperTable.defaultProps = {
 	className: '',
 	cols: [],
 	data: [],
+	aggregationData: {},
 	uniqueId: null,
 	afterSort: null,
 	afterSelect: null,
@@ -1992,7 +2016,9 @@ ProperTable.defaultProps = {
 	onScrollEnd: null,
 	hasDisableRows: false,
 	displayFooter: false,
-	footerInfoHeight: 30
+	displayAggregationFooter: true,
+	footerInfoHeight: 30,
+	footerAggregationHeight: null
 }
 
 export default ProperTable;
