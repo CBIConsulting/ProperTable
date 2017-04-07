@@ -1,5 +1,5 @@
 {
-  "name": "propertable",
+  "name": "@cbi/react-propertable",
   "version": "0.2.9",
   "description": "A proper data table for React",
   "main": "lib/propertable.js",
