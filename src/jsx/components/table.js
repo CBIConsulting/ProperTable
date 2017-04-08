@@ -1225,7 +1225,7 @@ class ProperTable extends React.Component {
 	}
 
 /**
- *	Get the current data rendered in component using a HOC
+ * Get the current data rendered in component using a HOC
  *
  * @param (boolean)			getAsRaw 	Get the data as inmutable or parse to raw data
  * @return (array...object)	data
@@ -1248,7 +1248,7 @@ class ProperTable extends React.Component {
 	}
 
 /**
- *	Get the current cols using a HOC
+ * Get the current cols using a HOC
  *
  * @return (array)	cols
  */
@@ -1907,7 +1907,6 @@ class ProperTable extends React.Component {
 			onRowClick={this.handleRowClick.bind(this)}
 			rowClassNameGetter={this.getRowClassName.bind(this)}
 			onColumnResizeEndCallback={this.onResize.bind(this)}
-			containerWidth={200}
 			className="propertable-table"
 			{...this.props}
 		>

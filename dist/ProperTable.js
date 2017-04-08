@@ -78,7 +78,7 @@ var ProperTable =
 	}
 
 	exports["default"] = {
-		Table: (0, _reactDimensions2["default"])({ elementResize: true })(_table2["default"]),
+		Table: (0, _reactDimensions2["default"])()(_table2["default"]),
 		Portal: _portal2["default"],
 		formatters: _formatters2["default"],
 		lang: _messages2["default"]
