@@ -1540,7 +1540,7 @@ var ProperTable =
 		};
 
 		/**
-	  *	Get the current data rendered in component using a HOC
+	  * Get the current data rendered in component using a HOC
 	  *
 	  * @param (boolean)			getAsRaw 	Get the data as inmutable or parse to raw data
 	  * @return (array...object)	data
@@ -1571,7 +1571,7 @@ var ProperTable =
 		};
 
 		/**
-	  *	Get the current cols using a HOC
+	  * Get the current cols using a HOC
 	  *
 	  * @return (array)	cols
 	  */
@@ -2348,7 +2348,6 @@ var ProperTable =
 					onRowClick: this.handleRowClick.bind(this),
 					rowClassNameGetter: this.getRowClassName.bind(this),
 					onColumnResizeEndCallback: this.onResize.bind(this),
-					containerWidth: 200,
 					className: 'propertable-table'
 				}, this.props),
 				tableContent
@@ -22989,11 +22988,14 @@ var ProperTable =
 
 	      DimensionsHOC.prototype.updateDimensions = function updateDimensions() {
 	        var container = this.refs.container;
-	        var containerWidth = getWidth(container);
-	        var containerHeight = getHeight(container);
 
-	        if (containerWidth !== this.state.containerWidth || containerHeight !== this.state.containerHeight) {
-	          this.setState({ containerWidth: containerWidth, containerHeight: containerHeight });
+	        if (container) {
+	          var containerWidth = getWidth(container);
+	          var containerHeight = getHeight(container);
+
+	          if (containerWidth !== this.state.containerWidth || containerHeight !== this.state.containerHeight) {
+	            this.setState({ containerWidth: containerWidth, containerHeight: containerHeight });
+	          }
 	        }
 	      };
 
