@@ -29,7 +29,7 @@ Features of ProperTable:
 * The visibility of each column could be updated in hot.
 * Default Sorting allowed
 * Default Selected rows allowed
-* Apply filters / sort to internal data using the colFilters and colSortDirs properties in a easy, fast and clean way.
+* Apply filters / sort to internal data using the colFilters and colSortDirs properties in an easy, fast and clean way.
 * Allows to use a custom filter component for each column, rendered in column header after header icon get clicked. (Uses a custom Portal to render based on [React Portal](https://github.com/tajo/react-portal))
 * From FixedDataTable:
   * Fixed headers and footer
