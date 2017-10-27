@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/CBIConsulting/ProperTable.svg)](https://travis-ci.org/CBIConsulting/ProperTable)
 
+The dependencies of this project are abandoned right now but they will be updated as soon as possible. Thanks for understanding.
+
 A Proper data table for React based on famous fixed-data-table from Facebook. This components add some functionality to the react-data-table of Facebook. The table was designed to handle thousands of rows of data without sacrificing performance even when it's sorted by some different columns at the same time.
 
 The component is heavily opinionated and requires some external dependencies to be used in the browser.
