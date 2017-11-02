@@ -41,7 +41,30 @@ var ProperTable =
 /******/ 	return __webpack_require__(0);
 /******/ })
 /************************************************************************/
-/******/ ([
+/******/ ((function(modules) {
+	// Check all modules for deduplicated modules
+	for(var i in modules) {
+		if(Object.prototype.hasOwnProperty.call(modules, i)) {
+			switch(typeof modules[i]) {
+			case "function": break;
+			case "object":
+				// Module can be created from a template
+				modules[i] = (function(_m) {
+					var args = _m.slice(1), fn = modules[_m[0]];
+					return function (a,b,c) {
+						fn.apply(this, [a,b,c].concat(args));
+					};
+				}(modules[i]));
+				break;
+			default:
+				// Module is a copy of another module
+				modules[i] = modules[modules[i]];
+				break;
+			}
+		}
+	}
+	return modules;
+}([
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
@@ -57,7 +80,7 @@ var ProperTable =
 
 	var _portal2 = _interopRequireDefault(_portal);
 
-	var _formatters = __webpack_require__(93);
+	var _formatters = __webpack_require__(92);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
@@ -65,7 +88,7 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(146);
+	var _reactDimensions = __webpack_require__(157);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
@@ -74,7 +97,7 @@ var ProperTable =
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 	if (true) {
-		__webpack_require__(148);
+		__webpack_require__(159);
 	}
 
 	exports["default"] = {
@@ -133,15 +156,15 @@ var ProperTable =
 
 	var _headerCell2 = _interopRequireDefault(_headerCell);
 
-	var _footerCell = __webpack_require__(83);
+	var _footerCell = __webpack_require__(82);
 
 	var _footerCell2 = _interopRequireDefault(_footerCell);
 
-	var _binarysearch = __webpack_require__(84);
+	var _binarysearch = __webpack_require__(83);
 
 	var _binarysearch2 = _interopRequireDefault(_binarysearch);
 
-	var _clone = __webpack_require__(85);
+	var _clone = __webpack_require__(84);
 
 	var _clone2 = _interopRequireDefault(_clone);
 
@@ -151,15 +174,15 @@ var ProperTable =
 
 	var _rowcache2 = _interopRequireDefault(_rowcache);
 
-	var _moment = __webpack_require__(90);
+	var _moment = __webpack_require__(89);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _normalizer = __webpack_require__(91);
+	var _normalizer = __webpack_require__(90);
 
 	var _normalizer2 = _interopRequireDefault(_normalizer);
 
-	var _comparators = __webpack_require__(92);
+	var _comparators = __webpack_require__(91);
 
 	var _comparators2 = _interopRequireDefault(_comparators);
 
@@ -200,7 +223,7 @@ var ProperTable =
 	var NOTCONTAINS = 'notcontains';
 	var EMPTY = 'empty';
 	var CACHE_NAME = 'formatted';
-	var Set = __webpack_require__(95);
+	var Set = __webpack_require__(94);
 	var DATE_TYPES = new Set([AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]);
 	var CLEAR_OPTIONS = (_CLEAR_OPTIONS = {}, _CLEAR_OPTIONS[CLEAR_BOTH] = { sort: true, filters: true }, _CLEAR_OPTIONS[CLEAR_FILTERS] = { sort: false, filters: true }, _CLEAR_OPTIONS[CLEAR_SORT] = { sort: true, filters: false }, _CLEAR_OPTIONS);
 
@@ -1540,7 +1563,7 @@ var ProperTable =
 		};
 
 		/**
-	  *	Get the current data rendered in component using a HOC
+	  * Get the current data rendered in component using a HOC
 	  *
 	  * @param (boolean)			getAsRaw 	Get the data as inmutable or parse to raw data
 	  * @return (array...object)	data
@@ -1571,7 +1594,7 @@ var ProperTable =
 		};
 
 		/**
-	  *	Get the current cols using a HOC
+	  * Get the current cols using a HOC
 	  *
 	  * @return (array)	cols
 	  */
@@ -2348,7 +2371,6 @@ var ProperTable =
 					onRowClick: this.handleRowClick.bind(this),
 					rowClassNameGetter: this.getRowClassName.bind(this),
 					onColumnResizeEndCallback: this.onResize.bind(this),
-					containerWidth: 200,
 					className: 'propertable-table'
 				}, this.props),
 				tableContent
@@ -2486,10 +2508,9 @@ var ProperTable =
 	  Cell: FixedDataTableCellDefault,
 	  Column: FixedDataTableColumn,
 	  ColumnGroup: FixedDataTableColumnGroup,
-	  Table: FixedDataTable
-	};
+	  Table: FixedDataTable };
 
-	FixedDataTableRoot.version = '0.6.3';
+	FixedDataTableRoot.version = '0.6.0';
 	module.exports = FixedDataTableRoot;
 
 /***/ },
@@ -2796,8 +2817,7 @@ var ProperTable =
 	    /**
 	     * Whether a column is currently being resized.
 	     */
-	    isColumnResizing: PropTypes.bool
-	  },
+	    isColumnResizing: PropTypes.bool },
 
 	  getInitialState: function getInitialState() {
 	    // Throw warnings on deprecated props.
@@ -3011,8 +3031,7 @@ var ProperTable =
 	      }),
 	      this._convertedColumns(this.state.needsMigration)
 	    );
-	  }
-	});
+	  } });
 
 	module.exports = TransitionTable;
 
@@ -3297,8 +3316,7 @@ var ProperTable =
 	    /**
 	     * Whether a column is currently being resized.
 	     */
-	    isColumnResizing: PropTypes.bool
-	  },
+	    isColumnResizing: PropTypes.bool },
 
 	  getDefaultProps: function getDefaultProps() /*object*/{
 	    return {
@@ -3306,8 +3324,7 @@ var ProperTable =
 	      groupHeaderHeight: 0,
 	      headerHeight: 0,
 	      scrollLeft: 0,
-	      scrollTop: 0
-	    };
+	      scrollTop: 0 };
 	  },
 
 	  getInitialState: function getInitialState() /*object*/{
@@ -3830,8 +3847,7 @@ var ProperTable =
 	    // The order of elements in this object metters and bringing bodyHeight,
 	    // height or useGroupHeader to the top can break various features
 	    var newState = _extends({
-	      isColumnResizing: oldState && oldState.isColumnResizing
-	    }, columnInfo, props, {
+	      isColumnResizing: oldState && oldState.isColumnResizing }, columnInfo, props, {
 
 	      columns: columns,
 	      columnGroups: columnGroups,
@@ -3851,8 +3867,7 @@ var ProperTable =
 	      bodyHeight: bodyHeight,
 	      height: height,
 	      groupHeaderHeight: groupHeaderHeight,
-	      useGroupHeader: useGroupHeader
-	    });
+	      useGroupHeader: useGroupHeader });
 
 	    return newState;
 	  },
@@ -3880,8 +3895,7 @@ var ProperTable =
 	    }
 	    return {
 	      fixed: fixedColumns,
-	      scrollable: scrollableColumns
-	    };
+	      scrollable: scrollableColumns };
 	  },
 
 	  _onWheel: function _onWheel( /*number*/deltaX, /*number*/deltaY) {
@@ -3898,15 +3912,13 @@ var ProperTable =
 	          firstRowOffset: scrollState.offset,
 	          scrollY: scrollState.position,
 	          scrollContentHeight: scrollState.contentHeight,
-	          maxScrollY: maxScrollY
-	        });
+	          maxScrollY: maxScrollY });
 	      } else if (deltaX && this.props.overflowX !== 'hidden') {
 	        x += deltaX;
 	        x = x < 0 ? 0 : x;
 	        x = x > this.state.maxScrollX ? this.state.maxScrollX : x;
 	        this.setState({
-	          scrollX: x
-	        });
+	          scrollX: x });
 	      }
 
 	      this._didScrollStop();
@@ -3919,8 +3931,7 @@ var ProperTable =
 	        this._didScrollStart();
 	      }
 	      this.setState({
-	        scrollX: scrollPos
-	      });
+	        scrollX: scrollPos });
 	      this._didScrollStop();
 	    }
 	  },
@@ -3935,8 +3946,7 @@ var ProperTable =
 	        firstRowIndex: scrollState.index,
 	        firstRowOffset: scrollState.offset,
 	        scrollY: scrollState.position,
-	        scrollContentHeight: scrollState.contentHeight
-	      });
+	        scrollContentHeight: scrollState.contentHeight });
 	      this._didScrollStop();
 	    }
 	  },
@@ -3958,8 +3968,7 @@ var ProperTable =
 	        this.props.onScrollEnd(this.state.scrollX, this.state.scrollY);
 	      }
 	    }
-	  }
-	});
+	  } });
 
 	var HorizontalScrollbar = React.createClass({
 	  displayName: 'HorizontalScrollbar',
@@ -3970,20 +3979,17 @@ var ProperTable =
 	    offset: PropTypes.number.isRequired,
 	    onScroll: PropTypes.func.isRequired,
 	    position: PropTypes.number.isRequired,
-	    size: PropTypes.number.isRequired
-	  },
+	    size: PropTypes.number.isRequired },
 
 	  render: function render() /*object*/{
 	    var outerContainerStyle = {
 	      height: Scrollbar.SIZE,
-	      width: this.props.size
-	    };
+	      width: this.props.size };
 	    var innerContainerStyle = {
 	      height: Scrollbar.SIZE,
 	      position: 'absolute',
 	      overflow: 'hidden',
-	      width: this.props.size
-	    };
+	      width: this.props.size };
 	    translateDOMPositionXY(innerContainerStyle, 0, this.props.offset);
 
 	    return React.createElement(
@@ -4001,10 +4007,10 @@ var ProperTable =
 	        }))
 	      )
 	    );
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTable;
+
 	// isColumnResizing should be overwritten by value from props if
 	// avaialble
 
@@ -4702,7 +4708,7 @@ var ProperTable =
 	  },
 
 	  mobile: function mobile() {
-	    return _populate() || _iphone || _ipad || _android || _mobile;
+	    return _populate() || (_iphone || _ipad || _android || _mobile);
 	  },
 
 	  nativeApp: function nativeApp() {
@@ -4926,8 +4932,7 @@ var ProperTable =
 
 	var UNSCROLLABLE_STATE = {
 	  position: 0,
-	  scrollable: false
-	};
+	  scrollable: false };
 
 	var FACE_MARGIN = parseInt(cssVar('scrollbar-face-margin'), 10);
 	var FACE_MARGIN_2 = FACE_MARGIN * 2;
@@ -4974,8 +4979,7 @@ var ProperTable =
 	      isOpaque: false,
 	      onScroll: emptyFunction,
 	      orientation: 'vertical',
-	      zIndex: 99
-	    };
+	      zIndex: 99 };
 	  },
 
 	  render: function render() /*?object*/{
@@ -4999,23 +5003,20 @@ var ProperTable =
 	      'ScrollbarLayout/mainHorizontal': isHorizontal,
 	      'public/Scrollbar/main': true,
 	      'public/Scrollbar/mainOpaque': isOpaque,
-	      'public/Scrollbar/mainActive': isActive
-	    });
+	      'public/Scrollbar/mainActive': isActive });
 
 	    var faceClassName = cx({
 	      'ScrollbarLayout/face': true,
 	      'ScrollbarLayout/faceHorizontal': isHorizontal,
 	      'ScrollbarLayout/faceVertical': isVertical,
 	      'public/Scrollbar/faceActive': isActive,
-	      'public/Scrollbar/face': true
-	    });
+	      'public/Scrollbar/face': true });
 
 	    var position = this.state.position * this.state.scale + FACE_MARGIN;
 
 	    if (isHorizontal) {
 	      mainStyle = {
-	        width: size
-	      };
+	        width: size };
 	      faceStyle = {
 	        width: faceSize - FACE_MARGIN_2
 	      };
@@ -5023,11 +5024,9 @@ var ProperTable =
 	    } else {
 	      mainStyle = {
 	        top: verticalTop,
-	        height: size
-	      };
+	        height: size };
 	      faceStyle = {
-	        height: faceSize - FACE_MARGIN_2
-	      };
+	        height: faceSize - FACE_MARGIN_2 };
 	      translateDOMPositionXY(faceStyle, 0, position);
 	    }
 
@@ -5108,7 +5107,7 @@ var ProperTable =
 	      return UNSCROLLABLE_STATE;
 	    }
 
-	    var stateKey = position + '_' + size + '_' + contentSize + '_' + orientation;
+	    var stateKey = '' + position + '_' + size + '_' + contentSize + '_' + orientation;
 	    if (this._stateKey === stateKey) {
 	      return this._stateForKey;
 	    }
@@ -5147,8 +5146,7 @@ var ProperTable =
 	      isHorizontal: isHorizontal,
 	      position: position,
 	      scale: scale,
-	      scrollable: scrollable
-	    };
+	      scrollable: scrollable };
 
 	    // cache the state for later use.
 	    this._stateKey = stateKey;
@@ -5289,14 +5287,12 @@ var ProperTable =
 
 	  _onFocus: function _onFocus() {
 	    this.setState({
-	      focused: true
-	    });
+	      focused: true });
 	  },
 
 	  _onBlur: function _onBlur() {
 	    this.setState({
-	      focused: false
-	    });
+	      focused: false });
 	  },
 
 	  _blur: function _blur() {
@@ -5304,9 +5300,7 @@ var ProperTable =
 	      try {
 	        this._onBlur();
 	        ReactDOM.findDOMNode(this).blur();
-	      } catch (oops) {
-	        // pass
-	      }
+	      } catch (oops) {}
 	    }
 	  },
 
@@ -5336,13 +5330,14 @@ var ProperTable =
 
 	  _didScroll: function _didScroll() {
 	    this.props.onScroll(this.state.position);
-	  }
-	});
+	  } });
 
 	Scrollbar.KEYBOARD_SCROLL_AMOUNT = KEYBOARD_SCROLL_AMOUNT;
 	Scrollbar.SIZE = parseInt(cssVar('scrollbar-size'), 10);
 
 	module.exports = Scrollbar;
+
+	// pass
 
 /***/ },
 /* 19 */
@@ -5400,15 +5395,15 @@ var ProperTable =
 	    this._didMouseMove = this._didMouseMove.bind(this);
 	  }
 
-	  /**
-	   * This is to set up the listeners for listening to mouse move
-	   * and mouse up signaling the movement has ended. Please note that these
-	   * listeners are added at the document.body level. It takes in an event
-	   * in order to grab inital state.
-	   */
-
 	  _createClass(DOMMouseMoveTracker, [{
 	    key: 'captureMouseMoves',
+
+	    /**
+	     * This is to set up the listeners for listening to mouse move
+	     * and mouse up signaling the movement has ended. Please note that these
+	     * listeners are added at the document.body level. It takes in an event
+	     * in order to grab inital state.
+	     */
 	    value: function captureMouseMoves( /*object*/event) {
 	      if (!this._eventMoveToken && !this._eventUpToken) {
 	        this._eventMoveToken = EventListener.listen(this._domNode, 'mousemove', this._onMouseMove);
@@ -5424,12 +5419,12 @@ var ProperTable =
 	      }
 	      event.preventDefault();
 	    }
+	  }, {
+	    key: 'releaseMouseMoves',
 
 	    /**
 	     * These releases all of the listeners on document.body.
 	     */
-	  }, {
-	    key: 'releaseMouseMoves',
 	    value: function releaseMouseMoves() {
 	      if (this._eventMoveToken && this._eventUpToken) {
 	        this._eventMoveToken.remove();
@@ -5449,21 +5444,21 @@ var ProperTable =
 	        this._y = null;
 	      }
 	    }
+	  }, {
+	    key: 'isDragging',
 
 	    /**
 	     * Returns whether or not if the mouse movement is being tracked.
 	     */
-	  }, {
-	    key: 'isDragging',
 	    value: function isDragging() /*boolean*/{
 	      return this._isDragging;
 	    }
+	  }, {
+	    key: '_onMouseMove',
 
 	    /**
 	     * Calls onMove passed into constructor and updates internal state.
 	     */
-	  }, {
-	    key: '_onMouseMove',
 	    value: function _onMouseMove( /*object*/event) {
 	      var x = event.clientX;
 	      var y = event.clientY;
@@ -5489,12 +5484,12 @@ var ProperTable =
 	      this._deltaX = 0;
 	      this._deltaY = 0;
 	    }
+	  }, {
+	    key: '_onMouseUp',
 
 	    /**
 	     * Calls onMoveEnd passed into constructor and updates internal state.
 	     */
-	  }, {
-	    key: '_onMouseUp',
 	    value: function _onMouseUp() {
 	      if (this._animationFrameID) {
 	        this._didMouseMove();
@@ -5693,7 +5688,7 @@ var ProperTable =
 	 * @typechecks
 	 */
 
-	"use strict";
+	'use strict';
 
 	var CSS_VARS = {
 	  'scrollbar-face-active-color': '#7d7d7d',
@@ -5704,8 +5699,7 @@ var ProperTable =
 	  'scrollbar-size-large': '17px',
 	  'scrollbar-track-color': 'rgba(255, 255, 255, 0.8)',
 	  'fbui-white': '#fff',
-	  'fbui-desktop-background-light': '#f6f7f8'
-	};
+	  'fbui-desktop-background-light': '#f6f7f8' };
 
 	/**
 	 * @param {string} name
@@ -5881,8 +5875,7 @@ var ProperTable =
 	   */
 	  hasCSSTransitions: function hasCSSTransitions() {
 	    return !!getVendorPrefixedName('transition');
-	  }
-	};
+	  } };
 
 	module.exports = BrowserSupportCore;
 
@@ -5995,7 +5988,7 @@ var ProperTable =
 	 * @providesModule invariant
 	 */
 
-	"use strict";
+	'use strict';
 
 	/**
 	 * Use invariant() to assert state which your program assumes to be true.
@@ -6086,14 +6079,12 @@ var ProperTable =
 	    scrollLeft: PropTypes.number.isRequired,
 	    scrollableColumns: PropTypes.array.isRequired,
 	    showLastRowBorder: PropTypes.bool,
-	    width: PropTypes.number.isRequired
-	  },
+	    width: PropTypes.number.isRequired },
 
 	  getInitialState: function getInitialState() /*object*/{
 	    this._rowBuffer = new FixedDataTableRowBuffer(this.props.rowsCount, this.props.defaultRowHeight, this.props.height, this._getRowHeight);
 	    return {
-	      rowsToRender: this._rowBuffer.getRows(this.props.firstRowIndex, this.props.firstRowOffset)
-	    };
+	      rowsToRender: this._rowBuffer.getRows(this.props.firstRowIndex, this.props.firstRowOffset) };
 	  },
 
 	  componentWillMount: function componentWillMount() {
@@ -6112,16 +6103,14 @@ var ProperTable =
 	      this._updateBuffer();
 	    } else {
 	      this.setState({
-	        rowsToRender: this._rowBuffer.getRows(nextProps.firstRowIndex, nextProps.firstRowOffset)
-	      });
+	        rowsToRender: this._rowBuffer.getRows(nextProps.firstRowIndex, nextProps.firstRowOffset) });
 	    }
 	  },
 
 	  _updateBuffer: function _updateBuffer() {
 	    if (this.isMounted()) {
 	      this.setState({
-	        rowsToRender: this._rowBuffer.getRowsWithUpdatedBuffer()
-	      });
+	        rowsToRender: this._rowBuffer.getRowsWithUpdatedBuffer() });
 	    }
 	  },
 
@@ -6166,8 +6155,7 @@ var ProperTable =
 	        onMouseLeave: props.onRowMouseLeave,
 	        className: joinClasses(rowClassNameGetter(rowIndex), cx('public/fixedDataTable/bodyRow'), cx({
 	          'fixedDataTableLayout/hasBottomBorder': hasBottomBorder,
-	          'public/fixedDataTable/hasBottomBorder': hasBottomBorder
-	        }))
+	          'public/fixedDataTable/hasBottomBorder': hasBottomBorder }))
 	      });
 	    }
 
@@ -6175,8 +6163,7 @@ var ProperTable =
 
 	    var style = {
 	      position: 'absolute',
-	      pointerEvents: props.isScrolling ? 'none' : 'auto'
-	    };
+	      pointerEvents: props.isScrolling ? 'none' : 'auto' };
 
 	    translateDOMPositionXY(style, 0, props.firstRowOffset - firstRowPosition + props.offsetTop);
 
@@ -6189,8 +6176,7 @@ var ProperTable =
 
 	  _getRowHeight: function _getRowHeight( /*number*/index) /*number*/{
 	    return this.props.rowHeightGetter ? this.props.rowHeightGetter(index) : this.props.defaultRowHeight;
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTableBufferedRows;
 
@@ -6235,7 +6221,7 @@ var ProperTable =
 	  /*?function*/rowHeightGetter) {
 	    _classCallCheck(this, FixedDataTableRowBuffer);
 
-	    invariant(defaultRowHeight !== 0, "defaultRowHeight musn't be equal 0 in FixedDataTableRowBuffer");
+	    invariant(defaultRowHeight !== 0, 'defaultRowHeight musn\'t be equal 0 in FixedDataTableRowBuffer');
 
 	    this._bufferSet = new IntegerBufferSet();
 	    this._defaultRowHeight = defaultRowHeight;
@@ -6393,7 +6379,7 @@ var ProperTable =
 	  }, {
 	    key: 'getNewPositionForValue',
 	    value: function getNewPositionForValue( /*number*/value) /*number*/{
-	      invariant(this._valueToPositionMap[value] === undefined, "Shouldn't try to find new position for value already stored in BufferSet");
+	      invariant(this._valueToPositionMap[value] === undefined, 'Shouldn\'t try to find new position for value already stored in BufferSet');
 	      var newPosition = this._size;
 	      this._size++;
 	      this._pushToHeaps(newPosition, value);
@@ -6406,7 +6392,7 @@ var ProperTable =
 	    /*number*/lowValue,
 	    /*number*/highValue,
 	    /*number*/newValue) /*?number*/{
-	      invariant(this._valueToPositionMap[newValue] === undefined, "Shouldn't try to replace values with value already stored value in " + "BufferSet");
+	      invariant(this._valueToPositionMap[newValue] === undefined, 'Shouldn\'t try to replace values with value already stored value in ' + 'BufferSet');
 
 	      this._cleanHeaps();
 	      if (this._smallValues.empty() || this._largeValues.empty()) {
@@ -6443,8 +6429,7 @@ var ProperTable =
 	    value: function _pushToHeaps( /*number*/position, /*number*/value) {
 	      var element = {
 	        position: position,
-	        value: value
-	      };
+	        value: value };
 	      // We can reuse the same object in both heaps, because we don't mutate them
 	      this._smallValues.push(element);
 	      this._largeValues.push(element);
@@ -6526,16 +6511,15 @@ var ProperTable =
 
 	'use strict';
 
+	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+
 	/*
 	 * @param {*} a
 	 * @param {*} b
 	 * @return {boolean}
 	 */
-
-	var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
 	function defaultComparator(a, b) {
 	  return a < b;
 	}
@@ -6550,21 +6534,21 @@ var ProperTable =
 	    this._heapify();
 	  }
 
-	  /*
-	   * @return {boolean}
-	   */
-
 	  _createClass(Heap, [{
 	    key: 'empty',
+
+	    /*
+	     * @return {boolean}
+	     */
 	    value: function empty() {
 	      return this._size === 0;
 	    }
+	  }, {
+	    key: 'pop',
 
 	    /*
 	     * @return {*}
 	     */
-	  }, {
-	    key: 'pop',
 	    value: function pop() {
 	      if (this._size === 0) {
 	        return;
@@ -6582,31 +6566,31 @@ var ProperTable =
 
 	      return elt;
 	    }
+	  }, {
+	    key: 'push',
 
 	    /*
 	     * @param {*} item
 	     */
-	  }, {
-	    key: 'push',
 	    value: function push(item) {
 	      this._items[this._size++] = item;
 	      this._bubbleUp(this._size - 1);
 	    }
+	  }, {
+	    key: 'size',
 
 	    /*
 	     * @return {number}
 	     */
-	  }, {
-	    key: 'size',
 	    value: function size() {
 	      return this._size;
 	    }
+	  }, {
+	    key: 'peek',
 
 	    /*
 	     * @return {*}
 	     */
-	  }, {
-	    key: 'peek',
 	    value: function peek() {
 	      if (this._size === 0) {
 	        return;
@@ -6621,12 +6605,12 @@ var ProperTable =
 	        this._sinkDown(index);
 	      }
 	    }
+	  }, {
+	    key: '_bubbleUp',
 
 	    /*
 	     * @parent {number} index
 	     */
-	  }, {
-	    key: '_bubbleUp',
 	    value: function _bubbleUp(index) {
 	      var elt = this._items[index];
 	      while (index > 0) {
@@ -6644,12 +6628,12 @@ var ProperTable =
 	        index = parentIndex;
 	      }
 	    }
+	  }, {
+	    key: '_sinkDown',
 
 	    /*
 	     * @parent {number} index
 	     */
-	  }, {
-	    key: '_sinkDown',
 	    value: function _sinkDown(index) {
 	      var elt = this._items[index];
 
@@ -6820,22 +6804,19 @@ var ProperTable =
 	     * @param number|string columnKey
 	     * @param object event
 	     */
-	    onColumnResize: PropTypes.func
-	  },
+	    onColumnResize: PropTypes.func },
 
 	  render: function render() /*object*/{
 	    var style = {
 	      width: this.props.width,
-	      height: this.props.height
-	    };
+	      height: this.props.height };
 
 	    var className = cx({
 	      'fixedDataTableRowLayout/main': true,
 	      'public/fixedDataTableRow/main': true,
 	      'public/fixedDataTableRow/highlighted': this.props.index % 2 === 1,
 	      'public/fixedDataTableRow/odd': this.props.index % 2 === 1,
-	      'public/fixedDataTableRow/even': this.props.index % 2 === 0
-	    });
+	      'public/fixedDataTableRow/even': this.props.index % 2 === 0 });
 
 	    var fixedColumnsWidth = this._getColumnsWidth(this.props.fixedColumns);
 	    var fixedColumns = React.createElement(FixedDataTableCellGroup, {
@@ -6899,8 +6880,7 @@ var ProperTable =
 	        'fixedDataTableRowLayout/fixedColumnsDivider': true,
 	        'fixedDataTableRowLayout/columnsShadow': this.props.scrollLeft > 0,
 	        'public/fixedDataTableRow/fixedColumnsDivider': true,
-	        'public/fixedDataTableRow/columnsShadow': this.props.scrollLeft > 0
-	      });
+	        'public/fixedDataTableRow/columnsShadow': this.props.scrollLeft > 0 });
 	      var style = {
 	        left: left,
 	        height: this.props.height
@@ -6927,8 +6907,7 @@ var ProperTable =
 
 	  _onMouseLeave: function _onMouseLeave( /*object*/event) {
 	    this.props.onMouseLeave(event, this.props.index);
-	  }
-	});
+	  } });
 
 	var FixedDataTableRow = React.createClass({
 	  displayName: 'FixedDataTableRow',
@@ -6956,15 +6935,13 @@ var ProperTable =
 	    /**
 	     * Width of the row.
 	     */
-	    width: PropTypes.number.isRequired
-	  },
+	    width: PropTypes.number.isRequired },
 
 	  render: function render() /*object*/{
 	    var style = {
 	      width: this.props.width,
 	      height: this.props.height,
-	      zIndex: this.props.zIndex ? this.props.zIndex : 0
-	    };
+	      zIndex: this.props.zIndex ? this.props.zIndex : 0 };
 	    translateDOMPositionXY(style, 0, this.props.offsetTop);
 
 	    return React.createElement(
@@ -6977,8 +6954,7 @@ var ProperTable =
 	        zIndex: undefined
 	      }))
 	    );
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTableRow;
 
@@ -7042,8 +7018,7 @@ var ProperTable =
 
 	    width: PropTypes.number.isRequired,
 
-	    zIndex: PropTypes.number.isRequired
-	  },
+	    zIndex: PropTypes.number.isRequired },
 
 	  render: function render() /*object*/{
 	    var props = this.props;
@@ -7066,8 +7041,7 @@ var ProperTable =
 	      height: props.height,
 	      position: 'absolute',
 	      width: contentWidth,
-	      zIndex: props.zIndex
-	    };
+	      zIndex: props.zIndex };
 	    translateDOMPositionXY(style, -1 * DIR_SIGN * props.left, 0);
 
 	    return React.createElement(
@@ -7114,8 +7088,7 @@ var ProperTable =
 	      width += columns[i].props.width;
 	    }
 	    return width;
-	  }
-	});
+	  } });
 
 	var FixedDataTableCellGroup = React.createClass({
 	  displayName: 'FixedDataTableCellGroup',
@@ -7139,8 +7112,7 @@ var ProperTable =
 	     * Z-index on which the row will be displayed. Used e.g. for keeping
 	     * header and footer in front of other rows.
 	     */
-	    zIndex: PropTypes.number.isRequired
-	  },
+	    zIndex: PropTypes.number.isRequired },
 
 	  shouldComponentUpdate: function shouldComponentUpdate( /*object*/nextProps) /*boolean*/{
 	    return !nextProps.isScrolling || this.props.rowIndex !== nextProps.rowIndex || this.props.left !== nextProps.left;
@@ -7148,8 +7120,7 @@ var ProperTable =
 
 	  getDefaultProps: function getDefaultProps() /*object*/{
 	    return {
-	      offsetLeft: 0
-	    };
+	      offsetLeft: 0 };
 	  },
 
 	  render: function render() /*object*/{
@@ -7159,8 +7130,7 @@ var ProperTable =
 	    var props = _objectWithoutProperties(_props, ['offsetLeft']);
 
 	    var style = {
-	      height: props.height
-	    };
+	      height: props.height };
 
 	    if (DIR_SIGN === 1) {
 	      style.left = offsetLeft;
@@ -7189,8 +7159,7 @@ var ProperTable =
 	  /*string|number*/columnKey,
 	  /*object*/event) {
 	    this.props.onColumnResize && this.props.onColumnResize(this.props.offsetLeft, left - this.props.left + width, width, minWidth, maxWidth, columnKey, event);
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTableCellGroup;
 
@@ -7280,8 +7249,7 @@ var ProperTable =
 	      // new children
 	      if (haveColumnsChanged) {
 	        newChild = React.cloneElement(originalChild, {
-	          children: newColumns
-	        });
+	          children: newColumns });
 	      }
 	    } else if (originalChild.type === FixedDataTableColumn) {
 	      newChild = callback(originalChild);
@@ -7298,8 +7266,7 @@ var ProperTable =
 	  CELL_VISIBILITY_TOLERANCE: CELL_VISIBILITY_TOLERANCE,
 	  renderToString: renderToString,
 	  forEachColumn: forEachColumn,
-	  mapColumns: mapColumns
-	};
+	  mapColumns: mapColumns };
 
 	module.exports = FixedDataTableHelper;
 
@@ -7326,7 +7293,7 @@ var ProperTable =
 	    return false;
 	  },
 	  getDirection: function getDirection() {
-	    return 'LTR';
+	    return "LTR";
 	  }
 	};
 
@@ -7363,8 +7330,7 @@ var ProperTable =
 	  displayName: 'TransitionColumnGroup',
 
 	  statics: {
-	    __TableColumnGroup__: true
-	  },
+	    __TableColumnGroup__: true },
 
 	  render: function render() {
 	    if (false) {
@@ -7452,8 +7418,7 @@ var ProperTable =
 
 	var DEFAULT_PROPS = {
 	  align: 'left',
-	  highlighted: false
-	};
+	  highlighted: false };
 
 	var FixedDataTableCell = React.createClass({
 	  displayName: 'FixedDataTableCell',
@@ -7499,8 +7464,7 @@ var ProperTable =
 	    /**
 	     * The left offset in pixels of the cell.
 	     */
-	    left: PropTypes.number
-	  },
+	    left: PropTypes.number },
 
 	  shouldComponentUpdate: function shouldComponentUpdate(nextProps) {
 	    return !nextProps.isScrolling || this.props.rowIndex !== nextProps.rowIndex;
@@ -7520,8 +7484,7 @@ var ProperTable =
 
 	    var style = {
 	      height: height,
-	      width: width
-	    };
+	      width: width };
 
 	    if (DIR_SIGN === 1) {
 	      style.left = props.left;
@@ -7536,8 +7499,7 @@ var ProperTable =
 	      'fixedDataTableCellLayout/alignCenter': props.align === 'center',
 	      'public/fixedDataTableCell/alignRight': props.align === 'right',
 	      'public/fixedDataTableCell/highlighted': props.highlighted,
-	      'public/fixedDataTableCell/main': true
-	    }), props.className);
+	      'public/fixedDataTableCell/main': true }), props.className);
 
 	    var columnResizerComponent;
 	    if (props.onColumnResize) {
@@ -7590,8 +7552,7 @@ var ProperTable =
 
 	  _onColumnResizerMouseDown: function _onColumnResizerMouseDown( /*object*/event) {
 	    this.props.onColumnResize(this.props.left, this.props.width, this.props.minWidth, this.props.maxWidth, this.props.columnKey, event);
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTableCell;
 
@@ -7666,8 +7627,7 @@ var ProperTable =
 	     * Optional prop that if specified on the `Column` will be passed to the
 	     * cell. It can be used to uniquely identify which column is the cell is in.
 	     */
-	    columnKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-	  },
+	    columnKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) },
 
 	  render: function render() {
 	    var _props = this.props;
@@ -7676,16 +7636,12 @@ var ProperTable =
 	    var style = _props.style;
 	    var className = _props.className;
 	    var children = _props.children;
-	    var columnKey = _props.columnKey;
-	    var // Unused but should not be passed through
-	    rowIndex = _props.rowIndex;
 
-	    var props = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children', 'columnKey', 'rowIndex']);
+	    var props = _objectWithoutProperties(_props, ['height', 'width', 'style', 'className', 'children']);
 
 	    var innerStyle = _extends({
 	      height: height,
-	      width: width
-	    }, style);
+	      width: width }, style);
 
 	    return React.createElement(
 	      'div',
@@ -7708,11 +7664,9 @@ var ProperTable =
 	        )
 	      )
 	    );
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTableCellDefault;
-	// Unused but should not be passed through
 
 /***/ },
 /* 44 */
@@ -7845,8 +7799,7 @@ var ProperTable =
 	    /**
 	     * Column key for the column being resized.
 	     */
-	    columnKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-	  },
+	    columnKey: PropTypes.oneOfType([PropTypes.string, PropTypes.number]) },
 
 	  getInitialState: function getInitialState() /*object*/{
 	    return {
@@ -7877,8 +7830,7 @@ var ProperTable =
 	  render: function render() /*object*/{
 	    var style = {
 	      width: this.state.width,
-	      height: this.props.height
-	    };
+	      height: this.props.height };
 	    if (Locale.isRTL()) {
 	      style.right = this.props.leftOffset;
 	    } else {
@@ -7890,8 +7842,7 @@ var ProperTable =
 	        className: cx({
 	          'fixedDataTableColumnResizerLineLayout/main': true,
 	          'fixedDataTableColumnResizerLineLayout/hiddenElem': !this.props.visible,
-	          'public/fixedDataTableColumnResizerLine/main': true
-	        }),
+	          'public/fixedDataTableColumnResizerLine/main': true }),
 	        style: style },
 	      React.createElement('div', {
 	        className: cx('fixedDataTableColumnResizerLineLayout/mouseArea'),
@@ -7918,8 +7869,7 @@ var ProperTable =
 	  _onColumnResizeEnd: function _onColumnResizeEnd() {
 	    this._mouseMoveTracker.releaseMouseMoves();
 	    this.props.onColumnResizeEnd(this.state.width, this.props.columnKey);
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTableColumnResizeHandle;
 
@@ -7953,8 +7903,7 @@ var ProperTable =
 	  index: 0,
 	  offset: 0,
 	  position: 0,
-	  contentHeight: 0
-	};
+	  contentHeight: 0 };
 
 	var FixedDataTableScrollHelper = (function () {
 	  function FixedDataTableScrollHelper(
@@ -8119,8 +8068,7 @@ var ProperTable =
 	        index: firstRowIndex,
 	        offset: firstRowOffset,
 	        position: this._position,
-	        contentHeight: this._contentHeight
-	      };
+	        contentHeight: this._contentHeight };
 	    }
 	  }, {
 	    key: '_getRowAtEndPosition',
@@ -8160,8 +8108,7 @@ var ProperTable =
 	          index: 0,
 	          offset: 0,
 	          position: this._position,
-	          contentHeight: this._contentHeight
-	        };
+	          contentHeight: this._contentHeight };
 	      } else if (position >= this._contentHeight - this._viewportHeight) {
 	        // If position is equal to or greater than max scroll value, we need
 	        // to make sure to have bottom border of last row visible.
@@ -8182,33 +8129,32 @@ var ProperTable =
 	        index: firstRowIndex,
 	        offset: firstRowOffset,
 	        position: this._position,
-	        contentHeight: this._contentHeight
-	      };
+	        contentHeight: this._contentHeight };
 	    }
+	  }, {
+	    key: 'scrollToRow',
 
 	    /**
 	     * Allows to scroll to selected row with specified offset. It always
 	     * brings that row to top of viewport with that offset
 	     */
-	  }, {
-	    key: 'scrollToRow',
 	    value: function scrollToRow( /*number*/rowIndex, /*number*/offset) /*object*/{
 	      rowIndex = clamp(rowIndex, 0, Math.max(this._rowCount - 1, 0));
 	      offset = clamp(offset, -this._storedHeights[rowIndex], 0);
 	      var firstRow = this._rowOffsets.sumUntil(rowIndex);
 	      return this.scrollTo(firstRow - offset);
 	    }
+	  }, {
+	    key: 'scrollRowIntoView',
 
 	    /**
 	     * Allows to scroll to selected row by bringing it to viewport with minimal
-	     * scrolling. This that if row is fully visible scroll will not be changed.
+	     * scrolling. This that if row is fully visible, scroll will not be changed.
 	     * If top border of row is above top of viewport it will be scrolled to be
 	     * fully visible on the top of viewport. If the bottom border of row is
-	     * below end of viewport it will be scrolled up to be fully visible on the
+	     * below end of viewport, it will be scrolled up to be fully visible on the
 	     * bottom of viewport.
 	     */
-	  }, {
-	    key: 'scrollRowIntoView',
 	    value: function scrollRowIntoView( /*number*/rowIndex) /*object*/{
 	      rowIndex = clamp(rowIndex, 0, Math.max(this._rowCount - 1, 0));
 	      var rowBegin = this._rowOffsets.sumUntil(rowIndex);
@@ -8241,7 +8187,7 @@ var ProperTable =
 	 * of patent rights can be found in the PATENTS file in the same directory.
 	 *
 	 * @providesModule PrefixIntervalTree
-	 * 
+	 * @flow
 	 * @typechecks
 	 */
 
@@ -8335,12 +8281,12 @@ var ProperTable =
 	    value: function getSize() {
 	      return this._size;
 	    }
+	  }, {
+	    key: 'sumUntil',
 
 	    /**
 	     * Returns the sum get(0) + get(1) + ... + get(end - 1).
 	     */
-	  }, {
-	    key: 'sumUntil',
 	    value: function sumUntil(end) {
 	      invariant(0 <= end && end < this._size + 1, 'Index out of range %s', end);
 
@@ -8358,33 +8304,33 @@ var ProperTable =
 
 	      return sum;
 	    }
+	  }, {
+	    key: 'sumTo',
 
 	    /**
 	     * Returns the sum get(0) + get(1) + ... + get(inclusiveEnd).
 	     */
-	  }, {
-	    key: 'sumTo',
 	    value: function sumTo(inclusiveEnd) {
 	      invariant(0 <= inclusiveEnd && inclusiveEnd < this._size, 'Index out of range %s', inclusiveEnd);
 	      return this.sumUntil(inclusiveEnd + 1);
 	    }
+	  }, {
+	    key: 'sum',
 
 	    /**
 	     * Returns the sum get(begin) + get(begin + 1) + ... + get(end - 1).
 	     */
-	  }, {
-	    key: 'sum',
 	    value: function sum(begin, end) {
 	      invariant(begin <= end, 'Begin must precede end');
 	      return this.sumUntil(end) - this.sumUntil(begin);
 	    }
-
-	    /**
-	     * Returns the smallest i such that 0 <= i <= size and sumUntil(i) <= t or
-	     * -1 if no such i exists.
-	     */
 	  }, {
 	    key: 'greatestLowerBound',
+
+	    /**
+	     * Returns the smallest i such that 0 <= i <= size and sumUntil(i) <= t, or
+	     * -1 if no such i exists.
+	     */
 	    value: function greatestLowerBound(t) {
 	      if (t < 0) {
 	        return -1;
@@ -8407,13 +8353,13 @@ var ProperTable =
 
 	      return node - this._half;
 	    }
-
-	    /**
-	     * Returns the smallest i such that 0 <= i <= size and sumUntil(i) < t or
-	     * -1 if no such i exists.
-	     */
 	  }, {
 	    key: 'greatestStrictLowerBound',
+
+	    /**
+	     * Returns the smallest i such that 0 <= i <= size and sumUntil(i) < t, or
+	     * -1 if no such i exists.
+	     */
 	    value: function greatestStrictLowerBound(t) {
 	      if (t <= 0) {
 	        return -1;
@@ -8436,23 +8382,23 @@ var ProperTable =
 
 	      return node - this._half;
 	    }
-
-	    /**
-	     * Returns the smallest i such that 0 <= i <= size and t <= sumUntil(i) or
-	     * size + 1 if no such i exists.
-	     */
 	  }, {
 	    key: 'leastUpperBound',
+
+	    /**
+	     * Returns the smallest i such that 0 <= i <= size and t <= sumUntil(i), or
+	     * size + 1 if no such i exists.
+	     */
 	    value: function leastUpperBound(t) {
 	      return this.greatestStrictLowerBound(t) + 1;
 	    }
-
-	    /**
-	     * Returns the smallest i such that 0 <= i <= size and t < sumUntil(i) or
-	     * size + 1 if no such i exists.
-	     */
 	  }, {
 	    key: 'leastStrictUpperBound',
+
+	    /**
+	     * Returns the smallest i such that 0 <= i <= size and t < sumUntil(i), or
+	     * size + 1 if no such i exists.
+	     */
 	    value: function leastStrictUpperBound(t) {
 	      return this.greatestLowerBound(t) + 1;
 	    }
@@ -8534,8 +8480,7 @@ var ProperTable =
 	  if (flexWidth <= 0) {
 	    return {
 	      columns: columns,
-	      width: getTotalWidth(columns)
-	    };
+	      width: getTotalWidth(columns) };
 	  }
 	  var remainingFlexGrow = getTotalFlexGrow(columns);
 	  var remainingFlexWidth = flexWidth;
@@ -8560,8 +8505,7 @@ var ProperTable =
 
 	  return {
 	    columns: newColumns,
-	    width: totalWidth
-	  };
+	    width: totalWidth };
 	}
 
 	function adjustColumnGroupWidths(
@@ -8606,8 +8550,7 @@ var ProperTable =
 
 	  return {
 	    columns: newAllColumns,
-	    columnGroups: newColumnGroups
-	  };
+	    columnGroups: newColumnGroups };
 	}
 
 	function adjustColumnWidths(
@@ -8625,8 +8568,7 @@ var ProperTable =
 	  getTotalFlexGrow: getTotalFlexGrow,
 	  distributeFlexWidth: distributeFlexWidth,
 	  adjustColumnWidths: adjustColumnWidths,
-	  adjustColumnGroupWidths: adjustColumnGroupWidths
-	};
+	  adjustColumnGroupWidths: adjustColumnGroupWidths };
 
 	module.exports = FixedDataTableWidthHelper;
 
@@ -8716,7 +8658,7 @@ var ProperTable =
 	 *
 	 * @providesModule shallowEqual
 	 * @typechecks
-	 * 
+	 * @flow
 	 */
 
 	'use strict';
@@ -8921,14 +8863,12 @@ var ProperTable =
 	     * Setting the property to false will keep previous behaviour and keep
 	     * cell rendered if the row it belongs to is visible.
 	     */
-	    allowCellsRecycling: PropTypes.bool
-	  },
+	    allowCellsRecycling: PropTypes.bool },
 
 	  getDefaultProps: function getDefaultProps() /*object*/{
 	    return {
 	      allowCellsRecycling: false,
-	      fixed: false
-	    };
+	      fixed: false };
 	  },
 
 	  render: function render() {
@@ -8936,8 +8876,7 @@ var ProperTable =
 	      throw new Error('Component <FixedDataTableColumn /> should never render');
 	    }
 	    return null;
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTableColumn;
 
@@ -8970,8 +8909,7 @@ var ProperTable =
 	  displayName: 'FixedDataTableColumnGroup',
 
 	  statics: {
-	    __TableColumnGroup__: true
-	  },
+	    __TableColumnGroup__: true },
 
 	  propTypes: {
 	    /**
@@ -9003,14 +8941,11 @@ var ProperTable =
 	     * You can also pass in a function that returns a react elemnt, with the
 	     * props object above passed in as the first parameter.
 	     */
-	    header: PropTypes.oneOfType([PropTypes.node, PropTypes.func])
-
-	  },
+	    header: PropTypes.oneOfType([PropTypes.node, PropTypes.func]) },
 
 	  getDefaultProps: function getDefaultProps() /*object*/{
 	    return {
-	      fixed: false
-	    };
+	      fixed: false };
 	  },
 
 	  render: function render() {
@@ -9018,8 +8953,7 @@ var ProperTable =
 	      throw new Error('Component <FixedDataTableColumnGroup /> should never render');
 	    }
 	    return null;
-	  }
-	});
+	  } });
 
 	module.exports = FixedDataTableColumnGroup;
 
@@ -9079,7 +9013,6 @@ var ProperTable =
 	    isHeaderCell: PropTypes.bool, // header
 	    isFooterCell: PropTypes.bool },
 
-	  // footer
 	  shouldComponentUpdate: function shouldComponentUpdate( /*object*/nextProps) {
 	    var update = false;
 	    var rowData;
@@ -9197,8 +9130,7 @@ var ProperTable =
 
 	    var innerStyle = _extends({
 	      height: props.height,
-	      width: props.width
-	    }, props.style);
+	      width: props.width }, props.style);
 
 	    return React.createElement(
 	      'div',
@@ -9221,6 +9153,7 @@ var ProperTable =
 	});
 
 	module.exports = TransitionCell;
+	// footer
 
 /***/ },
 /* 54 */
@@ -9238,7 +9171,7 @@ var ProperTable =
 	(function (global, factory) {
 	   true ? module.exports = factory() :
 	  typeof define === 'function' && define.amd ? define(factory) :
-	  (global.Immutable = factory());
+	  global.Immutable = factory();
 	}(this, function () { 'use strict';var SLICE$0 = Array.prototype.slice;
 
 	  function createClass(ctor, superClass) {
@@ -10133,7 +10066,7 @@ var ProperTable =
 	      }
 	      return 'Range [ ' +
 	        this._start + '...' + this._end +
-	        (this._step !== 1 ? ' by ' + this._step : '') +
+	        (this._step > 1 ? ' by ' + this._step : '') +
 	      ' ]';
 	    };
 
@@ -10265,9 +10198,6 @@ var ProperTable =
 	    }
 	    var type = typeof o;
 	    if (type === 'number') {
-	      if (o !== o || o === Infinity) {
-	        return 0;
-	      }
 	      var h = o | 0;
 	      if (h !== o) {
 	        h ^= o * 0xFFFFFFFF;
@@ -10452,17 +10382,6 @@ var ProperTable =
 	          iter.forEach(function(v, k)  {return map.set(k, v)});
 	        });
 	    }
-
-	    Map.of = function() {var keyValues = SLICE$0.call(arguments, 0);
-	      return emptyMap().withMutations(function(map ) {
-	        for (var i = 0; i < keyValues.length; i += 2) {
-	          if (i + 1 >= keyValues.length) {
-	            throw new Error('Missing value for key: ' + keyValues[i]);
-	          }
-	          map.set(keyValues[i], keyValues[i + 1]);
-	        }
-	      });
-	    };
 
 	    Map.prototype.toString = function() {
 	      return this.__toString('Map {', '}');
@@ -12376,11 +12295,7 @@ var ProperTable =
 	      begin = begin | 0;
 	    }
 	    if (end !== undefined) {
-	      if (end === Infinity) {
-	        end = originalSize;
-	      } else {
-	        end = end | 0;
-	      }
+	      end = end | 0;
 	    }
 
 	    if (wholeSlice(begin, end, originalSize)) {
@@ -12916,12 +12831,6 @@ var ProperTable =
 	    Record.prototype.set = function(k, v) {
 	      if (!this.has(k)) {
 	        throw new Error('Cannot set unknown key "' + k + '" on ' + recordName(this));
-	      }
-	      if (this._map && !this._map.has(k)) {
-	        var defaultVal = this._defaultValues[k];
-	        if (v === defaultVal) {
-	          return this;
-	        }
 	      }
 	      var newMap = this._map && this._map.set(k, v);
 	      if (this.__ownerID || newMap === this._map) {
@@ -13606,6 +13515,21 @@ var ProperTable =
 	      return entry ? entry[1] : notSetValue;
 	    },
 
+	    findEntry: function(predicate, context) {
+	      var found;
+	      this.__iterate(function(v, k, c)  {
+	        if (predicate.call(context, v, k, c)) {
+	          found = [k, v];
+	          return false;
+	        }
+	      });
+	      return found;
+	    },
+
+	    findLastEntry: function(predicate, context) {
+	      return this.toSeq().reverse().findEntry(predicate, context);
+	    },
+
 	    forEach: function(sideEffect, context) {
 	      assertNotInfinite(this.size);
 	      return this.__iterate(context ? sideEffect.bind(context) : sideEffect);
@@ -13716,32 +13640,8 @@ var ProperTable =
 	      return this.filter(not(predicate), context);
 	    },
 
-	    findEntry: function(predicate, context, notSetValue) {
-	      var found = notSetValue;
-	      this.__iterate(function(v, k, c)  {
-	        if (predicate.call(context, v, k, c)) {
-	          found = [k, v];
-	          return false;
-	        }
-	      });
-	      return found;
-	    },
-
-	    findKey: function(predicate, context) {
-	      var entry = this.findEntry(predicate, context);
-	      return entry && entry[0];
-	    },
-
 	    findLast: function(predicate, context, notSetValue) {
 	      return this.toKeyedSeq().reverse().find(predicate, context, notSetValue);
-	    },
-
-	    findLastEntry: function(predicate, context, notSetValue) {
-	      return this.toKeyedSeq().reverse().findEntry(predicate, context, notSetValue);
-	    },
-
-	    findLastKey: function(predicate, context) {
-	      return this.toKeyedSeq().reverse().findKey(predicate, context);
 	    },
 
 	    first: function() {
@@ -13802,20 +13702,12 @@ var ProperTable =
 	      return iter.isSubset(this);
 	    },
 
-	    keyOf: function(searchValue) {
-	      return this.findKey(function(value ) {return is(value, searchValue)});
-	    },
-
 	    keySeq: function() {
 	      return this.toSeq().map(keyMapper).toIndexedSeq();
 	    },
 
 	    last: function() {
 	      return this.toSeq().reverse().first();
-	    },
-
-	    lastKeyOf: function(searchValue) {
-	      return this.toKeyedSeq().reverse().keyOf(searchValue);
 	    },
 
 	    max: function(comparator) {
@@ -13908,12 +13800,58 @@ var ProperTable =
 	  IterablePrototype.chain = IterablePrototype.flatMap;
 	  IterablePrototype.contains = IterablePrototype.includes;
 
+	  // Temporary warning about using length
+	  (function () {
+	    try {
+	      Object.defineProperty(IterablePrototype, 'length', {
+	        get: function () {
+	          if (!Iterable.noLengthWarning) {
+	            var stack;
+	            try {
+	              throw new Error();
+	            } catch (error) {
+	              stack = error.stack;
+	            }
+	            if (stack.indexOf('_wrapObject') === -1) {
+	              console && console.warn && console.warn(
+	                'iterable.length has been deprecated, '+
+	                'use iterable.size or iterable.count(). '+
+	                'This warning will become a silent error in a future version. ' +
+	                stack
+	              );
+	              return this.size;
+	            }
+	          }
+	        }
+	      });
+	    } catch (e) {}
+	  })();
+
+
+
 	  mixin(KeyedIterable, {
 
 	    // ### More sequential methods
 
 	    flip: function() {
 	      return reify(this, flipFactory(this));
+	    },
+
+	    findKey: function(predicate, context) {
+	      var entry = this.findEntry(predicate, context);
+	      return entry && entry[0];
+	    },
+
+	    findLastKey: function(predicate, context) {
+	      return this.toSeq().reverse().findKey(predicate, context);
+	    },
+
+	    keyOf: function(searchValue) {
+	      return this.findKey(function(value ) {return is(value, searchValue)});
+	    },
+
+	    lastKeyOf: function(searchValue) {
+	      return this.findLastKey(function(value ) {return is(value, searchValue)});
 	    },
 
 	    mapEntries: function(mapper, context) {var this$0 = this;
@@ -13964,13 +13902,16 @@ var ProperTable =
 	    },
 
 	    indexOf: function(searchValue) {
-	      var key = this.keyOf(searchValue);
+	      var key = this.toKeyedSeq().keyOf(searchValue);
 	      return key === undefined ? -1 : key;
 	    },
 
 	    lastIndexOf: function(searchValue) {
-	      var key = this.lastKeyOf(searchValue);
+	      var key = this.toKeyedSeq().reverse().keyOf(searchValue);
 	      return key === undefined ? -1 : key;
+
+	      // var index =
+	      // return this.toSeq().reverse().indexOf(searchValue);
 	    },
 
 	    reverse: function() {
@@ -14004,8 +13945,8 @@ var ProperTable =
 	    // ### More collection methods
 
 	    findLastIndex: function(predicate, context) {
-	      var entry = this.findLastEntry(predicate, context);
-	      return entry ? entry[0] : -1;
+	      var key = this.toKeyedSeq().findLastKey(predicate, context);
+	      return key === undefined ? -1 : key;
 	    },
 
 	    first: function() {
@@ -14044,10 +13985,6 @@ var ProperTable =
 	        interleaved.size = zipped.size * iterables.length;
 	      }
 	      return reify(this, interleaved);
-	    },
-
-	    keySeq: function() {
-	      return Range(0, this.size);
 	    },
 
 	    last: function() {
@@ -14098,7 +14035,6 @@ var ProperTable =
 	  });
 
 	  SetIterable.prototype.has = IterablePrototype.includes;
-	  SetIterable.prototype.contains = SetIterable.prototype.includes;
 
 
 	  // Mixin subclasses
@@ -14135,7 +14071,7 @@ var ProperTable =
 	  }
 
 	  function quoteString(value) {
-	    return typeof value === 'string' ? JSON.stringify(value) : String(value);
+	    return typeof value === 'string' ? JSON.stringify(value) : value;
 	  }
 
 	  function defaultZipper() {
@@ -14682,7 +14618,7 @@ var ProperTable =
 	DotObject.prototype.str = function (path, v, obj, mod) {
 	  if (path.indexOf(this.seperator) !== -1) {
 	    this._fill(path.split(this.seperator), obj, v, mod)
-	  } else if (!obj.hasOwnProperty(path) || this.override) {
+	  } else if (this.override) {
 	    obj[path] = _process(v, mod)
 	  }
 
@@ -14979,7 +14915,7 @@ var ProperTable =
 	  tgt = tgt || {}
 	  path = path || []
 	  Object.keys(obj).forEach(function (key) {
-	    if (Object(obj[key]) === obj[key] && (Object.prototype.toString.call(obj[key]) === '[object Object]') || Object.prototype.toString.call(obj[key]) === '[object Array]') {
+	    if (Object(obj[key]) === obj[key]) {
 	      return this.dot(obj[key], tgt, path.concat(key))
 	    } else {
 	      tgt[path.concat(key).join(this.seperator)] = obj[key]
@@ -16585,7 +16521,7 @@ var ProperTable =
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports["default"] = undefined;
+	exports.shallowEqualImmutable = exports.shouldComponentUpdate = exports.immutableRenderDecorator = exports.default = undefined;
 
 	var _shouldComponentUpdate = __webpack_require__(77);
 
@@ -16603,12 +16539,12 @@ var ProperTable =
 
 	var _immutableRenderDecorator2 = _interopRequireDefault(_immutableRenderDecorator);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	exports["default"] = _immutableRenderMixin2["default"];
-	exports.immutableRenderDecorator = _immutableRenderDecorator2["default"];
-	exports.shouldComponentUpdate = _shouldComponentUpdate2["default"];
-	exports.shallowEqualImmutable = _shallowEqualImmutable2["default"];
+	exports.default = _immutableRenderMixin2.default;
+	exports.immutableRenderDecorator = _immutableRenderDecorator2.default;
+	exports.shouldComponentUpdate = _shouldComponentUpdate2.default;
+	exports.shallowEqualImmutable = _shallowEqualImmutable2.default;
 
 /***/ },
 /* 77 */
@@ -16619,16 +16555,16 @@ var ProperTable =
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports["default"] = shouldComponentUpdate;
+	exports.default = shouldComponentUpdate;
 
 	var _shallowEqualImmutable = __webpack_require__(78);
 
 	var _shallowEqualImmutable2 = _interopRequireDefault(_shallowEqualImmutable);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function shouldComponentUpdate(nextProps, nextState) {
-	  return !(0, _shallowEqualImmutable2["default"])(this.props, nextProps) || !(0, _shallowEqualImmutable2["default"])(this.state, nextState);
+	  return !(0, _shallowEqualImmutable2.default)(this.props, nextProps) || !(0, _shallowEqualImmutable2.default)(this.state, nextState);
 	}
 
 /***/ },
@@ -16643,15 +16579,15 @@ var ProperTable =
 
 	var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
 
-	exports["default"] = shallowEqualImmutable;
+	exports.default = shallowEqualImmutable;
 
 	var _immutable = __webpack_require__(54);
 
 	var _immutable2 = _interopRequireDefault(_immutable);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	var is = _immutable2["default"].is.bind(_immutable2["default"]);
+	var is = _immutable2.default.is.bind(_immutable2.default);
 
 	function shallowEqualImmutable(objA, objB) {
 	  if (objA === objB || is(objA, objB)) {
@@ -16694,10 +16630,10 @@ var ProperTable =
 
 	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-	exports["default"] = {
-	  shouldComponentUpdate: _shouldComponentUpdate2["default"]
+	exports.default = {
+	  shouldComponentUpdate: _shouldComponentUpdate2.default
 	};
 
 /***/ },
@@ -16712,7 +16648,7 @@ var ProperTable =
 
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-	exports["default"] = immutableRenderDecorator;
+	exports.default = immutableRenderDecorator;
 
 	var _react = __webpack_require__(2);
 
@@ -16722,7 +16658,7 @@ var ProperTable =
 
 	var _shouldComponentUpdate2 = _interopRequireDefault(_shouldComponentUpdate);
 
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -16748,14 +16684,14 @@ var ProperTable =
 	    _createClass(Wrapper, [{
 	      key: 'render',
 	      value: function render() {
-	        return _react2["default"].createElement(Target, this.props, this.props.children);
+	        return _react2.default.createElement(Target, this.props, this.props.children);
 	      }
 	    }]);
 
 	    return Wrapper;
 	  }(_react.Component);
 
-	  Wrapper.prototype.shouldComponentUpdate = _shouldComponentUpdate2["default"];
+	  Wrapper.prototype.shouldComponentUpdate = _shouldComponentUpdate2.default;
 
 	  return Wrapper;
 	}
@@ -16764,7 +16700,7 @@ var ProperTable =
 /* 81 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(process) {/**
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
 	 * Tween.js - Licensed under the MIT license
 	 * https://github.com/tweenjs/tween.js
 	 * ----------------------------------------------
@@ -16772,6 +16708,29 @@ var ProperTable =
 	 * See https://github.com/tweenjs/tween.js/graphs/contributors for the full list of contributors.
 	 * Thank you all, you're awesome!
 	 */
+
+	// Include a performance.now polyfill
+	(function () {
+
+		if ('performance' in window === false) {
+			window.performance = {};
+		}
+
+		// IE 8
+		Date.now = (Date.now || function () {
+			return new Date().getTime();
+		});
+
+		if ('now' in window.performance === false) {
+			var offset = window.performance.timing && window.performance.timing.navigationStart ? window.performance.timing.navigationStart
+			                                                                                    : Date.now();
+
+			window.performance.now = function () {
+				return Date.now() - offset;
+			};
+		}
+
+	})();
 
 	var TWEEN = TWEEN || (function () {
 
@@ -16807,7 +16766,7 @@ var ProperTable =
 
 			},
 
-			update: function (time, preserve) {
+			update: function (time) {
 
 				if (_tweens.length === 0) {
 					return false;
@@ -16815,11 +16774,11 @@ var ProperTable =
 
 				var i = 0;
 
-				time = time !== undefined ? time : TWEEN.now();
+				time = time !== undefined ? time : window.performance.now();
 
 				while (i < _tweens.length) {
 
-					if (_tweens[i].update(time) || preserve) {
+					if (_tweens[i].update(time)) {
 						i++;
 					} else {
 						_tweens.splice(i, 1);
@@ -16834,37 +16793,6 @@ var ProperTable =
 
 	})();
 
-
-	// Include a performance.now polyfill.
-	// In node.js, use process.hrtime.
-	if (typeof (window) === 'undefined' && typeof (process) !== 'undefined') {
-		TWEEN.now = function () {
-			var time = process.hrtime();
-
-			// Convert [seconds, nanoseconds] to milliseconds.
-			return time[0] * 1000 + time[1] / 1000000;
-		};
-	}
-	// In a browser, use window.performance.now if it is available.
-	else if (typeof (window) !== 'undefined' &&
-	         window.performance !== undefined &&
-			 window.performance.now !== undefined) {
-		// This must be bound, because directly assigning this function
-		// leads to an invocation exception in Chrome.
-		TWEEN.now = window.performance.now.bind(window.performance);
-	}
-	// Use Date.now if it is available.
-	else if (Date.now !== undefined) {
-		TWEEN.now = Date.now;
-	}
-	// Otherwise, use 'new Date().getTime()'.
-	else {
-		TWEEN.now = function () {
-			return new Date().getTime();
-		};
-	}
-
-
 	TWEEN.Tween = function (object) {
 
 		var _object = object;
@@ -16873,7 +16801,6 @@ var ProperTable =
 		var _valuesStartRepeat = {};
 		var _duration = 1000;
 		var _repeat = 0;
-		var _repeatDelayTime;
 		var _yoyo = false;
 		var _isPlaying = false;
 		var _reversed = false;
@@ -16888,13 +16815,18 @@ var ProperTable =
 		var _onCompleteCallback = null;
 		var _onStopCallback = null;
 
-		this.to = function (properties, duration) {
+		// Set all starting values present on the target object
+		for (var field in object) {
+			_valuesStart[field] = parseFloat(object[field], 10);
+		}
 
-			_valuesEnd = properties;
+		this.to = function (properties, duration) {
 
 			if (duration !== undefined) {
 				_duration = duration;
 			}
+
+			_valuesEnd = properties;
 
 			return this;
 
@@ -16908,7 +16840,7 @@ var ProperTable =
 
 			_onStartCallbackFired = false;
 
-			_startTime = time !== undefined ? time : TWEEN.now();
+			_startTime = time !== undefined ? time : window.performance.now();
 			_startTime += _delayTime;
 
 			for (var property in _valuesEnd) {
@@ -16927,11 +16859,10 @@ var ProperTable =
 
 				// If `to()` specifies a property that doesn't exist in the source object,
 				// we should not set that property in the object
-				if (_object[property] === undefined) {
+				if (_valuesStart[property] === undefined) {
 					continue;
 				}
 
-				// Save the starting value.
 				_valuesStart[property] = _object[property];
 
 				if ((_valuesStart[property] instanceof Array) === false) {
@@ -16956,17 +16887,10 @@ var ProperTable =
 			_isPlaying = false;
 
 			if (_onStopCallback !== null) {
-				_onStopCallback.call(_object, _object);
+				_onStopCallback.call(_object);
 			}
 
 			this.stopChainedTweens();
-			return this;
-
-		};
-
-		this.end = function () {
-
-			this.update(_startTime + _duration);
 			return this;
 
 		};
@@ -16989,13 +16913,6 @@ var ProperTable =
 		this.repeat = function (times) {
 
 			_repeat = times;
-			return this;
-
-		};
-
-		this.repeatDelay = function (amount) {
-
-			_repeatDelayTime = amount;
 			return this;
 
 		};
@@ -17070,10 +16987,11 @@ var ProperTable =
 			if (_onStartCallbackFired === false) {
 
 				if (_onStartCallback !== null) {
-					_onStartCallback.call(_object, _object);
+					_onStartCallback.call(_object);
 				}
 
 				_onStartCallbackFired = true;
+
 			}
 
 			elapsed = (time - _startTime) / _duration;
@@ -17100,10 +17018,10 @@ var ProperTable =
 					// Parses relative end values with start as base (e.g.: +10, -3)
 					if (typeof (end) === 'string') {
 
-						if (end.charAt(0) === '+' || end.charAt(0) === '-') {
-							end = start + parseFloat(end);
+						if (end.startsWith('+') || end.startsWith('-')) {
+							end = start + parseFloat(end, 10);
 						} else {
-							end = parseFloat(end);
+							end = parseFloat(end, 10);
 						}
 					}
 
@@ -17132,7 +17050,7 @@ var ProperTable =
 					for (property in _valuesStartRepeat) {
 
 						if (typeof (_valuesEnd[property]) === 'string') {
-							_valuesStartRepeat[property] = _valuesStartRepeat[property] + parseFloat(_valuesEnd[property]);
+							_valuesStartRepeat[property] = _valuesStartRepeat[property] + parseFloat(_valuesEnd[property], 10);
 						}
 
 						if (_yoyo) {
@@ -17150,19 +17068,14 @@ var ProperTable =
 						_reversed = !_reversed;
 					}
 
-					if (_repeatDelayTime !== undefined) {
-						_startTime = time + _repeatDelayTime;
-					} else {
-						_startTime = time + _delayTime;
-					}
+					_startTime = time + _delayTime;
 
 					return true;
 
 				} else {
 
 					if (_onCompleteCallback !== null) {
-
-						_onCompleteCallback.call(_object, _object);
+						_onCompleteCallback.call(_object);
 					}
 
 					for (var i = 0, numChainedTweens = _chainedTweens.length; i < numChainedTweens; i++) {
@@ -17386,6 +17299,10 @@ var ProperTable =
 
 			In: function (k) {
 
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+
 				if (k === 0) {
 					return 0;
 				}
@@ -17394,12 +17311,23 @@ var ProperTable =
 					return 1;
 				}
 
-				return -Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				}
+
+				return - (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
 
 			},
 
 			Out: function (k) {
 
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+
 				if (k === 0) {
 					return 0;
 				}
@@ -17408,12 +17336,23 @@ var ProperTable =
 					return 1;
 				}
 
-				return Math.pow(2, -10 * k) * Math.sin((k - 0.1) * 5 * Math.PI) + 1;
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
+				}
+
+				return (a * Math.pow(2, - 10 * k) * Math.sin((k - s) * (2 * Math.PI) / p) + 1);
 
 			},
 
 			InOut: function (k) {
 
+				var s;
+				var a = 0.1;
+				var p = 0.4;
+
 				if (k === 0) {
 					return 0;
 				}
@@ -17422,13 +17361,18 @@ var ProperTable =
 					return 1;
 				}
 
-				k *= 2;
-
-				if (k < 1) {
-					return -0.5 * Math.pow(2, 10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI);
+				if (!a || a < 1) {
+					a = 1;
+					s = p / 4;
+				} else {
+					s = p * Math.asin(1 / a) / (2 * Math.PI);
 				}
 
-				return 0.5 * Math.pow(2, -10 * (k - 1)) * Math.sin((k - 1.1) * 5 * Math.PI) + 1;
+				if ((k *= 2) < 1) {
+					return - 0.5 * (a * Math.pow(2, 10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p));
+				}
+
+				return a * Math.pow(2, -10 * (k -= 1)) * Math.sin((k - s) * (2 * Math.PI) / p) * 0.5 + 1;
 
 			}
 
@@ -17647,196 +17591,9 @@ var ProperTable =
 
 	})(this);
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(82)))
 
 /***/ },
 /* 82 */
-/***/ function(module, exports) {
-
-	// shim for using process in browser
-	var process = module.exports = {};
-
-	// cached from whatever global is present so that test runners that stub it
-	// don't break things.  But we need to wrap it in a try catch in case it is
-	// wrapped in strict mode code which doesn't define any globals.  It's inside a
-	// function because try/catches deoptimize in certain engines.
-
-	var cachedSetTimeout;
-	var cachedClearTimeout;
-
-	function defaultSetTimout() {
-	    throw new Error('setTimeout has not been defined');
-	}
-	function defaultClearTimeout () {
-	    throw new Error('clearTimeout has not been defined');
-	}
-	(function () {
-	    try {
-	        if (typeof setTimeout === 'function') {
-	            cachedSetTimeout = setTimeout;
-	        } else {
-	            cachedSetTimeout = defaultSetTimout;
-	        }
-	    } catch (e) {
-	        cachedSetTimeout = defaultSetTimout;
-	    }
-	    try {
-	        if (typeof clearTimeout === 'function') {
-	            cachedClearTimeout = clearTimeout;
-	        } else {
-	            cachedClearTimeout = defaultClearTimeout;
-	        }
-	    } catch (e) {
-	        cachedClearTimeout = defaultClearTimeout;
-	    }
-	} ())
-	function runTimeout(fun) {
-	    if (cachedSetTimeout === setTimeout) {
-	        //normal enviroments in sane situations
-	        return setTimeout(fun, 0);
-	    }
-	    // if setTimeout wasn't available but was latter defined
-	    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-	        cachedSetTimeout = setTimeout;
-	        return setTimeout(fun, 0);
-	    }
-	    try {
-	        // when when somebody has screwed with setTimeout but no I.E. maddness
-	        return cachedSetTimeout(fun, 0);
-	    } catch(e){
-	        try {
-	            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-	            return cachedSetTimeout.call(null, fun, 0);
-	        } catch(e){
-	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-	            return cachedSetTimeout.call(this, fun, 0);
-	        }
-	    }
-
-
-	}
-	function runClearTimeout(marker) {
-	    if (cachedClearTimeout === clearTimeout) {
-	        //normal enviroments in sane situations
-	        return clearTimeout(marker);
-	    }
-	    // if clearTimeout wasn't available but was latter defined
-	    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-	        cachedClearTimeout = clearTimeout;
-	        return clearTimeout(marker);
-	    }
-	    try {
-	        // when when somebody has screwed with setTimeout but no I.E. maddness
-	        return cachedClearTimeout(marker);
-	    } catch (e){
-	        try {
-	            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-	            return cachedClearTimeout.call(null, marker);
-	        } catch (e){
-	            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-	            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-	            return cachedClearTimeout.call(this, marker);
-	        }
-	    }
-
-
-
-	}
-	var queue = [];
-	var draining = false;
-	var currentQueue;
-	var queueIndex = -1;
-
-	function cleanUpNextTick() {
-	    if (!draining || !currentQueue) {
-	        return;
-	    }
-	    draining = false;
-	    if (currentQueue.length) {
-	        queue = currentQueue.concat(queue);
-	    } else {
-	        queueIndex = -1;
-	    }
-	    if (queue.length) {
-	        drainQueue();
-	    }
-	}
-
-	function drainQueue() {
-	    if (draining) {
-	        return;
-	    }
-	    var timeout = runTimeout(cleanUpNextTick);
-	    draining = true;
-
-	    var len = queue.length;
-	    while(len) {
-	        currentQueue = queue;
-	        queue = [];
-	        while (++queueIndex < len) {
-	            if (currentQueue) {
-	                currentQueue[queueIndex].run();
-	            }
-	        }
-	        queueIndex = -1;
-	        len = queue.length;
-	    }
-	    currentQueue = null;
-	    draining = false;
-	    runClearTimeout(timeout);
-	}
-
-	process.nextTick = function (fun) {
-	    var args = new Array(arguments.length - 1);
-	    if (arguments.length > 1) {
-	        for (var i = 1; i < arguments.length; i++) {
-	            args[i - 1] = arguments[i];
-	        }
-	    }
-	    queue.push(new Item(fun, args));
-	    if (queue.length === 1 && !draining) {
-	        runTimeout(drainQueue);
-	    }
-	};
-
-	// v8 likes predictible objects
-	function Item(fun, array) {
-	    this.fun = fun;
-	    this.array = array;
-	}
-	Item.prototype.run = function () {
-	    this.fun.apply(null, this.array);
-	};
-	process.title = 'browser';
-	process.browser = true;
-	process.env = {};
-	process.argv = [];
-	process.version = ''; // empty string to avoid regexp issues
-	process.versions = {};
-
-	function noop() {}
-
-	process.on = noop;
-	process.addListener = noop;
-	process.once = noop;
-	process.off = noop;
-	process.removeListener = noop;
-	process.removeAllListeners = noop;
-	process.emit = noop;
-
-	process.binding = function (name) {
-	    throw new Error('process.binding is not supported');
-	};
-
-	process.cwd = function () { return '/' };
-	process.chdir = function (dir) {
-	    throw new Error('process.chdir is not supported');
-	};
-	process.umask = function() { return 0; };
-
-
-/***/ },
-/* 83 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -17894,7 +17651,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 84 */
+/* 83 */
 /***/ function(module, exports) {
 
 	
@@ -18117,7 +17874,7 @@ var ProperTable =
 
 
 /***/ },
-/* 85 */
+/* 84 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(Buffer) {var clone = (function() {
@@ -18281,13 +18038,13 @@ var ProperTable =
 	  module.exports = clone;
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(86).Buffer))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(85).Buffer))
 
 /***/ },
-/* 86 */
+/* 85 */
 /***/ function(module, exports, __webpack_require__) {
 
-	/* WEBPACK VAR INJECTION */(function(global) {/*!
+	/* WEBPACK VAR INJECTION */(function(Buffer, global) {/*!
 	 * The buffer module from node.js, for the browser.
 	 *
 	 * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
@@ -18297,9 +18054,9 @@ var ProperTable =
 
 	'use strict'
 
-	var base64 = __webpack_require__(87)
-	var ieee754 = __webpack_require__(88)
-	var isArray = __webpack_require__(89)
+	var base64 = __webpack_require__(86)
+	var ieee754 = __webpack_require__(87)
+	var isArray = __webpack_require__(88)
 
 	exports.Buffer = Buffer
 	exports.SlowBuffer = SlowBuffer
@@ -20077,10 +19834,10 @@ var ProperTable =
 	  return val !== val // eslint-disable-line no-self-compare
 	}
 
-	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(85).Buffer, (function() { return this; }())))
 
 /***/ },
-/* 87 */
+/* 86 */
 /***/ function(module, exports) {
 
 	'use strict'
@@ -20118,22 +19875,22 @@ var ProperTable =
 
 	function byteLength (b64) {
 	  // base64 is 4/3 + up to two characters of the original data
-	  return b64.length * 3 / 4 - placeHoldersCount(b64)
+	  return (b64.length * 3 / 4) - placeHoldersCount(b64)
 	}
 
 	function toByteArray (b64) {
-	  var i, j, l, tmp, placeHolders, arr
+	  var i, l, tmp, placeHolders, arr
 	  var len = b64.length
 	  placeHolders = placeHoldersCount(b64)
 
-	  arr = new Arr(len * 3 / 4 - placeHolders)
+	  arr = new Arr((len * 3 / 4) - placeHolders)
 
 	  // if there are placeholders, only get up to the last complete 4 chars
 	  l = placeHolders > 0 ? len - 4 : len
 
 	  var L = 0
 
-	  for (i = 0, j = 0; i < l; i += 4, j += 3) {
+	  for (i = 0; i < l; i += 4) {
 	    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
 	    arr[L++] = (tmp >> 16) & 0xFF
 	    arr[L++] = (tmp >> 8) & 0xFF
@@ -20200,7 +19957,7 @@ var ProperTable =
 
 
 /***/ },
-/* 88 */
+/* 87 */
 /***/ function(module, exports) {
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
@@ -20290,7 +20047,7 @@ var ProperTable =
 
 
 /***/ },
-/* 89 */
+/* 88 */
 /***/ function(module, exports) {
 
 	var toString = {}.toString;
@@ -20301,13 +20058,13 @@ var ProperTable =
 
 
 /***/ },
-/* 90 */
+/* 89 */
 /***/ function(module, exports) {
 
 	module.exports = moment;
 
 /***/ },
-/* 91 */
+/* 90 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -20360,7 +20117,7 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 92 */
+/* 91 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -20369,11 +20126,11 @@ var ProperTable =
 
 	var _BIGGERTHAN$LOWERTHAN;
 
-	var _formatters = __webpack_require__(93);
+	var _formatters = __webpack_require__(92);
 
 	var _formatters2 = _interopRequireDefault(_formatters);
 
-	var _moment = __webpack_require__(90);
+	var _moment = __webpack_require__(89);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
@@ -20470,18 +20227,18 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 93 */
+/* 92 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	exports.__esModule = true;
 
-	var _moment = __webpack_require__(90);
+	var _moment = __webpack_require__(89);
 
 	var _moment2 = _interopRequireDefault(_moment);
 
-	var _numeral = __webpack_require__(94);
+	var _numeral = __webpack_require__(93);
 
 	var _numeral2 = _interopRequireDefault(_numeral);
 
@@ -20548,43 +20305,32 @@ var ProperTable =
 	module.exports = exports['default'];
 
 /***/ },
-/* 94 */
+/* 93 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*! @preserve
+	var __WEBPACK_AMD_DEFINE_ARRAY__, __WEBPACK_AMD_DEFINE_RESULT__;/*!
 	 * numeral.js
-	 * version : 1.5.6
+	 * version : 1.5.3
 	 * author : Adam Draper
 	 * license : MIT
 	 * http://adamwdraper.github.com/Numeral-js/
 	 */
 
-	(function() {
+	(function () {
 
 	    /************************************
-	        Variables
+	        Constants
 	    ************************************/
 
 	    var numeral,
-	        VERSION = '1.5.6',
+	        VERSION = '1.5.3',
 	        // internal storage for language config files
 	        languages = {},
-	        defaults = {
-	            currentLanguage: 'en',
-	            zeroFormat: null,
-	            nullFormat: null,
-	            defaultFormat: '0,0'
-	        },
-	        options = {
-	            currentLanguage: defaults.currentLanguage,
-	            zeroFormat: defaults.zeroFormat,
-	            nullFormat: defaults.nullFormat,
-	            defaultFormat: defaults.defaultFormat
-	        },
-	        byteSuffixes = {
-	            bytes: ['B','KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-	            iec: ['B','KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
-	        };
+	        currentLanguage = 'en',
+	        zeroFormat = null,
+	        defaultFormat = '0,0',
+	        // check for nodeJS
+	        hasModule = (typeof module !== 'undefined' && module.exports);
 
 
 	    /************************************
@@ -20593,7 +20339,7 @@ var ProperTable =
 
 
 	    // Numeral prototype object
-	    function Numeral(number) {
+	    function Numeral (number) {
 	        this._value = number;
 	    }
 
@@ -20603,29 +20349,17 @@ var ProperTable =
 	     * Fixes binary rounding issues (eg. (0.615).toFixed(2) === '0.61') that present
 	     * problems for accounting- and finance-related software.
 	     */
-	    function toFixed (value, maxDecimals, roundingFunction, optionals) {
-	        var splitValue = value.toString().split('.'),
-	            minDecimals = maxDecimals - (optionals || 0),
-	            boundedPrecision,
+	    function toFixed (value, precision, roundingFunction, optionals) {
+	        var power = Math.pow(10, precision),
 	            optionalsRegExp,
-	            power,
 	            output;
-
-	        // Use the smallest precision value possible to avoid errors from floating point representation
-	        if (splitValue.length === 2) {
-	          boundedPrecision = Math.min(Math.max(splitValue[1].length, minDecimals), maxDecimals);
-	        } else {
-	          boundedPrecision = minDecimals;
-	        }
-
-	        power = Math.pow(10, boundedPrecision);
-
+	            
 	        //roundingFunction = (roundingFunction !== undefined ? roundingFunction : Math.round);
 	        // Multiply up by precision, round accurately, then divide and use native toFixed():
-	        output = (roundingFunction(value * power) / power).toFixed(boundedPrecision);
+	        output = (roundingFunction(value * power) / power).toFixed(precision);
 
-	        if (optionals > maxDecimals - boundedPrecision) {
-	            optionalsRegExp = new RegExp('\\.?0{1,' + (optionals - (maxDecimals - boundedPrecision)) + '}$');
+	        if (optionals) {
+	            optionalsRegExp = new RegExp('0{1,' + optionals + '}$');
 	            output = output.replace(optionalsRegExp, '');
 	        }
 
@@ -20637,34 +20371,71 @@ var ProperTable =
 	    ************************************/
 
 	    // determine what type of formatting we need to do
-	    function formatNumeral(n, format, roundingFunction) {
+	    function formatNumeral (n, format, roundingFunction) {
 	        var output;
 
-	        if (n._value === 0 && options.zeroFormat !== null) {
-	            output = options.zeroFormat;
-	        } else if (n._value === null && options.nullFormat !== null) {
-	            output = options.nullFormat;
-	        } else {
-	            // figure out what kind of format we are dealing with
-	            if (format.indexOf('$') > -1) {
-	                output = formatCurrency(n, format, roundingFunction);
-	            } else if (format.indexOf('%') > -1) {
-	                output = formatPercentage(n, format, roundingFunction);
-	            } else if (format.indexOf(':') > -1) {
-	                output = formatTime(n, format);
-	            } else if (format.indexOf('b') > -1 || format.indexOf('ib') > -1) {
-	                output = formatBytes(n, format, roundingFunction);
-	            } else if (format.indexOf('o') > -1) {
-	                output = formatOrdinal(n, format, roundingFunction);
-	            } else {
-	                output = formatNumber(n._value, format, roundingFunction);
-	            }
+	        // figure out what kind of format we are dealing with
+	        if (format.indexOf('$') > -1) { // currency!!!!!
+	            output = formatCurrency(n, format, roundingFunction);
+	        } else if (format.indexOf('%') > -1) { // percentage
+	            output = formatPercentage(n, format, roundingFunction);
+	        } else if (format.indexOf(':') > -1) { // time
+	            output = formatTime(n, format);
+	        } else { // plain ol' numbers or bytes
+	            output = formatNumber(n._value, format, roundingFunction);
 	        }
 
+	        // return string
 	        return output;
 	    }
 
-	    function formatCurrency(n, format, roundingFunction) {
+	    // revert to number
+	    function unformatNumeral (n, string) {
+	        var stringOriginal = string,
+	            thousandRegExp,
+	            millionRegExp,
+	            billionRegExp,
+	            trillionRegExp,
+	            suffixes = ['KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+	            bytesMultiplier = false,
+	            power;
+
+	        if (string.indexOf(':') > -1) {
+	            n._value = unformatTime(string);
+	        } else {
+	            if (string === zeroFormat) {
+	                n._value = 0;
+	            } else {
+	                if (languages[currentLanguage].delimiters.decimal !== '.') {
+	                    string = string.replace(/\./g,'').replace(languages[currentLanguage].delimiters.decimal, '.');
+	                }
+
+	                // see if abbreviations are there so that we can multiply to the correct number
+	                thousandRegExp = new RegExp('[^a-zA-Z]' + languages[currentLanguage].abbreviations.thousand + '(?:\\)|(\\' + languages[currentLanguage].currency.symbol + ')?(?:\\))?)?$');
+	                millionRegExp = new RegExp('[^a-zA-Z]' + languages[currentLanguage].abbreviations.million + '(?:\\)|(\\' + languages[currentLanguage].currency.symbol + ')?(?:\\))?)?$');
+	                billionRegExp = new RegExp('[^a-zA-Z]' + languages[currentLanguage].abbreviations.billion + '(?:\\)|(\\' + languages[currentLanguage].currency.symbol + ')?(?:\\))?)?$');
+	                trillionRegExp = new RegExp('[^a-zA-Z]' + languages[currentLanguage].abbreviations.trillion + '(?:\\)|(\\' + languages[currentLanguage].currency.symbol + ')?(?:\\))?)?$');
+
+	                // see if bytes are there so that we can multiply to the correct number
+	                for (power = 0; power <= suffixes.length; power++) {
+	                    bytesMultiplier = (string.indexOf(suffixes[power]) > -1) ? Math.pow(1024, power + 1) : false;
+
+	                    if (bytesMultiplier) {
+	                        break;
+	                    }
+	                }
+
+	                // do some math to create our number
+	                n._value = ((bytesMultiplier) ? bytesMultiplier : 1) * ((stringOriginal.match(thousandRegExp)) ? Math.pow(10, 3) : 1) * ((stringOriginal.match(millionRegExp)) ? Math.pow(10, 6) : 1) * ((stringOriginal.match(billionRegExp)) ? Math.pow(10, 9) : 1) * ((stringOriginal.match(trillionRegExp)) ? Math.pow(10, 12) : 1) * ((string.indexOf('%') > -1) ? 0.01 : 1) * (((string.split('-').length + Math.min(string.split('(').length-1, string.split(')').length-1)) % 2)? 1: -1) * Number(string.replace(/[^0-9\.]+/g, ''));
+
+	                // round if we are talking about bytes
+	                n._value = (bytesMultiplier) ? Math.ceil(n._value) : n._value;
+	            }
+	        }
+	        return n._value;
+	    }
+
+	    function formatCurrency (n, format, roundingFunction) {
 	        var symbolIndex = format.indexOf('$'),
 	            openParenIndex = format.indexOf('('),
 	            minusSignIndex = format.indexOf('-'),
@@ -20684,36 +20455,36 @@ var ProperTable =
 	        }
 
 	        // format the number
-	        output = formatNumber(n._value, format, roundingFunction, false);
+	        output = formatNumber(n._value, format, roundingFunction);
 
 	        // position the symbol
 	        if (symbolIndex <= 1) {
 	            if (output.indexOf('(') > -1 || output.indexOf('-') > -1) {
 	                output = output.split('');
 	                spliceIndex = 1;
-	                if (symbolIndex < openParenIndex || symbolIndex < minusSignIndex) {
+	                if (symbolIndex < openParenIndex || symbolIndex < minusSignIndex){
 	                    // the symbol appears before the "(" or "-"
 	                    spliceIndex = 0;
 	                }
-	                output.splice(spliceIndex, 0, languages[options.currentLanguage].currency.symbol + space);
+	                output.splice(spliceIndex, 0, languages[currentLanguage].currency.symbol + space);
 	                output = output.join('');
 	            } else {
-	                output = languages[options.currentLanguage].currency.symbol + space + output;
+	                output = languages[currentLanguage].currency.symbol + space + output;
 	            }
 	        } else {
 	            if (output.indexOf(')') > -1) {
 	                output = output.split('');
-	                output.splice(-1, 0, space + languages[options.currentLanguage].currency.symbol);
+	                output.splice(-1, 0, space + languages[currentLanguage].currency.symbol);
 	                output = output.join('');
 	            } else {
-	                output = output + space + languages[options.currentLanguage].currency.symbol;
+	                output = output + space + languages[currentLanguage].currency.symbol;
 	            }
 	        }
 
 	        return output;
 	    }
 
-	    function formatPercentage(n, format, roundingFunction) {
+	    function formatPercentage (n, format, roundingFunction) {
 	        var space = '',
 	            output,
 	            value = n._value * 100;
@@ -20727,8 +20498,8 @@ var ProperTable =
 	        }
 
 	        output = formatNumber(value, format, roundingFunction);
-
-	        if (output.indexOf(')') > -1) {
+	        
+	        if (output.indexOf(')') > -1 ) {
 	            output = output.split('');
 	            output.splice(-1, 0, space + '%');
 	            output = output.join('');
@@ -20739,255 +20510,14 @@ var ProperTable =
 	        return output;
 	    }
 
-	    function formatBytes(n, format, roundingFunction) {
-	        var output,
-	            suffixes = format.indexOf('ib') > -1 ? byteSuffixes.iec : byteSuffixes.bytes,
-	            value = n._value,
-	            suffix = '',
-	            power,
-	            min,
-	            max;
-
-	        // check for space before
-	        if (format.indexOf(' b') > -1 || format.indexOf(' ib') > -1) {
-	            suffix = ' ';
-	            format = format.replace(' ib', '').replace(' b', '');
-	        } else {
-	            format = format.replace('ib', '').replace('b', '');
-	        }
-
-	        for (power = 0; power <= suffixes.length; power++) {
-	            min = Math.pow(1024, power);
-	            max = Math.pow(1024, power + 1);
-
-	            if (value === null || value === 0 || value >= min && value < max) {
-	                suffix += suffixes[power];
-
-	                if (min > 0) {
-	                    value = value / min;
-	                }
-
-	                break;
-	            }
-	        }
-
-	        output = formatNumber(value, format, roundingFunction);
-
-	        return output + suffix;
-	    }
-
-	    function formatOrdinal(n, format, roundingFunction) {
-	        var output,
-	            ordinal = '';
-
-	        // check for space before
-	        if (format.indexOf(' o') > -1) {
-	            ordinal = ' ';
-	            format = format.replace(' o', '');
-	        } else {
-	            format = format.replace('o', '');
-	        }
-
-	        ordinal += languages[options.currentLanguage].ordinal(n._value);
-
-	        output = formatNumber(n._value, format, roundingFunction);
-
-	        return output + ordinal;
-	    }
-
-	    function formatTime(n) {
-	        var hours = Math.floor(n._value / 60 / 60),
-	            minutes = Math.floor((n._value - (hours * 60 * 60)) / 60),
+	    function formatTime (n) {
+	        var hours = Math.floor(n._value/60/60),
+	            minutes = Math.floor((n._value - (hours * 60 * 60))/60),
 	            seconds = Math.round(n._value - (hours * 60 * 60) - (minutes * 60));
-
 	        return hours + ':' + ((minutes < 10) ? '0' + minutes : minutes) + ':' + ((seconds < 10) ? '0' + seconds : seconds);
 	    }
 
-	    function formatNumber(value, format, roundingFunction) {
-	        var negP = false,
-	            signed = false,
-	            optDec = false,
-	            abbr = '',
-	            abbrK = false, // force abbreviation to thousands
-	            abbrM = false, // force abbreviation to millions
-	            abbrB = false, // force abbreviation to billions
-	            abbrT = false, // force abbreviation to trillions
-	            abbrForce = false, // force abbreviation
-	            abs,
-	            min,
-	            max,
-	            power,
-	            w,
-	            precision,
-	            thousands,
-	            d = '',
-	            neg = false;
-
-	        if (value === null) {
-	            value = 0;
-	        }
-
-	        abs = Math.abs(value);
-
-	        // see if we should use parentheses for negative number or if we should prefix with a sign
-	        // if both are present we default to parentheses
-	        if (format.indexOf('(') > -1) {
-	            negP = true;
-	            format = format.slice(1, -1);
-	        } else if (format.indexOf('+') > -1) {
-	            signed = true;
-	            format = format.replace(/\+/g, '');
-	        }
-
-	        // see if abbreviation is wanted
-	        if (format.indexOf('a') > -1) {
-	            // check if abbreviation is specified
-	            abbrK = format.indexOf('aK') >= 0;
-	            abbrM = format.indexOf('aM') >= 0;
-	            abbrB = format.indexOf('aB') >= 0;
-	            abbrT = format.indexOf('aT') >= 0;
-	            abbrForce = abbrK || abbrM || abbrB || abbrT;
-
-	            // check for space before abbreviation
-	            if (format.indexOf(' a') > -1) {
-	                abbr = ' ';
-	            }
-
-	            format = format.replace(new RegExp(abbr + 'a[KMBT]?'), '');
-
-	            if (abs >= Math.pow(10, 12) && !abbrForce || abbrT) {
-	                // trillion
-	                abbr = abbr + languages[options.currentLanguage].abbreviations.trillion;
-	                value = value / Math.pow(10, 12);
-	            } else if (abs < Math.pow(10, 12) && abs >= Math.pow(10, 9) && !abbrForce || abbrB) {
-	                // billion
-	                abbr = abbr + languages[options.currentLanguage].abbreviations.billion;
-	                value = value / Math.pow(10, 9);
-	            } else if (abs < Math.pow(10, 9) && abs >= Math.pow(10, 6) && !abbrForce || abbrM) {
-	                // million
-	                abbr = abbr + languages[options.currentLanguage].abbreviations.million;
-	                value = value / Math.pow(10, 6);
-	            } else if (abs < Math.pow(10, 6) && abs >= Math.pow(10, 3) && !abbrForce || abbrK) {
-	                // thousand
-	                abbr = abbr + languages[options.currentLanguage].abbreviations.thousand;
-	                value = value / Math.pow(10, 3);
-	            }
-	        }
-
-
-	        if (format.indexOf('[.]') > -1) {
-	            optDec = true;
-	            format = format.replace('[.]', '.');
-	        }
-
-	        w = value.toString().split('.')[0];
-	        precision = format.split('.')[1];
-	        thousands = format.indexOf(',');
-
-	        if (precision) {
-	            if (precision.indexOf('[') > -1) {
-	                precision = precision.replace(']', '');
-	                precision = precision.split('[');
-	                d = toFixed(value, (precision[0].length + precision[1].length), roundingFunction, precision[1].length);
-	            } else {
-	                d = toFixed(value, precision.length, roundingFunction);
-	            }
-
-	            w = d.split('.')[0];
-
-	            if (d.indexOf('.') > -1) {
-	                d = languages[options.currentLanguage].delimiters.decimal + d.split('.')[1];
-	            } else {
-	                d = '';
-	            }
-
-	            if (optDec && Number(d.slice(1)) === 0) {
-	                d = '';
-	            }
-	        } else {
-	            w = toFixed(value, null, roundingFunction);
-	        }
-
-	        // format number
-	        if (w.indexOf('-') > -1) {
-	            w = w.slice(1);
-	            neg = true;
-	        }
-
-	        if (thousands > -1) {
-	            w = w.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + languages[options.currentLanguage].delimiters.thousands);
-	        }
-
-	        if (format.indexOf('.') === 0) {
-	            w = '';
-	        }
-
-	        return ((negP && neg) ? '(' : '') + ((!negP && neg) ? '-' : '') + ((!neg && signed) ? '+' : '') + w + d + ((abbr) ? abbr : '') + ((negP && neg) ? ')' : '');
-	    }
-
-
-	    /************************************
-	        Unformatting
-	    ************************************/
-
-	    // revert to number
-	    function unformatNumeral(n, string) {
-	        var stringOriginal = string,
-	            thousandRegExp,
-	            millionRegExp,
-	            billionRegExp,
-	            trillionRegExp,
-	            bytesMultiplier = false,
-	            power,
-	            value;
-
-	        if (string.indexOf(':') > -1) {
-	            value = unformatTime(string);
-	        } else {
-	            if (string === options.zeroFormat || string === options.nullFormat) {
-	                value = 0;
-	            } else {
-	                if (languages[options.currentLanguage].delimiters.decimal !== '.') {
-	                    string = string.replace(/\./g, '').replace(languages[options.currentLanguage].delimiters.decimal, '.');
-	                }
-
-	                // see if abbreviations are there so that we can multiply to the correct number
-	                thousandRegExp = new RegExp('[^a-zA-Z]' + languages[options.currentLanguage].abbreviations.thousand + '(?:\\)|(\\' + languages[options.currentLanguage].currency.symbol + ')?(?:\\))?)?$');
-	                millionRegExp = new RegExp('[^a-zA-Z]' + languages[options.currentLanguage].abbreviations.million + '(?:\\)|(\\' + languages[options.currentLanguage].currency.symbol + ')?(?:\\))?)?$');
-	                billionRegExp = new RegExp('[^a-zA-Z]' + languages[options.currentLanguage].abbreviations.billion + '(?:\\)|(\\' + languages[options.currentLanguage].currency.symbol + ')?(?:\\))?)?$');
-	                trillionRegExp = new RegExp('[^a-zA-Z]' + languages[options.currentLanguage].abbreviations.trillion + '(?:\\)|(\\' + languages[options.currentLanguage].currency.symbol + ')?(?:\\))?)?$');
-
-	                // see if bytes are there so that we can multiply to the correct number
-	                for (power = 1; power <= byteSuffixes.bytes.length; power++) {
-	                    bytesMultiplier = ((string.indexOf(byteSuffixes.bytes[power]) > -1) || (string.indexOf(byteSuffixes.iec[power]) > -1))? Math.pow(1024, power) : false;
-
-	                    if (bytesMultiplier) {
-	                        break;
-	                    }
-	                }
-
-	                // do some math to create our number
-	                value = bytesMultiplier ? bytesMultiplier : 1;
-	                value *= stringOriginal.match(thousandRegExp) ? Math.pow(10, 3) : 1;
-	                value *= stringOriginal.match(millionRegExp) ? Math.pow(10, 6) : 1;
-	                value *= stringOriginal.match(billionRegExp) ? Math.pow(10, 9) : 1;
-	                value *= stringOriginal.match(trillionRegExp) ? Math.pow(10, 12) : 1;
-	                // check for percentage
-	                value *= string.indexOf('%') > -1 ? 0.01 : 1;
-	                // check for negative number
-	                value *= (string.split('-').length + Math.min(string.split('(').length - 1, string.split(')').length - 1)) % 2 ? 1 : -1;
-	                // remove non numbers
-	                value *= Number(string.replace(/[^0-9\.]+/g, ''));
-	                // round if we are talking about bytes
-	                value = bytesMultiplier ? Math.ceil(value) : value;
-	            }
-	        }
-
-	        n._value = value;
-
-	        return n._value;
-	    }
-	    function unformatTime(string) {
+	    function unformatTime (string) {
 	        var timeArray = string.split(':'),
 	            seconds = 0;
 	        // turn hours and minutes into seconds and add them all up
@@ -21007,52 +20537,204 @@ var ProperTable =
 	        return Number(seconds);
 	    }
 
+	    function formatNumber (value, format, roundingFunction) {
+	        var negP = false,
+	            signed = false,
+	            optDec = false,
+	            abbr = '',
+	            abbrK = false, // force abbreviation to thousands
+	            abbrM = false, // force abbreviation to millions
+	            abbrB = false, // force abbreviation to billions
+	            abbrT = false, // force abbreviation to trillions
+	            abbrForce = false, // force abbreviation
+	            bytes = '',
+	            ord = '',
+	            abs = Math.abs(value),
+	            suffixes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+	            min,
+	            max,
+	            power,
+	            w,
+	            precision,
+	            thousands,
+	            d = '',
+	            neg = false;
+
+	        // check if number is zero and a custom zero format has been set
+	        if (value === 0 && zeroFormat !== null) {
+	            return zeroFormat;
+	        } else {
+	            // see if we should use parentheses for negative number or if we should prefix with a sign
+	            // if both are present we default to parentheses
+	            if (format.indexOf('(') > -1) {
+	                negP = true;
+	                format = format.slice(1, -1);
+	            } else if (format.indexOf('+') > -1) {
+	                signed = true;
+	                format = format.replace(/\+/g, '');
+	            }
+
+	            // see if abbreviation is wanted
+	            if (format.indexOf('a') > -1) {
+	                // check if abbreviation is specified
+	                abbrK = format.indexOf('aK') >= 0;
+	                abbrM = format.indexOf('aM') >= 0;
+	                abbrB = format.indexOf('aB') >= 0;
+	                abbrT = format.indexOf('aT') >= 0;
+	                abbrForce = abbrK || abbrM || abbrB || abbrT;
+
+	                // check for space before abbreviation
+	                if (format.indexOf(' a') > -1) {
+	                    abbr = ' ';
+	                    format = format.replace(' a', '');
+	                } else {
+	                    format = format.replace('a', '');
+	                }
+
+	                if (abs >= Math.pow(10, 12) && !abbrForce || abbrT) {
+	                    // trillion
+	                    abbr = abbr + languages[currentLanguage].abbreviations.trillion;
+	                    value = value / Math.pow(10, 12);
+	                } else if (abs < Math.pow(10, 12) && abs >= Math.pow(10, 9) && !abbrForce || abbrB) {
+	                    // billion
+	                    abbr = abbr + languages[currentLanguage].abbreviations.billion;
+	                    value = value / Math.pow(10, 9);
+	                } else if (abs < Math.pow(10, 9) && abs >= Math.pow(10, 6) && !abbrForce || abbrM) {
+	                    // million
+	                    abbr = abbr + languages[currentLanguage].abbreviations.million;
+	                    value = value / Math.pow(10, 6);
+	                } else if (abs < Math.pow(10, 6) && abs >= Math.pow(10, 3) && !abbrForce || abbrK) {
+	                    // thousand
+	                    abbr = abbr + languages[currentLanguage].abbreviations.thousand;
+	                    value = value / Math.pow(10, 3);
+	                }
+	            }
+
+	            // see if we are formatting bytes
+	            if (format.indexOf('b') > -1) {
+	                // check for space before
+	                if (format.indexOf(' b') > -1) {
+	                    bytes = ' ';
+	                    format = format.replace(' b', '');
+	                } else {
+	                    format = format.replace('b', '');
+	                }
+
+	                for (power = 0; power <= suffixes.length; power++) {
+	                    min = Math.pow(1024, power);
+	                    max = Math.pow(1024, power+1);
+
+	                    if (value >= min && value < max) {
+	                        bytes = bytes + suffixes[power];
+	                        if (min > 0) {
+	                            value = value / min;
+	                        }
+	                        break;
+	                    }
+	                }
+	            }
+
+	            // see if ordinal is wanted
+	            if (format.indexOf('o') > -1) {
+	                // check for space before
+	                if (format.indexOf(' o') > -1) {
+	                    ord = ' ';
+	                    format = format.replace(' o', '');
+	                } else {
+	                    format = format.replace('o', '');
+	                }
+
+	                ord = ord + languages[currentLanguage].ordinal(value);
+	            }
+
+	            if (format.indexOf('[.]') > -1) {
+	                optDec = true;
+	                format = format.replace('[.]', '.');
+	            }
+
+	            w = value.toString().split('.')[0];
+	            precision = format.split('.')[1];
+	            thousands = format.indexOf(',');
+
+	            if (precision) {
+	                if (precision.indexOf('[') > -1) {
+	                    precision = precision.replace(']', '');
+	                    precision = precision.split('[');
+	                    d = toFixed(value, (precision[0].length + precision[1].length), roundingFunction, precision[1].length);
+	                } else {
+	                    d = toFixed(value, precision.length, roundingFunction);
+	                }
+
+	                w = d.split('.')[0];
+
+	                if (d.split('.')[1].length) {
+	                    d = languages[currentLanguage].delimiters.decimal + d.split('.')[1];
+	                } else {
+	                    d = '';
+	                }
+
+	                if (optDec && Number(d.slice(1)) === 0) {
+	                    d = '';
+	                }
+	            } else {
+	                w = toFixed(value, null, roundingFunction);
+	            }
+
+	            // format number
+	            if (w.indexOf('-') > -1) {
+	                w = w.slice(1);
+	                neg = true;
+	            }
+
+	            if (thousands > -1) {
+	                w = w.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1' + languages[currentLanguage].delimiters.thousands);
+	            }
+
+	            if (format.indexOf('.') === 0) {
+	                w = '';
+	            }
+
+	            return ((negP && neg) ? '(' : '') + ((!negP && neg) ? '-' : '') + ((!neg && signed) ? '+' : '') + w + d + ((ord) ? ord : '') + ((abbr) ? abbr : '') + ((bytes) ? bytes : '') + ((negP && neg) ? ')' : '');
+	        }
+	    }
 
 	    /************************************
 	        Top Level Functions
 	    ************************************/
 
-	    numeral = function(input) {
+	    numeral = function (input) {
 	        if (numeral.isNumeral(input)) {
 	            input = input.value();
 	        } else if (input === 0 || typeof input === 'undefined') {
 	            input = 0;
-	        } else if (input === null) {
-	            input = null;
 	        } else if (!Number(input)) {
 	            input = numeral.fn.unformat(input);
-	        } else {
-	            input = Number(input);
 	        }
 
-	        return new Numeral(input);
+	        return new Numeral(Number(input));
 	    };
 
 	    // version number
 	    numeral.version = VERSION;
 
 	    // compare numeral object
-	    numeral.isNumeral = function(obj) {
+	    numeral.isNumeral = function (obj) {
 	        return obj instanceof Numeral;
 	    };
-
 
 	    // This function will load languages and then set the global language.  If
 	    // no arguments are passed in, it will simply return the current global
 	    // language key.
-	    numeral.language = function(key, values) {
+	    numeral.language = function (key, values) {
 	        if (!key) {
-	            return options.currentLanguage;
+	            return currentLanguage;
 	        }
 
-	        key = key.toLowerCase();
-
 	        if (key && !values) {
-	            if (!languages[key]) {
+	            if(!languages[key]) {
 	                throw new Error('Unknown language : ' + key);
 	            }
-
-	            options.currentLanguage = key;
+	            currentLanguage = key;
 	        }
 
 	        if (values || !languages[key]) {
@@ -21061,25 +20743,19 @@ var ProperTable =
 
 	        return numeral;
 	    };
-
-	    numeral.reset = function() {
-	        for (var property in defaults) {
-	            options[property] = defaults[property];
-	        }
-	    };
-
+	    
 	    // This function provides access to the loaded language data.  If
 	    // no arguments are passed in, it will simply return the current
 	    // global language object.
-	    numeral.languageData = function(key) {
+	    numeral.languageData = function (key) {
 	        if (!key) {
-	            return languages[options.currentLanguage];
+	            return languages[currentLanguage];
 	        }
-
+	        
 	        if (!languages[key]) {
 	            throw new Error('Unknown language : ' + key);
 	        }
-
+	        
 	        return languages[key];
 	    };
 
@@ -21094,9 +20770,9 @@ var ProperTable =
 	            billion: 'b',
 	            trillion: 't'
 	        },
-	        ordinal: function(number) {
+	        ordinal: function (number) {
 	            var b = number % 10;
-	            return (~~(number % 100 / 10) === 1) ? 'th' :
+	            return (~~ (number % 100 / 10) === 1) ? 'th' :
 	                (b === 1) ? 'st' :
 	                (b === 2) ? 'nd' :
 	                (b === 3) ? 'rd' : 'th';
@@ -21106,105 +20782,12 @@ var ProperTable =
 	        }
 	    });
 
-	    numeral.zeroFormat = function(format) {
-	        options.zeroFormat = typeof(format) === 'string' ? format : null;
+	    numeral.zeroFormat = function (format) {
+	        zeroFormat = typeof(format) === 'string' ? format : null;
 	    };
 
-	    numeral.nullFormat = function (format) {
-	        options.nullFormat = typeof(format) === 'string' ? format : null;
-	    };
-
-	    numeral.defaultFormat = function(format) {
-	        options.defaultFormat = typeof(format) === 'string' ? format : '0.0';
-	    };
-
-	    numeral.validate = function(val, culture) {
-	        var _decimalSep,
-	            _thousandSep,
-	            _currSymbol,
-	            _valArray,
-	            _abbrObj,
-	            _thousandRegEx,
-	            languageData,
-	            temp;
-
-	        //coerce val to string
-	        if (typeof val !== 'string') {
-	            val += '';
-	            if (console.warn) {
-	                console.warn('Numeral.js: Value is not string. It has been co-erced to: ', val);
-	            }
-	        }
-
-	        //trim whitespaces from either sides
-	        val = val.trim();
-
-	        //if val is just digits return true
-	        if ( !! val.match(/^\d+$/)) {
-	            return true;
-	        }
-
-	        //if val is empty return false
-	        if (val === '') {
-	            return false;
-	        }
-
-	        //get the decimal and thousands separator from numeral.languageData
-	        try {
-	            //check if the culture is understood by numeral. if not, default it to current language
-	            languageData = numeral.languageData(culture);
-	        } catch (e) {
-	            languageData = numeral.languageData(numeral.language());
-	        }
-
-	        //setup the delimiters and currency symbol based on culture/language
-	        _currSymbol = languageData.currency.symbol;
-	        _abbrObj = languageData.abbreviations;
-	        _decimalSep = languageData.delimiters.decimal;
-	        if (languageData.delimiters.thousands === '.') {
-	            _thousandSep = '\\.';
-	        } else {
-	            _thousandSep = languageData.delimiters.thousands;
-	        }
-
-	        // validating currency symbol
-	        temp = val.match(/^[^\d]+/);
-	        if (temp !== null) {
-	            val = val.substr(1);
-	            if (temp[0] !== _currSymbol) {
-	                return false;
-	            }
-	        }
-
-	        //validating abbreviation symbol
-	        temp = val.match(/[^\d]+$/);
-	        if (temp !== null) {
-	            val = val.slice(0, -1);
-	            if (temp[0] !== _abbrObj.thousand && temp[0] !== _abbrObj.million && temp[0] !== _abbrObj.billion && temp[0] !== _abbrObj.trillion) {
-	                return false;
-	            }
-	        }
-
-	        _thousandRegEx = new RegExp(_thousandSep + '{2}');
-
-	        if (!val.match(/[^\d.,]/g)) {
-	            _valArray = val.split(_decimalSep);
-	            if (_valArray.length > 2) {
-	                return false;
-	            } else {
-	                if (_valArray.length < 2) {
-	                    return ( !! _valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx));
-	                } else {
-	                    if (_valArray[0].length === 1) {
-	                        return ( !! _valArray[0].match(/^\d+$/) && !_valArray[0].match(_thousandRegEx) && !! _valArray[1].match(/^\d+$/));
-	                    } else {
-	                        return ( !! _valArray[0].match(/^\d+.*\d$/) && !_valArray[0].match(_thousandRegEx) && !! _valArray[1].match(/^\d+$/));
-	                    }
-	                }
-	            }
-	        }
-
-	        return false;
+	    numeral.defaultFormat = function (format) {
+	        defaultFormat = typeof(format) === 'string' ? format : '0.0';
 	    };
 
 	    /************************************
@@ -21222,43 +20805,55 @@ var ProperTable =
 	    // The floating-point helper functions and implementation
 	    // borrows heavily from sinful.js: http://guipn.github.io/sinful.js/
 
-	    // Production steps of ECMA-262, Edition 5, 15.4.4.21
-	    // Reference: http://es5.github.io/#x15.4.4.21
-	    if (!Array.prototype.reduce) {
-	        Array.prototype.reduce = function(callback /*, initialValue*/) {
+	    /**
+	     * Array.prototype.reduce for browsers that don't support it
+	     * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/Reduce#Compatibility
+	     */
+	    if ('function' !== typeof Array.prototype.reduce) {
+	        Array.prototype.reduce = function (callback, opt_initialValue) {
 	            'use strict';
-	            if (this === null) {
+	            
+	            if (null === this || 'undefined' === typeof this) {
+	                // At the moment all modern browsers, that support strict mode, have
+	                // native implementation of Array.prototype.reduce. For instance, IE8
+	                // does not support strict mode, so this check is actually useless.
 	                throw new TypeError('Array.prototype.reduce called on null or undefined');
 	            }
-
-	            if (typeof callback !== 'function') {
+	            
+	            if ('function' !== typeof callback) {
 	                throw new TypeError(callback + ' is not a function');
 	            }
 
-	            var t = Object(this), len = t.length >>> 0, k = 0, value;
+	            var index,
+	                value,
+	                length = this.length >>> 0,
+	                isValueSet = false;
 
-	            if (arguments.length === 2) {
-	                value = arguments[1];
-	            } else {
-	                while (k < len && !(k in t)) {
-	                    k++;
-	                }
-
-	                if (k >= len) {
-	                    throw new TypeError('Reduce of empty array with no initial value');
-	                }
-
-	                value = t[k++];
+	            if (1 < arguments.length) {
+	                value = opt_initialValue;
+	                isValueSet = true;
 	            }
-	            for (; k < len; k++) {
-	                if (k in t) {
-	                    value = callback(value, t[k], k, t);
+
+	            for (index = 0; length > index; ++index) {
+	                if (this.hasOwnProperty(index)) {
+	                    if (isValueSet) {
+	                        value = callback(value, this[index], index, this);
+	                    } else {
+	                        value = this[index];
+	                        isValueSet = true;
+	                    }
 	                }
 	            }
+
+	            if (!isValueSet) {
+	                throw new TypeError('Reduce of empty array with no initial value');
+	            }
+
 	            return value;
 	        };
 	    }
 
+	    
 	    /**
 	     * Computes the multiplier necessary to make x >= 1,
 	     * effectively eliminating miscalculations caused by
@@ -21279,12 +20874,12 @@ var ProperTable =
 	     */
 	    function correctionFactor() {
 	        var args = Array.prototype.slice.call(arguments);
-	        return args.reduce(function(prev, next) {
+	        return args.reduce(function (prev, next) {
 	            var mp = multiplier(prev),
 	                mn = multiplier(next);
-	            return mp > mn ? mp : mn;
+	        return mp > mn ? mp : mn;
 	        }, -Infinity);
-	    }
+	    }        
 
 
 	    /************************************
@@ -21294,41 +20889,39 @@ var ProperTable =
 
 	    numeral.fn = Numeral.prototype = {
 
-	        clone: function() {
+	        clone : function () {
 	            return numeral(this);
 	        },
 
-	        format: function (inputString, roundingFunction) {
-	            return formatNumeral(this,
-	                inputString ? inputString : options.defaultFormat,
-	                roundingFunction !== undefined ? roundingFunction : Math.round
-	            );
+	        format : function (inputString, roundingFunction) {
+	            return formatNumeral(this, 
+	                  inputString ? inputString : defaultFormat, 
+	                  (roundingFunction !== undefined) ? roundingFunction : Math.round
+	              );
 	        },
 
-	        unformat: function (inputString) {
-	            if (Object.prototype.toString.call(inputString) === '[object Number]') {
-	                return inputString;
+	        unformat : function (inputString) {
+	            if (Object.prototype.toString.call(inputString) === '[object Number]') { 
+	                return inputString; 
 	            }
-
-	            return unformatNumeral(this, inputString ? inputString : options.defaultFormat);
+	            return unformatNumeral(this, inputString ? inputString : defaultFormat);
 	        },
 
-	        value: function() {
+	        value : function () {
 	            return this._value;
 	        },
 
-	        valueOf: function() {
+	        valueOf : function () {
 	            return this._value;
 	        },
 
-	        set: function(value) {
+	        set : function (value) {
 	            this._value = Number(value);
 	            return this;
 	        },
 
-	        add: function(value) {
+	        add : function (value) {
 	            var corrFactor = correctionFactor.call(null, this._value, value);
-
 	            function cback(accum, curr, currI, O) {
 	                return accum + corrFactor * curr;
 	            }
@@ -21336,17 +20929,16 @@ var ProperTable =
 	            return this;
 	        },
 
-	        subtract: function(value) {
+	        subtract : function (value) {
 	            var corrFactor = correctionFactor.call(null, this._value, value);
-
 	            function cback(accum, curr, currI, O) {
 	                return accum - corrFactor * curr;
 	            }
-	            this._value = [value].reduce(cback, this._value * corrFactor) / corrFactor;
+	            this._value = [value].reduce(cback, this._value * corrFactor) / corrFactor;            
 	            return this;
 	        },
 
-	        multiply: function(value) {
+	        multiply : function (value) {
 	            function cback(accum, curr, currI, O) {
 	                var corrFactor = correctionFactor(accum, curr);
 	                return (accum * corrFactor) * (curr * corrFactor) /
@@ -21356,16 +20948,16 @@ var ProperTable =
 	            return this;
 	        },
 
-	        divide: function(value) {
+	        divide : function (value) {
 	            function cback(accum, curr, currI, O) {
 	                var corrFactor = correctionFactor(accum, curr);
 	                return (accum * corrFactor) / (curr * corrFactor);
 	            }
-	            this._value = [this._value, value].reduce(cback);
+	            this._value = [this._value, value].reduce(cback);            
 	            return this;
 	        },
 
-	        difference: function(value) {
+	        difference : function (value) {
 	            return Math.abs(numeral(this._value).subtract(value).value());
 	        }
 
@@ -21376,7 +20968,7 @@ var ProperTable =
 	    ************************************/
 
 	    // CommonJS module is defined
-	    if (typeof module !== 'undefined' && module.exports) {
+	    if (hasModule) {
 	        module.exports = numeral;
 	    }
 
@@ -21390,7 +20982,7 @@ var ProperTable =
 
 	    /*global define:false */
 	    if (true) {
-	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function() {
+	        !(__WEBPACK_AMD_DEFINE_ARRAY__ = [], __WEBPACK_AMD_DEFINE_RESULT__ = function () {
 	            return numeral;
 	        }.apply(exports, __WEBPACK_AMD_DEFINE_ARRAY__), __WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__));
 	    }
@@ -21398,16 +20990,16 @@ var ProperTable =
 
 
 /***/ },
-/* 95 */
+/* 94 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(96)() ? Set : __webpack_require__(97);
+	module.exports = __webpack_require__(95)() ? Set : __webpack_require__(96);
 
 
 /***/ },
-/* 96 */
+/* 95 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21420,7 +21012,7 @@ var ProperTable =
 		if (set.size !== 3) return false;
 		if (typeof set.add !== 'function') return false;
 		if (typeof set.clear !== 'function') return false;
-		if (typeof set["delete"] !== 'function') return false;
+		if (typeof set.delete !== 'function') return false;
 		if (typeof set.entries !== 'function') return false;
 		if (typeof set.forEach !== 'function') return false;
 		if (typeof set.has !== 'function') return false;
@@ -21437,22 +21029,22 @@ var ProperTable =
 
 
 /***/ },
-/* 97 */
+/* 96 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var clear          = __webpack_require__(98)
-	  , eIndexOf       = __webpack_require__(100)
-	  , setPrototypeOf = __webpack_require__(106)
-	  , callable       = __webpack_require__(111)
-	  , d              = __webpack_require__(112)
-	  , ee             = __webpack_require__(124)
-	  , Symbol         = __webpack_require__(125)
-	  , iterator       = __webpack_require__(130)
-	  , forOf          = __webpack_require__(134)
-	  , Iterator       = __webpack_require__(144)
-	  , isNative       = __webpack_require__(145)
+	var clear          = __webpack_require__(97)
+	  , eIndexOf       = __webpack_require__(101)
+	  , setPrototypeOf = __webpack_require__(110)
+	  , callable       = __webpack_require__(115)
+	  , d              = __webpack_require__(116)
+	  , ee             = __webpack_require__(128)
+	  , Symbol         = __webpack_require__(130)
+	  , iterator       = __webpack_require__(136)
+	  , forOf          = __webpack_require__(140)
+	  , Iterator       = __webpack_require__(155)
+	  , isNative       = __webpack_require__(156)
 
 	  , call = Function.prototype.call
 	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
@@ -21491,7 +21083,7 @@ var ProperTable =
 			clear.call(this.__setData__);
 			this.emit('_clear');
 		}),
-		"delete": d(function (value) {
+		delete: d(function (value) {
 			var index = eIndexOf.call(this.__setData__, value);
 			if (index === -1) return false;
 			this.__setData__.splice(index, 1);
@@ -21523,16 +21115,16 @@ var ProperTable =
 
 
 /***/ },
-/* 98 */
+/* 97 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Inspired by Google Closure:
 	// http://closure-library.googlecode.com/svn/docs/
 	// closure_goog_array_array.js.html#goog.array.clear
 
-	'use strict';
+	"use strict";
 
-	var value = __webpack_require__(99);
+	var value = __webpack_require__(98);
 
 	module.exports = function () {
 		value(this).length = 0;
@@ -21541,46 +21133,70 @@ var ProperTable =
 
 
 /***/ },
-/* 99 */
-/***/ function(module, exports) {
+/* 98 */
+/***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
+
+	var isValue = __webpack_require__(99);
 
 	module.exports = function (value) {
-		if (value == null) throw new TypeError("Cannot use null or undefined");
+		if (!isValue(value)) throw new TypeError("Cannot use null or undefined");
 		return value;
 	};
 
 
 /***/ },
-/* 100 */
+/* 99 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var toPosInt = __webpack_require__(101)
-	  , value    = __webpack_require__(99)
+	var _undefined = __webpack_require__(100)(); // Support ES3 engines
 
-	  , indexOf = Array.prototype.indexOf
-	  , hasOwnProperty = Object.prototype.hasOwnProperty
-	  , abs = Math.abs, floor = Math.floor;
+	module.exports = function (val) {
+	 return (val !== _undefined) && (val !== null);
+	};
 
-	module.exports = function (searchElement/*, fromIndex*/) {
-		var i, l, fromIndex, val;
-		if (searchElement === searchElement) { //jslint: ignore
-			return indexOf.apply(this, arguments);
-		}
 
-		l = toPosInt(value(this).length);
+/***/ },
+/* 100 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	// eslint-disable-next-line no-empty-function
+	module.exports = function () {};
+
+
+/***/ },
+/* 101 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var numberIsNaN       = __webpack_require__(102)
+	  , toPosInt          = __webpack_require__(105)
+	  , value             = __webpack_require__(98)
+	  , indexOf           = Array.prototype.indexOf
+	  , objHasOwnProperty = Object.prototype.hasOwnProperty
+	  , abs               = Math.abs
+	  , floor             = Math.floor;
+
+	module.exports = function (searchElement /*, fromIndex*/) {
+		var i, length, fromIndex, val;
+		if (!numberIsNaN(searchElement)) return indexOf.apply(this, arguments);
+
+		length = toPosInt(value(this).length);
 		fromIndex = arguments[1];
 		if (isNaN(fromIndex)) fromIndex = 0;
 		else if (fromIndex >= 0) fromIndex = floor(fromIndex);
 		else fromIndex = toPosInt(this.length) - floor(abs(fromIndex));
 
-		for (i = fromIndex; i < l; ++i) {
-			if (hasOwnProperty.call(this, i)) {
+		for (i = fromIndex; i < length; ++i) {
+			if (objHasOwnProperty.call(this, i)) {
 				val = this[i];
-				if (val !== val) return i; //jslint: ignore
+				if (numberIsNaN(val)) return i; // Jslint: ignore
 			}
 		}
 		return -1;
@@ -21588,25 +21204,63 @@ var ProperTable =
 
 
 /***/ },
-/* 101 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	var toInteger = __webpack_require__(102)
-
-	  , max = Math.max;
-
-	module.exports = function (value) { return max(0, toInteger(value)); };
-
-
-/***/ },
 /* 102 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var sign = __webpack_require__(103)
+	module.exports = __webpack_require__(103)()
+		? Number.isNaN
+		: __webpack_require__(104);
+
+
+/***/ },
+/* 103 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = function () {
+		var numberIsNaN = Number.isNaN;
+		if (typeof numberIsNaN !== "function") return false;
+		return !numberIsNaN({}) && numberIsNaN(NaN) && !numberIsNaN(34);
+	};
+
+
+/***/ },
+/* 104 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = function (value) {
+		// eslint-disable-next-line no-self-compare
+		return value !== value;
+	};
+
+
+/***/ },
+/* 105 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var toInteger = __webpack_require__(106)
+
+	  , max = Math.max;
+
+	module.exports = function (value) {
+	 return max(0, toInteger(value));
+	};
+
+
+/***/ },
+/* 106 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var sign = __webpack_require__(107)
 
 	  , abs = Math.abs, floor = Math.floor;
 
@@ -21619,92 +21273,95 @@ var ProperTable =
 
 
 /***/ },
-/* 103 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(104)()
-		? Math.sign
-		: __webpack_require__(105);
-
-
-/***/ },
-/* 104 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function () {
-		var sign = Math.sign;
-		if (typeof sign !== 'function') return false;
-		return ((sign(10) === 1) && (sign(-20) === -1));
-	};
-
-
-/***/ },
-/* 105 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	module.exports = function (value) {
-		value = Number(value);
-		if (isNaN(value) || (value === 0)) return value;
-		return (value > 0) ? 1 : -1;
-	};
-
-
-/***/ },
-/* 106 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(107)()
-		? Object.setPrototypeOf
-		: __webpack_require__(108);
-
-
-/***/ },
 /* 107 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var create = Object.create, getPrototypeOf = Object.getPrototypeOf
-	  , x = {};
-
-	module.exports = function (/*customCreate*/) {
-		var setPrototypeOf = Object.setPrototypeOf
-		  , customCreate = arguments[0] || create;
-		if (typeof setPrototypeOf !== 'function') return false;
-		return getPrototypeOf(setPrototypeOf(customCreate(null), x)) === x;
-	};
+	module.exports = __webpack_require__(108)()
+		? Math.sign
+		: __webpack_require__(109);
 
 
 /***/ },
 /* 108 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = function () {
+		var sign = Math.sign;
+		if (typeof sign !== "function") return false;
+		return (sign(10) === 1) && (sign(-20) === -1);
+	};
+
+
+/***/ },
+/* 109 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = function (value) {
+		value = Number(value);
+		if (isNaN(value) || (value === 0)) return value;
+		return value > 0 ? 1 : -1;
+	};
+
+
+/***/ },
+/* 110 */
 /***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	module.exports = __webpack_require__(111)()
+		? Object.setPrototypeOf
+		: __webpack_require__(112);
+
+
+/***/ },
+/* 111 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	var create = Object.create, getPrototypeOf = Object.getPrototypeOf, plainObject = {};
+
+	module.exports = function (/* CustomCreate*/) {
+		var setPrototypeOf = Object.setPrototypeOf, customCreate = arguments[0] || create;
+		if (typeof setPrototypeOf !== "function") return false;
+		return getPrototypeOf(setPrototypeOf(customCreate(null), plainObject)) === plainObject;
+	};
+
+
+/***/ },
+/* 112 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* eslint no-proto: "off" */
 
 	// Big thanks to @WebReflection for sorting this out
 	// https://gist.github.com/WebReflection/5593554
 
-	'use strict';
+	"use strict";
 
-	var isObject      = __webpack_require__(109)
-	  , value         = __webpack_require__(99)
-
-	  , isPrototypeOf = Object.prototype.isPrototypeOf
-	  , defineProperty = Object.defineProperty
-	  , nullDesc = { configurable: true, enumerable: false, writable: true,
-			value: undefined }
+	var isObject        = __webpack_require__(113)
+	  , value           = __webpack_require__(98)
+	  , objIsPrototypOf = Object.prototype.isPrototypeOf
+	  , defineProperty  = Object.defineProperty
+	  , nullDesc        = {
+		configurable: true,
+		enumerable: false,
+		writable: true,
+		value: undefined
+	}
 	  , validate;
 
 	validate = function (obj, prototype) {
 		value(obj);
-		if ((prototype === null) || isObject(prototype)) return obj;
-		throw new TypeError('Prototype must be null or an object');
+		if (prototype === null || isObject(prototype)) return obj;
+		throw new TypeError("Prototype must be null or an object");
 	};
 
 	module.exports = (function (status) {
@@ -21727,118 +21384,140 @@ var ProperTable =
 			fn = function self(obj, prototype) {
 				var isNullBase;
 				validate(obj, prototype);
-				isNullBase = isPrototypeOf.call(self.nullPolyfill, obj);
+				isNullBase = objIsPrototypOf.call(self.nullPolyfill, obj);
 				if (isNullBase) delete self.nullPolyfill.__proto__;
 				if (prototype === null) prototype = self.nullPolyfill;
 				obj.__proto__ = prototype;
-				if (isNullBase) defineProperty(self.nullPolyfill, '__proto__', nullDesc);
+				if (isNullBase) defineProperty(self.nullPolyfill, "__proto__", nullDesc);
 				return obj;
 			};
 		}
-		return Object.defineProperty(fn, 'level', { configurable: false,
-			enumerable: false, writable: false, value: status.level });
-	}((function () {
-		var x = Object.create(null), y = {}, set
-		  , desc = Object.getOwnPropertyDescriptor(Object.prototype, '__proto__');
+		return Object.defineProperty(fn, "level", {
+			configurable: false,
+			enumerable: false,
+			writable: false,
+			value: status.level
+		});
+	}(
+		(function () {
+			var tmpObj1 = Object.create(null)
+			  , tmpObj2 = {}
+			  , set
+			  , desc = Object.getOwnPropertyDescriptor(Object.prototype, "__proto__");
 
-		if (desc) {
-			try {
-				set = desc.set; // Opera crashes at this point
-				set.call(x, y);
-			} catch (ignore) { }
-			if (Object.getPrototypeOf(x) === y) return { set: set, level: 2 };
-		}
+			if (desc) {
+				try {
+					set = desc.set; // Opera crashes at this point
+					set.call(tmpObj1, tmpObj2);
+				} catch (ignore) {}
+				if (Object.getPrototypeOf(tmpObj1) === tmpObj2) return { set: set, level: 2 };
+			}
 
-		x.__proto__ = y;
-		if (Object.getPrototypeOf(x) === y) return { level: 2 };
+			tmpObj1.__proto__ = tmpObj2;
+			if (Object.getPrototypeOf(tmpObj1) === tmpObj2) return { level: 2 };
 
-		x = {};
-		x.__proto__ = y;
-		if (Object.getPrototypeOf(x) === y) return { level: 1 };
+			tmpObj1 = {};
+			tmpObj1.__proto__ = tmpObj2;
+			if (Object.getPrototypeOf(tmpObj1) === tmpObj2) return { level: 1 };
 
-		return false;
-	}())));
+			return false;
+		})()
+	));
 
-	__webpack_require__(110);
+	__webpack_require__(114);
 
 
 /***/ },
-/* 109 */
-/***/ function(module, exports) {
+/* 113 */
+/***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var map = { 'function': true, object: true };
+	var isValue = __webpack_require__(99);
 
-	module.exports = function (x) {
-		return ((x != null) && map[typeof x]) || false;
+	var map = { function: true, object: true };
+
+	module.exports = function (value) {
+		return (isValue(value) && map[typeof value]) || false;
 	};
 
 
 /***/ },
-/* 110 */
+/* 114 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Workaround for http://code.google.com/p/v8/issues/detail?id=2804
 
-	'use strict';
+	"use strict";
 
 	var create = Object.create, shim;
 
-	if (!__webpack_require__(107)()) {
-		shim = __webpack_require__(108);
+	if (!__webpack_require__(111)()) {
+		shim = __webpack_require__(112);
 	}
 
 	module.exports = (function () {
-		var nullObject, props, desc;
+		var nullObject, polyProps, desc;
 		if (!shim) return create;
 		if (shim.level !== 1) return create;
 
 		nullObject = {};
-		props = {};
-		desc = { configurable: false, enumerable: false, writable: true,
-			value: undefined };
+		polyProps = {};
+		desc = {
+			configurable: false,
+			enumerable: false,
+			writable: true,
+			value: undefined
+		};
 		Object.getOwnPropertyNames(Object.prototype).forEach(function (name) {
-			if (name === '__proto__') {
-				props[name] = { configurable: true, enumerable: false, writable: true,
-					value: undefined };
+			if (name === "__proto__") {
+				polyProps[name] = {
+					configurable: true,
+					enumerable: false,
+					writable: true,
+					value: undefined
+				};
 				return;
 			}
-			props[name] = desc;
+			polyProps[name] = desc;
 		});
-		Object.defineProperties(nullObject, props);
+		Object.defineProperties(nullObject, polyProps);
 
-		Object.defineProperty(shim, 'nullPolyfill', { configurable: false,
-			enumerable: false, writable: false, value: nullObject });
+		Object.defineProperty(shim, "nullPolyfill", {
+			configurable: false,
+			enumerable: false,
+			writable: false,
+			value: nullObject
+		});
 
 		return function (prototype, props) {
-			return create((prototype === null) ? nullObject : prototype, props);
+			return create(prototype === null ? nullObject : prototype, props);
 		};
 	}());
 
 
 /***/ },
-/* 111 */
+/* 115 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
 
 	module.exports = function (fn) {
-		if (typeof fn !== 'function') throw new TypeError(fn + " is not a function");
+		if (typeof fn !== "function") throw new TypeError(fn + " is not a function");
 		return fn;
 	};
 
 
 /***/ },
-/* 112 */
+/* 116 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var assign        = __webpack_require__(113)
-	  , normalizeOpts = __webpack_require__(119)
-	  , isCallable    = __webpack_require__(120)
-	  , contains      = __webpack_require__(121)
+	var assign        = __webpack_require__(117)
+	  , normalizeOpts = __webpack_require__(123)
+	  , isCallable    = __webpack_require__(124)
+	  , contains      = __webpack_require__(125)
 
 	  , d;
 
@@ -21899,51 +21578,52 @@ var ProperTable =
 
 
 /***/ },
-/* 113 */
+/* 117 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	module.exports = __webpack_require__(114)()
+	module.exports = __webpack_require__(118)()
 		? Object.assign
-		: __webpack_require__(115);
+		: __webpack_require__(119);
 
 
 /***/ },
-/* 114 */
+/* 118 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
 
 	module.exports = function () {
 		var assign = Object.assign, obj;
-		if (typeof assign !== 'function') return false;
-		obj = { foo: 'raz' };
-		assign(obj, { bar: 'dwa' }, { trzy: 'trzy' });
-		return (obj.foo + obj.bar + obj.trzy) === 'razdwatrzy';
+		if (typeof assign !== "function") return false;
+		obj = { foo: "raz" };
+		assign(obj, { bar: "dwa" }, { trzy: "trzy" });
+		return (obj.foo + obj.bar + obj.trzy) === "razdwatrzy";
 	};
 
 
 /***/ },
-/* 115 */
+/* 119 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var keys  = __webpack_require__(116)
-	  , value = __webpack_require__(99)
+	var keys  = __webpack_require__(120)
+	  , value = __webpack_require__(98)
+	  , max   = Math.max;
 
-	  , max = Math.max;
-
-	module.exports = function (dest, src/*, …srcn*/) {
-		var error, i, l = max(arguments.length, 2), assign;
+	module.exports = function (dest, src /*, …srcn*/) {
+		var error, i, length = max(arguments.length, 2), assign;
 		dest = Object(value(dest));
 		assign = function (key) {
-			try { dest[key] = src[key]; } catch (e) {
+			try {
+				dest[key] = src[key];
+			} catch (e) {
 				if (!error) error = e;
 			}
 		};
-		for (i = 1; i < l; ++i) {
+		for (i = 1; i < length; ++i) {
 			src = arguments[i];
 			keys(src).forEach(assign);
 		}
@@ -21953,48 +21633,54 @@ var ProperTable =
 
 
 /***/ },
-/* 116 */
+/* 120 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	module.exports = __webpack_require__(117)()
+	module.exports = __webpack_require__(121)()
 		? Object.keys
-		: __webpack_require__(118);
+		: __webpack_require__(122);
 
 
 /***/ },
-/* 117 */
+/* 121 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
 
 	module.exports = function () {
 		try {
-			Object.keys('primitive');
+			Object.keys("primitive");
 			return true;
-		} catch (e) { return false; }
+		} catch (e) {
+	 return false;
+	}
 	};
 
 
 /***/ },
-/* 118 */
-/***/ function(module, exports) {
+/* 122 */
+/***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
+
+	var isValue = __webpack_require__(99);
 
 	var keys = Object.keys;
 
 	module.exports = function (object) {
-		return keys(object == null ? object : Object(object));
+		return keys(isValue(object) ? Object(object) : object);
 	};
 
 
 /***/ },
-/* 119 */
-/***/ function(module, exports) {
+/* 123 */
+/***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
+
+	var isValue = __webpack_require__(99);
 
 	var forEach = Array.prototype.forEach, create = Object.create;
 
@@ -22003,10 +21689,11 @@ var ProperTable =
 		for (key in src) obj[key] = src[key];
 	};
 
-	module.exports = function (options/*, …options*/) {
+	// eslint-disable-next-line no-unused-vars
+	module.exports = function (opts1 /*, …options*/) {
 		var result = create(null);
 		forEach.call(arguments, function (options) {
-			if (options == null) return;
+			if (!isValue(options)) return;
 			process(Object(options), result);
 		});
 		return result;
@@ -22014,46 +21701,48 @@ var ProperTable =
 
 
 /***/ },
-/* 120 */
+/* 124 */
 /***/ function(module, exports) {
 
 	// Deprecated
 
-	'use strict';
+	"use strict";
 
-	module.exports = function (obj) { return typeof obj === 'function'; };
-
-
-/***/ },
-/* 121 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-
-	module.exports = __webpack_require__(122)()
-		? String.prototype.contains
-		: __webpack_require__(123);
-
-
-/***/ },
-/* 122 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var str = 'razdwatrzy';
-
-	module.exports = function () {
-		if (typeof str.contains !== 'function') return false;
-		return ((str.contains('dwa') === true) && (str.contains('foo') === false));
+	module.exports = function (obj) {
+	 return typeof obj === "function";
 	};
 
 
 /***/ },
-/* 123 */
+/* 125 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	module.exports = __webpack_require__(126)()
+		? String.prototype.contains
+		: __webpack_require__(127);
+
+
+/***/ },
+/* 126 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
+
+	var str = "razdwatrzy";
+
+	module.exports = function () {
+		if (typeof str.contains !== "function") return false;
+		return (str.contains("dwa") === true) && (str.contains("foo") === false);
+	};
+
+
+/***/ },
+/* 127 */
+/***/ function(module, exports) {
+
+	"use strict";
 
 	var indexOf = String.prototype.indexOf;
 
@@ -22063,13 +21752,13 @@ var ProperTable =
 
 
 /***/ },
-/* 124 */
+/* 128 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var d        = __webpack_require__(112)
-	  , callable = __webpack_require__(111)
+	var d        = __webpack_require__(129)
+	  , callable = __webpack_require__(115)
 
 	  , apply = Function.prototype.apply, call = Function.prototype.call
 	  , create = Object.create, defineProperty = Object.defineProperty
@@ -22201,16 +21890,18 @@ var ProperTable =
 
 
 /***/ },
-/* 125 */
+/* 129 */
+116,
+/* 130 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	module.exports = __webpack_require__(126)() ? Symbol : __webpack_require__(127);
+	module.exports = __webpack_require__(131)() ? Symbol : __webpack_require__(132);
 
 
 /***/ },
-/* 126 */
+/* 131 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -22233,15 +21924,15 @@ var ProperTable =
 
 
 /***/ },
-/* 127 */
+/* 132 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// ES2015 Symbol polyfill for environments that do not (or partially) support it
 
 	'use strict';
 
-	var d              = __webpack_require__(112)
-	  , validateSymbol = __webpack_require__(128)
+	var d              = __webpack_require__(133)
+	  , validateSymbol = __webpack_require__(134)
 
 	  , create = Object.create, defineProperties = Object.defineProperties
 	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
@@ -22299,7 +21990,7 @@ var ProperTable =
 		});
 	};
 	defineProperties(SymbolPolyfill, {
-		"for": d(function (key) {
+		for: d(function (key) {
 			if (globalSymbols[key]) return globalSymbols[key];
 			return (globalSymbols[key] = SymbolPolyfill(String(key)));
 		}),
@@ -22357,12 +22048,14 @@ var ProperTable =
 
 
 /***/ },
-/* 128 */
+/* 133 */
+116,
+/* 134 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isSymbol = __webpack_require__(129);
+	var isSymbol = __webpack_require__(135);
 
 	module.exports = function (value) {
 		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
@@ -22371,7 +22064,7 @@ var ProperTable =
 
 
 /***/ },
-/* 129 */
+/* 135 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -22386,12 +22079,12 @@ var ProperTable =
 
 
 /***/ },
-/* 130 */
+/* 136 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var isIterable = __webpack_require__(131);
+	var isIterable = __webpack_require__(137);
 
 	module.exports = function (value) {
 		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
@@ -22400,91 +22093,101 @@ var ProperTable =
 
 
 /***/ },
-/* 131 */
+/* 137 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var isArguments    = __webpack_require__(132)
-	  , isString       = __webpack_require__(133)
-	  , iteratorSymbol = __webpack_require__(125).iterator
+	var isArguments = __webpack_require__(138)
+	  , isValue     = __webpack_require__(99)
+	  , isString    = __webpack_require__(139);
 
-	  , isArray = Array.isArray;
+	var iteratorSymbol = __webpack_require__(130).iterator
+	  , isArray        = Array.isArray;
 
 	module.exports = function (value) {
-		if (value == null) return false;
+		if (!isValue(value)) return false;
 		if (isArray(value)) return true;
 		if (isString(value)) return true;
 		if (isArguments(value)) return true;
-		return (typeof value[iteratorSymbol] === 'function');
+		return typeof value[iteratorSymbol] === "function";
 	};
 
 
 /***/ },
-/* 132 */
+/* 138 */
 /***/ function(module, exports) {
 
-	'use strict';
+	"use strict";
 
-	var toString = Object.prototype.toString
+	var objToString = Object.prototype.toString
+	  , id = objToString.call(
+		(function () {
+			return arguments;
+		})()
+	);
 
-	  , id = toString.call((function () { return arguments; }()));
-
-	module.exports = function (x) { return (toString.call(x) === id); };
-
-
-/***/ },
-/* 133 */
-/***/ function(module, exports) {
-
-	'use strict';
-
-	var toString = Object.prototype.toString
-
-	  , id = toString.call('');
-
-	module.exports = function (x) {
-		return (typeof x === 'string') || (x && (typeof x === 'object') &&
-			((x instanceof String) || (toString.call(x) === id))) || false;
+	module.exports = function (value) {
+		return objToString.call(value) === id;
 	};
 
 
 /***/ },
-/* 134 */
+/* 139 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	var objToString = Object.prototype.toString, id = objToString.call("");
+
+	module.exports = function (value) {
+		return (
+			typeof value === "string" ||
+			(value &&
+				typeof value === "object" &&
+				(value instanceof String || objToString.call(value) === id)) ||
+			false
+		);
+	};
+
+
+/***/ },
+/* 140 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var isArguments = __webpack_require__(132)
-	  , callable    = __webpack_require__(111)
-	  , isString    = __webpack_require__(133)
-	  , get         = __webpack_require__(135)
+	var isArguments = __webpack_require__(138)
+	  , callable    = __webpack_require__(115)
+	  , isString    = __webpack_require__(139)
+	  , get         = __webpack_require__(141);
 
-	  , isArray = Array.isArray, call = Function.prototype.call
-	  , some = Array.prototype.some;
+	var isArray = Array.isArray, call = Function.prototype.call, some = Array.prototype.some;
 
-	module.exports = function (iterable, cb/*, thisArg*/) {
-		var mode, thisArg = arguments[2], result, doBreak, broken, i, l, char, code;
-		if (isArray(iterable) || isArguments(iterable)) mode = 'array';
-		else if (isString(iterable)) mode = 'string';
+	module.exports = function (iterable, cb /*, thisArg*/) {
+		var mode, thisArg = arguments[2], result, doBreak, broken, i, length, char, code;
+		if (isArray(iterable) || isArguments(iterable)) mode = "array";
+		else if (isString(iterable)) mode = "string";
 		else iterable = get(iterable);
 
 		callable(cb);
-		doBreak = function () { broken = true; };
-		if (mode === 'array') {
+		doBreak = function () {
+			broken = true;
+		};
+		if (mode === "array") {
 			some.call(iterable, function (value) {
 				call.call(cb, thisArg, value, doBreak);
-				if (broken) return true;
+				return broken;
 			});
 			return;
 		}
-		if (mode === 'string') {
-			l = iterable.length;
-			for (i = 0; i < l; ++i) {
+		if (mode === "string") {
+			length = iterable.length;
+			for (i = 0; i < length; ++i) {
 				char = iterable[i];
-				if ((i + 1) < l) {
+				if (i + 1 < length) {
 					code = char.charCodeAt(0);
-					if ((code >= 0xD800) && (code <= 0xDBFF)) char += iterable[++i];
+					if (code >= 0xd800 && code <= 0xdbff) char += iterable[++i];
 				}
 				call.call(cb, thisArg, char, doBreak);
 				if (broken) break;
@@ -22502,20 +22205,20 @@ var ProperTable =
 
 
 /***/ },
-/* 135 */
+/* 141 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var isArguments    = __webpack_require__(132)
-	  , isString       = __webpack_require__(133)
-	  , ArrayIterator  = __webpack_require__(136)
-	  , StringIterator = __webpack_require__(143)
-	  , iterable       = __webpack_require__(130)
-	  , iteratorSymbol = __webpack_require__(125).iterator;
+	var isArguments    = __webpack_require__(138)
+	  , isString       = __webpack_require__(139)
+	  , ArrayIterator  = __webpack_require__(142)
+	  , StringIterator = __webpack_require__(154)
+	  , iterable       = __webpack_require__(136)
+	  , iteratorSymbol = __webpack_require__(130).iterator;
 
 	module.exports = function (obj) {
-		if (typeof iterable(obj)[iteratorSymbol] === 'function') return obj[iteratorSymbol]();
+		if (typeof iterable(obj)[iteratorSymbol] === "function") return obj[iteratorSymbol]();
 		if (isArguments(obj)) return new ArrayIterator(obj);
 		if (isString(obj)) return new StringIterator(obj);
 		return new ArrayIterator(obj);
@@ -22523,149 +22226,169 @@ var ProperTable =
 
 
 /***/ },
-/* 136 */
+/* 142 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var setPrototypeOf = __webpack_require__(106)
-	  , contains       = __webpack_require__(121)
-	  , d              = __webpack_require__(112)
-	  , Iterator       = __webpack_require__(137)
+	var setPrototypeOf = __webpack_require__(110)
+	  , contains       = __webpack_require__(125)
+	  , d              = __webpack_require__(143)
+	  , Symbol         = __webpack_require__(130)
+	  , Iterator       = __webpack_require__(144);
 
-	  , defineProperty = Object.defineProperty
-	  , ArrayIterator;
+	var defineProperty = Object.defineProperty, ArrayIterator;
 
 	ArrayIterator = module.exports = function (arr, kind) {
-		if (!(this instanceof ArrayIterator)) return new ArrayIterator(arr, kind);
+		if (!(this instanceof ArrayIterator)) throw new TypeError("Constructor requires 'new'");
 		Iterator.call(this, arr);
-		if (!kind) kind = 'value';
-		else if (contains.call(kind, 'key+value')) kind = 'key+value';
-		else if (contains.call(kind, 'key')) kind = 'key';
-		else kind = 'value';
-		defineProperty(this, '__kind__', d('', kind));
+		if (!kind) kind = "value";
+		else if (contains.call(kind, "key+value")) kind = "key+value";
+		else if (contains.call(kind, "key")) kind = "key";
+		else kind = "value";
+		defineProperty(this, "__kind__", d("", kind));
 	};
 	if (setPrototypeOf) setPrototypeOf(ArrayIterator, Iterator);
 
+	// Internal %ArrayIteratorPrototype% doesn't expose its constructor
+	delete ArrayIterator.prototype.constructor;
+
 	ArrayIterator.prototype = Object.create(Iterator.prototype, {
-		constructor: d(ArrayIterator),
 		_resolve: d(function (i) {
-			if (this.__kind__ === 'value') return this.__list__[i];
-			if (this.__kind__ === 'key+value') return [i, this.__list__[i]];
+			if (this.__kind__ === "value") return this.__list__[i];
+			if (this.__kind__ === "key+value") return [i, this.__list__[i]];
 			return i;
-		}),
-		toString: d(function () { return '[object Array Iterator]'; })
+		})
 	});
+	defineProperty(ArrayIterator.prototype, Symbol.toStringTag, d("c", "Array Iterator"));
 
 
 /***/ },
-/* 137 */
+/* 143 */
+116,
+/* 144 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var clear    = __webpack_require__(98)
-	  , assign   = __webpack_require__(113)
-	  , callable = __webpack_require__(111)
-	  , value    = __webpack_require__(99)
-	  , d        = __webpack_require__(112)
-	  , autoBind = __webpack_require__(138)
-	  , Symbol   = __webpack_require__(125)
+	var clear    = __webpack_require__(97)
+	  , assign   = __webpack_require__(117)
+	  , callable = __webpack_require__(115)
+	  , value    = __webpack_require__(98)
+	  , d        = __webpack_require__(143)
+	  , autoBind = __webpack_require__(145)
+	  , Symbol   = __webpack_require__(130);
 
-	  , defineProperty = Object.defineProperty
-	  , defineProperties = Object.defineProperties
-	  , Iterator;
+	var defineProperty = Object.defineProperty, defineProperties = Object.defineProperties, Iterator;
 
 	module.exports = Iterator = function (list, context) {
-		if (!(this instanceof Iterator)) return new Iterator(list, context);
+		if (!(this instanceof Iterator)) throw new TypeError("Constructor requires 'new'");
 		defineProperties(this, {
-			__list__: d('w', value(list)),
-			__context__: d('w', context),
-			__nextIndex__: d('w', 0)
+			__list__: d("w", value(list)),
+			__context__: d("w", context),
+			__nextIndex__: d("w", 0)
 		});
 		if (!context) return;
 		callable(context.on);
-		context.on('_add', this._onAdd);
-		context.on('_delete', this._onDelete);
-		context.on('_clear', this._onClear);
+		context.on("_add", this._onAdd);
+		context.on("_delete", this._onDelete);
+		context.on("_clear", this._onClear);
 	};
 
-	defineProperties(Iterator.prototype, assign({
-		constructor: d(Iterator),
-		_next: d(function () {
-			var i;
-			if (!this.__list__) return;
-			if (this.__redo__) {
-				i = this.__redo__.shift();
-				if (i !== undefined) return i;
-			}
-			if (this.__nextIndex__ < this.__list__.length) return this.__nextIndex__++;
-			this._unBind();
-		}),
-		next: d(function () { return this._createResult(this._next()); }),
-		_createResult: d(function (i) {
-			if (i === undefined) return { done: true, value: undefined };
-			return { done: false, value: this._resolve(i) };
-		}),
-		_resolve: d(function (i) { return this.__list__[i]; }),
-		_unBind: d(function () {
-			this.__list__ = null;
-			delete this.__redo__;
-			if (!this.__context__) return;
-			this.__context__.off('_add', this._onAdd);
-			this.__context__.off('_delete', this._onDelete);
-			this.__context__.off('_clear', this._onClear);
-			this.__context__ = null;
-		}),
-		toString: d(function () { return '[object Iterator]'; })
-	}, autoBind({
-		_onAdd: d(function (index) {
-			if (index >= this.__nextIndex__) return;
-			++this.__nextIndex__;
-			if (!this.__redo__) {
-				defineProperty(this, '__redo__', d('c', [index]));
-				return;
-			}
-			this.__redo__.forEach(function (redo, i) {
-				if (redo >= index) this.__redo__[i] = ++redo;
-			}, this);
-			this.__redo__.push(index);
-		}),
-		_onDelete: d(function (index) {
-			var i;
-			if (index >= this.__nextIndex__) return;
-			--this.__nextIndex__;
-			if (!this.__redo__) return;
-			i = this.__redo__.indexOf(index);
-			if (i !== -1) this.__redo__.splice(i, 1);
-			this.__redo__.forEach(function (redo, i) {
-				if (redo > index) this.__redo__[i] = --redo;
-			}, this);
-		}),
-		_onClear: d(function () {
-			if (this.__redo__) clear.call(this.__redo__);
-			this.__nextIndex__ = 0;
-		})
-	})));
+	// Internal %IteratorPrototype% doesn't expose its constructor
+	delete Iterator.prototype.constructor;
 
-	defineProperty(Iterator.prototype, Symbol.iterator, d(function () {
-		return this;
-	}));
-	defineProperty(Iterator.prototype, Symbol.toStringTag, d('', 'Iterator'));
+	defineProperties(
+		Iterator.prototype,
+		assign(
+			{
+				_next: d(function () {
+					var i;
+					if (!this.__list__) return undefined;
+					if (this.__redo__) {
+						i = this.__redo__.shift();
+						if (i !== undefined) return i;
+					}
+					if (this.__nextIndex__ < this.__list__.length) return this.__nextIndex__++;
+					this._unBind();
+					return undefined;
+				}),
+				next: d(function () {
+					return this._createResult(this._next());
+				}),
+				_createResult: d(function (i) {
+					if (i === undefined) return { done: true, value: undefined };
+					return { done: false, value: this._resolve(i) };
+				}),
+				_resolve: d(function (i) {
+					return this.__list__[i];
+				}),
+				_unBind: d(function () {
+					this.__list__ = null;
+					delete this.__redo__;
+					if (!this.__context__) return;
+					this.__context__.off("_add", this._onAdd);
+					this.__context__.off("_delete", this._onDelete);
+					this.__context__.off("_clear", this._onClear);
+					this.__context__ = null;
+				}),
+				toString: d(function () {
+					return "[object " + (this[Symbol.toStringTag] || "Object") + "]";
+				})
+			},
+			autoBind({
+				_onAdd: d(function (index) {
+					if (index >= this.__nextIndex__) return;
+					++this.__nextIndex__;
+					if (!this.__redo__) {
+						defineProperty(this, "__redo__", d("c", [index]));
+						return;
+					}
+					this.__redo__.forEach(function (redo, i) {
+						if (redo >= index) this.__redo__[i] = ++redo;
+					}, this);
+					this.__redo__.push(index);
+				}),
+				_onDelete: d(function (index) {
+					var i;
+					if (index >= this.__nextIndex__) return;
+					--this.__nextIndex__;
+					if (!this.__redo__) return;
+					i = this.__redo__.indexOf(index);
+					if (i !== -1) this.__redo__.splice(i, 1);
+					this.__redo__.forEach(function (redo, j) {
+						if (redo > index) this.__redo__[j] = --redo;
+					}, this);
+				}),
+				_onClear: d(function () {
+					if (this.__redo__) clear.call(this.__redo__);
+					this.__nextIndex__ = 0;
+				})
+			})
+		)
+	);
+
+	defineProperty(
+		Iterator.prototype,
+		Symbol.iterator,
+		d(function () {
+			return this;
+		})
+	);
 
 
 /***/ },
-/* 138 */
+/* 145 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var copy             = __webpack_require__(139)
-	  , normalizeOptions = __webpack_require__(119)
-	  , ensureCallable   = __webpack_require__(111)
-	  , map              = __webpack_require__(140)
-	  , callable         = __webpack_require__(111)
-	  , validValue       = __webpack_require__(99)
+	var copy             = __webpack_require__(146)
+	  , normalizeOptions = __webpack_require__(123)
+	  , ensureCallable   = __webpack_require__(115)
+	  , map              = __webpack_require__(151)
+	  , callable         = __webpack_require__(115)
+	  , validValue       = __webpack_require__(98)
 
 	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
@@ -22693,80 +22416,253 @@ var ProperTable =
 
 
 /***/ },
-/* 139 */
+/* 146 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var assign = __webpack_require__(113)
-	  , value  = __webpack_require__(99);
+	var aFrom  = __webpack_require__(147)
+	  , assign = __webpack_require__(117)
+	  , value  = __webpack_require__(98);
 
-	module.exports = function (obj) {
-		var copy = Object(value(obj));
-		if (copy !== obj) return copy;
-		return assign({}, obj);
+	module.exports = function (obj/*, propertyNames, options*/) {
+		var copy = Object(value(obj)), propertyNames = arguments[1], options = Object(arguments[2]);
+		if (copy !== obj && !propertyNames) return copy;
+		var result = {};
+		if (propertyNames) {
+			aFrom(propertyNames, function (propertyName) {
+				if (options.ensure || propertyName in obj) result[propertyName] = obj[propertyName];
+			});
+		} else {
+			assign(result, obj);
+		}
+		return result;
 	};
 
 
 /***/ },
-/* 140 */
+/* 147 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var callable = __webpack_require__(111)
-	  , forEach  = __webpack_require__(141)
+	module.exports = __webpack_require__(148)()
+		? Array.from
+		: __webpack_require__(149);
 
-	  , call = Function.prototype.call;
 
-	module.exports = function (obj, cb/*, thisArg*/) {
-		var o = {}, thisArg = arguments[2];
+/***/ },
+/* 148 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = function () {
+		var from = Array.from, arr, result;
+		if (typeof from !== "function") return false;
+		arr = ["raz", "dwa"];
+		result = from(arr);
+		return Boolean(result && (result !== arr) && (result[1] === "dwa"));
+	};
+
+
+/***/ },
+/* 149 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var iteratorSymbol = __webpack_require__(130).iterator
+	  , isArguments    = __webpack_require__(138)
+	  , isFunction     = __webpack_require__(150)
+	  , toPosInt       = __webpack_require__(105)
+	  , callable       = __webpack_require__(115)
+	  , validValue     = __webpack_require__(98)
+	  , isValue        = __webpack_require__(99)
+	  , isString       = __webpack_require__(139)
+	  , isArray        = Array.isArray
+	  , call           = Function.prototype.call
+	  , desc           = { configurable: true, enumerable: true, writable: true, value: null }
+	  , defineProperty = Object.defineProperty;
+
+	// eslint-disable-next-line complexity
+	module.exports = function (arrayLike /*, mapFn, thisArg*/) {
+		var mapFn = arguments[1]
+		  , thisArg = arguments[2]
+		  , Context
+		  , i
+		  , j
+		  , arr
+		  , length
+		  , code
+		  , iterator
+		  , result
+		  , getIterator
+		  , value;
+
+		arrayLike = Object(validValue(arrayLike));
+
+		if (isValue(mapFn)) callable(mapFn);
+		if (!this || this === Array || !isFunction(this)) {
+			// Result: Plain array
+			if (!mapFn) {
+				if (isArguments(arrayLike)) {
+					// Source: Arguments
+					length = arrayLike.length;
+					if (length !== 1) return Array.apply(null, arrayLike);
+					arr = new Array(1);
+					arr[0] = arrayLike[0];
+					return arr;
+				}
+				if (isArray(arrayLike)) {
+					// Source: Array
+					arr = new Array(length = arrayLike.length);
+					for (i = 0; i < length; ++i) arr[i] = arrayLike[i];
+					return arr;
+				}
+			}
+			arr = [];
+		} else {
+			// Result: Non plain array
+			Context = this;
+		}
+
+		if (!isArray(arrayLike)) {
+			if ((getIterator = arrayLike[iteratorSymbol]) !== undefined) {
+				// Source: Iterator
+				iterator = callable(getIterator).call(arrayLike);
+				if (Context) arr = new Context();
+				result = iterator.next();
+				i = 0;
+				while (!result.done) {
+					value = mapFn ? call.call(mapFn, thisArg, result.value, i) : result.value;
+					if (Context) {
+						desc.value = value;
+						defineProperty(arr, i, desc);
+					} else {
+						arr[i] = value;
+					}
+					result = iterator.next();
+					++i;
+				}
+				length = i;
+			} else if (isString(arrayLike)) {
+				// Source: String
+				length = arrayLike.length;
+				if (Context) arr = new Context();
+				for (i = 0, j = 0; i < length; ++i) {
+					value = arrayLike[i];
+					if (i + 1 < length) {
+						code = value.charCodeAt(0);
+						// eslint-disable-next-line max-depth
+						if (code >= 0xd800 && code <= 0xdbff) value += arrayLike[++i];
+					}
+					value = mapFn ? call.call(mapFn, thisArg, value, j) : value;
+					if (Context) {
+						desc.value = value;
+						defineProperty(arr, j, desc);
+					} else {
+						arr[j] = value;
+					}
+					++j;
+				}
+				length = j;
+			}
+		}
+		if (length === undefined) {
+			// Source: array or array-like
+			length = toPosInt(arrayLike.length);
+			if (Context) arr = new Context(length);
+			for (i = 0; i < length; ++i) {
+				value = mapFn ? call.call(mapFn, thisArg, arrayLike[i], i) : arrayLike[i];
+				if (Context) {
+					desc.value = value;
+					defineProperty(arr, i, desc);
+				} else {
+					arr[i] = value;
+				}
+			}
+		}
+		if (Context) {
+			desc.value = null;
+			arr.length = length;
+		}
+		return arr;
+	};
+
+
+/***/ },
+/* 150 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var objToString = Object.prototype.toString, id = objToString.call(__webpack_require__(100));
+
+	module.exports = function (value) {
+		return typeof value === "function" && objToString.call(value) === id;
+	};
+
+
+/***/ },
+/* 151 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var callable = __webpack_require__(115)
+	  , forEach  = __webpack_require__(152)
+	  , call     = Function.prototype.call;
+
+	module.exports = function (obj, cb /*, thisArg*/) {
+		var result = {}, thisArg = arguments[2];
 		callable(cb);
-		forEach(obj, function (value, key, obj, index) {
-			o[key] = call.call(cb, thisArg, value, key, obj, index);
+		forEach(obj, function (value, key, targetObj, index) {
+			result[key] = call.call(cb, thisArg, value, key, targetObj, index);
 		});
-		return o;
+		return result;
 	};
 
 
 /***/ },
-/* 141 */
+/* 152 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	module.exports = __webpack_require__(142)('forEach');
+	module.exports = __webpack_require__(153)("forEach");
 
 
 /***/ },
-/* 142 */
+/* 153 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Internal method, used by iteration functions.
 	// Calls a function for each key-value pair found in object
 	// Optionally takes compareFn to iterate object in specific order
 
-	'use strict';
+	"use strict";
 
-	var callable = __webpack_require__(111)
-	  , value    = __webpack_require__(99)
-
-	  , bind = Function.prototype.bind, call = Function.prototype.call, keys = Object.keys
-	  , propertyIsEnumerable = Object.prototype.propertyIsEnumerable;
+	var callable                = __webpack_require__(115)
+	  , value                   = __webpack_require__(98)
+	  , bind                    = Function.prototype.bind
+	  , call                    = Function.prototype.call
+	  , keys                    = Object.keys
+	  , objPropertyIsEnumerable = Object.prototype.propertyIsEnumerable;
 
 	module.exports = function (method, defVal) {
-		return function (obj, cb/*, thisArg, compareFn*/) {
+		return function (obj, cb /*, thisArg, compareFn*/) {
 			var list, thisArg = arguments[2], compareFn = arguments[3];
 			obj = Object(value(obj));
 			callable(cb);
 
 			list = keys(obj);
 			if (compareFn) {
-				list.sort((typeof compareFn === 'function') ? bind.call(compareFn, obj) : undefined);
+				list.sort(typeof compareFn === "function" ? bind.call(compareFn, obj) : undefined);
 			}
-			if (typeof method !== 'function') method = list[method];
+			if (typeof method !== "function") method = list[method];
 			return call.call(method, list, function (key, index) {
-				if (!propertyIsEnumerable.call(obj, key)) return defVal;
+				if (!objPropertyIsEnumerable.call(obj, key)) return defVal;
 				return call.call(cb, thisArg, obj[key], key, obj, index);
 			});
 		};
@@ -22774,59 +22670,61 @@ var ProperTable =
 
 
 /***/ },
-/* 143 */
+/* 154 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Thanks @mathiasbynens
 	// http://mathiasbynens.be/notes/javascript-unicode#iterating-over-symbols
 
-	'use strict';
+	"use strict";
 
-	var setPrototypeOf = __webpack_require__(106)
-	  , d              = __webpack_require__(112)
-	  , Iterator       = __webpack_require__(137)
+	var setPrototypeOf = __webpack_require__(110)
+	  , d              = __webpack_require__(143)
+	  , Symbol         = __webpack_require__(130)
+	  , Iterator       = __webpack_require__(144);
 
-	  , defineProperty = Object.defineProperty
-	  , StringIterator;
+	var defineProperty = Object.defineProperty, StringIterator;
 
 	StringIterator = module.exports = function (str) {
-		if (!(this instanceof StringIterator)) return new StringIterator(str);
+		if (!(this instanceof StringIterator)) throw new TypeError("Constructor requires 'new'");
 		str = String(str);
 		Iterator.call(this, str);
-		defineProperty(this, '__length__', d('', str.length));
-
+		defineProperty(this, "__length__", d("", str.length));
 	};
 	if (setPrototypeOf) setPrototypeOf(StringIterator, Iterator);
 
+	// Internal %ArrayIteratorPrototype% doesn't expose its constructor
+	delete StringIterator.prototype.constructor;
+
 	StringIterator.prototype = Object.create(Iterator.prototype, {
-		constructor: d(StringIterator),
 		_next: d(function () {
-			if (!this.__list__) return;
+			if (!this.__list__) return undefined;
 			if (this.__nextIndex__ < this.__length__) return this.__nextIndex__++;
 			this._unBind();
+			return undefined;
 		}),
 		_resolve: d(function (i) {
 			var char = this.__list__[i], code;
 			if (this.__nextIndex__ === this.__length__) return char;
 			code = char.charCodeAt(0);
-			if ((code >= 0xD800) && (code <= 0xDBFF)) return char + this.__list__[this.__nextIndex__++];
+			if (code >= 0xd800 && code <= 0xdbff) return char + this.__list__[this.__nextIndex__++];
 			return char;
-		}),
-		toString: d(function () { return '[object String Iterator]'; })
+		})
 	});
+	defineProperty(StringIterator.prototype, Symbol.toStringTag, d("c", "String Iterator"));
 
 
 /***/ },
-/* 144 */
+/* 155 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var setPrototypeOf    = __webpack_require__(106)
-	  , contains          = __webpack_require__(121)
-	  , d                 = __webpack_require__(112)
-	  , Iterator          = __webpack_require__(137)
-	  , toStringTagSymbol = __webpack_require__(125).toStringTag
+	var setPrototypeOf    = __webpack_require__(110)
+	  , contains          = __webpack_require__(125)
+	  , d                 = __webpack_require__(116)
+	  , Iterator          = __webpack_require__(144)
+	  , toStringTagSymbol = __webpack_require__(130).toStringTag
 
 	  , defineProperty = Object.defineProperty
 	  , SetIterator;
@@ -22853,7 +22751,7 @@ var ProperTable =
 
 
 /***/ },
-/* 145 */
+/* 156 */
 /***/ function(module, exports) {
 
 	// Exports true if environment provides native `Set` implementation,
@@ -22868,7 +22766,7 @@ var ProperTable =
 
 
 /***/ },
-/* 146 */
+/* 157 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22886,7 +22784,7 @@ var ProperTable =
 	  All credits to Gregor MacLennan
 	***/
 	var React = __webpack_require__(2);
-	var onElementResize = __webpack_require__(147);
+	var onElementResize = __webpack_require__(158);
 
 	var defaultContainerStyle = {
 	  width: '100%',
@@ -22989,11 +22887,14 @@ var ProperTable =
 
 	      DimensionsHOC.prototype.updateDimensions = function updateDimensions() {
 	        var container = this.refs.container;
-	        var containerWidth = getWidth(container);
-	        var containerHeight = getHeight(container);
 
-	        if (containerWidth !== this.state.containerWidth || containerHeight !== this.state.containerHeight) {
-	          this.setState({ containerWidth: containerWidth, containerHeight: containerHeight });
+	        if (container) {
+	          var containerWidth = getWidth(container);
+	          var containerHeight = getHeight(container);
+
+	          if (containerWidth !== this.state.containerWidth || containerHeight !== this.state.containerHeight) {
+	            this.setState({ containerWidth: containerWidth, containerHeight: containerHeight });
+	          }
 	        }
 	      };
 
@@ -23067,127 +22968,86 @@ var ProperTable =
 	};
 
 /***/ },
-/* 147 */
+/* 158 */
 /***/ function(module, exports) {
 
-	var requestFrame = (function () {
-	  var window = this
-	  var raf = window.requestAnimationFrame ||
-	    window.mozRequestAnimationFrame ||
-	    window.webkitRequestAnimationFrame ||
-	    function fallbackRAF(func) {
-	      return window.setTimeout(func, 20)
+	module.exports = function(element, fn) {
+	  var window = this;
+	  var document = window.document;
+
+	  var attachEvent = document.attachEvent;
+	  if (typeof navigator !== "undefined") {
+	    var isIE = navigator.userAgent.match(/Trident/) || navigator.userAgent.match(/Edge/);
+	  }
+
+	  var requestFrame = (function() {
+	    var raf = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || function(fn) {
+	        return window.setTimeout(fn, 20);
+	      };
+	    return function(fn) {
+	      return raf(fn);
+	    };
+	  })();
+
+	  var cancelFrame = (function() {
+	    var cancel = window.cancelAnimationFrame || window.mozCancelAnimationFrame || window.webkitCancelAnimationFrame ||
+	      window.clearTimeout;
+	    return function(id) {
+	      return cancel(id);
+	    };
+	  })();
+
+	  function resizeListener(e) {
+	    var win = e.target || e.srcElement;
+	    if (win.__resizeRAF__) {
+	      cancelFrame(win.__resizeRAF__);
 	    }
-	  return function requestFrameFunction(func) {
-	    return raf(func)
-	  }
-	})()
-
-	var cancelFrame = (function () {
-	  var window = this
-	  var cancel = window.cancelAnimationFrame ||
-	    window.mozCancelAnimationFrame ||
-	    window.webkitCancelAnimationFrame ||
-	    window.clearTimeout
-	  return function cancelFrameFunction(id) {
-	    return cancel(id)
-	  }
-	})()
-
-	function resizeListener(e) {
-	  var win = e.target || e.srcElement
-	  if (win.__resizeRAF__) {
-	    cancelFrame(win.__resizeRAF__)
-	  }
-	  win.__resizeRAF__ = requestFrame(function () {
-	    var trigger = win.__resizeTrigger__
-	    trigger.__resizeListeners__.forEach(function (fn) {
-	      fn.call(trigger, e)
-	    })
-	  })
-	}
-
-	var exports = function exports(element, fn) {
-	  var window = this
-	  var document = window.document
-	  var isIE
-
-	  var attachEvent = document.attachEvent
-	  if (typeof navigator !== 'undefined') {
-	    isIE = navigator.userAgent.match(/Trident/) ||
-	      navigator.userAgent.match(/Edge/)
+	    win.__resizeRAF__ = requestFrame(function() {
+	      var trigger = win.__resizeTrigger__;
+	      trigger.__resizeListeners__.forEach(function(fn) {
+	        fn.call(trigger, e);
+	      });
+	    });
 	  }
 
-	  function objectLoad() {
-	    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__
-	    this.contentDocument.defaultView.addEventListener('resize', resizeListener)
+	  function objectLoad(e) {
+	    this.contentDocument.defaultView.__resizeTrigger__ = this.__resizeElement__;
+	    this.contentDocument.defaultView.addEventListener('resize', resizeListener);
 	  }
 
 	  if (!element.__resizeListeners__) {
-	    element.__resizeListeners__ = []
+	    element.__resizeListeners__ = [];
 	    if (attachEvent) {
-	      element.__resizeTrigger__ = element
-	      element.attachEvent('onresize', resizeListener)
+	      element.__resizeTrigger__ = element;
+	      element.attachEvent('onresize', resizeListener);
 	    } else {
-	      if (getComputedStyle(element).position === 'static') {
-	        element.style.position = 'relative'
+	      if (getComputedStyle(element).position == 'static') {
+	        element.style.position = 'relative';
 	      }
-	      var obj = (element.__resizeTrigger__ = document.createElement('object'))
-	      obj.setAttribute(
-	        'style',
-	        'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1; opacity: 0;'
-	      )
-	      obj.setAttribute('class', 'resize-sensor')
-	      obj.__resizeElement__ = element
-	      obj.onload = objectLoad
-	      obj.type = 'text/html'
+	      var obj = element.__resizeTrigger__ = document.createElement('object');
+	      obj.setAttribute('style', 'display: block; position: absolute; top: 0; left: 0; height: 100%; width: 100%; overflow: hidden; pointer-events: none; z-index: -1;');
+	      obj.setAttribute('class', 'resize-sensor');
+	      obj.__resizeElement__ = element;
+	      obj.onload = objectLoad;
+	      obj.type = 'text/html';
 	      if (isIE) {
-	        element.appendChild(obj)
+	        element.appendChild(obj);
 	      }
-	      obj.data = 'about:blank'
+	      obj.data = 'about:blank';
 	      if (!isIE) {
-	        element.appendChild(obj)
+	        element.appendChild(obj);
 	      }
 	    }
 	  }
-	  element.__resizeListeners__.push(fn)
-	}
-
-	module.exports = typeof window === 'undefined' ? exports : exports.bind(window)
-
-	module.exports.unbind = function (element, fn) {
-	  var attachEvent = document.attachEvent
-	  if (fn) {
-	    element.__resizeListeners__.splice(
-	      element.__resizeListeners__.indexOf(fn),
-	      1
-	    )
-	  } else {
-	    element.__resizeListeners__ = []
-	  }
-	  if (!element.__resizeListeners__.length) {
-	    if (attachEvent) {
-	      element.detachEvent('onresize', resizeListener)
-	    } else {
-	      element.__resizeTrigger__.contentDocument.defaultView.removeEventListener(
-	        'resize',
-	        resizeListener
-	      )
-	      delete element.__resizeTrigger__.contentDocument.defaultView.__resizeTrigger__
-	      element.__resizeTrigger__ = !element.removeChild(
-	        element.__resizeTrigger__
-	      )
-	    }
-	    delete element.__resizeListeners__
-	  }
-	}
+	  element.__resizeListeners__.push(fn);
+	};
 
 
 /***/ },
-/* 148 */
+/* 159 */
 /***/ function(module, exports) {
 
 	// removed by extract-text-webpack-plugin
 
 /***/ }
-/******/ ]);
+/******/ ])));

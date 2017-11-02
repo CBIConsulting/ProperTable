@@ -96,12 +96,15 @@ module.exports = function Dimensions ({
 
       updateDimensions() {
         const container = this.refs.container
-        const containerWidth = getWidth(container)
-        const containerHeight = getHeight(container)
 
-        if (containerWidth !== this.state.containerWidth ||
-            containerHeight !== this.state.containerHeight) {
-          this.setState({containerWidth, containerHeight})
+        if (container) {
+          const containerWidth = getWidth(container)
+          const containerHeight = getHeight(container)
+
+          if (containerWidth !== this.state.containerWidth ||
+              containerHeight !== this.state.containerHeight) {
+            this.setState({containerWidth, containerHeight})
+          }
         }
       }
 
