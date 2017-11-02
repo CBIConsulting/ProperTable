@@ -48,7 +48,7 @@ The compiled and compressed ProperTable distribution file can be found in the di
 ##### [Code](https://github.com/CBIConsulting/ProperTable/tree/gh-pages/examples/jsx/example.js)
 ##### [Demo](http://cbiconsulting.github.io/ProperTable/)
 
-##External dependencies
+## External dependencies
 * React and React DOM
 * Underscore
 * moment
