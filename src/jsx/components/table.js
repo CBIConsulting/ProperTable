@@ -1,5 +1,4 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
 import {Table, Column, Cell, ColumnGroup} from 'fixed-data-table';
 import Immutable from 'immutable';
 import _ from 'underscore';
@@ -8,7 +7,6 @@ import Selector from './selector';
 import CellRenderer from './cellRenderer';
 import HeaderCell from './headerCell';
 import FooterCell from './footerCell';
-import bs from 'binarysearch';
 import clone from 'clone';
 import {shallowEqualImmutable} from 'react-immutable-render-mixin';
 import cache from '../lib/rowcache';
@@ -30,27 +28,19 @@ const CLEAR_SORT = 'clear_sort';
 const CLEAR_BOTH = 'clear_both';
 const FILTERTYPE_SELECTION = 'selection';
 const FILTERTYPE_CUSTOM = 'operation';
-const NOTEQUALS = 'notequals';
-const EQUALS = "equals";
-const BIGGERTHAN = 'bigger';
-const LOWERTHAN = 'lower';
 const AFTERDATE = 'after';
 const BEFOREDATE = 'before';
 const BETWEENDATES = 'between';
+const CONTAINS = 'contains';
 const ONDATE = 'on';
 const NOTONDATE = 'noton';
-const STARTSWITH = 'start';
-const FINISHWITH = 'finish';
-const CONTAINS = 'contains';
-const NOTCONTAINS = 'notcontains';
-const EMPTY = 'empty';
 const CACHE_NAME = 'formatted';
 const Set = require('es6-set');
 const DATE_TYPES = new Set([AFTERDATE, BEFOREDATE, ONDATE, NOTONDATE]);
 const CLEAR_OPTIONS = {
 	[CLEAR_BOTH]: {sort: true, filters: true},
 	[CLEAR_FILTERS]: {sort: false, filters: true},
-	[CLEAR_SORT]: {sort: true, filters: false},
+	[CLEAR_SORT]: {sort: true, filters: false}
 }
 
 /**
@@ -540,7 +530,9 @@ class ProperTable extends React.Component {
 					operations[col.column] = {type: col.operationFilterType, value: col.operationFilterValue};
 
 					if (DATE_TYPES.has(col.operationFilterType) && col.operationFilterValue.length > 0) {
-						if (!moment(col.operationFilterValue).isValid()) console.warn('Invalid date format: ' + operations[col.column].value);
+						if (!moment(col.operationFilterValue).isValid()) {
+							console.warn('Invalid date format: ' + operations[col.column].value);
+						}
 					}
 				}
 			}
@@ -1025,7 +1017,7 @@ class ProperTable extends React.Component {
 				if (!hasSort && col.direction !== DEFAULT_SORT_DIRECTION) hasSort = true;
 
 				if (col.selection.length > 0) { // Build all selection
-					selectionSet[col.column] = new Set(col.selection.toString().split(','));
+					selectionSet[col.column] = new Set(col.selection.slice());
 					formatters[col.column] = col.formatter;
 					columnKeysFiltered.push(col.column);
 
@@ -1847,8 +1839,8 @@ class ProperTable extends React.Component {
  */
 	sendColSettings(colSettings) {
 		if (typeof this.props.getColSettings === 'function' && colSettings) {
-  			this.props.getColSettings(colSettings);
-  		}
+			this.props.getColSettings(colSettings);
+		}
 	}
 
 /**
