@@ -1,6 +1,6 @@
 {
   "name": "@cbi/react-propertable",
-  "version": "0.2.11",
+  "version": "0.2.12",
   "description": "A proper data table for React",
   "main": "lib/ProperTable.js",
   "scripts": {
