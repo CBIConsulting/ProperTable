@@ -95,7 +95,7 @@ const HeaderCell = props => {
   let sortDir = props.sortDir || null, sortable = props.sortable;
   let children = props.children || null;
   let sortIcon = null, columnFilter = null, isSelectorCol = props.columnKey === SELECTOR_COL_NAME ? true : false;
-  let userClass = props.userClassName || '';
+  let userClass = (props.userClassName + ' ' + props.columnHeaderClass) || '';
   let className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
   let isSortedOrFiltered = '';
 
@@ -133,7 +133,7 @@ const HeaderCell = props => {
     <div key={props.uniqueId + '-column-header'}>
       <Cell
         key={props.uniqueId + '-column-header-cell'}
-        className={className + '_header'}
+        className={className + ' column-header_header'}
         onClick={(e) => {
           if (!props.filterComponent || isSelectorCol) {
             onSortChange(e, props, sortable);

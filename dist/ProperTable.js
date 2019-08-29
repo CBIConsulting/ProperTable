@@ -88,7 +88,7 @@ var ProperTable =
 
 	var _messages2 = _interopRequireDefault(_messages);
 
-	var _reactDimensions = __webpack_require__(156);
+	var _reactDimensions = __webpack_require__(167);
 
 	var _reactDimensions2 = _interopRequireDefault(_reactDimensions);
 
@@ -1728,7 +1728,8 @@ var ProperTable =
 					userClassName: className,
 					columnFormater: null,
 					isSortedOrFiltered: isSortedOrFiltered,
-					extraProps: filterExtraProps
+					extraProps: filterExtraProps,
+					columnHeaderClass: colData.columnHeaderClass
 				}),
 				cell: _react2['default'].createElement(_cellRenderer2['default'], {
 					tableId: this.uniqueId,
@@ -14338,7 +14339,7 @@ var ProperTable =
 		    val = null,
 		    formatted = null;
 		var colData = props.colData;
-		var className = colData.className || '';
+		var className = colData.className + ' ' + colData.columnBodyClass || '';
 		var selected = false;
 		var rawdata = indexed[row.get(props.idField)];
 		var ckey = null;
@@ -15124,7 +15125,7 @@ var ProperTable =
 	  var sortIcon = null,
 	      columnFilter = null,
 	      isSelectorCol = props.columnKey === SELECTOR_COL_NAME ? true : false;
-	  var userClass = props.userClassName || '';
+	  var userClass = props.userClassName + ' ' + props.columnHeaderClass || '';
 	  var className = sortable ? "propertable-header-cell sortable " + userClass : "propertable-header-cell not-sortable " + userClass;
 	  var isSortedOrFiltered = '';
 
@@ -15168,7 +15169,7 @@ var ProperTable =
 	      _fixedDataTable.Cell,
 	      _extends({
 	        key: props.uniqueId + '-column-header-cell',
-	        className: className + '_header',
+	        className: className + ' column-header_header',
 	        onClick: function onClick(e) {
 	          if (!props.filterComponent || isSelectorCol) {
 	            onSortChange(e, props, sortable);
@@ -19617,68 +19618,103 @@ var ProperTable =
 	  revLookup[code.charCodeAt(i)] = i
 	}
 
+	// Support decoding URL-safe base64 strings, as Node.js does.
+	// See: https://en.wikipedia.org/wiki/Base64#URL_applications
 	revLookup['-'.charCodeAt(0)] = 62
 	revLookup['_'.charCodeAt(0)] = 63
 
-	function placeHoldersCount (b64) {
+	function getLens (b64) {
 	  var len = b64.length
+
 	  if (len % 4 > 0) {
 	    throw new Error('Invalid string. Length must be a multiple of 4')
 	  }
 
-	  // the number of equal signs (place holders)
-	  // if there are two placeholders, than the two characters before it
-	  // represent one byte
-	  // if there is only one, then the three characters before it represent 2 bytes
-	  // this is just a cheap hack to not do indexOf twice
-	  return b64[len - 2] === '=' ? 2 : b64[len - 1] === '=' ? 1 : 0
+	  // Trim off extra bytes after placeholder bytes are found
+	  // See: https://github.com/beatgammit/base64-js/issues/42
+	  var validLen = b64.indexOf('=')
+	  if (validLen === -1) validLen = len
+
+	  var placeHoldersLen = validLen === len
+	    ? 0
+	    : 4 - (validLen % 4)
+
+	  return [validLen, placeHoldersLen]
 	}
 
+	// base64 is 4/3 + up to two characters of the original data
 	function byteLength (b64) {
-	  // base64 is 4/3 + up to two characters of the original data
-	  return (b64.length * 3 / 4) - placeHoldersCount(b64)
+	  var lens = getLens(b64)
+	  var validLen = lens[0]
+	  var placeHoldersLen = lens[1]
+	  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
+	}
+
+	function _byteLength (b64, validLen, placeHoldersLen) {
+	  return ((validLen + placeHoldersLen) * 3 / 4) - placeHoldersLen
 	}
 
 	function toByteArray (b64) {
-	  var i, l, tmp, placeHolders, arr
-	  var len = b64.length
-	  placeHolders = placeHoldersCount(b64)
+	  var tmp
+	  var lens = getLens(b64)
+	  var validLen = lens[0]
+	  var placeHoldersLen = lens[1]
 
-	  arr = new Arr((len * 3 / 4) - placeHolders)
+	  var arr = new Arr(_byteLength(b64, validLen, placeHoldersLen))
+
+	  var curByte = 0
 
 	  // if there are placeholders, only get up to the last complete 4 chars
-	  l = placeHolders > 0 ? len - 4 : len
+	  var len = placeHoldersLen > 0
+	    ? validLen - 4
+	    : validLen
 
-	  var L = 0
-
-	  for (i = 0; i < l; i += 4) {
-	    tmp = (revLookup[b64.charCodeAt(i)] << 18) | (revLookup[b64.charCodeAt(i + 1)] << 12) | (revLookup[b64.charCodeAt(i + 2)] << 6) | revLookup[b64.charCodeAt(i + 3)]
-	    arr[L++] = (tmp >> 16) & 0xFF
-	    arr[L++] = (tmp >> 8) & 0xFF
-	    arr[L++] = tmp & 0xFF
+	  var i
+	  for (i = 0; i < len; i += 4) {
+	    tmp =
+	      (revLookup[b64.charCodeAt(i)] << 18) |
+	      (revLookup[b64.charCodeAt(i + 1)] << 12) |
+	      (revLookup[b64.charCodeAt(i + 2)] << 6) |
+	      revLookup[b64.charCodeAt(i + 3)]
+	    arr[curByte++] = (tmp >> 16) & 0xFF
+	    arr[curByte++] = (tmp >> 8) & 0xFF
+	    arr[curByte++] = tmp & 0xFF
 	  }
 
-	  if (placeHolders === 2) {
-	    tmp = (revLookup[b64.charCodeAt(i)] << 2) | (revLookup[b64.charCodeAt(i + 1)] >> 4)
-	    arr[L++] = tmp & 0xFF
-	  } else if (placeHolders === 1) {
-	    tmp = (revLookup[b64.charCodeAt(i)] << 10) | (revLookup[b64.charCodeAt(i + 1)] << 4) | (revLookup[b64.charCodeAt(i + 2)] >> 2)
-	    arr[L++] = (tmp >> 8) & 0xFF
-	    arr[L++] = tmp & 0xFF
+	  if (placeHoldersLen === 2) {
+	    tmp =
+	      (revLookup[b64.charCodeAt(i)] << 2) |
+	      (revLookup[b64.charCodeAt(i + 1)] >> 4)
+	    arr[curByte++] = tmp & 0xFF
+	  }
+
+	  if (placeHoldersLen === 1) {
+	    tmp =
+	      (revLookup[b64.charCodeAt(i)] << 10) |
+	      (revLookup[b64.charCodeAt(i + 1)] << 4) |
+	      (revLookup[b64.charCodeAt(i + 2)] >> 2)
+	    arr[curByte++] = (tmp >> 8) & 0xFF
+	    arr[curByte++] = tmp & 0xFF
 	  }
 
 	  return arr
 	}
 
 	function tripletToBase64 (num) {
-	  return lookup[num >> 18 & 0x3F] + lookup[num >> 12 & 0x3F] + lookup[num >> 6 & 0x3F] + lookup[num & 0x3F]
+	  return lookup[num >> 18 & 0x3F] +
+	    lookup[num >> 12 & 0x3F] +
+	    lookup[num >> 6 & 0x3F] +
+	    lookup[num & 0x3F]
 	}
 
 	function encodeChunk (uint8, start, end) {
 	  var tmp
 	  var output = []
 	  for (var i = start; i < end; i += 3) {
-	    tmp = (uint8[i] << 16) + (uint8[i + 1] << 8) + (uint8[i + 2])
+	    tmp =
+	      ((uint8[i] << 16) & 0xFF0000) +
+	      ((uint8[i + 1] << 8) & 0xFF00) +
+	      (uint8[i + 2] & 0xFF)
 	    output.push(tripletToBase64(tmp))
 	  }
 	  return output.join('')
@@ -19688,30 +19724,33 @@ var ProperTable =
 	  var tmp
 	  var len = uint8.length
 	  var extraBytes = len % 3 // if we have 1 byte left, pad 2 bytes
-	  var output = ''
 	  var parts = []
 	  var maxChunkLength = 16383 // must be multiple of 3
 
 	  // go through the array every three bytes, we'll deal with trailing stuff later
 	  for (var i = 0, len2 = len - extraBytes; i < len2; i += maxChunkLength) {
-	    parts.push(encodeChunk(uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)))
+	    parts.push(encodeChunk(
+	      uint8, i, (i + maxChunkLength) > len2 ? len2 : (i + maxChunkLength)
+	    ))
 	  }
 
 	  // pad the end with zeros, but make sure to not forget the extra bytes
 	  if (extraBytes === 1) {
 	    tmp = uint8[len - 1]
-	    output += lookup[tmp >> 2]
-	    output += lookup[(tmp << 4) & 0x3F]
-	    output += '=='
+	    parts.push(
+	      lookup[tmp >> 2] +
+	      lookup[(tmp << 4) & 0x3F] +
+	      '=='
+	    )
 	  } else if (extraBytes === 2) {
-	    tmp = (uint8[len - 2] << 8) + (uint8[len - 1])
-	    output += lookup[tmp >> 10]
-	    output += lookup[(tmp >> 4) & 0x3F]
-	    output += lookup[(tmp << 2) & 0x3F]
-	    output += '='
+	    tmp = (uint8[len - 2] << 8) + uint8[len - 1]
+	    parts.push(
+	      lookup[tmp >> 10] +
+	      lookup[(tmp >> 4) & 0x3F] +
+	      lookup[(tmp << 2) & 0x3F] +
+	      '='
+	    )
 	  }
-
-	  parts.push(output)
 
 	  return parts.join('')
 	}
@@ -19723,7 +19762,7 @@ var ProperTable =
 
 	exports.read = function (buffer, offset, isLE, mLen, nBytes) {
 	  var e, m
-	  var eLen = nBytes * 8 - mLen - 1
+	  var eLen = (nBytes * 8) - mLen - 1
 	  var eMax = (1 << eLen) - 1
 	  var eBias = eMax >> 1
 	  var nBits = -7
@@ -19736,12 +19775,12 @@ var ProperTable =
 	  e = s & ((1 << (-nBits)) - 1)
 	  s >>= (-nBits)
 	  nBits += eLen
-	  for (; nBits > 0; e = e * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+	  for (; nBits > 0; e = (e * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
 	  m = e & ((1 << (-nBits)) - 1)
 	  e >>= (-nBits)
 	  nBits += mLen
-	  for (; nBits > 0; m = m * 256 + buffer[offset + i], i += d, nBits -= 8) {}
+	  for (; nBits > 0; m = (m * 256) + buffer[offset + i], i += d, nBits -= 8) {}
 
 	  if (e === 0) {
 	    e = 1 - eBias
@@ -19756,7 +19795,7 @@ var ProperTable =
 
 	exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 	  var e, m, c
-	  var eLen = nBytes * 8 - mLen - 1
+	  var eLen = (nBytes * 8) - mLen - 1
 	  var eMax = (1 << eLen) - 1
 	  var eBias = eMax >> 1
 	  var rt = (mLen === 23 ? Math.pow(2, -24) - Math.pow(2, -77) : 0)
@@ -19789,7 +19828,7 @@ var ProperTable =
 	      m = 0
 	      e = eMax
 	    } else if (e + eBias >= 1) {
-	      m = (value * c - 1) * Math.pow(2, mLen)
+	      m = ((value * c) - 1) * Math.pow(2, mLen)
 	      e = e + eBias
 	    } else {
 	      m = value * Math.pow(2, eBias - 1) * Math.pow(2, mLen)
@@ -20801,11 +20840,11 @@ var ProperTable =
 	  , callable       = __webpack_require__(114)
 	  , d              = __webpack_require__(115)
 	  , ee             = __webpack_require__(127)
-	  , Symbol         = __webpack_require__(129)
-	  , iterator       = __webpack_require__(135)
-	  , forOf          = __webpack_require__(139)
-	  , Iterator       = __webpack_require__(154)
-	  , isNative       = __webpack_require__(155)
+	  , Symbol         = __webpack_require__(134)
+	  , iterator       = __webpack_require__(140)
+	  , forOf          = __webpack_require__(144)
+	  , Iterator       = __webpack_require__(165)
+	  , isNative       = __webpack_require__(166)
 
 	  , call = Function.prototype.call
 	  , defineProperty = Object.defineProperty, getPrototypeOf = Object.getPrototypeOf
@@ -21109,7 +21148,7 @@ var ProperTable =
 
 	var isObject        = __webpack_require__(112)
 	  , value           = __webpack_require__(97)
-	  , objIsPrototypOf = Object.prototype.isPrototypeOf
+	  , objIsPrototypeOf = Object.prototype.isPrototypeOf
 	  , defineProperty  = Object.defineProperty
 	  , nullDesc        = {
 		configurable: true,
@@ -21145,7 +21184,7 @@ var ProperTable =
 			fn = function self(obj, prototype) {
 				var isNullBase;
 				validate(obj, prototype);
-				isNullBase = objIsPrototypOf.call(self.nullPolyfill, obj);
+				isNullBase = objIsPrototypeOf.call(self.nullPolyfill, obj);
 				if (isNullBase) delete self.nullPolyfill.__proto__;
 				if (prototype === null) prototype = self.nullPolyfill;
 				obj.__proto__ = prototype;
@@ -21399,9 +21438,7 @@ var ProperTable =
 
 	"use strict";
 
-	module.exports = __webpack_require__(120)()
-		? Object.keys
-		: __webpack_require__(121);
+	module.exports = __webpack_require__(120)() ? Object.keys : __webpack_require__(121);
 
 
 /***/ },
@@ -21415,8 +21452,8 @@ var ProperTable =
 			Object.keys("primitive");
 			return true;
 		} catch (e) {
-	 return false;
-	}
+			return false;
+		}
 	};
 
 
@@ -21430,9 +21467,7 @@ var ProperTable =
 
 	var keys = Object.keys;
 
-	module.exports = function (object) {
-		return keys(isValue(object) ? Object(object) : object);
-	};
+	module.exports = function (object) { return keys(isValue(object) ? Object(object) : object); };
 
 
 /***/ },
@@ -21652,17 +21687,173 @@ var ProperTable =
 
 /***/ },
 /* 128 */
-115,
-/* 129 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	module.exports = __webpack_require__(130)() ? Symbol : __webpack_require__(131);
+	var isValue         = __webpack_require__(129)
+	  , isPlainFunction = __webpack_require__(130)
+	  , assign          = __webpack_require__(116)
+	  , normalizeOpts   = __webpack_require__(122)
+	  , contains        = __webpack_require__(124);
+
+	var d = (module.exports = function (dscr, value/*, options*/) {
+		var c, e, w, options, desc;
+		if (arguments.length < 2 || typeof dscr !== "string") {
+			options = value;
+			value = dscr;
+			dscr = null;
+		} else {
+			options = arguments[2];
+		}
+		if (isValue(dscr)) {
+			c = contains.call(dscr, "c");
+			e = contains.call(dscr, "e");
+			w = contains.call(dscr, "w");
+		} else {
+			c = w = true;
+			e = false;
+		}
+
+		desc = { value: value, configurable: c, enumerable: e, writable: w };
+		return !options ? desc : assign(normalizeOpts(options), desc);
+	});
+
+	d.gs = function (dscr, get, set/*, options*/) {
+		var c, e, options, desc;
+		if (typeof dscr !== "string") {
+			options = set;
+			set = get;
+			get = dscr;
+			dscr = null;
+		} else {
+			options = arguments[3];
+		}
+		if (!isValue(get)) {
+			get = undefined;
+		} else if (!isPlainFunction(get)) {
+			options = get;
+			get = set = undefined;
+		} else if (!isValue(set)) {
+			set = undefined;
+		} else if (!isPlainFunction(set)) {
+			options = set;
+			set = undefined;
+		}
+		if (isValue(dscr)) {
+			c = contains.call(dscr, "c");
+			e = contains.call(dscr, "e");
+		} else {
+			c = true;
+			e = false;
+		}
+
+		desc = { get: get, set: set, configurable: c, enumerable: e };
+		return !options ? desc : assign(normalizeOpts(options), desc);
+	};
+
+
+/***/ },
+/* 129 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	// ES3 safe
+	var _undefined = void 0;
+
+	module.exports = function (value) { return value !== _undefined && value !== null; };
 
 
 /***/ },
 /* 130 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var isFunction = __webpack_require__(131);
+
+	var classRe = /^\s*class[\s{/}]/, functionToString = Function.prototype.toString;
+
+	module.exports = function (value) {
+		if (!isFunction(value)) return false;
+		if (classRe.test(functionToString.call(value))) return false;
+		return true;
+	};
+
+
+/***/ },
+/* 131 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var isPrototype = __webpack_require__(132);
+
+	module.exports = function (value) {
+		if (typeof value !== "function") return false;
+
+		if (!hasOwnProperty.call(value, "length")) return false;
+
+		try {
+			if (typeof value.length !== "number") return false;
+			if (typeof value.call !== "function") return false;
+			if (typeof value.apply !== "function") return false;
+		} catch (error) {
+			return false;
+		}
+
+		return !isPrototype(value);
+	};
+
+
+/***/ },
+/* 132 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var isObject = __webpack_require__(133);
+
+	module.exports = function (value) {
+		if (!isObject(value)) return false;
+		try {
+			if (!value.constructor) return false;
+			return value.constructor.prototype === value;
+		} catch (error) {
+			return false;
+		}
+	};
+
+
+/***/ },
+/* 133 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var isValue = __webpack_require__(129);
+
+	// prettier-ignore
+	var possibleTypes = { "object": true, "function": true, "undefined": true /* document.all */ };
+
+	module.exports = function (value) {
+		if (!isValue(value)) return false;
+		return hasOwnProperty.call(possibleTypes, typeof value);
+	};
+
+
+/***/ },
+/* 134 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+
+	module.exports = __webpack_require__(135)() ? Symbol : __webpack_require__(136);
+
+
+/***/ },
+/* 135 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21685,15 +21876,15 @@ var ProperTable =
 
 
 /***/ },
-/* 131 */
+/* 136 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// ES2015 Symbol polyfill for environments that do not (or partially) support it
 
 	'use strict';
 
-	var d              = __webpack_require__(132)
-	  , validateSymbol = __webpack_require__(133)
+	var d              = __webpack_require__(137)
+	  , validateSymbol = __webpack_require__(138)
 
 	  , create = Object.create, defineProperties = Object.defineProperties
 	  , defineProperty = Object.defineProperty, objPrototype = Object.prototype
@@ -21809,14 +22000,14 @@ var ProperTable =
 
 
 /***/ },
-/* 132 */
-115,
-/* 133 */
+/* 137 */
+128,
+/* 138 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	var isSymbol = __webpack_require__(134);
+	var isSymbol = __webpack_require__(139);
 
 	module.exports = function (value) {
 		if (!isSymbol(value)) throw new TypeError(value + " is not a symbol");
@@ -21825,7 +22016,7 @@ var ProperTable =
 
 
 /***/ },
-/* 134 */
+/* 139 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -21840,12 +22031,12 @@ var ProperTable =
 
 
 /***/ },
-/* 135 */
+/* 140 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var isIterable = __webpack_require__(136);
+	var isIterable = __webpack_require__(141);
 
 	module.exports = function (value) {
 		if (!isIterable(value)) throw new TypeError(value + " is not iterable");
@@ -21854,16 +22045,16 @@ var ProperTable =
 
 
 /***/ },
-/* 136 */
+/* 141 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var isArguments = __webpack_require__(137)
+	var isArguments = __webpack_require__(142)
 	  , isValue     = __webpack_require__(98)
-	  , isString    = __webpack_require__(138);
+	  , isString    = __webpack_require__(143);
 
-	var iteratorSymbol = __webpack_require__(129).iterator
+	var iteratorSymbol = __webpack_require__(134).iterator
 	  , isArray        = Array.isArray;
 
 	module.exports = function (value) {
@@ -21876,7 +22067,7 @@ var ProperTable =
 
 
 /***/ },
-/* 137 */
+/* 142 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -21894,7 +22085,7 @@ var ProperTable =
 
 
 /***/ },
-/* 138 */
+/* 143 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -21913,15 +22104,15 @@ var ProperTable =
 
 
 /***/ },
-/* 139 */
+/* 144 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var isArguments = __webpack_require__(137)
+	var isArguments = __webpack_require__(142)
 	  , callable    = __webpack_require__(114)
-	  , isString    = __webpack_require__(138)
-	  , get         = __webpack_require__(140);
+	  , isString    = __webpack_require__(143)
+	  , get         = __webpack_require__(145);
 
 	var isArray = Array.isArray, call = Function.prototype.call, some = Array.prototype.some;
 
@@ -21966,17 +22157,17 @@ var ProperTable =
 
 
 /***/ },
-/* 140 */
+/* 145 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var isArguments    = __webpack_require__(137)
-	  , isString       = __webpack_require__(138)
-	  , ArrayIterator  = __webpack_require__(141)
-	  , StringIterator = __webpack_require__(153)
-	  , iterable       = __webpack_require__(135)
-	  , iteratorSymbol = __webpack_require__(129).iterator;
+	var isArguments    = __webpack_require__(142)
+	  , isString       = __webpack_require__(143)
+	  , ArrayIterator  = __webpack_require__(146)
+	  , StringIterator = __webpack_require__(164)
+	  , iterable       = __webpack_require__(140)
+	  , iteratorSymbol = __webpack_require__(134).iterator;
 
 	module.exports = function (obj) {
 		if (typeof iterable(obj)[iteratorSymbol] === "function") return obj[iteratorSymbol]();
@@ -21987,16 +22178,16 @@ var ProperTable =
 
 
 /***/ },
-/* 141 */
+/* 146 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	var setPrototypeOf = __webpack_require__(109)
 	  , contains       = __webpack_require__(124)
-	  , d              = __webpack_require__(142)
-	  , Symbol         = __webpack_require__(129)
-	  , Iterator       = __webpack_require__(143);
+	  , d              = __webpack_require__(147)
+	  , Symbol         = __webpack_require__(134)
+	  , Iterator       = __webpack_require__(148);
 
 	var defineProperty = Object.defineProperty, ArrayIterator;
 
@@ -22025,9 +22216,9 @@ var ProperTable =
 
 
 /***/ },
-/* 142 */
-115,
-/* 143 */
+/* 147 */
+128,
+/* 148 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -22036,9 +22227,9 @@ var ProperTable =
 	  , assign   = __webpack_require__(116)
 	  , callable = __webpack_require__(114)
 	  , value    = __webpack_require__(97)
-	  , d        = __webpack_require__(142)
-	  , autoBind = __webpack_require__(144)
-	  , Symbol   = __webpack_require__(129);
+	  , d        = __webpack_require__(147)
+	  , autoBind = __webpack_require__(149)
+	  , Symbol   = __webpack_require__(134);
 
 	var defineProperty = Object.defineProperty, defineProperties = Object.defineProperties, Iterator;
 
@@ -22139,24 +22330,25 @@ var ProperTable =
 
 
 /***/ },
-/* 144 */
+/* 149 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
+	"use strict";
 
-	var copy             = __webpack_require__(145)
-	  , normalizeOptions = __webpack_require__(122)
-	  , ensureCallable   = __webpack_require__(114)
-	  , map              = __webpack_require__(150)
-	  , callable         = __webpack_require__(114)
-	  , validValue       = __webpack_require__(97)
+	var isValue             = __webpack_require__(129)
+	  , ensureValue         = __webpack_require__(150)
+	  , ensurePlainFunction = __webpack_require__(155)
+	  , copy                = __webpack_require__(156)
+	  , normalizeOptions    = __webpack_require__(122)
+	  , map                 = __webpack_require__(161);
 
-	  , bind = Function.prototype.bind, defineProperty = Object.defineProperty
+	var bind = Function.prototype.bind
+	  , defineProperty = Object.defineProperty
 	  , hasOwnProperty = Object.prototype.hasOwnProperty
 	  , define;
 
 	define = function (name, desc, options) {
-		var value = validValue(desc) && callable(desc.value), dgs;
+		var value = ensureValue(desc) && ensurePlainFunction(desc.value), dgs;
 		dgs = copy(desc);
 		delete dgs.writable;
 		delete dgs.value;
@@ -22171,18 +22363,155 @@ var ProperTable =
 
 	module.exports = function (props/*, options*/) {
 		var options = normalizeOptions(arguments[1]);
-		if (options.resolveContext != null) ensureCallable(options.resolveContext);
+		if (isValue(options.resolveContext)) ensurePlainFunction(options.resolveContext);
 		return map(props, function (desc, name) { return define(name, desc, options); });
 	};
 
 
 /***/ },
-/* 145 */
+/* 150 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var aFrom  = __webpack_require__(146)
+	var resolveException = __webpack_require__(151)
+	  , is               = __webpack_require__(129);
+
+	module.exports = function (value/*, options*/) {
+		if (is(value)) return value;
+		return resolveException(value, "Cannot use %v", arguments[1]);
+	};
+
+
+/***/ },
+/* 151 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var isValue       = __webpack_require__(129)
+	  , isObject      = __webpack_require__(133)
+	  , stringCoerce  = __webpack_require__(152)
+	  , toShortString = __webpack_require__(153);
+
+	var resolveMessage = function (message, value) {
+		return message.replace("%v", toShortString(value));
+	};
+
+	module.exports = function (value, defaultMessage, inputOptions) {
+		if (!isObject(inputOptions)) throw new TypeError(resolveMessage(defaultMessage, value));
+		if (!isValue(value)) {
+			if ("default" in inputOptions) return inputOptions["default"];
+			if (inputOptions.isOptional) return null;
+		}
+		var errorMessage = stringCoerce(inputOptions.errorMessage);
+		if (!isValue(errorMessage)) errorMessage = defaultMessage;
+		throw new TypeError(resolveMessage(errorMessage, value));
+	};
+
+
+/***/ },
+/* 152 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var isValue  = __webpack_require__(129)
+	  , isObject = __webpack_require__(133);
+
+	var objectToString = Object.prototype.toString;
+
+	module.exports = function (value) {
+		if (!isValue(value)) return null;
+		if (isObject(value)) {
+			// Reject Object.prototype.toString coercion
+			var valueToString = value.toString;
+			if (typeof valueToString !== "function") return null;
+			if (valueToString === objectToString) return null;
+			// Note: It can be object coming from other realm, still as there's no ES3 and CSP compliant
+			// way to resolve its realm's Object.prototype.toString it's left as not addressed edge case
+		}
+		try {
+			return "" + value; // Ensure implicit coercion
+		} catch (error) {
+			return null;
+		}
+	};
+
+
+/***/ },
+/* 153 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var safeToString = __webpack_require__(154);
+
+	var reNewLine = /[\n\r\u2028\u2029]/g;
+
+	module.exports = function (value) {
+		var string = safeToString(value);
+		if (string === null) return "<Non-coercible to string value>";
+		// Trim if too long
+		if (string.length > 100) string = string.slice(0, 99) + "…";
+		// Replace eventual new lines
+		string = string.replace(reNewLine, function (char) {
+			switch (char) {
+				case "\n":
+					return "\\n";
+				case "\r":
+					return "\\r";
+				case "\u2028":
+					return "\\u2028";
+				case "\u2029":
+					return "\\u2029";
+				/* istanbul ignore next */
+				default:
+					throw new Error("Unexpected character");
+			}
+		});
+		return string;
+	};
+
+
+/***/ },
+/* 154 */
+/***/ function(module, exports) {
+
+	"use strict";
+
+	module.exports = function (value) {
+		try {
+			return value.toString();
+		} catch (error) {
+			try { return String(value); }
+			catch (error2) { return null; }
+		}
+	};
+
+
+/***/ },
+/* 155 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var resolveException = __webpack_require__(151)
+	  , is               = __webpack_require__(130);
+
+	module.exports = function (value/*, options*/) {
+		if (is(value)) return value;
+		return resolveException(value, "%v is not a plain function", arguments[1]);
+	};
+
+
+/***/ },
+/* 156 */
+/***/ function(module, exports, __webpack_require__) {
+
+	"use strict";
+
+	var aFrom  = __webpack_require__(157)
 	  , assign = __webpack_require__(116)
 	  , value  = __webpack_require__(97);
 
@@ -22202,18 +22531,18 @@ var ProperTable =
 
 
 /***/ },
-/* 146 */
+/* 157 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	module.exports = __webpack_require__(147)()
+	module.exports = __webpack_require__(158)()
 		? Array.from
-		: __webpack_require__(148);
+		: __webpack_require__(159);
 
 
 /***/ },
-/* 147 */
+/* 158 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -22228,25 +22557,25 @@ var ProperTable =
 
 
 /***/ },
-/* 148 */
+/* 159 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	var iteratorSymbol = __webpack_require__(129).iterator
-	  , isArguments    = __webpack_require__(137)
-	  , isFunction     = __webpack_require__(149)
+	var iteratorSymbol = __webpack_require__(134).iterator
+	  , isArguments    = __webpack_require__(142)
+	  , isFunction     = __webpack_require__(160)
 	  , toPosInt       = __webpack_require__(104)
 	  , callable       = __webpack_require__(114)
 	  , validValue     = __webpack_require__(97)
 	  , isValue        = __webpack_require__(98)
-	  , isString       = __webpack_require__(138)
+	  , isString       = __webpack_require__(143)
 	  , isArray        = Array.isArray
 	  , call           = Function.prototype.call
 	  , desc           = { configurable: true, enumerable: true, writable: true, value: null }
 	  , defineProperty = Object.defineProperty;
 
-	// eslint-disable-next-line complexity
+	// eslint-disable-next-line complexity, max-lines-per-function
 	module.exports = function (arrayLike /*, mapFn, thisArg*/) {
 		var mapFn = arguments[1]
 		  , thisArg = arguments[2]
@@ -22353,7 +22682,7 @@ var ProperTable =
 
 
 /***/ },
-/* 149 */
+/* 160 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
@@ -22366,13 +22695,13 @@ var ProperTable =
 
 
 /***/ },
-/* 150 */
+/* 161 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
 	var callable = __webpack_require__(114)
-	  , forEach  = __webpack_require__(151)
+	  , forEach  = __webpack_require__(162)
 	  , call     = Function.prototype.call;
 
 	module.exports = function (obj, cb /*, thisArg*/) {
@@ -22386,16 +22715,16 @@ var ProperTable =
 
 
 /***/ },
-/* 151 */
+/* 162 */
 /***/ function(module, exports, __webpack_require__) {
 
 	"use strict";
 
-	module.exports = __webpack_require__(152)("forEach");
+	module.exports = __webpack_require__(163)("forEach");
 
 
 /***/ },
-/* 152 */
+/* 163 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Internal method, used by iteration functions.
@@ -22431,7 +22760,7 @@ var ProperTable =
 
 
 /***/ },
-/* 153 */
+/* 164 */
 /***/ function(module, exports, __webpack_require__) {
 
 	// Thanks @mathiasbynens
@@ -22440,9 +22769,9 @@ var ProperTable =
 	"use strict";
 
 	var setPrototypeOf = __webpack_require__(109)
-	  , d              = __webpack_require__(142)
-	  , Symbol         = __webpack_require__(129)
-	  , Iterator       = __webpack_require__(143);
+	  , d              = __webpack_require__(147)
+	  , Symbol         = __webpack_require__(134)
+	  , Iterator       = __webpack_require__(148);
 
 	var defineProperty = Object.defineProperty, StringIterator;
 
@@ -22476,7 +22805,7 @@ var ProperTable =
 
 
 /***/ },
-/* 154 */
+/* 165 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22484,8 +22813,8 @@ var ProperTable =
 	var setPrototypeOf    = __webpack_require__(109)
 	  , contains          = __webpack_require__(124)
 	  , d                 = __webpack_require__(115)
-	  , Iterator          = __webpack_require__(143)
-	  , toStringTagSymbol = __webpack_require__(129).toStringTag
+	  , Iterator          = __webpack_require__(148)
+	  , toStringTagSymbol = __webpack_require__(134).toStringTag
 
 	  , defineProperty = Object.defineProperty
 	  , SetIterator;
@@ -22512,7 +22841,7 @@ var ProperTable =
 
 
 /***/ },
-/* 155 */
+/* 166 */
 /***/ function(module, exports) {
 
 	// Exports true if environment provides native `Set` implementation,
@@ -22527,7 +22856,7 @@ var ProperTable =
 
 
 /***/ },
-/* 156 */
+/* 167 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -22545,7 +22874,7 @@ var ProperTable =
 	  All credits to Gregor MacLennan
 	***/
 	var React = __webpack_require__(2);
-	var onElementResize = __webpack_require__(157);
+	var onElementResize = __webpack_require__(168);
 
 	var defaultContainerStyle = {
 	  width: '100%',
@@ -22729,7 +23058,7 @@ var ProperTable =
 	};
 
 /***/ },
-/* 157 */
+/* 168 */
 /***/ function(module, exports) {
 
 	module.exports = function(element, fn) {
