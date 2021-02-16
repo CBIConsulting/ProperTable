@@ -176,10 +176,15 @@ const buildColumnFilter = (props, icon) => {
       }
     };
 
+    const filterPortalCn = [
+      'propertable column-complex-filter',
+      props.headerFilterClassName
+    ].filter(v => v).join(' ');
+
     filter = (
       <Portal
           key={props.uniqueId + '-column-header-component'}
-          className={'propertable column-complex-filter'}
+          className={filterPortalCn}
           beforeClose={beforeClose}
           closeOnEsc
           closeOnOutsideClick

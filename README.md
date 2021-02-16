@@ -248,6 +248,7 @@ Check your http://localhost:8080/ or  `open http://localhost:8080/`
 * displayAggregationFooter: If the aggregation data footer must be displayed or not. The footer contains the aggregation of the data in each column. Even if it's true will be only displayed if there is aggregation data. Default true.
 * footerInfoHeight: If display footer then set the footer height to this value. Default 30px
 * footerAggregationHeight: If display aggregation footer then set the footer height to this value. Default rowHeight
+* headerFilterClassName: Optional classes that are going to be added to the header filters. The React component, Portal, will use it.
 
 ### Basic Example
 ------------
