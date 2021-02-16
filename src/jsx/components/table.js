@@ -1377,6 +1377,7 @@ class ProperTable extends React.Component {
 					isSortedOrFiltered={isSortedOrFiltered}
 					headerFilterClassName={this.props.headerFilterClassName}
 					extraProps={filterExtraProps}
+					columnHeaderClass={colData.columnHeaderClass}
 				/>
 			}
 			cell={
