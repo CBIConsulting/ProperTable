@@ -25,7 +25,7 @@ const CellRenderer = (props) => {
 	let indexed = props.indexed;
 	let row = props.data.get(props.rowIndex), val = null, formatted = null;
 	let colData = props.colData;
-	let className = colData.className || '';
+	let className = (colData.className + ' ' + colData.columnBodyClass) || '';
 	let selected = false;
 	let rawdata = indexed[row.get(props.idField)];
 	let ckey = null;
